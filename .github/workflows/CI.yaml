@@ -1,0 +1,360 @@
+on:
+  push:
+    branches: [ master, ]
+  pull_request:
+  schedule:
+    - cron: 0 1 * * 1
+
+name: Build
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+# matrix  4 stratagies x 14 boards. 
+# After main testing there is a job by example, only on bluepill and only with one strategy.
+# It is a repeat of tests done in the first job, but is nice for identifying examples problems.
+
+  examples:
+    name: boards
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        stg: [release-testing, driver-testing, hal-testing, dev-testing ]
+        
+        brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
+              none-stm32f722, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
+              none-stm32f100, none-stm32f101,      none-stm32f042,      none-stm32f030,       none-stm32l0x2 ]
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "none-stm32f042"  
+             mcu:  stm32f042
+             hal: "stm32f0xx"
+             trg: "thumbv6m-none-eabi"
+           - brd: "none-stm32f030"
+             mcu:  stm32f030xc
+             hal: "stm32f0xx"
+             trg: "thumbv6m-none-eabi"   
+           - brd:  "none-stm32f100"
+             mcu:  stm32f100
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "none-stm32f101"
+             mcu:  stm32f101
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "discovery-stm32f303"
+             mcu:  stm32f303xc
+             hal: "stm32f3xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f401
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "blackpill-stm32f411"
+             mcu:  stm32f411
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32f722"
+             mcu:  stm32f722
+             hal: "stm32f7xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32h742"
+             mcu:  stm32h742             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32l0x2"
+             mcu:  stm32l072kztx
+             hal: "stm32l0xx"
+             trg: "thumbv6m-none-eabi"
+           - brd: "discovery-stm32l100"
+             mcu:  stm32l100
+             hal: "stm32l1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "heltec-lora-node151"
+             mcu:  stm32l151
+             hal: "stm32l1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "none-stm32l4x2"
+             mcu:  stm32l4x2
+             hal: "stm32l4xx"
+             trg: "thumbv7em-none-eabi"
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v2
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        uses: actions-rs/cargo@v1 
+        with:
+          command: tree
+          args:  --manifest-path ${{ matrix.stg }}/Cargo.toml 
+
+      - name: Build
+        uses: actions-rs/cargo@v1 
+        with:
+          command: build
+          args:  --manifest-path ${{ matrix.stg }}/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.mcu }}
+          use-cross: true
+
+      ##### driver-examples  #####
+
+      - name: Example ads1015-adc-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ads1015-adc-display
+          use-cross: true
+
+      - name: Example at24c256-eeprom
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example at24c256-eeprom
+          use-cross: true
+
+      - name: Example bmi160-imu-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example bmi160-imu-display
+          use-cross: true
+
+      - name: Example ccs811-gas-voc-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-display
+          use-cross: true
+
+      - name: Example ccs811-gas-voc-hdc2080-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-hdc2080-display
+          use-cross: true
+
+      - name: Example ds1307-rtc
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ds1307-rtc
+          use-cross: true
+
+      - name: Example hdc2080-temp-humidity-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example hdc2080-temp-humidity-display
+          use-cross: true
+
+      - name: Example isl29125-color-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example isl29125-color-display
+          use-cross: true
+
+      - name: Example max17043-battery-monitor-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example max17043-battery-monitor-display
+          use-cross: true
+
+      - name: Example max30102-heart-usart
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example max30102-heart-usart
+          use-cross: true
+
+      - name: Example mcp7940n-rtc-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mcp7940n-rtc-display
+          use-cross: true
+
+      - name: Example mlx90614-temperature-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx90614-temperature-display
+          use-cross: true
+
+      - name: Example mlx90615-temperature-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx90615-temperature-display
+          use-cross: true
+
+      - name: Example mma8452-accel-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mma8452-accel-display
+          use-cross: true
+
+      - name: Example opt3001-als-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example opt3001-als-display
+          use-cross: true
+
+      - name: Example pca9685-pwm-rgb-led-servos
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example pca9685-pwm-rgb-led-servos
+          use-cross: true
+
+      - name: Example tcs34725-color-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example tcs34725-color-display
+          use-cross: true
+
+      - name: Example tmp006-ir-temp-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example tmp006-ir-temp-display
+          use-cross: true
+
+      - name: Example tmp102-temp-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example tmp102-temp-display
+          use-cross: true
+
+      - name: Example veml6030-als-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example veml6030-als-display
+          use-cross: true
+
+      - name: Example veml6075-uv-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example veml6075-uv-display
+          use-cross: true
+
+      - name: Example iaq-core-c-gas-voc-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-display
+          use-cross: true
+
+      #####  ` are based on  #####
+
+      - name: sx127x lora_spi_send
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_send
+          use-cross: true
+
+      - name: sx127x lora_spi_receive
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_receive
+          use-cross: true
+
+      - name: sx127x lora_spi_gps
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_gps
+          use-cross: true
+
+ 
+  bluepill:
+    name: brd x eg
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+        brd: [bluepill, ]  
+        
+        eg:  [ad9833-midi-player-bp,   ads1015-adc-display,              at24c256-eeprom,   
+              bmi160-imu-display,      ccs811-gas-voc-display,           ccs811-gas-voc-hdc2080-display, 
+              ds1307-rtc,              hdc2080-temp-humidity-display,    iaq-core-c-gas-voc-display, 
+              isl29125-color-display,  max17043-battery-monitor-display, max30102-heart-usart, 
+              mcp7940n-rtc-display,    mlx90614-temperature-display,     mlx90615-temperature-display, 
+              mma8452-accel-display,   opt3001-als-display,              pca9685-pwm-rgb-led-servos, 
+              si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
+              tmp006-ir-temp-display,  tmp102-temp-display,              veml6030-als-display, 
+              veml6075-uv-display,
+              lora_spi_send, ora_spi_receive, lora_spi_gps ]
+
+              #veml6070-uv-display, ccs811-gas-voc-usart-logger-bp.rs, iaq-core-c-gas-voc-usart-logger-bp
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v2
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        uses: actions-rs/cargo@v1 
+        with:
+          command: tree
+          args:  --manifest-path hal-testing/Cargo.toml 
+
+      - name: Build
+        uses: actions-rs/cargo@v1 
+        with:
+          command: build
+          args:  --manifest-path hal-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.mcu }}
+          use-cross: true
+
+      - name: Build example 
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  hal-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+          use-cross: true
+

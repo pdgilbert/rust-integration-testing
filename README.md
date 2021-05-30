@@ -27,7 +27,7 @@ Basically, the logic here is completely reversed from workspaces. In this setup 
 everything is the same except the `Cargo` files for the strategies.)
  
 The main work of checking that examples build is done by the CI workflow. 
-See ... for the latest results.
+See https://github.com/pdgilbert/rust-integration-testing/actions  for the latest results.
 No attempt is made to link/flash/run/debug so `.cargo/config` and `memory.x` are not needed.
 A very brief indication of how to do these is below.
 
@@ -35,6 +35,15 @@ The link above shows build results for all examples on several boards and with v
 device HALs. Some of them have
 been tested on hardware. (Any test board marked as `none-` below means I do not have a
 board and so it is certain I have not tested on hardware.)
+
+The `driver-examples` are based on https://github.com/eldruin/driver-examples and more 
+information about them is available at that web site and in blog posts referenced there.
+
+The `radio-sx127x` examples are based on https://github.com/rust-iot/rust-radio-sx127x and
+fork https://github.com/pdgilbert/rust-radio-sx127x. These example are of special interest
+because the `radio-sx127x` crate is based on `embedded-hal 1.0.0-alpha-4` and uses a
+compatability plugin `embedded-hal-compat` to work with hal and other crates that are
+using `embedded-hal-0.2.4`.
 
 ## Building
 
@@ -72,7 +81,7 @@ cargo build --no-default-features --target $TARGET --features $MCU,$HAL --exampl
 ## Loading
 
 The build testing here does not include linking, flashing, running, or any actual
-hardware testing. Details about this process can be found elsewhere, but:
+hardware testing. Details about this process can be found elsewhere, briefly:
 
 If `cargo-embed`, `probe-rs` and an appropriate probe are in place then 
 ```
