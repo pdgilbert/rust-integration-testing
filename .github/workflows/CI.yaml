@@ -297,7 +297,7 @@ jobs:
 
  
   bluepill:
-    name:eg
+    name: eg
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
