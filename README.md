@@ -17,7 +17,13 @@ The   third  uses  github versions of HAL crates and a recent release versions o
 The  fourth  uses  github versions of both HAL crates and driver crates. 
 
 The examples themselves are the same for all strategies, with the exception that breaking 
-updates might be accommodated.  `setup()` functions in each example do all board/MCU/hal 
+updates might be accommodated.  However, in general it is not necessary to accommodate
+breaking changes. They will simply show as failing in some tests. 
+For instance, the hal module name change from `stm32` to `pac` is changed to the newer
+convention in the example code. Until the change is moved into release the tests using 
+the release version show as failing. 
+
+The `setup()` functions in each example do all board/MCU/hal 
 setup so the application part of each example is generic code that works with all setups. 
 
 The stategies require different `Cargo.toml` (and `Cargo.lock`) files. 
