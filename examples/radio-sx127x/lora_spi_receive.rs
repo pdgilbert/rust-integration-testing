@@ -345,7 +345,7 @@ fn setup(
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     delay::Delay,
-    device::Peripherals, // note non-standard  device vs pac
+    pac::{CorePeripherals, Peripherals},
     prelude::*,
     spi::{ClockDivider, Error, Spi},
 };
@@ -368,7 +368,7 @@ fn setup(
 
     //   somewhere 8.mhz needs to be set in spi
 
-    let spi = Spi::new(p.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc, ClockDivider::DIV32, MODE);
+    let spi = Spi::new(p.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc.apb2, ClockDivider::DIV32, MODE);
 
     let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
 

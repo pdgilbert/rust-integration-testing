@@ -77,6 +77,7 @@ cargo build --no-default-features --target $TARGET --features $MCU,$HAL --exampl
 cargo build --no-default-features --target $TARGET --features $MCU,$HAL --example lora_spi_send
 
 ```
+See directories in `examples/` or `Cargo.toml` for example names.
 
 ## Loading
 

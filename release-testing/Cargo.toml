@@ -12,42 +12,42 @@ edition = "2018"
 
 #  hal versions using release
 
-stm32f0xx-hal = { version = "0.17", optional = true }
-stm32f1xx-hal = { version = "0.7",  optional = true } #0.6
-stm32f3xx-hal = { version = "0.6",  optional = true }
-stm32f4xx-hal = { version = "0.9",  optional = true }
-stm32f7xx-hal = { version = "0.3",  optional = true }
-stm32h7xx-hal = { version = "0.9",  optional = true }
-stm32l0xx-hal = { version = "0.7",  optional = true }
-stm32l1xx-hal = { version = "0.1",  optional = true, default-features = false}
-stm32l4xx-hal = { version = "0.6",  optional = true }
+stm32f0xx-hal = { version = ">=0.17", optional = true }
+stm32f1xx-hal = { version = ">=0.7",  optional = true } #0.6
+stm32f3xx-hal = { version = ">=0.6",  optional = true }
+stm32f4xx-hal = { version = ">=0.9",  optional = true }
+stm32f7xx-hal = { version = ">=0.3",  optional = true }
+stm32h7xx-hal = { version = ">=0.9",  optional = true }
+stm32l0xx-hal = { version = ">=0.7",  optional = true }
+stm32l1xx-hal = { version = ">=0.1",  optional = true, default-features = false}
+stm32l4xx-hal = { version = ">=0.6",  optional = true }
 
 #  driver versions using  release
 
-ad983x = "0.2"
-ads1x1x = "0.2"
-bmi160 = "0.1"
-ds1307 = "0.3"
-eeprom24x = "0.3"
-embedded-ccs811 = "0.2"
-hdc20xx = "0.1"
-iaq-core = "0.1"
-isl29125 = "0.1"
-max170xx = "0.1"
-max3010x = "0.1"
-mcp794xx = "0.2"
-mlx9061x = "0.1"
-mma8x5x = "0.1"
-opt300x = "0.1"
-pwm-pca9685 = "0.3"
-si4703 = "0.1"
-tcs3472 = "0.2"
-tmp006 = "0.1"
-tmp1x2 = "0.2"
-veml6030 = "0.1"
-veml6070 = "0.1"
-veml6075 = "0.2"
-
+ad983x          = ">=0.2"
+ads1x1x         = ">=0.2"
+bmi160          = ">=0.1"
+ds1307          = ">=0.3"
+eeprom24x       = ">=0.3"
+embedded-ccs811 = ">=0.2"
+hdc20xx         = ">=0.1"
+iaq-core        = ">=0.1"
+isl29125        = ">=0.1"
+max170xx        = ">=0.1"
+max3010x        = ">=0.1"
+mcp794xx        = ">=0.2"
+mlx9061x        = ">=0.1"
+mma8x5x         = ">=0.1"
+opt300x         = ">=0.1"
+pwm-pca9685     = ">=0.3"
+si4703          = ">=0.1"
+tcs3472         = ">=0.2"
+tmp006          = ">=0.1"
+tmp1x2          = ">=0.2"
+veml6030        = ">=0.1"
+veml6070        = ">=0.1"
+veml6075        = ">=0.2"
+ 
 # only certain versions of radio and radio-sx127x work together
 radio         = { version = "0.9.0" }
 radio-sx127x  = { version = "0.11.0", default-features = false }

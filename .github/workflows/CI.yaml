@@ -18,7 +18,7 @@ jobs:
 # terminate on the first example failure.
 
   examples:
-    name: 
+    name: CI
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
@@ -313,7 +313,7 @@ jobs:
               si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
               tmp006-ir-temp-display,  tmp102-temp-display,              veml6030-als-display, 
               veml6075-uv-display,
-              lora_spi_send, ora_spi_receive, lora_spi_gps ]
+              lora_spi_send, lora_spi_receive, lora_spi_gps ]
 
               #veml6070-uv-display, ccs811-gas-voc-usart-logger-bp.rs, iaq-core-c-gas-voc-usart-logger-bp
 
