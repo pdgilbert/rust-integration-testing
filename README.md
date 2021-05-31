@@ -34,6 +34,16 @@ everything is the same except the `Cargo` files for the strategies.)
  
 The main work of checking that examples build is done by the CI workflow. 
 See https://github.com/pdgilbert/rust-integration-testing/actions  for the latest results.
+The first set of jobs runs all working examples with each of the four strategies on each of
+the board (MCU/hardware) setups. If the first stategy (release) fails and last stategy (dev)
+passes then there is an update/fix/change in the github version of a hal that is not yet
+in the release version. In the reverse case there is a change in the gihub version that has 
+not yet been incorporated into the example code.
+
+There is a second set of jobs, one for each example, that run only on `bluepill`.
+This is for testing examples without stopping at the first one that fails. It includes
+some examples that are not yet working and are not included in the first set of jobs.
+
 No attempt is made to link/flash/run/debug so `.cargo/config` and `memory.x` are not needed.
 A very brief indication of how to do these is below.
 
