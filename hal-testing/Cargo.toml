@@ -1,7 +1,7 @@
 [package]
 authors = ["Paul Gilbert"]
 categories = ["embedded", "no-std"]
-description = "hal integration tesing of examples"
+description = "hal integration testing of examples"
 keywords = ["driver", "i2c", "spi", "example"]
 license = "MIT OR Apache-2.0"
 name = "hal-integration-testing-of-examples"
@@ -56,6 +56,8 @@ radio-sx127x  = { version = "0.11.0", default-features = false }
 #
 #  below here hal-testing/Cargo.toml should be the same as release-testing/Cargo.toml
 #
+# crates below are semi-fixed and not actively tested by CI. Dependabot update are
+# incorporated when the update does not break things.
 
 embedded-hal = {version = "^0.2.4" }
 

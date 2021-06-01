@@ -1,3 +1,7 @@
+// SOME WORK ON THIS IN DRIVER-EXAMPLES FORK GENERIC-BARE-METAL BRANCH.
+// see https://github.com/eldruin/driver-examples/issues/2
+// and si4703-fm-radio-display.rs is more developed but also not working
+
 //! Seek an FM radio channel when pressing two buttons "Seek down" / "Seek up"
 //! using an Si4703 FM radio receiver (turner).
 //!
