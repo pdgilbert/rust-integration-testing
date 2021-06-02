@@ -272,7 +272,7 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-display
           use-cross: true
 
-      #####  ` are based on  #####
+      #####  sx127x examples  #####
 
       - name: sx127x lora_spi_send
         uses: actions-rs/cargo@v1
@@ -295,7 +295,17 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_gps
           use-cross: true
 
- 
+
+       #####  examples broken on some boards (last because job stops on failure) #####
+
+      - name: Example ad9833-midi-player
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ad9833-midi-player
+          use-cross: true
+
+
   bluepill:
     name: eg
     runs-on: ubuntu-latest
