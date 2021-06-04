@@ -368,35 +368,17 @@ fn setup() -> (
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{
-        gpioa::{PA1, PA4, PA5, PA6, PA7},
+    gpio::{Output, PushPull,
+        gpioa::PA1,
         gpioc::PC13,
-        Alternate, Floating, Input, Output, PushPull,
-    },
+   },
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
-    spi::{Enabled, Error, Pins, Spi},
+    spi::{Enabled, Spi},
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (
-    Spi<
-        SPI1,
-        (
-            PA5<Alternate<PushPull>>,
-            PA6<Input<Floating>>,
-            PA7<Alternate<PushPull>>,
-        ),
-        Enabled,
-    >,
-    PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
-) {
-    //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, Enabled>, PA1<Output<PushPull>>, impl LED, Delay ) {
-    //ffn setup() -> (Spi<SPI1, impl Pins<SPI1>>, PA1<Output<PushPull>>, impl LED, Delay ) {
-    //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, Enabled>, PA1<Output<PushPull>>, impl LED, Delay ) {
-    //fn setup() -> (Spi<SPI1, ( PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>> ) >, PA1<Output<PushPull>>, impl LED, Delay) {
+fn setup() -> (Spi<SPI1, Enabled, >,  PA1<Output<PushPull>>,impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
@@ -406,7 +388,6 @@ fn setup() -> (
     let clocks = ccdr.clocks;
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
-    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
     let spi = dp.SPI1.spi(

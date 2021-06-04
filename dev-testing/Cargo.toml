@@ -257,3 +257,10 @@ path = "examples/radio-sx127x/lora_spi_receive.rs"
 [[example]]
 name = "lora_spi_gps"
 path = "examples/radio-sx127x/lora_spi_gps.rs"
+
+
+# misc examples
+
+[[example]]
+name = "spi"
+path = "examples/misc/spi.rs"
