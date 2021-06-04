@@ -541,8 +541,6 @@ fn setup() -> (
     impl LED,
     Delay,
 ) {
-    //fn setup() -> (Spi<SPI1, impl Pins<SPI1>>, PA1<Output<PushPull>>, impl LED, Delay ) {
-    //fn setup() -> (Spi<SPI1, ( PA5<Alternate<AF5, Input<Floating>>>, PA6<Alternate<AF5, Input<Floating>>>, PA7<Alternate<AF5, Input<Floating>>>, )>, PA1<Output<PushPull>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();
