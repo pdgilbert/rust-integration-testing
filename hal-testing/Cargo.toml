@@ -22,7 +22,11 @@ stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = 
 stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
 stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
 
+
 #  driver versions using  release
+
+dht-sensor      = ">=0.2.1"
+ssd1306         = ">=0.4"
 
 ad983x          = ">=0.2"
 ads1x1x         = ">=0.2"
@@ -276,13 +280,13 @@ path = "examples/misc/blink3.rs"
 name = "dht"
 path = "examples/misc/dht.rs"
 
-#[[example]]
-#name = "digi_pot"
-#path = "examples/misc/digi_pot.rs"
+[[example]]
+name = "digi_pot"
+path = "examples/misc/digi_pot.rs"
 
 [[example]]
 name = "echo_by_char"
-path = "examples/misc/.rs"
+path = "examples/misc/echo_by_char.rs"
 
 [[example]]
 name = "echo_string"

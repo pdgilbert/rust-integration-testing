@@ -34,8 +34,6 @@ use nb::block;
 
 use embedded_hal::blocking::delay::DelayMs;
 
-use eg_stm_hal::to_str;
-
 //builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
 use embedded_graphics::{
     //fonts::{Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32, Text,},
@@ -520,6 +518,13 @@ fn setup() -> (
 }
 
 // End of hal/MCU specific setup. Following should be generic code.
+
+fn to_str(x: &[u8]) -> &str {
+    match core::str::from_utf8(x) {
+        Ok(str) => &str,
+        Err(_error) => "problem converting u8 to str ",
+    }
+}
 
 #[entry]
 
