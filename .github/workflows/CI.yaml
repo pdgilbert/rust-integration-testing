@@ -116,7 +116,115 @@ jobs:
           args:  --manifest-path ${{ matrix.stg }}/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.mcu }}
           use-cross: true
 
+      ##### misc  #####
+
+      - name: Example blink
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink
+          use-cross: true
+
+      - name: Example blink_impl
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink_impl
+          use-cross: true
+
+      - name: Example blink3
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink3
+          use-cross: true
+
+#      - name: Example dht
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht
+#          use-cross: true
+
+#      - name: Example digi_pot
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example digi_pot
+#          use-cross: true
+
+      - name: Example echo_by_char
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_by_char
+          use-cross: true
+
+#      - name: Example echo_string
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_string
+#          use-cross: true
+
+      - name: Example gps_rw
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example gps_rw
+          use-cross: true
+
+      - name: Example oled_gps
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example oled_gps
+          use-cross: true
+
+      - name: Example serial_char
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_char
+          use-cross: true
+
+#      - name: Example serial_string
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_string
+#          use-cross: true
+
+      - name: Example spi
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example spi
+          use-cross: true
+
+#      - name: Example temperature
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature
+#          use-cross: true
+
+      - name: Example text_i2c
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example text_i2c
+          use-cross: true
+
+
       ##### driver-examples  #####
+
+      - name: Example ad9833-midi-player
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ad9833-midi-player
+          use-cross: true
 
       - name: Example ads1015-adc-display
         uses: actions-rs/cargo@v1
@@ -298,13 +406,6 @@ jobs:
 
        #####  examples broken on some boards (last because job stops on failure) #####
 
-      - name: Example ad9833-midi-player
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ad9833-midi-player
-          use-cross: true
-
 
   bluepill:
     name: eg
@@ -313,8 +414,13 @@ jobs:
     strategy:
       matrix:
         brd: [bluepill, ]  
-        
-        eg:  [ad9833-midi-player,      ads1015-adc-display,              at24c256-eeprom,   
+
+
+        eg:  [blink3,                  blink_impl,         blink,    dht,      digi_pot,        
+              echo_by_char,            echo_string,        gps_rw,        
+              oled_gps,                serial_char,        serial_string,        
+              spi,                     temperature,        text_i2c,        
+              ad9833-midi-player,      ads1015-adc-display,              at24c256-eeprom,   
               bmi160-imu-display,      ccs811-gas-voc-display,           ccs811-gas-voc-hdc2080-display, 
               ds1307-rtc,              hdc2080-temp-humidity-display,    iaq-core-c-gas-voc-display, 
               isl29125-color-display,  max17043-battery-monitor-display, max30102-heart-usart, 

@@ -56,7 +56,7 @@ radio-sx127x  = { version = "0.11.0", default-features = false }
 #
 #  below here release-testing/Cargo.toml should be the same as dev-testing/Cargo.toml
 #
-# crates below are semi-fixed and not actively tested by CI. Dependabot update are
+# updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
 
 embedded-hal = {version = "^0.2.4" }
@@ -256,3 +256,62 @@ path = "examples/radio-sx127x/lora_spi_receive.rs"
 [[example]]
 name = "lora_spi_gps"
 path = "examples/radio-sx127x/lora_spi_gps.rs"
+
+
+# misc examples
+
+[[example]]
+name = "blink"
+path = "examples/misc/blink.rs"
+
+[[example]]
+name = "blink_impl"
+path = "examples/misc/blink_impl.rs"
+
+[[example]]
+name = "blink3"
+path = "examples/misc/blink3.rs"
+
+[[example]]
+name = "dht"
+path = "examples/misc/dht.rs"
+
+#[[example]]
+#name = "digi_pot"
+#path = "examples/misc/digi_pot.rs"
+
+[[example]]
+name = "echo_by_char"
+path = "examples/misc/.rs"
+
+[[example]]
+name = "echo_string"
+path = "examples/misc/echo_string.rs"
+
+[[example]]
+name = "serial_char"
+path = "examples/misc/serial_char.rs"
+
+[[example]]
+name = "serial_string"
+path = "examples/misc/serial_string.rs"
+
+[[example]]
+name = "temperature"
+path = "examples/misc/temperature.rs"
+
+[[example]]
+name = "gps_rw"
+path = "examples/misc/gps_rw.rs"
+
+[[example]]
+name = "text_i2c"
+path = "examples/misc/text_i2c.rs"
+
+[[example]]
+name = "oled_gps"
+path = "examples/misc/oled_gps.rs"
+
+[[example]]
+name = "spi"
+path = "examples/misc/spi.rs"
