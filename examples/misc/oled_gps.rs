@@ -47,19 +47,19 @@ use ssd1306::{prelude::*, Builder, I2CDIBuilder};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
-#[cfg(feature = "stm32f0xx")] //  eg  stm32f030xc
+#[cfg(feature = "stm32f0xx")] //  eg  stm32f030xc  stm32f042
 use stm32f0xx_hal::{
     delay::Delay,
     i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C1, USART3},
+    pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
     serial::{Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f0xx")]
 fn setup() -> (
-    Tx<USART3>,
-    Rx<USART3>,
+    Tx<USART2>,
+    Rx<USART2>,
     I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
     Delay,
 ) {
@@ -67,22 +67,23 @@ fn setup() -> (
     let mut p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
+    let gpioa = p.GPIOA.split(&mut rcc);
     let gpiob = p.GPIOB.split(&mut rcc);
 
-    let (tx3, rx3, scl, sda) = cortex_m::interrupt::free(move |cs| {
+    let (tx2, rx2, scl, sda) = cortex_m::interrupt::free(move |cs| {
         (
-            gpiob.pb10.into_alternate_af4(cs), //tx pb10
-            gpiob.pb11.into_alternate_af4(cs), //rx pb11
+            gpioa.pa2.into_alternate_af1(cs),  //tx pa2
+            gpioa.pa3.into_alternate_af1(cs),  //rx pa3
             gpiob.pb8.into_alternate_af1(cs),  // scl on PB8
             gpiob.pb7.into_alternate_af1(cs),  // sda on PB7
         )
     });
 
-    let (tx3, rx3) = Serial::usart3(p.USART3, (tx3, rx3), 9600.bps(), &mut rcc).split();
+    let (tx2, rx2) = Serial::usart2(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
 
     let i2c = I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), &mut rcc);
 
-    (tx3, rx3, i2c, Delay::new(cp.SYST, &rcc))
+    (tx2, rx2, i2c, Delay::new(cp.SYST, &rcc))
 }
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103

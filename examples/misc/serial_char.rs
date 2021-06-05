@@ -56,7 +56,7 @@ use stm32f0xx_hal::{
     serial::{Rx, Serial, Tx},
 };
 
-#[cfg(feature = "stm32f0xx")]
+#[cfg(feature = "stm32f0xx")]  // NOTE this fails on stm32f042 which has only 2 USARTs
 fn setup() -> (
     Tx<USART1>,
     Rx<USART1>,
@@ -167,8 +167,8 @@ fn setup() -> (
 use stm32f3xx_hal::{
     prelude::*,
     serial::{Rx, Serial, Tx},
-    stm32::Peripherals,
-    stm32::{USART1, USART2, USART3},
+    pac::Peripherals,
+    pac::{USART1, USART2, USART3},
 };
 
 #[cfg(feature = "stm32f3xx")]

@@ -38,36 +38,35 @@ use nb::block;
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
-#[cfg(feature = "stm32f0xx")] // eg stm32f030xc
+#[cfg(feature = "stm32f0xx")] // eg stm32f030xc  stm32f042
 use stm32f0xx_hal::{
     pac::Peripherals,
-    pac::{USART1, USART3},
+    pac::{USART1, USART2},
     prelude::*,
     serial::{Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f0xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
+fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     let mut p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
 
     let gpioa = p.GPIOA.split(&mut rcc);
-    let gpiob = p.GPIOB.split(&mut rcc);
 
-    let (tx1, rx1, tx3, rx3) = cortex_m::interrupt::free(move |cs| {
+    let (tx1, rx1, tx2, rx2) = cortex_m::interrupt::free(move |cs| {
         (
             gpioa.pa9.into_alternate_af1(cs),  //tx pa9
             gpioa.pa10.into_alternate_af1(cs), //rx pa10
-            gpiob.pb10.into_alternate_af4(cs), //tx pb10
-            gpiob.pb11.into_alternate_af4(cs), //rx pb11
+            gpioa.pa2.into_alternate_af1(cs),  //tx pa2
+            gpioa.pa3.into_alternate_af1(cs),  //rx pa3
         )
     });
 
     let (tx1, rx1) = Serial::usart1(p.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
 
-    let (tx3, rx3) = Serial::usart3(p.USART3, (tx3, rx3), 9600.bps(), &mut rcc).split();
+    let (tx2, rx2) = Serial::usart2(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
 
-    (tx1, rx1, tx3, rx3)
+    (tx1, rx1, tx2, rx2)
 }
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
@@ -123,8 +122,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
 use stm32f3xx_hal::{
     prelude::*,
     serial::{Rx, Serial, Tx},
-    stm32::Peripherals,
-    stm32::{USART1, USART2},
+    pac::Peripherals,
+    pac::{USART1, USART2},
 };
 
 #[cfg(feature = "stm32f3xx")]

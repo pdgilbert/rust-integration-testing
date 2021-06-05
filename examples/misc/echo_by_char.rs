@@ -90,8 +90,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
 use stm32f3xx_hal::{
     prelude::*,
     serial::{Rx, Serial, Tx},
-    stm32::Peripherals,
-    stm32::USART1,
+    pac::Peripherals,
+    pac::USART1,
 };
 
 #[cfg(feature = "stm32f3xx")]

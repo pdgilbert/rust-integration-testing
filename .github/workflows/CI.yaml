@@ -139,13 +139,6 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink3
           use-cross: true
 
-      - name: Example dht
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht
-          use-cross: true
-
 #      - name: Example digi_pot
 #        uses: actions-rs/cargo@v1
 #        with:
@@ -179,13 +172,6 @@ jobs:
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example oled_gps
-          use-cross: true
-
-      - name: Example serial_char
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_char
           use-cross: true
 
 #      - name: Example serial_string
@@ -432,11 +418,28 @@ jobs:
           use-cross: true
 
 
-#############################################################################################
-#####  run examples here that broken on some boards (last because job stops on failure) #####
+#################################################################################################
+#####  run examples here that are broken on some boards (last because job stops on failure) #####
 
+# this requires 3 USARTs and  fails using stm32f042 which has only 2
 
-#############################################################################################
+      - name: Example serial_char
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_char
+          use-cross: true
+
+# this fails using stm32l4xx_hal
+
+      - name: Example dht
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht
+          use-cross: true
+
+#################################################################################################
 
   bluepill:
     name: eg
