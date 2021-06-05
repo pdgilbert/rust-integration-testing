@@ -66,7 +66,6 @@ radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", defaul
 
 embedded-hal = {version = "^0.2.4" }
 
-ssd1306 = "0.4"
 embedded-graphics = "0.6"
 shared-bus = { version = "0.1.4", features = ["cortexm"] }
 heapless = "0.7"

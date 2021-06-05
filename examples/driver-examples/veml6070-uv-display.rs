@@ -31,7 +31,7 @@ use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use ssd1306::{prelude::*, Builder, I2CDIBuilder};
 
-use veml6070::VEML6070;
+use veml6070::Veml6070;
 
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
@@ -525,13 +525,13 @@ fn setup() -> (
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
-    rprintln!("VEML6070 example");
+    rprintln!("Veml6070 example");
 
     let (i2c, mut led, mut delay) = setup();
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDIBuilder::new().init(manager.acquire());
-    let mut disp: GraphicsMode<_> = Builder::new().connect(interface).into();
+    let mut disp: GraphicsMode<_,_> = Builder::new().connect(interface).into();
     disp.init().unwrap();
     disp.flush().unwrap();
 
@@ -539,7 +539,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut sensor = VEML6070::new(manager.acquire());
+    let mut sensor = Veml6070::new(manager.acquire());
 
     let mut buffer: heapless::String<64> = heapless::String::new();
     sensor.enable().unwrap();

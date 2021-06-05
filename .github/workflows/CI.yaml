@@ -139,12 +139,12 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink3
           use-cross: true
 
-#      - name: Example dht
-#        uses: actions-rs/cargo@v1
-#        with:
-#          command: build
-#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht
-#          use-cross: true
+      - name: Example dht
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht
+          use-cross: true
 
 #      - name: Example digi_pot
 #        uses: actions-rs/cargo@v1
@@ -261,6 +261,13 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-hdc2080-display
           use-cross: true
 
+#      - name: Example ccs811-gas-voc-usart-logger
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-usart-logger
+#          use-cross: true
+
       - name: Example ds1307-rtc
         uses: actions-rs/cargo@v1
         with:
@@ -274,6 +281,13 @@ jobs:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example hdc2080-temp-humidity-display
           use-cross: true
+
+#      - name: Example iaq-core-c-gas-voc-usart-logger
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-usart-logger
+#          use-cross: true
 
       - name: Example isl29125-color-display
         uses: actions-rs/cargo@v1
@@ -345,6 +359,20 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example tcs34725-color-display
           use-cross: true
 
+#      - name: Example si4703-fm-radio-display
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example si4703-fm-radio-display
+#          use-cross: true
+
+#      - name: Example si4703-fm-radio
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example si4703-fm-radio
+#          use-cross: true
+
       - name: Example tmp006-ir-temp-display
         uses: actions-rs/cargo@v1
         with:
@@ -404,8 +432,11 @@ jobs:
           use-cross: true
 
 
-       #####  examples broken on some boards (last because job stops on failure) #####
+#############################################################################################
+#####  run examples here that broken on some boards (last because job stops on failure) #####
 
+
+#############################################################################################
 
   bluepill:
     name: eg
