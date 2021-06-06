@@ -194,8 +194,8 @@ use stm32f3xx_hal::{
     dma::dma1,
     prelude::*,
     serial::{Rx, Serial, Tx},
-    stm32::Peripherals,
-    stm32::{USART1, USART2, USART3},
+    pac::Peripherals,
+    pac::{USART1, USART2, USART3},
 };
 
 #[cfg(feature = "stm32f3xx")]
