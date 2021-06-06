@@ -54,10 +54,7 @@ fn setup() -> (Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    gpio::{
-        gpioa::{PA4, PA5, PA6, PA7},
-        Alternate, Floating, Input,
-    },
+    gpio::{gpioa::PA4,},
     gpio::{Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
@@ -65,10 +62,9 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (Spi<SPI1, Spi1NoRemap, (PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>>), u8>,
-    PA4<Output<PushPull>>) {
-//fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap, SPI1>, u8>, PA4<Output<PushPull>>) {
-
+fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>, PA4<Output<PushPull>>,) {
+//fn setup() -> (Spi<SPI1, Spi1NoRemap, (PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>>), u8>,
+//    PA4<Output<PushPull>>) {
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();

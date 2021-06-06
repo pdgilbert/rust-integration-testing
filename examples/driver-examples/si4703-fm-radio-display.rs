@@ -1,4 +1,3 @@
-// SOME WORK ON THIS IN DRIVER-EXAMPLES FORK GENERIC-BARE-METAL BRANCH.
 // see https://github.com/eldruin/driver-examples/issues/2
 // and si4703-fm-radio-display.rs is more developed but also not working
 
@@ -66,7 +65,7 @@ pub trait LED {
 pub struct SeekPins<T, U> {
     p_seekup: T,
     p_seekdown: U,
-    //p_stcint:   V,
+    //stcint:   V,
 }
 
 pub trait SEEK {
@@ -154,14 +153,32 @@ fn setup() -> (
     let mut rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+
+    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
-    //let sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
+    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
+    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
+
+    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
+    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
+    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
 
     let i2c = BlockingI2c::i2c1(
         dp.I2C1,
@@ -179,21 +196,6 @@ fn setup() -> (
         1000,
     );
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
-    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-    let delay = Delay::new(cp.SYST, clocks);
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
-
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
         p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
@@ -207,10 +209,6 @@ fn setup() -> (
             self.p_seekdown.is_high().unwrap()
         }
     }
-
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
-    //let z = reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let z = reset_si4703(&mut rst, &mut sda, &mut delay);
 
     (i2c, led, delay, buttons, stcint)
 }
@@ -274,30 +272,22 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{ Input, Output, PushPull, PullDown, PullUp,
+           gpiob::{PB6, PB10, PB11},
+           gpioc::PC13, },
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
+fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>,
+) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-
-    let gpiob = dp.GPIOB.split(); // for i2c
-
-    // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
-    //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
-
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
-
-    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), clocks);
-
     let delay = Delay::new(cp.SYST, clocks);
 
     // led
@@ -313,7 +303,41 @@ fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
         }
     }
 
-    (i2c, led, delay)
+
+    let gpiob = dp.GPIOB.split(); // for i2c
+
+    // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
+    //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
+
+    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
+    let mut sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    //let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
+    //let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
+    let mut rst = gpiob.pb7.into_push_pull_output();
+    
+    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
+    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
+    let stcint = gpiob.pb6.into_pull_up_input();
+
+
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), clocks);
+
+
+    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
+        p_seekup: gpiob.pb10.into_pull_down_input(),
+        p_seekdown: gpiob.pb11.into_pull_down_input(),
+    };
+
+    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+        fn seekup(&mut self) -> bool {
+            self.p_seekup.is_high().unwrap()
+        }
+        fn seekdown(&mut self) -> bool {
+            self.p_seekdown.is_high().unwrap()
+        }
+    }
+
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32f7xx")]
@@ -585,7 +609,7 @@ fn main() -> ! {
     rtt_init_print!();
     rprintln!("Si4703 example");
 
-    let (i2c, mut led, mut delay, mut buttons, mut stcint) = setup();
+    let (i2c, mut led, mut delay, mut buttons, stcint) = setup();
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDIBuilder::new().init(manager.acquire());

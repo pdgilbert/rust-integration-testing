@@ -111,34 +111,16 @@ fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
-    gpio::{
-        gpioa::{PA4, PA5, PA6, PA7},
-        Alternate, Floating, Input,
-    },
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{ Output, PushPull,
+        gpioa::PA4,
+        gpioc::PC13, },
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
-    spi::{Spi, Spi1NoRemap}, //,Pins
+    spi::{Spi, Spi1NoRemap, Pins},
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (
-    Spi<
-        SPI1,
-        Spi1NoRemap,
-        (
-            PA5<Alternate<PushPull>>,
-            PA6<Input<Floating>>,
-            PA7<Alternate<PushPull>>,
-        ),
-        u8,
-    >,
-    PA4<Output<PushPull>>,
-    impl LED,
-    Delay,
-) {
-    //fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap, SPI1>, u8, >,
-    //      PA4<Output<PushPull>>, impl LED, Delay) {
+fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>, PA4<Output<PushPull>>, impl LED, Delay,) {
 
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
