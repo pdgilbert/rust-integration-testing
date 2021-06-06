@@ -122,16 +122,15 @@ fn setup() -> (
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input, Output, PullDown, PullUp, PushPull,
         gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
     },
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -266,7 +265,7 @@ fn setup() -> (
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
@@ -392,7 +391,7 @@ fn setup() -> (
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32h7xx")]
@@ -438,7 +437,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay) {
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32l0xx")]
@@ -491,7 +490,7 @@ fn setup() -> (
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -534,7 +533,7 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 #[cfg(feature = "stm32l4xx")]
@@ -599,7 +598,7 @@ fn setup() -> (
         }
     }
 
-    (i2c, led, delay)
+    (i2c, led, delay, buttons, stcint)
 }
 
 // End of hal/MCU specific setup. Following should be generic code.
