@@ -79,7 +79,10 @@ pub trait SEEK {
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{Input, Output, PullDown, PullUp, PushPull,
+        gpiob::{PB8, PB10, PB11, PB6},
+        gpioc::PC13,
+    },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
@@ -95,11 +98,43 @@ fn setup() -> (
     let mut dp = Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
-    let delay = Delay::new(cp.SYST, &rcc);
+    let mut delay = Delay::new(cp.SYST, &rcc);
 
-    // led
+    let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
-    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
+//    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
+
+//    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
+//        (
+//            gpiob.pb8.into_alternate_af1(cs), // scl on PB8
+//            gpiob.pb7.into_alternate_af1(cs), // sda on PB7
+//        )
+//    });
+
+    let (led, scl, mut sda, mut rst, stcint, seekup, seekdown ) = cortex_m::interrupt::free(move |cs| {
+        (
+            gpioc.pc13.into_push_pull_output(cs),
+            gpiob.pb8.into_open_drain_output(cs),
+            gpiob.pb9.into_push_pull_output(cs),
+            gpiob.pb7.into_push_pull_output(cs),
+            gpiob.pb6.into_pull_up_input(cs),
+            gpiob.pb10.into_pull_down_input(cs),
+            gpiob.pb11.into_pull_down_input(cs),
+        )
+    });
+
+
+// ########### check this section #############
+//    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
+//    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
+//    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
+
+    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
+    let sda = sda.into_alternate_open_drain(gpiob.pb8);
+//    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
+//
+//    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
+//  ###########################################
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
@@ -110,33 +145,11 @@ fn setup() -> (
         }
     }
 
-    let gpiob = dp.GPIOB.split(&mut rcc); // for i2c scl and sda
-
-    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
-        (
-            gpiob.pb8.into_alternate_af1(cs), // scl on PB8
-            gpiob.pb7.into_alternate_af1(cs), // sda on PB7
-        )
-    });
-
-
-// ########### check this section #############
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
-
-    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
-
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-//  ###########################################
-
     let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), &mut rcc);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+        p_seekup: seekup,
+        p_seekdown: seekdown,
     };
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
@@ -242,7 +255,10 @@ fn setup() -> (
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    gpio::{gpioe::PE9, Output, PushPull},
+    gpio::{Input, Output, PushPull,
+        gpiob::{PB10, PB11, PB6},
+        gpioe::PE9,
+    },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
@@ -252,7 +268,7 @@ use stm32f3xx_hal::{
 fn setup() -> (
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
-    Delay, impl SEEK, PB6<Input<PullUp>>,
+    Delay, impl SEEK, PB6<Input>,
 ){
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -260,7 +276,7 @@ fn setup() -> (
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
 
@@ -279,33 +295,23 @@ fn setup() -> (
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-    let scl = gpiob
-        .pb6
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-    let sda = gpiob
-        .pb7
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-
-// ########### check this section #############
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
+    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
+    let sda = sda.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-//  ###########################################
+    let scl = gpiob.pb8.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
+        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
+        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
         fn seekup(&mut self) -> bool {
             self.p_seekup.is_high().unwrap()
         }
