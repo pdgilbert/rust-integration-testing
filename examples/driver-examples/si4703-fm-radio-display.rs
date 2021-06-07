@@ -466,14 +466,17 @@ fn setup() -> (
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{Input, Output, PullDown, PullUp, PushPull,
+        gpiob::{PB10, PB11, PB6},
+        gpioc::PC13,
+    },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (I2c<I2C1>, impl LED, Delay) {
+fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
@@ -481,7 +484,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay) {
     let rcc = dp.RCC.constrain();
     let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
-    let delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
@@ -498,21 +501,15 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay) {
         }
     }
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
+    let mut sda = gpiob.pb9.into_push_pull_output();
+    let mut rst = gpiob.pb7.into_push_pull_output();
 
-
-// ########### check this section #############
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
+    let sda = sda.into_alternate_af4().set_open_drain();
+    let stcint = gpiob.pb6.into_pull_up_input();
 
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-//  ###########################################
+    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
 
     let i2c = dp
         .I2C1
@@ -520,8 +517,8 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay) {
 
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+        p_seekup: gpiob.pb10.into_pull_down_input(),
+        p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
