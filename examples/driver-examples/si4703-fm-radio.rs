@@ -523,10 +523,10 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input, Output, PullDown, PullUp, PushPull, OpenDrain, 
+        gpiob::{PB10, PB11, PB6},
         gpiob::{PB8, PB9},
         gpioc::PC13,
-        OpenDrain, Output, PushPull,
     },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -545,7 +545,7 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
     let clocks = rcc.clocks;
-    let delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
@@ -562,29 +562,20 @@ fn setup() -> (
         }
     }
 
-    // could also have scl on PB6, sda on PB7
-    //BlockingI2c::i2c1(
-    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-
-
-// ########### check this section #############
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
+    let mut sda = gpiob.pb9.into_push_pull_output();
+    let mut rst = gpiob.pb7.into_push_pull_output();
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
+    let sda = sda.into_open_drain_output(); 
+    let stcint = gpiob.pb6.into_pull_up_input();
 
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-//  ###########################################
+    let scl = gpiob.pb8.into_open_drain_output();
 
     let i2c = dp.I2C1.i2c(sda, scl, 400.khz(), &mut rcc);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+        p_seekup: gpiob.pb10.into_pull_down_input(),
+        p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
