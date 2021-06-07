@@ -628,7 +628,6 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, impl SEEK, PB6<Input
     let gpiob = dp.GPIOB.split();
     let gpioc = dp.GPIOC.split();
 
-    // led
     let led = gpioc.pc13.into_push_pull_output();
 
     impl LED for PC13<Output<PushPull>> {
@@ -672,15 +671,18 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, impl SEEK, PB6<Input
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{Input, Output, PullDown, PullUp, PushPull,
+        gpiob::{PB10, PB11, PB6},
+        gpioc::PC13,
+    },
     i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C2},
+    pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (
-    I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>,
+    I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
     Delay, impl SEEK, PB6<Input<PullUp>>,
 ){
@@ -696,11 +698,10 @@ fn setup() -> (
         .pclk2(80.mhz())
         .freeze(&mut flash.acr, &mut pwr);
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, clocks);
 
     let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
 
-    // led
     let led = gpioc
         .pc13
         .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); // led on pc13
@@ -716,37 +717,28 @@ fn setup() -> (
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
 
-    // following ttps://github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
-    let mut scl = gpiob
-        .pb10
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper); // scl on PB10
+    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper); 
+
+    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+
+    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
+
+    let sda = sda.into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper)
+                 .into_af4(&mut gpiob.moder, &mut gpiob.afrh);
+
+    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
+
+    //this should be simpler
+    let mut scl = gpiob.pb8
+        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
     let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let mut sda = gpiob
-        .pb11
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper); // sda on PB11
-    sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
-
-
-// ########### check this section #############
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
-
-    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
-    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
-
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-//  ###########################################
-
-    let i2c = I2c::i2c2(dp.I2C2, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
+        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
     };
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
