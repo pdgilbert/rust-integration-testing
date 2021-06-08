@@ -80,7 +80,7 @@ pub trait SEEK {
 use stm32f0xx_hal::{
     delay::Delay,
     gpio::{Input, Output, PullDown, PullUp, PushPull,
-        gpiob::{PB8, PB10, PB11, PB6},
+        gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
     },
     i2c::{I2c, SclPin, SdaPin},
@@ -114,8 +114,9 @@ fn setup() -> (
     let (led, scl, mut sda, mut rst, stcint, seekup, seekdown ) = cortex_m::interrupt::free(move |cs| {
         (
             gpioc.pc13.into_push_pull_output(cs),
-            gpiob.pb8.into_open_drain_output(cs),
-            gpiob.pb9.into_push_pull_output(cs),
+            gpiob.pb8.into_alternate_af1(cs),  
+            //gpiob.pb9.into_alternate_af1(cs),      //for i2c
+            gpiob.pb9.into_push_pull_output(cs), //for reset
             gpiob.pb7.into_push_pull_output(cs),
             gpiob.pb6.into_pull_up_input(cs),
             gpiob.pb10.into_pull_down_input(cs),
@@ -130,7 +131,7 @@ fn setup() -> (
 //    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_open_drain(gpiob.pb8);
+    let sda = cortex_m::interrupt::free(move |cs| gpiob.pb9.into_alternate_af1(cs));
 //    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
 //
 //    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
