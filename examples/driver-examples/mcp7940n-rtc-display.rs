@@ -27,7 +27,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::{Text},
+    text::Text,
 };
 use embedded_hal::digital::v2::OutputPin;
 use mcp794xx::{Datelike, Mcp794xx, NaiveDate, Rtcc, Timelike};
@@ -566,7 +566,7 @@ fn main() -> ! {
         )
         .unwrap();
         display.clear();
-        Text::new(&buffer, Point::zero(), text_style)            
+        Text::new(&buffer, Point::zero(), text_style)
             .draw(&mut display)
             .unwrap();
 

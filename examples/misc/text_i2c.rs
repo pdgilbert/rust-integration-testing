@@ -12,27 +12,13 @@
 //!
 //! Compare this example with oled_gps.
 
-// Example use of impl trait: If scl and sda are on PB10 and PB11 (eg in stm32f1xx below) then
-//      fn setup() -> BlockingI2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)> {
-// is changed to
-//      fn setup() -> BlockingI2c<I2C2, impl Pins<I2C2>> {
-// Also
-//   use stm32f1xx_hal::{ gpio::{gpiob::{PB10, PB11}, Alternate, OpenDrain, },
-// will be needed.
-
 #![no_std]
 #![no_main]
 
 use cortex_m_rt::{entry, exception, ExceptionFrame};
 
-// builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
-//use embedded_graphics::{
-//    fonts::{Font8x16, Text},
-//    pixelcolor::BinaryColor,
-//    prelude::*,
-//    style::TextStyleBuilder,
-//};
-//builtin include FONT_6X10, FONT_8X13, ....
+// old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
+// builtin include FONT_6X10, FONT_8X13, ....
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
@@ -324,37 +310,20 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
 fn main() -> ! {
     let i2c = setup();
 
-    //let interface = I2CDIBuilder::new().init(i2c);
-    //let mut disp: GraphicsMode<_, _> = Builder::new()
-    //    .size(DisplaySize128x64) // set display size 128x32, 128x64
-    //    .connect(interface)
-    //    .into();
     let interface = I2CDisplayInterface::new(i2c);
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
-    //builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
-    //let text_style = TextStyleBuilder::new(Font8x16)
-    //    .text_color(BinaryColor::On)
-    //    .build();
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
 
-    //Text::new("Hello world!", Point::zero())
-    //    .into_styled(text_style)
-    //    .draw(&mut disp)
-    //    .unwrap();
     Text::with_baseline("Hello world!", Point::zero(), text_style, Baseline::Top)
         .draw(&mut display)
         .unwrap();
 
-    //Text::new("Hello Rust!", Point::new(0, 20))
-    //    .into_styled(text_style)
-    //    .draw(&mut disp)
-    //    .unwrap();
     Text::with_baseline("Hello Rust!", Point::new(0, 16), text_style, Baseline::Top)
         .draw(&mut display)
         .unwrap();

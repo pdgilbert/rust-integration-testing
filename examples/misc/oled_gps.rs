@@ -39,7 +39,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::{Text},
+    text::Text,
 };
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
@@ -71,10 +71,10 @@ fn setup() -> (
 
     let (tx2, rx2, scl, sda) = cortex_m::interrupt::free(move |cs| {
         (
-            gpioa.pa2.into_alternate_af1(cs),  //tx pa2
-            gpioa.pa3.into_alternate_af1(cs),  //rx pa3
-            gpiob.pb8.into_alternate_af1(cs),  // scl on PB8
-            gpiob.pb7.into_alternate_af1(cs),  // sda on PB7
+            gpioa.pa2.into_alternate_af1(cs), //tx pa2
+            gpioa.pa3.into_alternate_af1(cs), //rx pa3
+            gpiob.pb8.into_alternate_af1(cs), // scl on PB8
+            gpiob.pb7.into_alternate_af1(cs), // sda on PB7
         )
     });
 

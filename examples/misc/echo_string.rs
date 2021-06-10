@@ -174,10 +174,10 @@ fn setup() -> (
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     dma::dma1,
-    prelude::*,
-    serial::{Rx, Serial, Tx},
     pac::Peripherals,
     pac::USART1,
+    prelude::*,
+    serial::{Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f3xx")]

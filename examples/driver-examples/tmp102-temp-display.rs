@@ -27,7 +27,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::{Text},
+    text::Text,
 };
 use embedded_hal::digital::v2::OutputPin;
 use panic_rtt_target as _;
@@ -558,7 +558,7 @@ fn main() -> ! {
         buffer.clear();
         write!(buffer, "Temperature: {:.1}ºC", temp_c).unwrap();
         display.clear();
-        Text::new(&buffer, Point::zero(), text_style)            
+        Text::new(&buffer, Point::zero(), text_style)
             .draw(&mut display)
             .unwrap();
 

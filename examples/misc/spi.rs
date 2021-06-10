@@ -13,7 +13,6 @@ pub const MODE: Mode = Mode {
     polarity: Polarity::IdleHigh,
 };
 
- 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -24,12 +23,15 @@ use stm32f0xx_hal::{
     },
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{EightBit, Spi, SckPin, MisoPin, MosiPin},
+    spi::{EightBit, MisoPin, MosiPin, SckPin, Spi},
 };
 
 #[cfg(feature = "stm32f0xx")]
-fn setup() -> (Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate<AF0>>, EightBit>, PA1<Output<PushPull>>) {
-//fn setup() -> (Spi<SPI1, impl SckPin<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>>) {
+fn setup() -> (
+    Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate<AF0>>, EightBit>,
+    PA1<Output<PushPull>>,
+) {
+    //fn setup() -> (Spi<SPI1, impl SckPin<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>>) {
     //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>> ) {
     //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, EightBit>, PA1<Output<PushPull>> ) {
     let mut dp = Peripherals::take().unwrap();
@@ -39,32 +41,34 @@ fn setup() -> (Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate
 
     let (sck, miso, mosi, chs) = cortex_m::interrupt::free(move |cs| {
         (
-            gpioa.pa5.into_alternate_af0(cs),     //   sck   on PA5
-            gpioa.pa6.into_alternate_af0(cs),     //   miso  on PA6
-            gpioa.pa7.into_alternate_af0(cs),     //   mosi  on PA7
-            gpioa.pa1.into_push_pull_output(cs),  // cs   on PA1
+            gpioa.pa5.into_alternate_af0(cs),    //   sck   on PA5
+            gpioa.pa6.into_alternate_af0(cs),    //   miso  on PA6
+            gpioa.pa7.into_alternate_af0(cs),    //   mosi  on PA7
+            gpioa.pa1.into_push_pull_output(cs), // cs   on PA1
         )
     });
 
     let spi = Spi::spi1(dp.SPI1, (sck, miso, mosi), MODE, 8.mhz(), &mut rcc);
-
 
     (spi, chs)
 }
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    gpio::{gpioa::PA4,},
+    gpio::gpioa::PA4,
     gpio::{Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Spi, Spi1NoRemap, Pins},
+    spi::{Pins, Spi, Spi1NoRemap},
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>, PA4<Output<PushPull>>,) {
-//fn setup() -> (Spi<SPI1, Spi1NoRemap, (PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>>), u8>,
-//    PA4<Output<PushPull>>) {
+fn setup() -> (
+    Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
+    PA4<Output<PushPull>>,
+) {
+    //fn setup() -> (Spi<SPI1, Spi1NoRemap, (PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>>), u8>,
+    //    PA4<Output<PushPull>>) {
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
@@ -76,10 +80,10 @@ fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>, PA4<Output<Pu
     let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
 
     // SPI1
-    let  sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
+    let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
     let miso = gpioa.pa6;
     let mosi = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
-    let  cs  = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
+    let cs = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
 
     let spi = Spi::spi1(
         dp.SPI1,
@@ -103,7 +107,10 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,  PA1<Output<PushPull>>) {
+fn setup() -> (
+    Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,
+    PA1<Output<PushPull>>,
+) {
     let dp = Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.constrain();
@@ -141,7 +148,8 @@ fn setup() -> (Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SP
     (spi, cs)
 }
 
-#[cfg(feature = "stm32f4xx")] // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
+#[cfg(feature = "stm32f4xx")]
+// eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
@@ -185,7 +193,9 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (Spi<SPI1, impl Pins<SPI1>, Enabled<u8>>, PA1<Output<PushPull>>,
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>, Enabled<u8>>,
+    PA1<Output<PushPull>>,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -208,14 +218,14 @@ fn setup() -> (Spi<SPI1, impl Pins<SPI1>, Enabled<u8>>, PA1<Output<PushPull>>,
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    gpio::{gpioa::PA1,Output, PushPull,},
+    gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Enabled, Spi},
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Spi<SPI1, Enabled, >,  PA1<Output<PushPull>>) {
+fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
@@ -314,7 +324,10 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>)>, PA1<Output<PushPull>>) {
+fn setup() -> (
+    Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>)>,
+    PA1<Output<PushPull>>,
+) {
     let dp = Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
@@ -352,9 +365,7 @@ fn setup() -> (Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SP
 
 #[entry]
 fn main() -> ! {
-
     let (_spi, _cs) = setup();
 
-    loop {
-    }
+    loop {}
 }

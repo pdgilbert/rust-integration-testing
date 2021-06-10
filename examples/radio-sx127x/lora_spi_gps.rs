@@ -276,8 +276,12 @@ fn setup() -> (
     let (tx, rx) = Serial::usart2(
         p.USART2,
         (
-            gpioa.pa2.into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS rx
-            gpioa.pa3.into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS tx
+            gpioa
+                .pa2
+                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS rx
+            gpioa
+                .pa3
+                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS tx
         ),
         9600.Bd(), // 115_200.Bd(),
         clocks,
@@ -288,9 +292,15 @@ fn setup() -> (
     let spi = Spi::spi1(
         p.SPI1,
         (
-            gpioa.pa5.into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
-            gpioa.pa6.into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
-            gpioa.pa7.into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
+            gpioa
+                .pa5
+                .into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
+            gpioa
+                .pa6
+                .into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
+            gpioa
+                .pa7
+                .into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         MODE,
         8_000_000.Hz(),
@@ -434,7 +444,8 @@ fn setup() -> (
 
     //   somewhere 8.mhz needs to be set in spi
 
-    let spi = Spi::new(p.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc.apb2, ClockDivider::DIV32, MODE);
+    let spi =
+        Spi::new(p.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc.apb2, ClockDivider::DIV32, MODE);
 
     // Relative to other hal setups, Serial::new is after spi::new because  clocks partially consumes rcc.
 
@@ -770,7 +781,7 @@ fn main() -> ! {
 
     // byte buffer   Nov 2020 limit data.len() < 255 in radio_sx127x  .start_transmit
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-    let mut buf2:   heapless::Vec<u8, 80> = heapless::Vec::new();
+    let mut buf2: heapless::Vec<u8, 80> = heapless::Vec::new();
 
     //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
     //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity()).unwrap();  //0 of 80

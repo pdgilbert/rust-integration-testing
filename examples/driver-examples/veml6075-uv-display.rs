@@ -28,7 +28,7 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::{Text},
+    text::Text,
 };
 use embedded_hal::digital::v2::OutputPin;
 use panic_rtt_target as _;
@@ -574,7 +574,7 @@ fn main() -> ! {
         write!(lines[2], "UV index: {}", uv_index).unwrap();
         display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::new(line, Point::new(0, i as i32 * 16), text_style)                
+            Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)
                 .unwrap();
         }

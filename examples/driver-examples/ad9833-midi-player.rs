@@ -111,17 +111,19 @@ fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
-    gpio::{ Output, PushPull,
-        gpioa::PA4,
-        gpioc::PC13, },
+    gpio::{gpioa::PA4, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
-    spi::{Spi, Spi1NoRemap, Pins},
+    spi::{Pins, Spi, Spi1NoRemap},
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>, PA4<Output<PushPull>>, impl LED, Delay,) {
-
+fn setup() -> (
+    Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
+    PA4<Output<PushPull>>,
+    impl LED,
+    Delay,
+) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
@@ -350,17 +352,14 @@ fn setup() -> (
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{Output, PushPull,
-        gpioa::PA1,
-        gpioc::PC13,
-   },
+    gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
     spi::{Enabled, Spi},
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Spi<SPI1, Enabled, >,  PA1<Output<PushPull>>,impl LED, Delay) {
+fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();

@@ -58,16 +58,16 @@ use stm32f1xx_hal::{
         Alternate, OpenDrain, Output, PushPull, State,
     },
     i2c::{BlockingI2c, Mode},
-    pac::{CorePeripherals, Peripherals, I2C1},
     pac,
+    pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
     serial,
 };
 
 //fn setup() -> Resources<PC13::<Output::<PushPull>>, I2cDevs, serial::Tx::<pac::USART1>>
-   // I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
-   // impl LED,
-   // Delay,
+// I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
+// impl LED,
+// Delay,
 fn setup() -> () {
     struct Resources {
         led: PC13<Output<PushPull>>,
@@ -84,17 +84,15 @@ fn setup() -> () {
     ()
 }
 
-
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
     gpio::{gpioe::PE9, Output, PushPull},
     i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C1},
     pac,
+    pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
-
 
 const PERIOD: u32 = 1_000_000_000; // 10 seconds
 type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
@@ -121,7 +119,7 @@ const APP: () = {
         i2c: I2cDevs,
         tx: serial::Tx<pac::USART1>,
     }
-    
+
     #[init(schedule = [measure])]
     fn init(cx: init::Context) -> init::LateResources {
         rtt_init_print!();
