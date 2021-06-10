@@ -1,6 +1,6 @@
 on:
   push:
-    branches: [ main, embedded-graphics-update,]
+    branches: [ main, ]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -495,19 +495,19 @@ jobs:
         uses: actions-rs/cargo@v1 
         with:
           command: tree
-          args:  --manifest-path hal-testing/Cargo.toml 
+          args:  --manifest-path dev-testing/Cargo.toml 
 
       - name: Build
         uses: actions-rs/cargo@v1 
         with:
           command: build
-          args:  --manifest-path hal-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.mcu }}
+          args:  --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.mcu }}
           use-cross: true
 
       - name: Build example 
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args:  --manifest-path  hal-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+          args:  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
           use-cross: true
 
