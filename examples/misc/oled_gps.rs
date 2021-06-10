@@ -34,16 +34,15 @@ use nb::block;
 
 use embedded_hal::blocking::delay::DelayMs;
 
-//builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
+//builtin include FONT_6X10, FONT_8X13, ....
 use embedded_graphics::{
-    //fonts::{Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32, Text,},
-    fonts::{Font8x16, Text},
+    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    style::TextStyleBuilder,
+    text::{Text},
 };
 
-use ssd1306::{prelude::*, Builder, I2CDIBuilder};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -532,12 +531,10 @@ fn to_str(x: &[u8]) -> &str {
 fn main() -> ! {
     let (mut _tx_gps, mut rx_gps, i2c, mut delay) = setup(); //  GPS, i2c, delay
 
-    let interface = I2CDIBuilder::new().init(i2c);
-    let mut disp: GraphicsMode<_, _> = Builder::new()
-        .size(DisplaySize128x64) // set display size 128x32, 128x64
-        .connect(interface)
-        .into();
-    disp.init().unwrap();
+    let interface = I2CDisplayInterface::new(i2c);
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
 
     // A symptom of improper DisplaySize setting can be clipping font on top and/or bottom.
 
@@ -550,27 +547,27 @@ fn main() -> ! {
     // Font12x16 too wide for 128x displays.
     // Font24x32 too wide and too high for two lines. Causes panic.
 
-    let text_style = TextStyleBuilder::new(Font8x16)
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
         .text_color(BinaryColor::On)
-        .background_color(BinaryColor::Off)
         .build();
 
-    let mut line1 = Text::new("----", Point::zero());
-    let mut line2 = Text::new("----", Point::new(0, 20));
+    let mut line1 = Text::new("----", Point::zero(), text_style);
+    let mut line2 = Text::new("----", Point::new(0, 20), text_style);
 
-    line1.into_styled(text_style).draw(&mut disp).unwrap();
-    line2.into_styled(text_style).draw(&mut disp).unwrap();
-    disp.flush().unwrap();
+    line1.draw(&mut display).unwrap();
+    line2.draw(&mut display).unwrap();
+    display.flush().unwrap();
 
     delay.delay_ms(2000_u16);
 
     // Would this approach in loop give smaller code? or faster?
     // Need to avoid  mutable/immutable borrow.
     line1.text = "xxxx";
-    line1.into_styled(text_style).draw(&mut disp).unwrap();
+    line1.draw(&mut display).unwrap();
     line2.text = "zzzz";
-    line2.into_styled(text_style).draw(&mut disp).unwrap();
-    disp.flush().unwrap();
+    line2.draw(&mut display).unwrap();
+    display.flush().unwrap();
     delay.delay_ms(1000_u16);
 
     // byte buffer length 80
@@ -616,15 +613,13 @@ fn main() -> ! {
                     hprintln!("north {}", north).unwrap();
                     let east = to_str(&buffer[32..45]);
                     hprintln!("east {}", east).unwrap();
-                    Text::new(north, Point::new(0, 0))
-                        .into_styled(text_style)
-                        .draw(&mut disp)
+                    Text::new(north, Point::new(0, 0), text_style)
+                        .draw(&mut display)
                         .unwrap();
-                    Text::new(east, Point::new(0, 20))
-                        .into_styled(text_style)
-                        .draw(&mut disp)
+                    Text::new(east, Point::new(0, 20), text_style)
+                        .draw(&mut display)
                         .unwrap();
-                    disp.flush().unwrap();
+                    display.flush().unwrap();
                 };
 
                 buffer.clear();

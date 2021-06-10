@@ -25,16 +25,23 @@
 
 use cortex_m_rt::{entry, exception, ExceptionFrame};
 
-//builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
+// builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
+//use embedded_graphics::{
+//    fonts::{Font8x16, Text},
+//    pixelcolor::BinaryColor,
+//    prelude::*,
+//    style::TextStyleBuilder,
+//};
+//builtin include FONT_6X10, FONT_8X13, ....
 use embedded_graphics::{
-    fonts::{Font8x16, Text},
+    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    style::TextStyleBuilder,
+    text::{Baseline, Text},
 };
 use panic_halt as _;
 
-use ssd1306::{prelude::*, Builder, I2CDIBuilder};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -317,29 +324,42 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
 fn main() -> ! {
     let i2c = setup();
 
-    let interface = I2CDIBuilder::new().init(i2c);
-    let mut disp: GraphicsMode<_, _> = Builder::new()
-        .size(DisplaySize128x64) // set display size 128x32, 128x64
-        .connect(interface)
-        .into();
-    disp.init().unwrap();
+    //let interface = I2CDIBuilder::new().init(i2c);
+    //let mut disp: GraphicsMode<_, _> = Builder::new()
+    //    .size(DisplaySize128x64) // set display size 128x32, 128x64
+    //    .connect(interface)
+    //    .into();
+    let interface = I2CDisplayInterface::new(i2c);
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
 
     //builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
-    let text_style = TextStyleBuilder::new(Font8x16)
+    //let text_style = TextStyleBuilder::new(Font8x16)
+    //    .text_color(BinaryColor::On)
+    //    .build();
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
 
-    Text::new("Hello world!", Point::zero())
-        .into_styled(text_style)
-        .draw(&mut disp)
+    //Text::new("Hello world!", Point::zero())
+    //    .into_styled(text_style)
+    //    .draw(&mut disp)
+    //    .unwrap();
+    Text::with_baseline("Hello world!", Point::zero(), text_style, Baseline::Top)
+        .draw(&mut display)
         .unwrap();
 
-    Text::new("Hello Rust!", Point::new(0, 20))
-        .into_styled(text_style)
-        .draw(&mut disp)
+    //Text::new("Hello Rust!", Point::new(0, 20))
+    //    .into_styled(text_style)
+    //    .draw(&mut disp)
+    //    .unwrap();
+    Text::with_baseline("Hello Rust!", Point::new(0, 16), text_style, Baseline::Top)
+        .draw(&mut display)
         .unwrap();
 
-    disp.flush().unwrap();
+    display.flush().unwrap();
 
     loop {}
 }

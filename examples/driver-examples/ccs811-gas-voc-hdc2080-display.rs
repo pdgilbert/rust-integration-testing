@@ -31,10 +31,10 @@ use embedded_ccs811::{
     prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode, SlaveAddr as Ccs811SlaveAddr,
 };
 use embedded_graphics::{
-    fonts::{Font6x8, Text},
+    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    style::TextStyleBuilder,
+    text::{Text},
 };
 use embedded_hal::digital::v2::OutputPin;
 use hdc20xx::{Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
@@ -42,7 +42,7 @@ use heapless::String;
 use nb::block;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
-use ssd1306::{prelude::*, Builder, I2CDIBuilder};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
@@ -540,12 +540,14 @@ fn main() -> ! {
     let (i2c, mut led, mut delay) = setup();
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDIBuilder::new().init(manager.acquire());
-    let mut disp: GraphicsMode<_,_> = Builder::new().connect(interface).into();
-    disp.init().unwrap();
-    disp.flush().unwrap();
+    let interface = I2CDisplayInterface::new(manager.acquire());
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
+    display.flush().unwrap();
 
-    let text_style = TextStyleBuilder::new(Font6x8)
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
 
@@ -595,13 +597,12 @@ fn main() -> ! {
         write!(lines[1], "eTVOC: {}", data.etvoc).unwrap();
         write!(lines[2], "Temp: {:.2}ºC", env.temperature).unwrap();
         write!(lines[3], "Humidity: {:.2}%", env.humidity.unwrap_or(0.0)).unwrap();
-        disp.clear();
+        display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::new(line, Point::new(0, i as i32 * 16))
-                .into_styled(text_style)
-                .draw(&mut disp)
+            Text::new(line, Point::new(0, i as i32 * 16), text_style)                
+                .draw(&mut display)
                 .unwrap();
         }
-        disp.flush().unwrap();
+        display.flush().unwrap();
     }
 }
