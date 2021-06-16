@@ -1,0 +1,16 @@
+[default.probe]
+protocol = "Swd"
+
+[default.general]
+chip = "XYZ"
+
+#chip = "STM32F103C8"    # bluepill
+#chip = "STM32F303VCTx"  # discovery-stm32f303
+
+[default.rtt]
+enabled = true
+# The duration in ms for which the logger should retry to attach to RTT.
+#timeout = 3000
+
+[default.gdb]
+enabled = false

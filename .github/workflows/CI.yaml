@@ -418,6 +418,8 @@ jobs:
           use-cross: true
 
 
+      #####  rtic examples to be added don't work on stmf0xx.  separate job? #####
+
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
 
@@ -465,7 +467,8 @@ jobs:
               tmp006-ir-temp-display,  tmp102-temp-display,              
               veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
               iaq-core-c-gas-voc-usart-logger,
-              lora_spi_send, lora_spi_receive, lora_spi_gps ]
+              lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
+              blink_rtic,              schedule, ]
 
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up

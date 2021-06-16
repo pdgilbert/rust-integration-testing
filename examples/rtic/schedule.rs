@@ -12,8 +12,8 @@ use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
 //#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-//#[rtic::app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-#[rtic::app(device = stm32f4xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
+#[rtic::app(device = stm32f1xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
+//#[rtic::app(device = stm32f4xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
 
 const APP: () = {
     #[init(schedule = [foo, bar])]
@@ -50,10 +50,19 @@ const APP: () = {
     // RTIC requires that unused interrupts are declared in an extern block when
     // using software tasks; these free interrupts will be used to dispatch the
     // software tasks.
+
+    //#[cfg(feature = "stm32f1xx")]   CFG DOES NOT WORK HERE
     extern "C" {
-        fn EXTI0();
-        fn SDIO();
-        //fn SSIO();
+        fn TIM2();
+        fn TIM3();
+        fn TIM4();
         fn QEI0();
     }
+
+//    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
+//    extern "C" {
+//        fn EXTI0();
+//        fn SDIO();
+//        fn QEI0();
+//    }
 };
