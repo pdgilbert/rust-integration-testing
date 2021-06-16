@@ -105,14 +105,6 @@ fn setup() -> (
 
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
-    //    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
-
-    //    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
-    //        (
-    //            gpiob.pb8.into_alternate_af1(cs), // scl on PB8
-    //            gpiob.pb7.into_alternate_af1(cs), // sda on PB7
-    //        )
-    //    });
 
     let (led, scl, mut sda, mut rst, stcint, seekup, seekdown) =
         cortex_m::interrupt::free(move |cs| {
@@ -128,17 +120,8 @@ fn setup() -> (
             )
         });
 
-    // ########### check this section #############
-    //    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    //    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
-    //    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
-
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = cortex_m::interrupt::free(move |cs| gpiob.pb9.into_alternate_af1(cs));
-    //    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
-    //
-    //    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    //  ###########################################
+    let sda = cortex_m::interrupt::free(move |cs| sda.into_alternate_af1(cs));
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
