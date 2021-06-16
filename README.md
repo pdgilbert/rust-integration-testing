@@ -69,7 +69,7 @@ The examples can be built manually by setting one of these lines:
   _____________________________________________________________     _____________  _____________   ___________________________
   export HAL=stm32f0xx MCU=stm32f030xc TARGET=thumbv6m-none-eabi    PROC=stm32f0x  CHIP=STM32F0x  # none-stm32f030      Cortex-M0
   export HAL=stm32f0xx MCU=stm32f042   TARGET=thumbv6m-none-eabi    PROC=stm32f0x  CHIP=STM32F0x  # none-stm32f042      Cortex-M0
-  export HAL=stm32f1xx MCU=stm32f103   TARGET=thumbv7m-none-eabi    PROC=stm32f1x  CHIP=STM32F103C8  # bluepill            Cortex-M3
+  export HAL=stm32f1xx MCU=stm32f103   TARGET=thumbv7m-none-eabi    PROC=stm32f1x  CHIP=STM32F103C8  # bluepill         Cortex-M3
   export HAL=stm32f1xx MCU=stm32f100   TARGET=thumbv7m-none-eabi    PROC=stm32f1x  CHIP=STM32F1x  # none-stm32f100      Cortex-M3
   export HAL=stm32f1xx MCU=stm32f101   TARGET=thumbv7m-none-eabi    PROC=stm32f1x  CHIP=STM32F1x  # none-stm32f101      Cortex-M3
   export HAL=stm32f3xx MCU=stm32f303xc TARGET=thumbv7em-none-eabihf PROC=stm32f3x  CHIP=STM32F3x  # discovery-stm32f303 Cortex-M3
@@ -115,7 +115,8 @@ in place then in one window run
 ```
 openocd -f interface/$INTERFACE.cfg -f target/$PROC.cfg 
 ```
-where INTERFACE is set for your probe and in another window do
+where INTERFACE is set for your probe, for example, `export INTERFACE=stlink-v2` or `export INTERFACE=stlink-v2-1`.
+In another window do
 ```
 cargo  run --target $TARGET --features $HAL,$MCU --example xxx  [ --release]
 ```
