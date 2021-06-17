@@ -1,3 +1,6 @@
+//!  THIS COMPILES on bluepill BUT I DON'T SEE HOW IT CAN WORK. 
+//!  Compare rtic/blink_rtic for handling of delay and consider other remarks in code below.
+//! 
 //! Measures the CO2 and TVOC equivalents in the air with an iAQ-Core-C module,
 //! logs the values and sends them through the serial interface every 10 seconds.
 //!
@@ -287,9 +290,9 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
 
 //  NEED TO SPECIFY DEVICE HERE FOR DIFFERENT HALs
 
-//#[app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+#[app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 //#[app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 
 const APP: () = {
     struct Resources {
