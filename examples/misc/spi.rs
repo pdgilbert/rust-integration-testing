@@ -1,4 +1,6 @@
-//! This is to test impl trait for returning spi and cs.
+//! This is to test impl trait for returning spi and cs. It does not run, only builds.
+//!
+//!  Also it fails linking, I think because there is no target on the spi bus.
 
 #![deny(unsafe_code)]
 #![no_std]

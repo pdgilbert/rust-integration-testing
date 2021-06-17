@@ -189,6 +189,63 @@ fn setup() -> (
     (spi, cs, led, delay)
 }
 
+#[cfg(feature = "stm32f4xx")]
+// eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
+use stm32f4xx_hal::{
+    delay::Delay,
+    gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
+    pac::{CorePeripherals, Peripherals, SPI1},
+    prelude::*,
+    spi::{Pins, Spi},
+    time::MegaHertz,
+};
+
+#[cfg(feature = "stm32f4xx")]
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>>,
+    PA1<Output<PushPull>>,
+    impl LED,
+    Delay,
+) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
+
+    let gpioa = dp.GPIOA.split();
+    let gpioc = dp.GPIOC.split();
+
+    let spi = Spi::spi1(
+        dp.SPI1,
+        (
+            gpioa.pa5.into_alternate_af5(), // sck   on PA5
+            gpioa.pa6.into_alternate_af5(), // miso  on PA6
+            gpioa.pa7.into_alternate_af5(), // mosi  on PA7
+        ),
+        MODE,
+        MegaHertz(8).into(),
+        clocks,
+    );
+
+    let cs = gpioa.pa1.into_push_pull_output();
+
+    let led = gpioc.pc13.into_push_pull_output();
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
+    let delay = Delay::new(cp.SYST, clocks);
+
+    (spi, cs, led, delay)
+}
+
+
 #[entry]
 fn main() -> ! {
     let (spi, chip_select, mut led, mut delay) = setup();
