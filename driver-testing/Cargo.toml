@@ -322,6 +322,10 @@ name = "spi"
 path = "examples/misc/spi.rs"
 
 [[example]]
+name = "battery_monitor_ads1015"
+path = "examples/misc/battery_monitor_ads1015.rs"
+
+[[example]]
 name = "blink_rtic"
 path = "examples/rtic/blink_rtic.rs"
 
