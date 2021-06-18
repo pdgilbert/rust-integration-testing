@@ -185,7 +185,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     //Why does next need arg, there is only one possibility?
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa
@@ -201,7 +201,7 @@ fn setup() -> (
     )
     .split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa
@@ -219,7 +219,7 @@ fn setup() -> (
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
 
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob

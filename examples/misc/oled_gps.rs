@@ -169,7 +169,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa

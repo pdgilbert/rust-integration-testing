@@ -135,7 +135,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     //Why does next need arg, there is only one possibility?
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
 
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa
@@ -151,7 +151,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     )
     .split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa

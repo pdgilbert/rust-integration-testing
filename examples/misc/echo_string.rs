@@ -29,8 +29,6 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 //use nb::block;
 
-//use eg_stm_hal::to_str;
-
 // possibly should be using something from embedded-hal here
 
 const BUFSIZE: usize = 15;
@@ -192,7 +190,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
 
-    let txrx1 = Serial::usart1(
+    let txrx1 = Serial::new(
         p.USART1,
         (
             gpioa

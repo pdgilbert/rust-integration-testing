@@ -101,7 +101,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
     //let cnfg = 9600.bps();
-    Serial::usart1(
+    Serial::new(
         p.USART1,
         (
             gpioa

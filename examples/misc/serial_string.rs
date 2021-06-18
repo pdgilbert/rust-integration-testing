@@ -19,10 +19,9 @@ use panic_halt as _;
 use cortex_m::singleton;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
-//use core::str::from_utf8;
 //use nb::block;
 
-use eg_stm_hal::to_str;
+use core::str::from_utf8;
 
 #[cfg(feature = "stm32f0xx")] //  eg blue pill stm32f103
 use stm32f0xx_hal::{
@@ -218,7 +217,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     //Why does next need arg, there is only one possibility?
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa
@@ -234,7 +233,7 @@ fn setup() -> (
     )
     .split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa
@@ -252,7 +251,7 @@ fn setup() -> (
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
 
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob
@@ -731,7 +730,7 @@ fn main() -> ! {
     let mut send2 = tx.wait(); //when tx is complete return 3-tuple send structure (buf2, tx2_ch, tx2)
     let mut recv3 = rx.wait(); //when rx is complete return 3-tuple recv structure (buf3, rx3_ch, rx3)
 
-    //hprintln!("  check received = sent,  '{}' = '{}' ", to_str(recv3.0), to_str(send2.0)).unwrap();
+    //hprintln!("  check received = sent,  '{}' = '{}' ", from_utf8(recv3.0), from_utf8(send2.0)).unwrap();
     assert_eq!(recv3.0, send2.0);
 
     // Now recvX and sendX structures can be modified rather than assigned
@@ -747,7 +746,7 @@ fn main() -> ! {
 
     for i in buf4.iter() {
         //hprintln!(" i is '{:?}'", i).unwrap();
-        hprintln!(" i is '{}'", to_str(i)).unwrap();
+        hprintln!(" i is '{}'", from_utf8(i)).unwrap();
 
         rx = recv3.2.read_exact(send1.0, recv3.1); // rx ready to receive into send1 buf
                                                    // This requires buf3 has same size as buf1.

@@ -251,7 +251,7 @@ fn setup() -> (
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
 
-    let (tx, rx) = Serial::usart1(
+    let (tx, rx) = Serial::new(
         dp.USART1,
         (
             gpioa
