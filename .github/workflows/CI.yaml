@@ -40,7 +40,7 @@ jobs:
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
               echo_by_char,            echo_string,                      gps_rw,        
               oled_gps,                serial_char,                      serial_string,        
-              temperature,            text_i2c,                          battery_monitor_ads1015
+              temperature,             text_i2c,                         battery_monitor_ads1015,
               ad9833-midi-player,      ads1015-adc-display,              at24c256-eeprom,   
               bmi160-imu-display,      digi_pot,
               ccs811-gas-voc-display,  ccs811-gas-voc-hdc2080-display,   ccs811-gas-voc-usart-logger,
