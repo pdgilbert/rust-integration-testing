@@ -36,12 +36,7 @@ use embedded_hal::digital::v2::OutputPin;
 use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
-//use embedded_graphics::{
-//    fonts::{Font8x16, Text}, //Font6x8,
-//    pixelcolor::BinaryColor,
-//    prelude::*,
-//    style::{TextStyle, TextStyleBuilder},
-//};
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10
     pixelcolor::BinaryColor,
@@ -49,10 +44,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-//use ssd1306::{mode::GraphicsMode, prelude::*, Builder, I2CDIBuilder};
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
-
-//use ssd1306::{prelude::*, Builder, I2CDIBuilder};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
 use nb::block;
 
@@ -573,16 +565,17 @@ fn setup() -> (
 // End of hal/MCU specific setup. Following should be generic code.
 
 
-fn display(
+fn display<S>(
            bat_mv : i16, 
            bat_ma : i16, 
            load_ma : i16, 
            temp_c : i16, 
            values_b : [i16; 3], 
-           //disp : &mut impl DrawTarget<BinaryColor>, 
-           disp: &mut impl DrawTarget<Color = BinaryColor>,
-           text_style: MonoTextStyle<BinaryColor>) -> () {
-           //text_style : TextStyle<BinaryColor, Font8x16>) -> () {
+           text_style: MonoTextStyle<BinaryColor>,
+           disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>) -> ()
+              where S: DisplaySize,
+{
+
     let mut lines: [heapless::String<32>; 4] = [
         heapless::String::new(),
         heapless::String::new(),
@@ -595,15 +588,14 @@ fn display(
     write!(lines[2], "B:{:4} {:4} {:4}", values_b[0], values_b[1], values_b[2]).unwrap();
     write!(lines[3], "temperature{:3} C", temp_c ).unwrap();
 
-    let _z = disp.clear(BinaryColor::Off);
-    // check for err variant
+    let _z = disp.clear();
     for i in 0..lines.len() {
         let _z = Text::new(&lines[i], Point::new(0, i as i32 * 16), text_style)
             //.into_styled(text_style)
             .draw(&mut *disp);
         // check for err variant
     }
-    //disp.flush().unwrap();
+    disp.flush().unwrap();
     ()
 }
 
@@ -697,8 +689,7 @@ fn main() -> ! {
         //    block!(adc_c.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
         //];
 
-        display(bat_mv, bat_ma, load_ma, temp_c, values_b, &mut disp, text_style );
-        disp.flush().unwrap();
+        display(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp );
 
         delay.delay_ms(2000_u16); // sleep for 2s
     }
