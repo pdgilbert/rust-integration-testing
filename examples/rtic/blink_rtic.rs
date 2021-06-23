@@ -41,7 +41,7 @@ use stm32f1xx_hal::{
     gpio::{Output, PushPull, State,
         gpioc::PC13,
     },
-    pac,
+    //pac,
     pac::{Peripherals}, 
     prelude::*,
 };

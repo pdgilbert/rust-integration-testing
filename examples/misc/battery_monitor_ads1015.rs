@@ -36,14 +36,23 @@ use embedded_hal::digital::v2::OutputPin;
 use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
+//use embedded_graphics::{
+//    fonts::{Font8x16, Text}, //Font6x8,
+//    pixelcolor::BinaryColor,
+//    prelude::*,
+//    style::{TextStyle, TextStyleBuilder},
+//};
 use embedded_graphics::{
-    fonts::{Font8x16, Text}, //Font6x8,
+    mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10
     pixelcolor::BinaryColor,
     prelude::*,
-    style::{TextStyle, TextStyleBuilder},
+    text::{Baseline, Text},
 };
 
-use ssd1306::{prelude::*, Builder, I2CDIBuilder};
+//use ssd1306::{mode::GraphicsMode, prelude::*, Builder, I2CDIBuilder};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+
+//use ssd1306::{prelude::*, Builder, I2CDIBuilder};
 
 use nb::block;
 
@@ -570,10 +579,10 @@ fn display(
            load_ma : i16, 
            temp_c : i16, 
            values_b : [i16; 3], 
-           disp : &mut impl DrawTarget<BinaryColor>, 
-           //disp : impl DrawTarget<BinaryColor> + WriteOnlyDataCommand, 
-           //disp : impl DrawTarget<BinaryColor> + cortex_m::prelude::_embedded_hal_serial_Write, 
-           text_style : TextStyle<BinaryColor, Font8x16>) -> () {
+           //disp : &mut impl DrawTarget<BinaryColor>, 
+           disp: &mut impl DrawTarget<Color = BinaryColor>,
+           text_style: MonoTextStyle<BinaryColor>) -> () {
+           //text_style : TextStyle<BinaryColor, Font8x16>) -> () {
     let mut lines: [heapless::String<32>; 4] = [
         heapless::String::new(),
         heapless::String::new(),
@@ -589,7 +598,9 @@ fn display(
     let _z = disp.clear(BinaryColor::Off);
     // check for err variant
     for i in 0..lines.len() {
-        let _z = Text::new(&lines[i], Point::new(0, i as i32 * 16)).into_styled(text_style).draw(&mut *disp);
+        let _z = Text::new(&lines[i], Point::new(0, i as i32 * 16), text_style)
+            //.into_styled(text_style)
+            .draw(&mut *disp);
         // check for err variant
     }
     //disp.flush().unwrap();
@@ -603,30 +614,30 @@ fn main() -> ! {
     led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDIBuilder::new().init(manager.acquire());
-    let mut disp: GraphicsMode<_, _> = Builder::new()
-        .size(DisplaySize128x64) // set display size 128x32, 128x64
-        .connect(interface)
-        .into();
+    let interface = I2CDisplayInterface::new(manager.acquire());
+
+    let mut disp = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
     disp.init().unwrap();
 
-    //let text_style = TextStyleBuilder::new(Font6x8).text_color(BinaryColor::On).build();
-    let text_style = TextStyleBuilder::new(Font8x16)
+    let text_style = MonoTextStyleBuilder::new()
+        .font(&FONT_8X13) //.font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
 
-    Text::new("Display initialized ...", Point::zero())
-        .into_styled(text_style)
-        .draw(&mut disp)
-        .unwrap();
-    disp.flush().unwrap();
+    Text::with_baseline(
+        "Display initialized ...",
+        Point::zero(),
+        text_style,
+        Baseline::Top,
+    )
+    .draw(&mut disp)
+    .unwrap();
 
-    //let mut adc = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::default()); // = addr = GND
+
     let mut adc_a = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative(false, false)); //addr = GND
     let mut adc_b = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative(false, true)); //addr =  V
 
-    //let mut adc_c = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative( true, false)); //addr = SDA
-    //let mut adc_c = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative( true,  true)); //addr = SCL
 
     // set FullScaleRange to measure expected max voltage.
     // This is very small for diff across low value shunt resistors

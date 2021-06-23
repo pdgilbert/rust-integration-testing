@@ -334,3 +334,7 @@ path = "examples/rtic/blink_rtic.rs"
 [[example]]
 name = "schedule"
 path = "examples/rtic/schedule.rs"
+
+[[example]]
+name = "zz"
+path = "examples/misc/zz.rs"
