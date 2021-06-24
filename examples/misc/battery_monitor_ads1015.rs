@@ -38,7 +38,7 @@ use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 use core::fmt::Write;
 
 use embedded_graphics::{
-    mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10
+    mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10  FONT_8X13
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
@@ -583,17 +583,17 @@ fn display<S>(
         heapless::String::new(),
     ];
 
-    write!(lines[0], "bat:{:4}mV{:4}mA", bat_mv, bat_ma).unwrap();
-    write!(lines[1], "load:    {:5}mA",  load_ma).unwrap();
+    // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+    // it is now possible to use \n in place of separate writes, with one line rather than vector.
+    write!(lines[0], "bat:{:4}mV{:4}mA",   bat_mv,  bat_ma                    ).unwrap();
+    write!(lines[1], "load:    {:5}mA",             load_ma                   ).unwrap();
     write!(lines[2], "B:{:4} {:4} {:4}", values_b[0], values_b[1], values_b[2]).unwrap();
-    write!(lines[3], "temperature{:3} C", temp_c ).unwrap();
+    write!(lines[3], "temperature{:3} C",    temp_c                           ).unwrap();
 
-    let _z = disp.clear();
-    for i in 0..lines.len() {
-        let _z = Text::new(&lines[i], Point::new(0, i as i32 * 16), text_style)
-            //.into_styled(text_style)
-            .draw(&mut *disp);
-        // check for err variant
+    disp.clear();
+    for i in 0..lines.len() {   // start from 0 requires that the top is used for font baseline
+       Text::with_baseline(&lines[i], Point::new(0, i as i32 * 16), text_style, Baseline::Top,)
+          .draw(&mut *disp).unwrap();
     }
     disp.flush().unwrap();
     ()
@@ -613,7 +613,7 @@ fn main() -> ! {
     disp.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_8X13) //.font(&FONT_6X10)
+        .font(&FONT_8X13) //.&FONT_6X10  &FONT_8X13
         .text_color(BinaryColor::On)
         .build();
 
