@@ -32,6 +32,7 @@ use ad983x::{Ad983x, FrequencyRegister, MODE};
 
 use cortex_m_rt::entry;
 use embedded_hal::digital::v2::OutputPin;
+
 use libm;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};

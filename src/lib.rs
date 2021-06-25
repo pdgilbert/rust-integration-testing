@@ -10,6 +10,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
+pub mod i2c_led_delay;
 pub mod lora_spi_gps_usart;
 
 // consider putting some real tests here
