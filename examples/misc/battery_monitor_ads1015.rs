@@ -44,7 +44,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
 use nb::block;
 
@@ -409,7 +409,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay) {
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull,},
+    gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, SCLPin, SDAPin},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
@@ -418,7 +418,7 @@ use stm32l0xx_hal::{
 
 #[cfg(feature = "stm32l0xx")]
 fn setup() -> (
-   I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
+    I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
     impl LED,
     Delay,
 ) {
@@ -564,18 +564,18 @@ fn setup() -> (
 
 // End of hal/MCU specific setup. Following should be generic code.
 
-
 fn display<S>(
-           bat_mv : i16, 
-           bat_ma : i16, 
-           load_ma : i16, 
-           temp_c : i16, 
-           values_b : [i16; 3], 
-           text_style: MonoTextStyle<BinaryColor>,
-           disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>) -> ()
-              where S: DisplaySize,
+    bat_mv: i16,
+    bat_ma: i16,
+    load_ma: i16,
+    temp_c: i16,
+    values_b: [i16; 3],
+    text_style: MonoTextStyle<BinaryColor>,
+    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+) -> ()
+where
+    S: DisplaySize,
 {
-
     let mut lines: [heapless::String<32>; 4] = [
         heapless::String::new(),
         heapless::String::new(),
@@ -585,15 +585,27 @@ fn display<S>(
 
     // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
     // it is now possible to use \n in place of separate writes, with one line rather than vector.
-    write!(lines[0], "bat:{:4}mV{:4}mA",   bat_mv,  bat_ma                    ).unwrap();
-    write!(lines[1], "load:    {:5}mA",             load_ma                   ).unwrap();
-    write!(lines[2], "B:{:4} {:4} {:4}", values_b[0], values_b[1], values_b[2]).unwrap();
-    write!(lines[3], "temperature{:3} C",    temp_c                           ).unwrap();
+    write!(lines[0], "bat:{:4}mV{:4}mA", bat_mv, bat_ma).unwrap();
+    write!(lines[1], "load:    {:5}mA", load_ma).unwrap();
+    write!(
+        lines[2],
+        "B:{:4} {:4} {:4}",
+        values_b[0], values_b[1], values_b[2]
+    )
+    .unwrap();
+    write!(lines[3], "temperature{:3} C", temp_c).unwrap();
 
     disp.clear();
-    for i in 0..lines.len() {   // start from 0 requires that the top is used for font baseline
-       Text::with_baseline(&lines[i], Point::new(0, i as i32 * 16), text_style, Baseline::Top,)
-          .draw(&mut *disp).unwrap();
+    for i in 0..lines.len() {
+        // start from 0 requires that the top is used for font baseline
+        Text::with_baseline(
+            &lines[i],
+            Point::new(0, i as i32 * 16),
+            text_style,
+            Baseline::Top,
+        )
+        .draw(&mut *disp)
+        .unwrap();
     }
     disp.flush().unwrap();
     ()
@@ -626,10 +638,8 @@ fn main() -> ! {
     .draw(&mut disp)
     .unwrap();
 
-
     let mut adc_a = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative(false, false)); //addr = GND
     let mut adc_b = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative(false, true)); //addr =  V
-
 
     // set FullScaleRange to measure expected max voltage.
     // This is very small for diff across low value shunt resistors
@@ -662,15 +672,21 @@ fn main() -> ! {
         led.blink(10_u16, &mut delay);
 
         //first adc  Note that readings are zero on USB power (programming) rather than battery.
-   
-        let bat_ma  = block!(adc_a.read(&mut AdcChannel::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
-        let load_ma = block!(adc_a.read(&mut AdcChannel::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
+
+        let bat_ma =
+            block!(adc_a.read(&mut AdcChannel::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
+        let load_ma =
+            block!(adc_a.read(&mut AdcChannel::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
 
         // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
         // also first adc
-        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+        adc_a
+            .set_full_scale_range(FullScaleRange::Within4_096V)
+            .unwrap();
         let bat_mv = block!(adc_a.read(&mut AdcChannel::SingleA0)).unwrap_or(8091) * scale_a;
-        adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+        adc_a
+            .set_full_scale_range(FullScaleRange::Within0_256V)
+            .unwrap();
 
         // second adc
         let values_b = [
@@ -679,8 +695,9 @@ fn main() -> ! {
             block!(adc_b.read(&mut AdcChannel::SingleA2)).unwrap_or(8091) * scale_b,
         ];
 
-        let temp_c = block!(adc_b.read(&mut AdcChannel::SingleA3)).unwrap_or(8091) / scale_temp - offset_temp;
-        
+        let temp_c = block!(adc_b.read(&mut AdcChannel::SingleA3)).unwrap_or(8091) / scale_temp
+            - offset_temp;
+
         // third adc
         //let values_c = [
         //    block!(adc_c.read(&mut AdcChannel::SingleA0)).unwrap_or(8091),
@@ -689,7 +706,9 @@ fn main() -> ! {
         //    block!(adc_c.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
         //];
 
-        display(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp );
+        display(
+            bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,
+        );
 
         delay.delay_ms(2000_u16); // sleep for 2s
     }

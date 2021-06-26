@@ -1,7 +1,6 @@
 //! Receive message with LoRa using crate radio_sx127x (on SPI).
 //! See example lora_spi_send for more details.
 
-
 #![no_std]
 #![no_main]
 
@@ -20,7 +19,7 @@ use e_h_1a::blocking::delay::DelayMs;
 use radio::Receive;
 use radio_sx127x::prelude::PacketInfo;
 
-use hal_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
 
 fn to_str(x: &[u8]) -> &str {
     match core::str::from_utf8(x) {

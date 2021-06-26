@@ -1,11 +1,11 @@
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!
-//!  The setup() functions make the application code common. They are in src/lora_spi_gps_usart.rs. 
-//!  The specific function used will depend on the HAL setting (see README.md). 
+//!  The setup() functions make the application code common. They are in src/lora_spi_gps_usart.rs.
+//!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!  The setup is using  sck, miso, mosi, cs, reset and D00, D01. Not yet using  D02, D03
 //!  
-//!  The same setup() function is used for examples lora_spi_send, lora_spi_receive, and 
+//!  The same setup() function is used for examples lora_spi_send, lora_spi_receive, and
 //!  lora_spi_gps (if the HAL setting is the same). The following is for all examples.
 //!
 //!  See FREQUENCY in src/lora_spi_gps_usart.rs to set the channel.
@@ -19,7 +19,7 @@
 //!
 //!    cargo build --no-default-features --target $TARGET --features=$HAL,$MCU,compat --example xxx [ --release ]
 //!
-//!  in another window 
+//!  in another window
 //!    openocd -f interface/$INTERFACE.cfg -f target/$PROC.cfg
 //!
 //!    cargo  run  --no-default-features --target $TARGET --features $HAL,$MCU,compat --example xxx [ --release ]
@@ -27,7 +27,6 @@
 //!  If --release is omitted then some MCUs do not have sufficient memory and loading results in
 //!       '.rodata will not fit in region FLASH '
 //!  Even with sufficient memory the code without --release is slower and may result in errors.
-
 
 //https://www.rfwireless-world.com/Tutorials/LoRa-channels-list.html
 // channels are as follows
@@ -64,11 +63,10 @@ use e_h_1a::blocking::delay::DelayMs;
 
 use radio::Transmit;
 
-use hal_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
 
 #[entry]
 fn main() -> ! {
-
     let (mut lora, _tx, _rx, _i2c, mut led) = setup(); //delay is available in lora
     led.off();
 

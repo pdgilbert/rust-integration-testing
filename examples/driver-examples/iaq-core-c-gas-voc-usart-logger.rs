@@ -1,6 +1,6 @@
-//!  THIS COMPILES on bluepill BUT I DON'T SEE HOW IT CAN WORK. 
+//!  THIS COMPILES on bluepill BUT I DON'T SEE HOW IT CAN WORK.
 //!  Compare rtic/blink_rtic for handling of delay and consider other remarks in code below.
-//! 
+//!
 //! Measures the CO2 and TVOC equivalents in the air with an iAQ-Core-C module,
 //! logs the values and sends them through the serial interface every 10 seconds.
 //!
@@ -53,6 +53,7 @@ pub trait LED {
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
+    device::USART1,
     gpio::{
         gpiob::{PB8, PB9},
         gpioc::PC13,
@@ -60,102 +61,104 @@ use stm32f1xx_hal::{
     },
     i2c::{BlockingI2c, Mode},
     pac,
-    pac::{Peripherals},    //I2C1
-    device::{USART1},
+    pac::Peripherals, //I2C1
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f1xx")]
-type LedType  =  PC13<Output<PushPull>>;
+type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f1xx")]
 type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
 
-
 #[cfg(feature = "stm32f1xx")]
 fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
-//fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
+    //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
 
-     let mut flash = dp.FLASH.constrain();
-     let mut rcc = dp.RCC.constrain();
-     let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
-     let clocks = rcc
-         .cfgr
-         .use_hse(8.mhz())
-         .sysclk(72.mhz())
-         .pclk1(36.mhz())
-         .freeze(&mut flash.acr);
+    let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
+    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+    let clocks = rcc
+        .cfgr
+        .use_hse(8.mhz())
+        .sysclk(72.mhz())
+        .pclk1(36.mhz())
+        .freeze(&mut flash.acr);
 
+    // WHY DOES NEXT NOT CAUSE BULD PROBLEM WITH  let mut core = cx.core; IN INTI?
+    let cp = cortex_m::Peripherals::take().unwrap();
+    let delay = Delay::new(cp.SYST, clocks);
 
-     // WHY DOES NEXT NOT CAUSE BULD PROBLEM WITH  let mut core = cx.core; IN INTI?
-     let cp = cortex_m::Peripherals::take().unwrap();
-     let delay = Delay::new(cp.SYST, clocks);
+    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
 
-     let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
+    let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
 
-     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
+    let i2c = BlockingI2c::i2c1(
+        dp.I2C1,
+        (scl, sda),
+        &mut afio.mapr,
+        Mode::Standard {
+            frequency: 100_000.hz(),
+        },
+        clocks,
+        &mut rcc.apb1,
+        1000,
+        10,
+        1000,
+        1000,
+    );
+    let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
+    let rx = gpiob.pb7;
+    let serial = Serial::usart1(
+        dp.USART1,
+        (tx, rx),
+        &mut afio.mapr,
+        Config::default().baudrate(115200.bps()),
+        clocks,
+        &mut rcc.apb2,
+    );
+    let (tx, rx) = serial.split();
 
-     let i2c = BlockingI2c::i2c1(
-         dp.I2C1,
-         (scl, sda),
-         &mut afio.mapr,
-         Mode::Standard {
-             frequency: 100_000.hz(),
-         },
-         clocks,
-         &mut rcc.apb1,
-         1000,
-         10,
-         1000,
-         1000,
-     );
-     let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
-     let rx = gpiob.pb7;
-     let serial = Serial::usart1(
-         dp.USART1,
-         (tx, rx),
-         &mut afio.mapr,
-         Config::default().baudrate(115200.bps()),
-         clocks,
-         &mut rcc.apb2,
-     );
-     let (tx, rx) = serial.split();
+    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut led = gpioc
+        .pc13
+        .into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
+    //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
-     let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
-     let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-     //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    led.off();
 
-     impl LED for PC13<Output<PushPull>> {
-             fn on(&mut self) -> () {
-             self.set_low().unwrap()
-             }
-             fn off(&mut self) -> () {
-                 self.set_high().unwrap()
-             }
-     }
-     led.off();
-
-     (i2c, led, delay, tx, rx)
+    (i2c, led, delay, tx, rx)
 }
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    gpio::{Output, PushPull, Alternate, OpenDrain, AF4, Otyper::Otype,
-           gpiob::{PB6, PB7},
-           gpioe::PE9,
-           },
+    gpio::{
+        gpiob::{PB6, PB7},
+        gpioe::PE9,
+        Alternate, OpenDrain,
+        Otyper::Otype,
+        Output, PushPull, AF4,
+    },
     i2c::{I2c, SclPin, SdaPin},
     pac,
-    pac::{CorePeripherals, Peripherals, USART1, I2C1},
+    pac::{CorePeripherals, Peripherals, I2C1, USART1},
     prelude::*,
     serial::{Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f3xx")]
-type LedType  =  PE9<Output<PushPull>>;
+type LedType = PE9<Output<PushPull>>;
 
 #[cfg(feature = "stm32f3xx")]
 type I2cBus = I2c<pac::I2C1, (PB6<Alternate<Otype, AF4>>, PB7<Alternate<Otype, AF4>>)>;
@@ -164,10 +167,9 @@ type I2cBus = I2c<pac::I2C1, (PB6<Alternate<Otype, AF4>>, PB7<Alternate<Otype, A
 
 #[cfg(feature = "stm32f3xx")]
 fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
-
-     let mut flash = dp.FLASH.constrain();
-     let mut rcc = dp.RCC.constrain();
-     let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
     // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
     let cp = cortex_m::Peripherals::take().unwrap();
@@ -181,7 +183,6 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
         .pb7
         .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
     let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
-
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
     let (tx, rx) = Serial::usart1(
@@ -200,13 +201,12 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
     )
     .split();
 
-
     let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
     let led = gpioe
         .pe9
         .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
     let delay = Delay::new(cp.SYST, clocks);
-    
+
     impl LED for PE9<Output<PushPull>> {
         fn on(&mut self) -> () {
             self.set_high().unwrap()
@@ -220,73 +220,74 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
     (i2c, led, delay, tx, rx)
 }
 
-
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     delay::Delay,
-    gpio::{AlternateOD, Output, PushPull, AF4,
+    gpio::{
         gpiob::{PB8, PB9},
         gpioc::PC13,
+        AlternateOD, Output, PushPull, AF4,
     },
-    i2c::{I2c},   //Pins Mode
+    i2c::I2c, //Pins Mode
     pac,
-    pac::{Peripherals, USART1, },    //I2C1
+    pac::{Peripherals, USART1}, //I2C1
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f4xx")]
-type LedType  =  PC13<Output<PushPull>>;
+type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f4xx")]
-type I2cBus = I2c<pac::I2C1, (PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>)>;  //NO BlockingI2c
+type I2cBus = I2c<pac::I2C1, (PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>)>; //NO BlockingI2c
 
 #[cfg(feature = "stm32f4xx")]
 fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
-//fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
-//fn setup(dp: Peripherals) -> (I2c<I2C2, impl Pins<I2C2>, LedType, Delay, Tx<USART1>, Rx<USART1>> {
+    //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
+    //fn setup(dp: Peripherals) -> (I2c<I2C2, impl Pins<I2C2>, LedType, Delay, Tx<USART1>, Rx<USART1>> {
 
-     let rcc = dp.RCC.constrain();
-     let clocks = rcc.cfgr.freeze();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze();
 
-     // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
-     let cp = cortex_m::Peripherals::take().unwrap();
-     let delay = Delay::new(cp.SYST, clocks);
+    // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
+    let cp = cortex_m::Peripherals::take().unwrap();
+    let delay = Delay::new(cp.SYST, clocks);
 
-     let gpiob = dp.GPIOB.split();
+    let gpiob = dp.GPIOB.split();
 
-     let scl = gpiob.pb8.into_alternate_af4().set_open_drain();
-     let sda = gpiob.pb9.into_alternate_af4().set_open_drain();
+    let scl = gpiob.pb8.into_alternate_af4().set_open_drain();
+    let sda = gpiob.pb9.into_alternate_af4().set_open_drain();
 
-     let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), clocks);
+    let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), clocks);
 
-     let gpioa = dp.GPIOA.split();
-     let tx = gpioa.pa9.into_alternate_af7();
-     let rx = gpioa.pa10.into_alternate_af7();
-     let (tx, rx) = Serial::usart1(
-         dp.USART1,
-         (tx, rx),
-         Config::default().baudrate(115200.bps()),
-         clocks,
-     ).unwrap().split();
+    let gpioa = dp.GPIOA.split();
+    let tx = gpioa.pa9.into_alternate_af7();
+    let rx = gpioa.pa10.into_alternate_af7();
+    let (tx, rx) = Serial::usart1(
+        dp.USART1,
+        (tx, rx),
+        Config::default().baudrate(115200.bps()),
+        clocks,
+    )
+    .unwrap()
+    .split();
 
-     let gpioc = dp.GPIOC.split();
-     //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-     let led = gpioc.pc13.into_push_pull_output();  
+    let gpioc = dp.GPIOC.split();
+    //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
+    let led = gpioc.pc13.into_push_pull_output();
 
-     impl LED for PC13<Output<PushPull>> {
-             fn on(&mut self) -> () {
-             self.set_low().unwrap()
-             }
-             fn off(&mut self) -> () {
-                 self.set_high().unwrap()
-             }
-     }
-     //led.off();   NEED TO FIX
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    //led.off();   NEED TO FIX
 
-     (i2c, led, delay, tx, rx)
+    (i2c, led, delay, tx, rx)
 }
-
 
 //  NEED TO SPECIFY DEVICE HERE FOR DIFFERENT HALs
 
@@ -313,9 +314,8 @@ const APP: () = {
         let device: Peripherals = cx.device;
 
         let (i2c, mut led, _delay, mut tx, _rx) = setup(device);
-        
-        led.off();
 
+        led.off();
 
         cx.schedule.measure(cx.start + PERIOD.cycles()).unwrap();
 

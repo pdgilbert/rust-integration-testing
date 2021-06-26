@@ -4,7 +4,7 @@ categories = ["embedded", "no-std"]
 description = "driver integration testing of examples"
 keywords = ["driver", "i2c", "spi", "example"]
 license = "MIT OR Apache-2.0"
-name = "driver-integration-testing-of-examples"
+name = "rust-integration-testing-of-examples"
 version = "0.1.0"
 edition = "2018"
 

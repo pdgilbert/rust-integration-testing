@@ -245,13 +245,11 @@ fn setup() -> (
     (spi, cs, led, delay)
 }
 
-
 #[entry]
 fn main() -> ! {
     let (spi, chip_select, mut led, mut delay) = setup();
 
-
-//  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
+    //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
     chip_select.set_high().unwrap();
 

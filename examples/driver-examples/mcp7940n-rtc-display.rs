@@ -4,8 +4,8 @@
 //! Introductory blog post here:
 //! https://blog.eldruin.com/mcp794xx-real-time-clock-rtc-driver-in-rust/
 //!
-//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs. 
-//!  The specific function used will depend on the HAL setting (see README.md). 
+//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
+//!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!
 //!  On "BluePill" (stm32f1xx_hal) using I2C1.
@@ -28,15 +28,15 @@ use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
 
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::Text,
 };
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use hal_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
 #[entry]
 fn main() -> ! {

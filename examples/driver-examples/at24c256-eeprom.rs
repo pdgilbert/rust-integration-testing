@@ -4,8 +4,8 @@
 //! Introductory blog post here:
 //! https://blog.eldruin.com/24x-serial-eeprom-driver-in-rust/
 //!
-//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs. 
-//!  The specific function used will depend on the HAL setting (see README.md). 
+//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
+//!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!
 //!  On "BluePill" (stm32f1xx_hal) using I2C1.
@@ -28,7 +28,7 @@ use embedded_hal::blocking::delay::DelayMs;
 
 use rtt_target::{rprintln, rtt_init_print};
 
-use hal_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
 #[entry]
 fn main() -> ! {

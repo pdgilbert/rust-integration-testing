@@ -22,11 +22,10 @@ use embedded_hal::serial::Read;
 
 use radio::Transmit;
 
-use hal_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
 
 #[entry]
 fn main() -> ! {
-
     let (mut lora, _tx_gps, mut rx_gps, _i2c, mut led) = setup(); //delay is available in lora
     led.off();
 
