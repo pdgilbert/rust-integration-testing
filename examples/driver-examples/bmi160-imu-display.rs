@@ -29,10 +29,10 @@ use core::fmt::Write;
 use rtt_target::{rprintln, rtt_init_print};
 
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    mono_font::{ascii::FONT_4X6, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::Text,
+    text::{Baseline, Text},
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
@@ -47,13 +47,15 @@ fn main() -> ! {
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)  //128x64 128x32
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
-
+    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT_4X6)          
         .text_color(BinaryColor::On)
         .build();
 
@@ -78,7 +80,7 @@ fn main() -> ! {
     loop {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.
-        led.blink(50_u16, &mut delay);
+        led.blink(500_u16, &mut delay);
 
         let data = imu
             .data(SensorSelector::new().accel().gyro())
@@ -92,7 +94,7 @@ fn main() -> ! {
         write!(lines[1], "gyr: x {} y {} z {}", gyro.x, gyro.y, gyro.z).unwrap();
         display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::new(line, Point::new(0, i as i32 * 16), text_style)
+            Text::with_baseline(line, Point::new(0, i as i32 * 16), text_style, Baseline::Top)
                 .draw(&mut display)
                 .unwrap();
         }

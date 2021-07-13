@@ -19,6 +19,11 @@ use cortex_m_rt::{entry, exception, ExceptionFrame};
 
 // old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
 // builtin include FONT_6X10, FONT_8X13, ....
+// See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
+// DisplaySize128x32:
+//    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+//    &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
@@ -311,7 +316,7 @@ fn main() -> ! {
     let i2c = setup();
 
     let interface = I2CDisplayInterface::new(i2c);
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
