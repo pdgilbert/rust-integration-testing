@@ -333,7 +333,7 @@ use stm32f3xx_hal::{
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Serial, Tx, Rx, TxPin, RxPin,},
     spi::{Error, Spi},
 };
 
@@ -342,8 +342,8 @@ pub fn setup() -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
+    Tx<USART2, impl TxPin<USART2> >,
+    Rx<USART2, impl RxPin<USART2> >,
     I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>,
     PE15<Output<PushPull>>,
 ) {

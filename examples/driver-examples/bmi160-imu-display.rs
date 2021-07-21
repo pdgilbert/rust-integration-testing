@@ -47,7 +47,7 @@ fn main() -> ! {
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)  //128x64 128x32
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0) //128x64 128x32
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
@@ -55,7 +55,7 @@ fn main() -> ! {
     //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
     //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_4X6)          
+        .font(&FONT_4X6)
         .text_color(BinaryColor::On)
         .build();
 
@@ -94,9 +94,14 @@ fn main() -> ! {
         write!(lines[1], "gyr: x {} y {} z {}", gyro.x, gyro.y, gyro.z).unwrap();
         display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::with_baseline(line, Point::new(0, i as i32 * 16), text_style, Baseline::Top)
-                .draw(&mut display)
-                .unwrap();
+            Text::with_baseline(
+                line,
+                Point::new(0, i as i32 * 16),
+                text_style,
+                Baseline::Top,
+            )
+            .draw(&mut display)
+            .unwrap();
         }
         display.flush().unwrap();
     }

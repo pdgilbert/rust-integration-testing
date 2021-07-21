@@ -153,13 +153,13 @@ use stm32f3xx_hal::{
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
 fn setup() -> (
-    Tx<USART2>,
-    Rx<USART2>,
+    Tx<USART2, impl TxPin<USART2>>,
+    Rx<USART2, impl RxPin<USART2>>,
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     Delay,
 ) {

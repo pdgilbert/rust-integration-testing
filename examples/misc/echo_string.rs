@@ -175,13 +175,13 @@ use stm32f3xx_hal::{
     pac::Peripherals,
     pac::USART1,
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
 fn setup() -> (
-    TxDma<&'static mut [u8; 15], dma1::C4, Tx<USART1>>,
-    RxDma<&'static mut [u8; 15], dma1::C5, Rx<USART1>>,
+    TxDma<&'static mut [u8; 15], dma1::C4, Tx<USART1, impl TxPin<USART1>>>,
+    RxDma<&'static mut [u8; 15], dma1::C5, Rx<USART1, impl RxPin<USART1>>>,
 ) {
     //fn setup() ->  (impl WriteDma, impl ReadDma) {
 

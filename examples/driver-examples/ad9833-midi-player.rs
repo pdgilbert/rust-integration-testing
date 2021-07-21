@@ -5,7 +5,7 @@
 //! You can see a video of the original version running here:
 //! https://blog.eldruin.com/ad983x-waveform-generator-dds-driver-in-rust/
 //!
-//! This example is runs on the STM32F103 "Bluepill" board using  SPI1.
+//! This example runs on the STM32F103 "Bluepill" board using  SPI1.
 //!
 //! ```
 //! BP   <-> AD9833  <-> Amplifier

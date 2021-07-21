@@ -123,11 +123,16 @@ use stm32f3xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+fn setup() -> (
+    Tx<USART1, impl TxPin<USART1>>,
+    Rx<USART1, impl RxPin<USART1>>,
+    Tx<USART2, impl TxPin<USART2>>,
+    Rx<USART2, impl RxPin<USART2>>,
+) {
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);

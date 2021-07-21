@@ -200,7 +200,7 @@ use stm32f3xx_hal::{
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1, USART1},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
@@ -208,8 +208,8 @@ fn setup() -> (
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
     Delay,
-    Tx<USART1>,
-    Rx<USART1>,
+    Tx<USART1, impl TxPin<USART1>>,
+    Rx<USART1, impl RxPin<USART1>>,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();

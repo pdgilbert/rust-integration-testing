@@ -194,22 +194,22 @@ use stm32f3xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2, USART3},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
 fn setup() -> (
-    Tx<USART1>,
+    Tx<USART1, impl TxPin<USART1>>,
     dma1::C4,
-    Rx<USART1>,
+    Rx<USART1, impl RxPin<USART1>>,
     dma1::C5,
-    Tx<USART2>,
+    Tx<USART2, impl TxPin<USART2>>,
     dma1::C7,
-    Rx<USART2>,
+    Rx<USART2, impl RxPin<USART2>>,
     dma1::C6,
-    Tx<USART3>,
+    Tx<USART3, impl TxPin<USART3>>,
     dma1::C2,
-    Rx<USART3>,
+    Rx<USART3, impl RxPin<USART3>>,
     dma1::C3,
 ) {
     let p = Peripherals::take().unwrap();

@@ -154,7 +154,7 @@ use stm32f3xx_hal::{
     pac,
     pac::{CorePeripherals, Peripherals, I2C1, USART1},
     prelude::*,
-    serial::{Rx, Serial, Tx},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
 };
 
 #[cfg(feature = "stm32f3xx")]
@@ -166,7 +166,15 @@ type I2cBus = I2c<pac::I2C1, (PB6<Alternate<Otype, AF4>>, PB7<Alternate<Otype, A
 //type I2cBus = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
 
 #[cfg(feature = "stm32f3xx")]
-fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
+fn setup(
+    dp: Peripherals,
+) -> (
+    I2cBus,
+    LedType,
+    Delay,
+    Tx<USART1, impl TxPin<USART1>>,
+    Rx<USART1, impl RxPin<USART1>>,
+) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut flash.acr);

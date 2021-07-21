@@ -59,10 +59,10 @@ const APP: () = {
         fn QEI0();
     }
 
-//    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
-//    extern "C" {
-//        fn EXTI0();
-//        fn SDIO();
-//        fn QEI0();
-//    }
+    //    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
 };
