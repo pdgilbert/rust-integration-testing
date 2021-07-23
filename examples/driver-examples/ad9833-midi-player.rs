@@ -253,7 +253,8 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (    Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
     PA1<Output<PushPull>>,
     impl LED,
     Delay,
