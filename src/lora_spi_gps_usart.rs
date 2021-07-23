@@ -494,19 +494,19 @@ pub fn setup() -> (
     let gpiob = p.GPIOB.split();
     let gpioc = p.GPIOC.split();
 
-    let spi = Spi::spi1(
+    let spi = Spi::new(
         p.SPI1,
         (
-            gpioa.pa5.into_alternate_af5(), // sck   on PA5
-            gpioa.pa6.into_alternate_af5(), // miso  on PA6
-            gpioa.pa7.into_alternate_af5(), // mosi  on PA7
+            gpioa.pa5.into_alternate(), // sck   on PA5
+            gpioa.pa6.into_alternate(), // miso  on PA6
+            gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         MODE,
         MegaHertz(8).into(),
         clocks,
     );
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     // Create lora radio instance
 
@@ -531,11 +531,11 @@ pub fn setup() -> (
 
     //lora.lora_configure( config_lora, &config_ch ).unwrap(); # not yet pub, to change something
 
-    let (tx, rx) = Serial::usart2(
+    let (tx, rx) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_af7(), //tx pa2  for GPS rx
-            gpioa.pa3.into_alternate_af7(), //rx pa3  for GPS tx
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
+            gpioa.pa3.into_alternate(), //rx pa3  for GPS tx
         ),
         Config::default().baudrate(9600.bps()),
         clocks,
@@ -543,8 +543,8 @@ pub fn setup() -> (
     .unwrap()
     .split();
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks);
 
@@ -552,10 +552,10 @@ pub fn setup() -> (
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

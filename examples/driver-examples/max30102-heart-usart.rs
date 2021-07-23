@@ -27,7 +27,7 @@ use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-use embedded_hal::digital::v2::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
 use nb::block;
 
 pub trait LED {
@@ -299,12 +299,12 @@ fn setup() -> (
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), clocks);
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     // led
     let gpioc = dp.GPIOC.split();
@@ -312,21 +312,21 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
     let gpioa = dp.GPIOA.split();
 
     dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx, rx) = Serial::usart1(
+    let (tx, rx) = Serial::new(
         dp.USART1,
         (
-            gpioa.pa9.into_alternate_af7(), //tx pa9
-            gpioa.pa10.into_alternate_af7(),
+            gpioa.pa9.into_alternate(), //tx pa9
+            gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,

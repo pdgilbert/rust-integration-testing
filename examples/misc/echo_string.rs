@@ -280,11 +280,11 @@ fn setup() -> (
     let gpioa = p.GPIOA.split();
     //p.USART1.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
 
-    let txrx1 = Serial::usart1(
+    let txrx1 = Serial::new(
         p.USART1,
         (
-            gpioa.pa9.into_alternate_af7(),
-            gpioa.pa10.into_alternate_af7(),
+            gpioa.pa9.into_alternate(),
+            gpioa.pa10.into_alternate(),
         ),
         Config::default().baudrate(9600.bps()),
         clocks,

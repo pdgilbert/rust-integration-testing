@@ -26,7 +26,7 @@
 #![no_main]
 
 use core::fmt::Write;
-use embedded_hal::digital::v2::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
 use iaq_core::{IaqCore, Measurement};
 use nb::block;
 use panic_rtt_target as _;
@@ -259,19 +259,19 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
 
     // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
     let cp = cortex_m::Peripherals::take().unwrap();
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     let gpiob = dp.GPIOB.split();
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain();
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain();
+    let scl = gpiob.pb8.into_alternate().set_open_drain();
+    let sda = gpiob.pb9.into_alternate().set_open_drain();
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), clocks);
 
     let gpioa = dp.GPIOA.split();
-    let tx = gpioa.pa9.into_alternate_af7();
-    let rx = gpioa.pa10.into_alternate_af7();
-    let (tx, rx) = Serial::usart1(
+    let tx = gpioa.pa9.into_alternate();
+    let rx = gpioa.pa10.into_alternate();
+    let (tx, rx) = Serial::new(
         dp.USART1,
         (tx, rx),
         Config::default().baudrate(115200.bps()),
@@ -286,10 +286,10 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
     //led.off();   NEED TO FIX

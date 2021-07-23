@@ -28,7 +28,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+//use embedded_hal::digital::v2::{InputPin, OutputPin};
 use nb::block;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -340,7 +340,7 @@ fn setup() -> (
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, &clocks);
 
     // led
     let gpioc = dp.GPIOC.split();
@@ -348,10 +348,10 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -360,12 +360,12 @@ fn setup() -> (
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain();
+    let scl = gpiob.pb8.into_alternate().set_open_drain();
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_af4().set_open_drain();
+    let sda = sda.into_alternate().set_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400.khz(), clocks);
@@ -377,10 +377,10 @@ fn setup() -> (
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
         fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
+            self.p_seekup.is_high()
         }
         fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
+            self.p_seekdown.is_high()
         }
     }
 

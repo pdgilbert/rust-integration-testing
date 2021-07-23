@@ -13,7 +13,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
 
 pub trait LED {
     fn on(&mut self) -> ();
@@ -237,28 +237,28 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     // all leds wire with pin as source, cathode connect to ground though a resistor.
     impl LED for PB13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB14<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB15<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
@@ -267,7 +267,7 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
         gpiob.pb13.into_push_pull_output(), // led on pb13
         gpiob.pb14.into_push_pull_output(), // led on pb14
         gpiob.pb15.into_push_pull_output(), // led on pb15
-        Delay::new(cp.SYST, clocks),
+        Delay::new(cp.SYST, &clocks),
     )
 }
 

@@ -218,11 +218,11 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
     let clocks = p.RCC.constrain().cfgr.freeze();
     let gpioa = p.GPIOA.split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_af7(), //tx pa2  for GPS rx
-            gpioa.pa3.into_alternate_af7(),
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
+            gpioa.pa3.into_alternate(),
         ), //rx pa3  for GPS tx
         Config::default().baudrate(9600.bps()),
         clocks,
@@ -236,14 +236,14 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
     //BlockingI2c::i2c2(
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     (
         tx2,
         rx2,
         I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks), // i2c
-        Delay::new(cp.SYST, clocks),
+        Delay::new(cp.SYST, &clocks),
     )
 }
 

@@ -21,7 +21,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
 
 pub trait LED {
     fn on(&mut self) -> ();
@@ -185,17 +185,17 @@ fn setup() -> (impl LED, Delay) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        Delay::new(cp.SYST, clocks),
+        Delay::new(cp.SYST, &clocks),
     )
 }
 

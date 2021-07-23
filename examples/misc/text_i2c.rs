@@ -152,8 +152,8 @@ fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     // return i2c
     I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks)

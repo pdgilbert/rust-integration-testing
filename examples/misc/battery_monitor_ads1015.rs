@@ -31,7 +31,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::OutputPin;
+//use embedded_hal::digital::v2::OutputPin;
 
 use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 
@@ -282,12 +282,12 @@ fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_af9().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks);
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     // led
     let gpioc = p.GPIOC.split();
@@ -295,10 +295,10 @@ fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

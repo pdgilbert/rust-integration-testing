@@ -264,11 +264,11 @@ fn setup() -> (
     // alternate function modes see https://www.st.com/resource/en/datasheet/stm32f411re.pdf  p47.
 
     p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
-            gpioa.pa9.into_alternate_af7(), //tx pa9
-            gpioa.pa10.into_alternate_af7(),
+            gpioa.pa9.into_alternate(), //tx pa9
+            gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,
@@ -277,11 +277,11 @@ fn setup() -> (
     .split();
 
     p.USART2.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_af7(), //tx pa2
-            gpioa.pa3.into_alternate_af7(),
+            gpioa.pa2.into_alternate(), //tx pa2
+            gpioa.pa3.into_alternate(),
         ), //rx pa3
         Config::default().baudrate(115_200.bps()), //.parity_odd() .stopbits(StopBits::STOP1)
         clocks,
@@ -290,12 +290,12 @@ fn setup() -> (
     .split();
 
     p.USART6.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx3, rx3) = Serial::usart6(
+    let (tx3, rx3) = Serial::new(
         //  NOTE PINS and USART6 !!!
         p.USART6,
         (
-            gpioa.pa11.into_alternate_af8(), //tx pa11
-            gpioa.pa12.into_alternate_af8(),
+            gpioa.pa11.into_alternate(), //tx pa11
+            gpioa.pa12.into_alternate(),
         ), //rx pa12
         Config::default().baudrate(115_200.bps()),
         clocks,

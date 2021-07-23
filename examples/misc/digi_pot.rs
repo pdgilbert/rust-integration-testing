@@ -196,13 +196,13 @@ use stm32f4xx_hal::{
     gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
-    spi::{Pins, Spi},
+    spi::{Pins, Spi, TransferModeNormal},
     time::MegaHertz,
 };
 
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (
-    Spi<SPI1, impl Pins<SPI1>>,
+    Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
     PA1<Output<PushPull>>,
     impl LED,
     Delay,
@@ -216,12 +216,12 @@ fn setup() -> (
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split();
 
-    let spi = Spi::spi1(
+    let spi = Spi::new(
         dp.SPI1,
         (
-            gpioa.pa5.into_alternate_af5(), // sck   on PA5
-            gpioa.pa6.into_alternate_af5(), // miso  on PA6
-            gpioa.pa7.into_alternate_af5(), // mosi  on PA7
+            gpioa.pa5.into_alternate(), // sck   on PA5
+            gpioa.pa6.into_alternate(), // miso  on PA6
+            gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         MODE,
         MegaHertz(8).into(),
@@ -233,14 +233,14 @@ fn setup() -> (
     let led = gpioc.pc13.into_push_pull_output();
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     (spi, cs, led, delay)
 }
