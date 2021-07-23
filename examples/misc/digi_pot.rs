@@ -247,7 +247,7 @@ fn setup() -> (
 
 #[entry]
 fn main() -> ! {
-    let (spi, chip_select, mut led, mut delay) = setup();
+    let (spi, mut chip_select, mut led, mut delay) = setup();
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 

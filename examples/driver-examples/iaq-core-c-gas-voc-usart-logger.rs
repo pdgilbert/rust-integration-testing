@@ -26,7 +26,7 @@
 #![no_main]
 
 use core::fmt::Write;
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 use iaq_core::{IaqCore, Measurement};
 use nb::block;
 use panic_rtt_target as _;

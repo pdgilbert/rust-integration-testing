@@ -4,8 +4,6 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-//use embedded_hal::digital::v2::OutputPin;
-
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
     // implementation should deal with this difference
@@ -80,6 +78,9 @@ use stm32f1xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
+
+#[cfg(feature = "stm32f1xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup() -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
@@ -262,7 +263,7 @@ pub fn setup() -> (
         (scl, sda),
         //400.khz(),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,
@@ -294,6 +295,9 @@ use stm32h7xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
+
+#[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup() -> (I2c<I2C1>, impl LED, Delay) {
@@ -397,6 +401,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -436,6 +443,9 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 pub fn setup() -> (

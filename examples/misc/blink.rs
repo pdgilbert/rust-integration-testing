@@ -34,7 +34,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 // 1. Get device specific peripherals
@@ -198,7 +198,7 @@ use stm32f7xx_hal::{
 fn setup() -> (PC13<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.mhz()).freeze();
+    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let gpioc = p.GPIOC.split();
 

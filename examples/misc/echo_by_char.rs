@@ -160,7 +160,7 @@ use stm32f7xx_hal::{
 #[cfg(feature = "stm32f7xx")]
 fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.mhz()).freeze();
+    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = p.GPIOA.split();
 
@@ -172,7 +172,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
         ), //rx pa10
         clocks,
         Config {
-            baud_rate: 115_200.bps(),
+            baud_rate: 115_200.Bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },

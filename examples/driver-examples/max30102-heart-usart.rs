@@ -27,7 +27,7 @@ use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 use nb::block;
 
 pub trait LED {
@@ -370,7 +370,7 @@ fn setup() -> (
         dp.I2C1,
         (scl, sda),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,
@@ -401,7 +401,7 @@ fn setup() -> (
         ),
         clocks,
         Config {
-            baud_rate: 9600.bps(),
+            baud_rate: 9600.Bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },

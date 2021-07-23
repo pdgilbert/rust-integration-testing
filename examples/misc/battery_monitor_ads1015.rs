@@ -31,7 +31,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 
 use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 
@@ -336,7 +336,7 @@ fn setup() -> (
         (scl, sda),
         //400.khz(),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,

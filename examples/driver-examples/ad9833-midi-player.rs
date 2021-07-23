@@ -31,7 +31,7 @@
 use ad983x::{Ad983x, FrequencyRegister, MODE};
 
 use cortex_m_rt::entry;
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 
 use libm;
 use panic_rtt_target as _;
@@ -341,7 +341,7 @@ fn setup() -> (
         }
     }
 
-    let clocks = rcc.cfgr.sysclk(216.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
     //let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
 
     let delay = Delay::new(cp.SYST, clocks);

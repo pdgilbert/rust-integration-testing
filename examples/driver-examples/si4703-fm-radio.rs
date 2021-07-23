@@ -28,7 +28,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-//use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 use nb::block;
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -443,7 +443,7 @@ fn setup() -> (
         (scl, sda),
         //400.khz(),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,

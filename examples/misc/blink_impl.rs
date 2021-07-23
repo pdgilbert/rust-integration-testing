@@ -21,7 +21,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-//use embedded_hal::digital::v2::OutputPin;
+use embedded_hal::digital::v2::OutputPin;
 
 pub trait LED {
     fn on(&mut self) -> ();
@@ -212,7 +212,7 @@ fn setup() -> (impl LED, Delay) {
     // fn setup() -> (PC13<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.mhz()).freeze();
+    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let gpioc = p.GPIOC.split();
 

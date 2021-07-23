@@ -37,7 +37,7 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-//use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use si4703::{
@@ -453,7 +453,7 @@ fn setup() -> (
         (scl, sda),
         //400.khz(),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,

@@ -186,7 +186,7 @@ fn setup() -> BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>> {
         (scl, sda),
         //400.khz(),
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
         },
         clocks,
         &mut rcc.apb1,

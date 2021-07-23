@@ -266,7 +266,7 @@ fn setup() -> (
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(216.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = p.GPIOA.split();
 
@@ -278,7 +278,7 @@ fn setup() -> (
         ), //rx pa3  for GPS tx
         clocks,
         Config {
-            baud_rate: 9600.bps(),
+            baud_rate: 9600.Bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
@@ -296,7 +296,7 @@ fn setup() -> (
         BlockingI2c::i2c1(
             p.I2C1,
             (scl, sda),
-            Mode::standard(400_000.hz()),
+            Mode::standard(400_000.Hz()),
             clocks,
             &mut rcc.apb1,
             1000,

@@ -604,7 +604,7 @@ pub fn setup() -> (
         Spi::new(p.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc.apb2, ClockDivider::DIV32, MODE);
 
     //let clocks = rcc.cfgr.sysclk(216.mhz()).freeze();
-    let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
 
     let delay = Delay::new(cp.SYST, clocks);
 
@@ -630,7 +630,7 @@ pub fn setup() -> (
         ),
         clocks,
         Config {
-            baud_rate: 9600.bps(),
+            baud_rate: 9600.Bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
@@ -643,7 +643,7 @@ pub fn setup() -> (
     let i2c = BlockingI2c::i2c2(
         p.I2C2,
         (scl, sda),
-        stm32f7xx_hal::i2c::Mode::standard(400_000.hz()),
+        stm32f7xx_hal::i2c::Mode::standard(400_000.Hz()),
         clocks,
         &mut rcc.apb1,
         1000,

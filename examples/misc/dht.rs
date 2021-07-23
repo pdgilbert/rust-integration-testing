@@ -29,7 +29,7 @@ use dht_sensor::*;
 
 use embedded_hal::{
     blocking::delay::DelayMs,
-    //digital::v2::OutputPin, // for  set_high().ok()
+    digital::v2::OutputPin, // for  set_high().ok()
 };
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -189,7 +189,7 @@ use stm32f7xx_hal::{
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.mhz()).freeze();
+    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
 
