@@ -1,5 +1,7 @@
 //! examples/schedule.rs
 
+//! THIS EXAMPLE CANNOT YET WORK ON DIFFERENT HALLs WITHOUT MANUAL EDITING IN TWO SECTIONS AS INDICATED BELOW
+
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
@@ -8,12 +10,20 @@
 use cortex_m::peripheral::DWT;
 use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
+
+use rtic::app;
 use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
-//#[rtic::app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-#[rtic::app(device = stm32f1xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
-//#[rtic::app(device = stm32f4xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
+#[app(device = stm32f1xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32h7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l0xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 
 const APP: () = {
     #[init(schedule = [foo, bar])]
@@ -59,10 +69,53 @@ const APP: () = {
         fn QEI0();
     }
 
+    //    #[cfg(feature = "stm32f3xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
     //    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
     //    extern "C" {
     //        fn EXTI0();
     //        fn SDIO();
     //        fn QEI0();
     //    }
+
+    //    #[cfg(feature = "stm32f7xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
+    //    #[cfg(feature = "stm32h7xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
+    //    #[cfg(feature = "stm32l0xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
+    //    #[cfg(feature = "stm32l1xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
+    //    #[cfg(feature = "stm32l4xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
+    //    extern "C" {
+    //        fn EXTI0();
+    //        fn SDIO();
+    //        fn QEI0();
+    //    }
+
 };

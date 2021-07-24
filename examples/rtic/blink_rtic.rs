@@ -2,6 +2,8 @@
 //! Two processes are scheduled, `one` for pulse and `ten` for longer blink. These spawn
 //! a `blink` process that turns the led on and schedules another process to turn it off.
 
+//! THIS EXAMPLE CANNOT YET WORK ON DIFFERENT HALLs WITHOUT MANUAL EDITING IN TWO SECTIONS AS INDICATED BELOW
+
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
@@ -29,8 +31,27 @@ pub trait LED {
 #[cfg(feature = "stm32f1xx")]
 const MILLISECOND: u32 = 8_000; // Duration of a millisecond in cyccnt (syst ticks)
 
+#[cfg(feature = "stm32f3xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
 #[cfg(feature = "stm32f4xx")]
 const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks)
+
+#[cfg(feature = "stm32f7xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
+#[cfg(feature = "stm32h7xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
+#[cfg(feature = "stm32l0xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
+#[cfg(feature = "stm32l1xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
+#[cfg(feature = "stm32l4xx")]
+const MILLISECOND: u32 = 16_000; // Duration of a millisecond in cyccnt (syst ticks) TO BE CHECKED
+
 
 const PULSE: u32 = 1_000 * MILLISECOND; // 1 second
 const PERIOD: u32 = 10 * PULSE; // 10 seconds
@@ -38,7 +59,6 @@ const PERIOD: u32 = 10 * PULSE; // 10 seconds
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull, State},
-    //pac,
     pac::Peripherals,
     prelude::*,
 };
@@ -51,9 +71,7 @@ fn setup(dp: Peripherals) -> LedType {
     let mut rcc = dp.RCC.constrain();
 
     let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
-    let mut led = gpioc
-        .pc13
-        .into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
+    let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
     //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
@@ -69,10 +87,42 @@ fn setup(dp: Peripherals) -> LedType {
     led
 }
 
+
+#[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
+use stm32f3xx_hal::{
+   gpio::{gpioe::PE15, Output, PushPull},
+    pac::Peripherals,
+    prelude::*,
+};
+
+#[cfg(feature = "stm32f3xx")]
+type LedType = PE15<Output<PushPull>>;
+
+#[cfg(feature = "stm32f3xx")]
+fn setup(dp: Peripherals) -> LedType {
+    let mut rcc = dp.RCC.constrain();
+    //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
+    let mut led = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+
+    impl LED for PE15<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
+    led.off();
+
+    led
+}
+
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull},
-    pac,
     pac::Peripherals,
     prelude::*,
 };
@@ -82,6 +132,36 @@ type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f4xx")]
 fn setup(dp: Peripherals) -> LedType {
+    let gpioc = dp.GPIOC.split();
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+    }
+
+    led
+}
+
+
+#[cfg(feature = "stm32f7xx")]
+use stm32f7xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    pac::Peripherals,
+    prelude::*,
+};
+
+#[cfg(feature = "stm32f7xx")]
+type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32f7xx")]
+fn setup(dp: Peripherals) -> LedType {
+    //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
+
     let gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output();
 
@@ -97,10 +177,144 @@ fn setup(dp: Peripherals) -> LedType {
     led
 }
 
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    pac::Peripherals,
+    prelude::*,
+};
+
+#[cfg(feature = "stm32h7xx")]
+type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32h7xx")]
+fn setup(dp: Peripherals) -> LedType {
+    let pwr = dp.PWR.constrain();
+    let vos = pwr.freeze();
+    let rcc = dp.RCC.constrain();
+    let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+
+    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
+    led
+}
+
+#[cfg(feature = "stm32l0xx")]
+use stm32l0xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    pac::Peripherals,
+    prelude::*,
+    rcc, // for ::Config but note name conflict with serial
+};
+
+#[cfg(feature = "stm32l0xx")]
+type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32l0xx")]
+fn setup(dp: Peripherals) -> LedType {
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+    let gpioc = p.GPIOC.split(&mut rcc);
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
+    led
+}
+
+#[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
+use stm32l1xx_hal::{
+    gpio::{gpiob::PB6, Output, PushPull},
+    prelude::*,
+    stm32::Peripherals,
+};
+
+#[cfg(feature = "stm32l1xx")]
+type LedType = PB6<Output<PushPull>>;
+
+#[cfg(feature = "stm32l1xx")]
+fn setup(dp: Peripherals) -> LedType {
+    let gpiob = dp.GPIOB.split();
+    let led = gpiob.pb6.into_push_pull_output();
+
+    impl LED for PB6<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
+
+    led
+}
+
+#[cfg(feature = "stm32l4xx")]
+use stm32l4xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    pac::Peripherals,
+    prelude::*,
+};
+
+#[cfg(feature = "stm32l4xx")]
+type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32l4xx")]
+fn setup(dp: Peripherals) -> LedType {
+    //let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
+    //let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
+    //let clocks = rcc
+    //    .cfgr
+    //    .sysclk(80.mhz())
+    //    .pclk1(80.mhz())
+    //    .pclk2(80.mhz())
+    //    .freeze(&mut flash.acr, &mut pwr);
+
+    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper);
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
+    led
+}
+
+// End of hal/MCU specific setup. Following should be generic code.  BUT IS NOT TESTED AND STILL NEEDS MANUAL EDIT
+
+
 //  NEED TO SPECIFY DEVICE HERE FOR DIFFERENT HALs
 
 #[app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 //#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32f7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32h7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l0xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l1xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//#[app(device = stm32l4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 
 const APP: () = {
     struct Resources {
@@ -174,13 +388,74 @@ const APP: () = {
         fn QEI0();
     }
 
-    //    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn TIM1();
-    //        fn TIM2();
-    //        fn TIM3();
-    //        fn QEI0();
-    //    }
+    //#[cfg(feature = "stm32f3xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    //fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32f7xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    //fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32h7xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    //fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32l0xx")]CFG DOES NOT WORK HERE  like stm32f0, stm32l0  may not work
+    //extern "C" {
+    //    fn EXTI0();
+    //    fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32l1xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
+    //#[cfg(feature = "stm32l4xx")]CFG DOES NOT WORK HERE
+    //extern "C" {
+    //    fn EXTI0();
+    //    //fn SDIO();
+    //    //fn TIM1();
+    //    fn TIM2();
+    //    fn TIM3();
+    //    fn QEI0();
+    //}
+
 };
