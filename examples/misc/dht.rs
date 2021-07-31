@@ -29,7 +29,6 @@ use dht_sensor::*;
 
 use embedded_hal::{
     blocking::delay::DelayMs,
-    digital::v2::OutputPin, // for  set_high().ok()
 };
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -85,18 +84,18 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
 
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
+    let mut gpioa = p.GPIOA.split();
     let mut pa8 = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
     //let mut pa8 = cortex_m::interrupt::free(|cs| pa8.into_open_drain_output(cs));
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    pa8.set_high();
 
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);

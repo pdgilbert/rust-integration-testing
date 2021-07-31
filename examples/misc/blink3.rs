@@ -13,8 +13,6 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::OutputPin;
-
 pub trait LED {
     fn on(&mut self) -> ();
     fn off(&mut self) -> ();
@@ -99,9 +97,9 @@ use stm32f1xx_hal::{
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = p.GPIOB.split();
 
     //this would work for delay on bluepill but not others
     //use stm32f1xx_hal::timer::Timer;
@@ -112,28 +110,28 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     // all leds wire with pin as source, cathode connect to ground though a resistor.
     impl LED for PB13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB14<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB15<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
@@ -340,6 +338,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     // see https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/blinky.rs
     let cp = CorePeripherals::take().unwrap();
@@ -456,6 +457,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -510,6 +514,9 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {

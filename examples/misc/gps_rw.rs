@@ -80,10 +80,10 @@ use stm32f1xx_hal::{
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
+    let mut gpioa = p.GPIOA.split();
 
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     let (tx1, rx1) = Serial::usart1(
@@ -97,11 +97,10 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1), //.parity_odd()
         clocks,
-        &mut rcc.apb2,
     )
     .split();
 
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = p.GPIOB.split();
     let (tx3, rx3) = Serial::usart3(
         p.USART3,
         (
@@ -111,7 +110,6 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
         clocks,
-        &mut rcc.apb1,
     )
     .split();
 

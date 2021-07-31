@@ -27,7 +27,6 @@ use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-use embedded_hal::digital::v2::OutputPin;
 use nb::block;
 
 pub trait LED {
@@ -133,7 +132,7 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
     let clocks = rcc
         .cfgr
@@ -142,9 +141,9 @@ fn setup() -> (
         .pclk1(36.mhz())
         .freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+    let mut afio = dp.AFIO.constrain();
 
-    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
@@ -158,23 +157,22 @@ fn setup() -> (
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,
         1000,
     );
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     let delay = Delay::new(cp.SYST, clocks);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -186,7 +184,6 @@ fn setup() -> (
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()),
         clocks,
-        &mut rcc.apb2,
     );
     let (tx, rx) = serial.split();
 
@@ -422,6 +419,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -556,6 +556,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (
     I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
@@ -615,6 +618,9 @@ use stm32l4xx_hal::{
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (

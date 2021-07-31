@@ -37,7 +37,6 @@ use embedded_ccs811::{
     mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
     SlaveAddr as Ccs811SlaveAddr,
 };
-use embedded_hal::digital::v2::OutputPin;
 use hdc20xx::{mode as Hdc20xxMode, Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
 use nb::block;
 use panic_rtt_target as _;
@@ -89,8 +88,8 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
     //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+    let rcc = dp.RCC.constrain();
+    let mut afio = dp.AFIO.constrain();
     let clocks = rcc
         .cfgr
         .use_hse(8.mhz())
@@ -102,7 +101,7 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
     let cp = cortex_m::Peripherals::take().unwrap();
     let delay = Delay::new(cp.SYST, clocks);
 
-    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
@@ -115,7 +114,6 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
             frequency: 100_000.hz(),
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,
@@ -129,11 +127,10 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
         &mut afio.mapr,
         Config::default().baudrate(115200.bps()),
         clocks,
-        &mut rcc.apb2,
     );
     let (tx, rx) = serial.split();
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let mut led = gpioc
         .pc13
         .into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
@@ -141,10 +138,10 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
     led.off();
@@ -387,10 +384,10 @@ const APP: () = {
         static mut INDEX: usize = 0;
 
         if *LED_STATE {
-            cx.resources.led.set_high().unwrap();
+            cx.resources.led.set_high();
             *LED_STATE = false;
         } else {
-            cx.resources.led.set_low().unwrap();
+            cx.resources.led.set_low();
             *LED_STATE = true;
         }
 

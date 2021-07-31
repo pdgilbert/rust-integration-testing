@@ -31,8 +31,6 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::OutputPin;
-
 use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
@@ -149,10 +147,10 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
 
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
 
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2); // for i2c scl and sda
+    let mut gpiob = p.GPIOB.split(); // for i2c scl and sda
 
     // can have (scl, sda) using I2C1  on (PB8, PB9 ) or on  (PB6, PB7)
     //     or   (scl, sda) using I2C2  on (PB10, PB11)
@@ -169,7 +167,6 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,
@@ -179,15 +176,15 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     let delay = Delay::new(cp.SYST, clocks);
 
     // led
-    let mut gpioc = p.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = p.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh); // led on pc13
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -370,6 +367,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -466,6 +466,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -505,6 +508,9 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (

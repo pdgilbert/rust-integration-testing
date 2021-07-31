@@ -31,7 +31,6 @@
 use ad983x::{Ad983x, FrequencyRegister, MODE};
 
 use cortex_m_rt::entry;
-use embedded_hal::digital::v2::OutputPin;
 
 use libm;
 use panic_rtt_target as _;
@@ -129,12 +128,12 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
+    let mut afio = dp.AFIO.constrain();
+    let mut gpioa = dp.GPIOA.split();
 
     // SPI1
     let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
@@ -149,20 +148,19 @@ fn setup() -> (
         MODE,
         1_u32.mhz(),
         clocks,
-        &mut rcc.apb2,
     );
 
-    cs.set_high().unwrap();
+    cs.set_high();
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -360,6 +358,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -465,6 +466,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA4<Output<PushPull>>,
@@ -515,6 +519,9 @@ use stm32l4xx_hal::{
     prelude::*,
     spi::{MisoPin, MosiPin, SckPin, Spi},
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (

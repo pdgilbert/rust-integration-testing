@@ -113,11 +113,11 @@ fn setup() -> (
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
 
-    let channels = p.DMA1.split(&mut rcc.ahb);
+    let channels = p.DMA1.split();
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
+    let mut gpioa = p.GPIOA.split();
 
     let (tx1, rx1) = Serial::usart1(
         p.USART1,
@@ -128,7 +128,6 @@ fn setup() -> (
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
         clocks,
-        &mut rcc.apb2,
     )
     .split();
 
@@ -144,11 +143,10 @@ fn setup() -> (
             .parity_odd()
             .stopbits(StopBits::STOP1),
         clocks,
-        &mut rcc.apb1,
     )
     .split();
 
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = p.GPIOB.split();
 
     let (tx3, rx3) = Serial::usart3(
         p.USART3,
@@ -162,7 +160,6 @@ fn setup() -> (
             .parity_odd()
             .stopbits(StopBits::STOP1),
         clocks,
-        &mut rcc.apb1,
     )
     .split();
 
@@ -173,7 +170,7 @@ fn setup() -> (
     //let tx3  = tx3.with_dma(channels.2);
     //let rx3  = rx3.with_dma(channels.3);
 
-    let dma1 = p.DMA1.split(&mut rcc.ahb);
+    let dma1 = p.DMA1.split();
     let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
     let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
     let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);

@@ -67,10 +67,10 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     //fn setup() -> (impl WriteRead<USART1>) {
     //fn setup() -> (impl Write<USART1>, impl Read<USART1>) {
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
+    let mut gpioa = p.GPIOA.split();
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     Serial::usart1(
         p.USART1,
@@ -81,7 +81,6 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
         clocks,
-        &mut rcc.apb2,
     )
     .split()
 }

@@ -130,8 +130,8 @@ fn setup() -> (
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
+    let mut gpioa = p.GPIOA.split();
 
     let txrx1 = Serial::usart1(
         p.USART1,
@@ -144,7 +144,6 @@ fn setup() -> (
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1),
         clocks,
-        &mut rcc.apb2,
     ); //.split();
 
     let (tx1, rx1) = txrx1.split();
@@ -153,7 +152,7 @@ fn setup() -> (
     //  writeln!(tx1, "\r\ncheck console output.\r\n").unwrap();
     //  and without dma tx1.write() expects u8 not &[u8; 25]
 
-    let dma1 = p.DMA1.split(&mut rcc.ahb);
+    let dma1 = p.DMA1.split();
     let (tx1_ch, rx1_ch) = (dma1.4, dma1.5);
 
     let txbuf = singleton!(: [u8; BUFSIZE] = *b"---- empty ----").unwrap(); //NB. 15 characters

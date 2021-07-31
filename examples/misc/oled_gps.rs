@@ -105,12 +105,12 @@ fn setup() -> (
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
+    let mut gpioa = p.GPIOA.split();
+    let mut gpiob = p.GPIOB.split();
 
     let (tx, rx) = Serial::usart2(
         p.USART2,
@@ -121,7 +121,6 @@ fn setup() -> (
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
         clocks,
-        &mut rcc.apb1,
     )
     .split();
 
@@ -137,7 +136,6 @@ fn setup() -> (
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,

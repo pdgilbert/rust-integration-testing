@@ -37,7 +37,6 @@ use embedded_graphics::{
     prelude::*,
     text::Text,
 };
-use embedded_hal::digital::v2::{InputPin, OutputPin};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use si4703::{
@@ -176,26 +175,26 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
+    let mut afio = dp.AFIO.constrain();
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
-    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
@@ -214,7 +213,6 @@ fn setup() -> (
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,
@@ -228,10 +226,10 @@ fn setup() -> (
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
         fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
+            self.p_seekup.is_high()
         }
         fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
+            self.p_seekdown.is_high()
         }
     }
 
@@ -491,6 +489,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::{InputPin, OutputPin};
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -634,6 +635,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::{InputPin, OutputPin};
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (
     I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
@@ -701,6 +705,9 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::{InputPin, OutputPin};
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (

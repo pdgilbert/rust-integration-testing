@@ -34,7 +34,6 @@ use cortex_m_rt::entry;
 //use cortex_m_semihosting::*;
 
 use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::digital::v2::OutputPin;
 
 use mcp4x;
 
@@ -76,12 +75,12 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
+    let mut afio = dp.AFIO.constrain();
+    let mut gpioa = dp.GPIOA.split();
 
     // SPI1
     let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
@@ -96,20 +95,19 @@ fn setup() -> (
         MODE,
         1_u32.mhz(),
         clocks,
-        &mut rcc.apb2,
     );
 
-    cs.set_high().unwrap();
+    cs.set_high();
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -251,7 +249,7 @@ fn main() -> ! {
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
-    chip_select.set_high().unwrap();
+    chip_select.set_high();
 
     let mut pot = Mcp4x::new_mcp42x(spi, chip_select);
 

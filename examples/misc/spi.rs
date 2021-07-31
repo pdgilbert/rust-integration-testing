@@ -78,8 +78,8 @@ fn setup() -> (
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = dp.GPIOA.split(&mut rcc.apb2);
+    let mut afio = dp.AFIO.constrain();
+    let mut gpioa = dp.GPIOA.split();
 
     // SPI1
     let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
@@ -94,7 +94,6 @@ fn setup() -> (
         MODE,
         1_u32.mhz(),
         clocks,
-        &mut rcc.apb2,
     );
 
     (spi, cs)

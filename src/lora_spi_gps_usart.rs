@@ -214,9 +214,6 @@ use stm32f1xx_hal::{
     spi::{Error, Spi},
 };
 
-#[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
-use embedded_hal::digital::v2::OutputPin;
-
 #[cfg(feature = "stm32f1xx")]
 pub fn setup() -> (
     impl DelayMs<u32>
@@ -230,17 +227,17 @@ pub fn setup() -> (
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
 
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc
         .cfgr
         .sysclk(64.mhz())
         .pclk1(32.mhz())
         .freeze(&mut p.FLASH.constrain().acr);
 
-    let mut afio = p.AFIO.constrain(&mut rcc.apb2);
-    let mut gpioa = p.GPIOA.split(&mut rcc.apb2);
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
-    let mut gpioc = p.GPIOC.split(&mut rcc.apb2);
+    let mut afio = p.AFIO.constrain();
+    let mut gpioa = p.GPIOA.split();
+    let mut gpiob = p.GPIOB.split();
+    let mut gpioc = p.GPIOC.split();
 
     let spi = Spi::spi1(
         p.SPI1,
@@ -253,7 +250,6 @@ pub fn setup() -> (
         MODE,
         8.mhz(),
         clocks,
-        &mut rcc.apb2,
     );
 
     let delay = Delay::new(cp.SYST, clocks);
@@ -280,7 +276,6 @@ pub fn setup() -> (
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
         clocks,
-        &mut rcc.apb1,
     )
     .split();
 
@@ -296,7 +291,6 @@ pub fn setup() -> (
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        &mut rcc.apb1,
         1000,
         10,
         1000,
@@ -314,10 +308,10 @@ pub fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

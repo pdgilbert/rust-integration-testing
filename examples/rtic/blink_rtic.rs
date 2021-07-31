@@ -14,8 +14,6 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use embedded_hal::digital::v2::OutputPin;
-
 use rtic::app;
 use rtic::cyccnt::U32Ext;
 
@@ -68,18 +66,18 @@ type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f1xx")]
 fn setup(dp: Peripherals) -> LedType {
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.apb2);
+    let mut gpioc = dp.GPIOC.split();
     let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
     //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
     led.off();
@@ -185,6 +183,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32h7xx")]
@@ -246,6 +247,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 type LedType = PB6<Output<PushPull>>;
 
 #[cfg(feature = "stm32l1xx")]
@@ -271,6 +275,9 @@ use stm32l4xx_hal::{
     pac::Peripherals,
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 type LedType = PC13<Output<PushPull>>;
