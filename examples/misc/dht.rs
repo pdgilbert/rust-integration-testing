@@ -213,6 +213,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -284,6 +287,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+use embedded_hal::digital::v2::OutputPin;
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -313,6 +319,9 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {

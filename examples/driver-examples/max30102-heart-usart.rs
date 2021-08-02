@@ -486,7 +486,7 @@ use stm32l0xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C1, USART1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
-    serial::{Config, Rx, Serial1Ext, Serial2Ext, Serial4Ext, Tx},
+    serial::{Config, Rx, Serial1Ext, Tx},
 };
 
 #[cfg(feature = "stm32l0xx")]
@@ -511,7 +511,7 @@ fn setup() -> (
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
 
-    let i2c = dp.I2C1.i2c(sda, scl, 400.khz(), &mut rcc);
+    let i2c = dp.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     let delay = Delay::new(cp.SYST, clocks);
 
@@ -534,7 +534,7 @@ fn setup() -> (
         .usart(
             gpioa.pa9,
             gpioa.pa10,
-            Config::default().baudrate(9600.bps()),
+            Config::default().baudrate(9600.Bd()),
             &mut rcc,
         )
         .unwrap()

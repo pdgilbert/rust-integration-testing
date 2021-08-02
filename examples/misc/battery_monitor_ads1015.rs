@@ -435,7 +435,7 @@ fn setup() -> (
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
 
-    let i2c = p.I2C1.i2c(sda, scl, 400.khz(), &mut rcc);
+    let i2c = p.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     let delay = Delay::new(cp.SYST, clocks);
 

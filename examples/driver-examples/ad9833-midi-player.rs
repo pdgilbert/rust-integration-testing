@@ -433,7 +433,7 @@ fn setup() -> (
             gpioa.pa7, // mosi  on PA7
         ),
         MODE,
-        8.mhz(),
+        8_000_000.Hz(),
         &mut rcc,
     );
 

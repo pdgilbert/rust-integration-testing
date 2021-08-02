@@ -591,7 +591,7 @@ fn setup() -> (
 
     let scl = gpiob.pb8.into_open_drain_output();
 
-    let i2c = dp.I2C1.i2c(sda, scl, 400.khz(), &mut rcc);
+    let i2c = dp.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),

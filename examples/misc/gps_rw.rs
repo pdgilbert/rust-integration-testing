@@ -333,7 +333,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         .usart(
             gpioa.pa9,  //tx pa9  for console
             gpioa.pa10, //rx pa10 for console
-            Config::default().baudrate(9600.bps()),
+            Config::default().baudrate(9600.Bd()),
             &mut rcc,
         )
         .unwrap()
@@ -344,7 +344,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         .usart(
             gpioa.pa2, //tx pa2  for GPS
             gpioa.pa3, //rx pa3  for GPS
-            Config::default().baudrate(9600.bps()),
+            Config::default().baudrate(9600.Bd()),
             &mut rcc,
         )
         .unwrap()

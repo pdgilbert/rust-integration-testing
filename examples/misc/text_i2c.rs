@@ -236,7 +236,7 @@ fn setup() -> I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>> {
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
 
     // return i2c
-    p.I2C1.i2c(sda, scl, 400.khz(), &mut rcc)
+    p.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc)
 }
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6

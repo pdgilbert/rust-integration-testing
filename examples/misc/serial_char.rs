@@ -476,7 +476,7 @@ fn setup() -> (
         .usart(
             gpioa.pa9,  //tx pa9  for console
             gpioa.pa10, //rx pa10 for console
-            Config::default().baudrate(9600.bps()),
+            Config::default().baudrate(9600.Bd()),
             &mut rcc,
         )
         .unwrap()
@@ -487,7 +487,7 @@ fn setup() -> (
         .usart(
             gpioa.pa2, //tx pa2
             gpioa.pa3, //rx pa3
-            Config::default().baudrate(115_200.bps()),
+            Config::default().baudrate(115_200.Bd()),
             &mut rcc,
         )
         .unwrap()
@@ -499,7 +499,7 @@ fn setup() -> (
         .usart(
             gpioa.pa0, //tx pa0
             gpioa.pa1, //rx pa1
-            Config::default().baudrate(115_200.bps()),
+            Config::default().baudrate(115_200.Bd()),
             &mut rcc,
         )
         .unwrap()

@@ -794,7 +794,7 @@ pub fn setup() -> (
             gpioa.pa7, // mosi  on PA7
         ),
         MODE,
-        8.mhz(),
+        8_000_000.Hz(),
         &mut rcc,
     );
 
@@ -818,7 +818,7 @@ pub fn setup() -> (
         .usart(
             gpioa.pa2, //tx pa2  for GPS
             gpioa.pa3, //rx pa3  for GPS
-            Config::default().baudrate(9600.bps()),
+            Config::default().baudrate(9600.Bd()),
             &mut rcc,
         )
         .unwrap()
@@ -827,7 +827,7 @@ pub fn setup() -> (
     let scl = gpiob.pb10.into_open_drain_output();
     let sda = gpiob.pb11.into_open_drain_output();
 
-    let i2c = p.I2C2.i2c(sda, scl, 400.khz(), &mut rcc);
+    let i2c = p.I2C2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
