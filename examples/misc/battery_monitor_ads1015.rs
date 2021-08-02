@@ -31,7 +31,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
 
@@ -570,6 +570,59 @@ fn setup() -> (
 
 // End of hal/MCU specific setup. Following should be generic code.
 
+// Read a single value from channel A.
+// Returns 0 on Error.
+// pub fn read<E, A: DynamicOneShot<Error = E>>(adc: &mut A) -> i16 {
+//     block!(adc.read(ChannelSelection::SingleA0)).unwrap_or(0)
+// }
+
+pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A) -> 
+   (i16, i16, i16, i16, [i16; 3]) {
+    // Note scale_cur divides, scale_a and scale_b multiplies
+    let scale_cur = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
+    let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
+    let scale_b = 2; // calibrated to get mV    depends on FullScaleRange
+
+    //TMP35 scale is 100 deg C per 1.0v (slope 10mV/deg C) and goes through
+    //     <50C, 1.0v>,  so 0.0v is  -50C.
+
+    let scale_temp = 5; //divides
+    let offset_temp = 50;
+
+    //first adc  Note that readings are zero on USB power (programming) rather than battery.
+
+    let bat_ma  = block!(adc_a.read(ChannelSelection::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
+    let load_ma = block!(adc_a.read(ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
+
+    // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
+    // also first adc
+    // skip until working
+    //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+    let bat_mv = 5000 * scale_a;  //not close
+    //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
+    //adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+
+    // second adc
+    let values_b = [
+        block!(adc_b.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_b,
+        block!(adc_b.read(ChannelSelection::SingleA1)).unwrap_or(8091) * scale_b,
+        block!(adc_b.read(ChannelSelection::SingleA2)).unwrap_or(8091) * scale_b,
+    ];
+
+    let temp_c = block!(adc_b.read(ChannelSelection::SingleA3)).unwrap_or(8091) / scale_temp
+        - offset_temp;
+
+    // third adc
+    //let values_c = [
+    //    block!(adc_c.read(ChannelSelection::SingleA0)).unwrap_or(8091),
+    //    block!(adc_c.read(ChannelSelection::SingleA1)).unwrap_or(8091),
+    //    block!(adc_c.read(ChannelSelection::SingleA2)).unwrap_or(8091),
+    //    block!(adc_c.read(ChannelSelection::SingleA3)).unwrap_or(8091),
+    //];
+
+    (bat_mv, bat_ma, load_ma, temp_c, values_b )
+}
+
 fn display<S>(
     bat_mv: i16,
     bat_ma: i16,
@@ -651,25 +704,10 @@ fn main() -> ! {
     // This is very small for diff across low value shunt resistors
     //   but up to 5v for single pin with usb power.
     // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
-    adc_a
-        .set_full_scale_range(FullScaleRange::Within0_256V)
-        .unwrap();
+    adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
     //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-    adc_b
-        .set_full_scale_range(FullScaleRange::Within4_096V)
-        .unwrap();
+    adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
     //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-
-    // Note scale_cur divides, scale_a and scale_b multiply
-    let scale_cur = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
-    let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
-    let scale_b = 2; // calibrated to get mV    depends on FullScaleRange
-
-    //TMP35 scale is 100 deg C per 1.0v (slope 10mV/deg C) and goes through
-    //     <50C, 1.0v>,  so 0.0v is  -50C.
-
-    let scale_temp = 5; //divides
-    let offset_temp = 50;
 
     loop {
         // Blink LED to check that everything is actually running.
@@ -677,40 +715,7 @@ fn main() -> ! {
         // Comment out blinking to calibrate scale.
         led.blink(10_u16, &mut delay);
 
-        //first adc  Note that readings are zero on USB power (programming) rather than battery.
-
-        let bat_ma =
-            block!(adc_a.read(&mut AdcChannel::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
-        let load_ma =
-            block!(adc_a.read(&mut AdcChannel::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
-
-        // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
-        // also first adc
-        adc_a
-            .set_full_scale_range(FullScaleRange::Within4_096V)
-            .unwrap();
-        let bat_mv = block!(adc_a.read(&mut AdcChannel::SingleA0)).unwrap_or(8091) * scale_a;
-        adc_a
-            .set_full_scale_range(FullScaleRange::Within0_256V)
-            .unwrap();
-
-        // second adc
-        let values_b = [
-            block!(adc_b.read(&mut AdcChannel::SingleA0)).unwrap_or(8091) * scale_b,
-            block!(adc_b.read(&mut AdcChannel::SingleA1)).unwrap_or(8091) * scale_b,
-            block!(adc_b.read(&mut AdcChannel::SingleA2)).unwrap_or(8091) * scale_b,
-        ];
-
-        let temp_c = block!(adc_b.read(&mut AdcChannel::SingleA3)).unwrap_or(8091) / scale_temp
-            - offset_temp;
-
-        // third adc
-        //let values_c = [
-        //    block!(adc_c.read(&mut AdcChannel::SingleA0)).unwrap_or(8091),
-        //    block!(adc_c.read(&mut AdcChannel::SingleA1)).unwrap_or(8091),
-        //    block!(adc_c.read(&mut AdcChannel::SingleA2)).unwrap_or(8091),
-        //    block!(adc_c.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
-        //];
+        let (bat_mv, bat_ma, load_ma, temp_c, values_b ) = read_all(&mut adc_a, &mut adc_b);
 
         display(
             bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,

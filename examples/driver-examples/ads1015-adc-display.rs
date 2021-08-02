@@ -63,6 +63,13 @@ fn main() -> ! {
     adc.set_full_scale_range(FullScaleRange::Within6_144V)
         .unwrap();
 
+    let mut lines: [heapless::String<32>; 4] = [
+        heapless::String::new(),
+        heapless::String::new(),
+        heapless::String::new(),
+        heapless::String::new(),
+    ];
+
     loop {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.
@@ -74,13 +81,6 @@ fn main() -> ! {
             block!(adc.read(&mut AdcChannel::SingleA1)).unwrap_or(8091),
             block!(adc.read(&mut AdcChannel::SingleA2)).unwrap_or(8091),
             block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
-        ];
-
-        let mut lines: [heapless::String<32>; 4] = [
-            heapless::String::new(),
-            heapless::String::new(),
-            heapless::String::new(),
-            heapless::String::new(),
         ];
 
         display.clear();
