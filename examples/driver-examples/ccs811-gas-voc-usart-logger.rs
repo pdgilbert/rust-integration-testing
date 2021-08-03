@@ -68,7 +68,7 @@ use stm32f1xx_hal::{
     gpio::{
         gpiob::{PB8, PB9},
         gpioc::PC13,
-        Alternate, OpenDrain, Output, PushPull, State,
+        Alternate, OpenDrain, Output, PushPull, //State,
     },
     i2c::{BlockingI2c, Mode}, //Pins
     pac,
@@ -131,10 +131,8 @@ fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, Tx<USART1>, Rx<USART1>) {
     let (tx, rx) = serial.split();
 
     let mut gpioc = dp.GPIOC.split();
-    let mut led = gpioc
-        .pc13
-        .into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-    //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+    //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
+    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {

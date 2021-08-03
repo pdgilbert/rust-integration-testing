@@ -56,7 +56,7 @@ const PERIOD: u32 = 10 * PULSE; // 10 seconds
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    gpio::{gpioc::PC13, Output, PushPull, State},
+    gpio::{gpioc::PC13, Output, PushPull},  //, State},
     pac::Peripherals,
     prelude::*,
 };
@@ -66,11 +66,11 @@ type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f1xx")]
 fn setup(dp: Peripherals) -> LedType {
-    let rcc = dp.RCC.constrain();
+    //let rcc = dp.RCC.constrain();
 
     let mut gpioc = dp.GPIOC.split();
-    let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-    //let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+    //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
+    let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
