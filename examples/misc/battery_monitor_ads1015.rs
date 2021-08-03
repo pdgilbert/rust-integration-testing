@@ -31,7 +31,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr,};
 
 use core::fmt::Write;
 
@@ -570,17 +570,11 @@ fn setup() -> (
 
 // End of hal/MCU specific setup. Following should be generic code.
 
-// Read a single value from channel A.
-// Returns 0 on Error.
-// pub fn read<E, A: DynamicOneShot<Error = E>>(adc: &mut A) -> i16 {
-//     block!(adc.read(ChannelSelection::SingleA0)).unwrap_or(0)
-// }
-
-pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A) -> 
-   (i16, i16, i16, i16, [i16; 3]) {
+pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A 
+      ) -> (i16, i16, i16, [i16; 3]) {
     // Note scale_cur divides, scale_a and scale_b multiplies
     let scale_cur = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
-    let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
+    //let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
     let scale_b = 2; // calibrated to get mV    depends on FullScaleRange
 
     //TMP35 scale is 100 deg C per 1.0v (slope 10mV/deg C) and goes through
@@ -596,9 +590,9 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A) -
 
     // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
     // also first adc
-    // skip until working
+    // skip until working see
+    //    https://github.com/eldruin/ads1x1x-rs/issues/10?_pjax=%23repo-content-pjax-container
     //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-    let bat_mv = 5000 * scale_a;  //not close
     //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
     //adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
@@ -620,7 +614,8 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A) -
     //    block!(adc_c.read(ChannelSelection::SingleA3)).unwrap_or(8091),
     //];
 
-    (bat_mv, bat_ma, load_ma, temp_c, values_b )
+    //(bat_mv, bat_ma, load_ma, temp_c, values_b )
+    (bat_ma, load_ma, temp_c, values_b )
 }
 
 fn display<S>(
@@ -709,13 +704,20 @@ fn main() -> ! {
     adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
     //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 
+    let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
+
     loop {
         // Blink LED to check that everything is actually running.
         // Note that blink takes about a mA current and makes measurement below noisy.
         // Comment out blinking to calibrate scale.
         led.blink(10_u16, &mut delay);
 
-        let (bat_mv, bat_ma, load_ma, temp_c, values_b ) = read_all(&mut adc_a, &mut adc_b);
+        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+        //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
+        let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
+        adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+
+        let (bat_ma, load_ma, temp_c, values_b ) = read_all(&mut adc_a, &mut adc_b);
 
         display(
             bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,
