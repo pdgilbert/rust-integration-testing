@@ -355,7 +355,7 @@ pub fn setup() -> (
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
     let mut gpioe = p.GPIOE.split(&mut rcc.ahb);
 
-    let spi = Spi::spi1(
+    let spi = Spi::new(
         p.SPI1,
         (
             gpioa
@@ -368,8 +368,8 @@ pub fn setup() -> (
                 .pa7
                 .into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
-        MODE,
-        8_000_000.Hz(),
+        //MODE,
+        8.MHz(),
         clocks,
         &mut rcc.apb2,
     );
