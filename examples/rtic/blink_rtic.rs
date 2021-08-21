@@ -311,17 +311,14 @@ fn setup(dp: Peripherals) -> LedType {
 
 // End of hal/MCU specific setup. Following should be generic code.  BUT IS NOT TESTED AND STILL NEEDS MANUAL EDIT
 
-
-//  NEED TO SPECIFY DEVICE HERE FOR DIFFERENT HALs
-
-#[app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32h7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l0xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l1xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT))]
 
 const APP: () = {
     struct Resources {
@@ -385,7 +382,7 @@ const APP: () = {
     }
 
     // HOW TO KNOW USED INTERRUPTS?
-    //#[cfg(feature = "stm32f1xx")]   CFG DOES NOT WORK HERE
+    #[cfg(feature = "stm32f1xx")]   
     extern "C" {
         //        fn EXTI0();
         //        fn SDIO();
@@ -395,15 +392,14 @@ const APP: () = {
         fn QEI0();
     }
 
-    //#[cfg(feature = "stm32f3xx")]CFG DOES NOT WORK HERE
-    //extern "C" {
-    //    fn EXTI0();
-    //    //fn SDIO();
-    //    //fn TIM1();
-    //    fn TIM2();
-    //    fn TIM3();
-    //    fn QEI0();
-    //}
+//    #[cfg(feature = "stm32f3xx", extern "C" {
+//        fn EXTI0();
+//        //fn SDIO();
+//        //fn TIM1();
+//        fn TIM2();
+//        fn TIM3();
+//        fn QEI0();
+//    })]
 
     //#[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
     //extern "C" {
