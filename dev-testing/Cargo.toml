@@ -338,11 +338,3 @@ path = "examples/rtic/schedule.rs"
 [[example]]
 name = "resource-user-struct"
 path = "examples/rtic/resource-user-struct.rs"
-
-[[example]]
-name = "spawn2"
-path = "examples/rtic/spawn2.rs"
-
-[[example]]
-name = "zz"
-path = "examples/misc/zz.rs"
