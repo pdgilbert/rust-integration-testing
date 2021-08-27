@@ -937,10 +937,11 @@ pub fn setup() -> (
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
-    serial::{Config, Rx, Serial, Tx},
+    serial::{ Rx, Serial, Tx},
+    serial,  //for Config
     spi::{Error, Spi},
 };
 
@@ -1016,7 +1017,7 @@ pub fn setup() -> (
             gpioa.pa2.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //tx pa2  for GPS
             gpioa.pa3.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //rx pa3  for GPS
         ),
-        Config::default().baudrate(9600.bps()),
+        serial::Config::default().baudrate(9600.bps()),
         clocks,
         &mut rcc.apb1r1,
     )
@@ -1034,7 +1035,7 @@ pub fn setup() -> (
     sda.internal_pull_up(&mut gpioa.pupdr, true);
     let sda = sda.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
-    let i2c = I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let i2c = I2c::i2c1(p.I2C1, (scl, sda), Config::new(400.khz(), clocks), &mut rcc.apb1r1);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {

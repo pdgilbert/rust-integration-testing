@@ -1,121 +1,70 @@
-//! examples/schedule.rs
-
-//! THIS EXAMPLE CANNOT YET WORK ON DIFFERENT HALLs WITHOUT MANUAL EDITING IN TWO SECTIONS AS INDICATED BELOW
+// from  /cortex-m-rtic/examples/schedule.rs
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
 #![no_main]
 #![no_std]
 
-use cortex_m::peripheral::DWT;
-use cortex_m_semihosting::hprintln;
 use panic_semihosting as _;
 
 use rtic::app;
-use rtic::cyccnt::{Instant, U32Ext as _};
 
 // NOTE: does NOT work on QEMU!
-//#[app(device = lm3s6965, monotonic = rtic::cyccnt::CYCCNT)]
-#[app(device = stm32f1xx_hal::pac,  monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f3xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32f7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32h7xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l0xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l1xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-//#[app(device = stm32l4xx_hal::pac, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 
-const APP: () = {
-    #[init(schedule = [foo, bar])]
-    fn init(mut cx: init::Context) {
-        // Initialize (enable) the monotonic timer (CYCCNT)
-        cx.core.DCB.enable_trace();
-        // required on Cortex-M7 devices that software lock the DWT (e.g. STM32F7)
-        DWT::unlock();
-        cx.core.DWT.enable_cycle_counter();
+// see <pac>::Interrupt for dispatchers,  e.g. stm32l4::stm32l4x1::Interrupt
 
-        // semantically, the monotonic timer is frozen at time "zero" during `init`
-        // NOTE do *not* call `Instant::now` in this context; it will return a nonsense value
-        let now = cx.start; // the start time of the system
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]  //fails
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
-        hprintln!("init @ {:?}", now).unwrap();
+//#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 
-        // Schedule `foo` to run 8e6 cycles (clock cycles) in the future
-        cx.schedule.foo(now + 8_000_000.cycles()).unwrap();
+mod app {
+    use cortex_m_semihosting::hprintln;
+    use dwt_systick_monotonic::DwtSystick;
+    use rtic::time::duration::Seconds;
 
-        // Schedule `bar` to run 4e6 cycles in the future
-        cx.schedule.bar(now + 4_000_000.cycles()).unwrap();
+    const MONO_HZ: u32 = 8_000_000; // 8 MHz
+
+    #[monotonic(binds = SysTick, default = true)]
+    type MyMono = DwtSystick<MONO_HZ>;
+
+    #[shared]
+    struct Shared {}
+
+    #[local]
+    struct Local {}
+
+    #[init]
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let mut dcb = cx.core.DCB;
+        let dwt = cx.core.DWT;
+        let systick = cx.core.SYST;
+
+        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+
+        hprintln!("init").ok();
+
+        // Schedule `foo` to run 1 second in the future
+        foo::spawn_after(Seconds(1_u32)).ok();
+
+        // Schedule `bar` to run 2 seconds in the future
+        bar::spawn_after(Seconds(2_u32)).ok();
+
+        (Shared {}, Local {}, init::Monotonics(mono))
     }
 
     #[task]
     fn foo(_: foo::Context) {
-        hprintln!("foo  @ {:?}", Instant::now()).unwrap();
+        hprintln!("foo").ok();
     }
 
     #[task]
     fn bar(_: bar::Context) {
-        hprintln!("bar  @ {:?}", Instant::now()).unwrap();
+        hprintln!("bar").ok();
     }
-
-    // RTIC requires that unused interrupts are declared in an extern block when
-    // using software tasks; these free interrupts will be used to dispatch the
-    // software tasks.
-
-    //#[cfg(feature = "stm32f1xx")]   CFG DOES NOT WORK HERE
-    extern "C" {
-        fn TIM2();
-        fn TIM3();
-        fn TIM4();
-        fn QEI0();
-    }
-
-    //    #[cfg(feature = "stm32f3xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32f4xx")]CFG DOES NOT WORK HERE
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32f7xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32h7xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32l0xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32l1xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-    //    #[cfg(feature = "stm32l4xx")]CFG DOES NOT WORK HERE.  TO BE CHECKED
-    //    extern "C" {
-    //        fn EXTI0();
-    //        fn SDIO();
-    //        fn QEI0();
-    //    }
-
-};
+}
