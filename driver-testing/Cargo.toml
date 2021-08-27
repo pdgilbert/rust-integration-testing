@@ -52,7 +52,9 @@ veml6030        = { git = "https://github.com/eldruin/veml6030-rs" }
 veml6070        = { git = "https://github.com/eldruin/veml6070-rs" }
 veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 
+#cortex-m-rtic = ">=0.6" # needed for condition on different hals. Still not released.
 cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
+dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic" }
 shared-bus-rtic = { version = "0.2.2", optional = true }
 
 # only certain versions of radio and radio-sx127x work together
@@ -332,3 +334,7 @@ path = "examples/rtic/blink_rtic.rs"
 [[example]]
 name = "schedule"
 path = "examples/rtic/schedule.rs"
+
+[[example]]
+name = "resource-user-struct"
+path = "examples/rtic/resource-user-struct.rs"
