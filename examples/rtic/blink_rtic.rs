@@ -241,9 +241,6 @@ mod app {
         prelude::*,
         stm32::Peripherals,
     };
-
-    #[cfg(feature = "stm32h7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
    
     #[cfg(feature = "stm32l1xx")]
     use embedded_hal::digital::v2::OutputPin;
