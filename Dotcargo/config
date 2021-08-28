@@ -1,6 +1,9 @@
 [target.thumbv7m-none-eabi]
 #runner = 'arm-none-eabi-gdb'
 runner = "gdb-multiarch -q -x openocd.gdb"
+# need following for link and load with `cargo  run ...` but it may require memory.x,
+# linking may cause failure when --release is needed,
+# and also cause interference with `cargo embed ...`
 #rustflags = [
 #  "-C", "link-arg=-Tlink.x",
 #]

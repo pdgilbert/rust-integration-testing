@@ -72,6 +72,7 @@ mod app {
     // `shared` cannot be accessed from this context
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
+        hprintln!("about to  debug::EXIT_SUCCESS").unwrap();
         debug::exit(debug::EXIT_SUCCESS);
 
         // error: no `shared` field in `idle::Context`

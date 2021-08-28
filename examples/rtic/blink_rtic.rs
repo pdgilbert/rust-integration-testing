@@ -17,16 +17,18 @@ use rtic::app;
 
 // NOT SURE IF  peripherals = true, IS USED ?
 
-#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))] 
-#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, peripherals = true, dispatchers = [TIM2, TIM3]))] 
-#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   peripherals = true, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))] 
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))] 
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 
 mod app {
+    //use cortex_m_semihosting::{debug, hprintln};
+
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::{Seconds, Milliseconds};
 
@@ -44,6 +46,9 @@ mod app {
         pac::Peripherals,
         prelude::*,
     };
+
+    #[cfg(feature = "stm32f1xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -68,7 +73,10 @@ mod app {
         pac::Peripherals,
         prelude::*,
     };
-    
+   
+    #[cfg(feature = "stm32f3xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+ 
     #[cfg(feature = "stm32f3xx")]
     type LedType = PE15<Output<PushPull>>;
     
@@ -100,7 +108,10 @@ mod app {
         pac::Peripherals,
         prelude::*,
     };
-    
+   
+    #[cfg(feature = "stm32f4xx")]
+    const CLOCK: u32 = 16_000_000;  //should be set for board not for HAL
+ 
     #[cfg(feature = "stm32f4xx")]
     type LedType = PC13<Output<PushPull>>;
 
@@ -128,6 +139,9 @@ mod app {
         pac::Peripherals,
         prelude::*,
     };
+
+    #[cfg(feature = "stm32f7xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
     
     #[cfg(feature = "stm32f7xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -160,6 +174,9 @@ mod app {
     
     #[cfg(feature = "stm32h7xx")]
     use embedded_hal::digital::v2::OutputPin;
+
+    #[cfg(feature = "stm32h7xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
     
     #[cfg(feature = "stm32h7xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -193,6 +210,9 @@ mod app {
         prelude::*,
         rcc, // for ::Config but note name conflict with serial
     };
+
+    #[cfg(feature = "stm32l0xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
     
     #[cfg(feature = "stm32l0xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -221,10 +241,16 @@ mod app {
         prelude::*,
         stm32::Peripherals,
     };
-    
+
+    #[cfg(feature = "stm32h7xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+   
     #[cfg(feature = "stm32l1xx")]
     use embedded_hal::digital::v2::OutputPin;
-    
+
+    #[cfg(feature = "stm32l1xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+  
     #[cfg(feature = "stm32l1xx")]
     type LedType = PB6<Output<PushPull>>;
     
@@ -255,7 +281,10 @@ mod app {
     
     #[cfg(feature = "stm32l4xx")]
     use embedded_hal::digital::v2::OutputPin;
-    
+
+    #[cfg(feature = "stm32l4xx")]
+    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+  
     #[cfg(feature = "stm32l4xx")]
     type LedType = PC13<Output<PushPull>>;
     
@@ -284,13 +313,12 @@ mod app {
     }
     
     #[monotonic(binds = SysTick, default = true)]
-    type DwtMono = DwtSystick<80_000_000>;
-    
-    //#[init(schedule = [one, ten])]
+    type DwtMono = DwtSystick<CLOCK>;
 
     #[init]
     fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, 8_000_000);
+        //hprintln!("about to  mono = DwtSystick::new...").unwrap();
+        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
 
         //rtt_init_print!();
         //rprintln!("blink example");
@@ -315,7 +343,6 @@ mod app {
     #[local]
     struct Local {}
     
-    //#[task(resources = [led], spawn = [blink], schedule = [one] )]
 
     #[task(shared = [led])]
     fn one(_cx: one::Context) {
@@ -324,7 +351,7 @@ mod app {
         one::spawn_after(ONE).ok();
     }
 
-    //#[task(resources = [led], spawn = [blink], schedule = [ten] )]
+
     #[task(shared = [led])]
     fn ten(_cx: ten::Context) {
         // blink and re-spawn ten process to repeat after TEN seconds
@@ -332,7 +359,6 @@ mod app {
         ten::spawn_after(TEN).ok();
     }
      
-    //#[task(priority = 2, capacity = 3 , spawn = [led_on], schedule = [led_off] )]
 
     #[task(shared = [led])]
     fn blink(_cx: blink::Context, duration: Milliseconds<u32>) {
@@ -342,14 +368,12 @@ mod app {
         crate::app::led_on::spawn().ok();
     }
    
-    //#[task(priority = 3, capacity = 3, resources = [led] )]
 
     #[task(shared = [led])]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
     
-    //#[task(priority = 3, capacity = 3, resources = [led] )]
 
     #[task(shared = [led])]
     fn led_off(mut cx: led_off::Context) {
