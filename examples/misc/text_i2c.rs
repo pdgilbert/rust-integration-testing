@@ -271,7 +271,7 @@ fn setup() -> I2c<I2C1, impl Pins<I2C1>> {
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config},
     pac::{Peripherals, I2C2},
     prelude::*,
 };
@@ -305,7 +305,7 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
     let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
     // return i2c
-    I2c::i2c2(p.I2C2, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1)
+    I2c::i2c2(p.I2C2, (scl, sda), Config::new(400.khz(), clocks), &mut rcc.apb1r1)   
 }
 
 // End of hal/MCU specific setup. Following should be generic code.

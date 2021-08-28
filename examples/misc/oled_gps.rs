@@ -453,10 +453,10 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
-    serial::{Config, Rx, Serial, Tx},
+    serial::{Rx, Serial, Tx, Config as serialConfig, },
 };
 
 #[cfg(feature = "stm32l4xx")]
@@ -487,7 +487,7 @@ fn setup() -> (
             gpioa.pa2.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //tx pa2  for GPS rx
             gpioa.pa3.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //rx pa3  for GPS tx
         ),
-        Config::default().baudrate(9600.bps()),
+        serialConfig::default().baudrate(9600.bps()),
         clocks,
         &mut rcc.apb1r1,
     )
@@ -510,7 +510,7 @@ fn setup() -> (
     (
         tx2,
         rx2,
-        I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1), // i2c
+        I2c::i2c1(p.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1),   
         Delay::new(cp.SYST, clocks),
     )
 }

@@ -613,7 +613,7 @@ fn setup() -> (
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
@@ -657,7 +657,7 @@ fn setup() -> (
     sda.internal_pull_up(&mut gpiob.pupdr, true);
     let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let i2c = I2c::i2c2(dp.I2C2, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let i2c = I2c::i2c2(dp.I2C2, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
 
     let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
 

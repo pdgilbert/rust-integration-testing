@@ -504,7 +504,7 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
@@ -545,7 +545,7 @@ fn setup() -> (
     sda.internal_pull_up(&mut gpiob.pupdr, true);
     let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let i2c = I2c::i2c2(p.I2C2, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let i2c = I2c::i2c2(p.I2C2, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
 
     let mut gpioc = p.GPIOC.split(&mut rcc.ahb2);
 

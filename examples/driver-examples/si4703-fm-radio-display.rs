@@ -701,7 +701,7 @@ use stm32l4xx_hal::{
         gpioc::PC13,
         Input, Output, PullDown, PullUp, PushPull,
     },
-    i2c::{I2c, SclPin, SdaPin},
+    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
@@ -773,7 +773,7 @@ fn setup() -> (
     scl.internal_pull_up(&mut gpiob.pupdr, true);
     let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob
