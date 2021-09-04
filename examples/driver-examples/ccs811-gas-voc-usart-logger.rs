@@ -54,6 +54,10 @@ mod app {
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::{Seconds, };
 
+    use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
+    //delay_ms could be used but needs to use a timer other than Systick
+    //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
+
     use core::fmt::Write;
     use embedded_ccs811::{
         mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
@@ -71,7 +75,6 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        delay::Delay,
         device::USART1,
         gpio::{
             gpiob::{PB8, PB9},
@@ -82,7 +85,7 @@ mod app {
         pac,
         pac::Peripherals, //I2C1
         prelude::*,
-        serial::{Config, Rx, Serial, Tx},
+        serial::{Config, Serial, Tx},
     };
     
     #[cfg(feature = "stm32f1xx")]
@@ -90,16 +93,17 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     type LedType = PC13<Output<PushPull>>;
+    //impl LED, Delay
 
     #[cfg(feature = "stm32f1xx")]
     type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
-         
+    //BlockingI2c<I2C1, impl Pins<I2C1>>
+    
     #[cfg(feature = "stm32f1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
-        //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
     
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
@@ -110,10 +114,6 @@ mod app {
             .sysclk(72.mhz())
             .pclk1(36.mhz())
             .freeze(&mut flash.acr);
-    
-        // WHY DOES NEXT NOT CAUSE BULD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
     
         let mut gpiob = dp.GPIOB.split();
     
@@ -142,7 +142,7 @@ mod app {
             Config::default().baudrate(115200.bps()),
             clocks,
         );
-        let (tx, rx) = serial.split();
+        let (tx, _rx) = serial.split();
     
         let mut gpioc = dp.GPIOC.split();
         //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
@@ -158,12 +158,11 @@ mod app {
         }
         led.off();
     
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
     
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        delay::Delay,
         gpio::{
             gpiob::{PB6, PB7},
             gpioe::PE9,
@@ -175,7 +174,7 @@ mod app {
         pac,
         pac::{CorePeripherals, Peripherals, I2C1, USART1},
         prelude::*,
-        serial::{Rx, RxPin, Serial, Tx, TxPin},
+        serial::{RxPin, Serial, Tx, TxPin},
     };
        
     #[cfg(feature = "stm32f3xx")]
@@ -194,14 +193,10 @@ mod app {
     //type TxType = Tx<USART1, impl TxPin<USART1>>;
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType ) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType ) {
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    
-        // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
     
         let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
         let scl = gpiob
@@ -213,7 +208,7 @@ mod app {
         let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
     
         let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-        let (tx, rx) = Serial::usart1(
+        let (tx, _rx) = Serial::usart1(
             dp.USART1,
             (
                 gpioa
@@ -233,7 +228,6 @@ mod app {
         let led = gpioe
             .pe9
             .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-        let delay = Delay::new(cp.SYST, clocks);
 
         impl LED for PE9<Output<PushPull>> {
             fn on(&mut self) -> () {
@@ -245,12 +239,11 @@ mod app {
         }
         led.off();
     
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
     
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        delay::Delay,
         gpio::{
             gpiob::{PB8, PB9},
             gpioc::PC13,
@@ -260,7 +253,7 @@ mod app {
         pac,
         pac::{Peripherals, USART1}, //I2C1
         prelude::*,
-        serial::{config::Config, Rx, Serial, Tx},
+        serial::{config::Config, Serial, Tx},
     };
        
     #[cfg(feature = "stm32f4xx")]
@@ -268,25 +261,21 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     type LedType = PC13<Output<PushPull>>;
+    //impl LED
     
     #[cfg(feature = "stm32f4xx")]
     type I2cBus = I2c<pac::I2C1, (PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>)>; //NO BlockingI2c
-     
+    //BlockingI2c<I2C1, impl Pins<I2C1>>
+    
     #[cfg(feature = "stm32f4xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
-        //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
-        //fn setup(dp: Peripherals) -> (I2c<I2C2, impl Pins<I2C2>, LedType, Delay, Tx<USART1>, Rx<USART1>> {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
     
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze();
    
-        // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, &clocks);
-    
         let gpiob = dp.GPIOB.split();
   
         let scl = gpiob.pb8.into_alternate().set_open_drain();
@@ -297,7 +286,7 @@ mod app {
         let gpioa = dp.GPIOA.split();
         let tx = gpioa.pa9.into_alternate();
         let rx = gpioa.pa10.into_alternate();
-        let (tx, rx) = Serial::new(
+        let (tx, _rx) = Serial::new(
             dp.USART1,
             (tx, rx),
             Config::default().baudrate(115200.bps()),
@@ -319,13 +308,12 @@ mod app {
             }
         }
 
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
 
     
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        delay::Delay,
         gpio::{Output, PushPull, Alternate, AF4,
                gpioc::PC13, 
                gpiob::{PB8, PB9},
@@ -334,7 +322,7 @@ mod app {
         pac::{Peripherals, CorePeripherals, I2C1, USART2},
         pac,
         prelude::*,
-        serial::{Config, Oversampling, Rx, Serial, Tx},
+        serial::{Config, Oversampling, Serial, Tx},
     };
 
     #[cfg(feature = "stm32f7xx")]
@@ -352,17 +340,15 @@ mod app {
     type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType,TxType) {
         
         //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
         let mut rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
-        let cp = CorePeripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
 
         let gpioa = dp.GPIOA.split();
 
-        let (tx, rx) = Serial::new(
+        let (tx, _rx) = Serial::new(
             dp.USART2,
             (
                 gpioa.pa2.into_alternate_af7(),
@@ -404,14 +390,13 @@ mod app {
         }
         
         
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
 
 
     
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        delay::Delay,
         gpio::{Output, PushPull,
                gpioc::PC13 },
         i2c::I2c,
@@ -436,15 +421,13 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
 
         let pwr = dp.PWR.constrain();
         let vos = pwr.freeze();
         let rcc = dp.RCC.constrain();
         let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
         let clocks = ccdr.clocks;
-        let cp = CorePeripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
 
         let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
@@ -481,7 +464,7 @@ mod app {
             }
         }
 
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
 
 
@@ -514,12 +497,11 @@ mod app {
             }
         }
     
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
     
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
-        delay::Delay,
         gpio::{Output, PushPull, OpenDrain,
                gpiob::{PB6, PB8, PB9},},
         i2c::{I2c, Pins},
@@ -545,7 +527,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
 
         let mut rcc = dp.RCC.freeze(rccConfig::hsi());
         let cp = CorePeripherals::take().unwrap();
@@ -553,7 +535,7 @@ mod app {
 
         let gpioa = dp.GPIOA.split();
 
-        let (tx, rx) = dp
+        let (tx, _rx) = dp
             .USART1
             .usart(
                 (
@@ -585,14 +567,13 @@ mod app {
             }
         }
     
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
         
     
     
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        delay::Delay,
         gpio::{Output, PushPull, Alternate, AF4, OpenDrain,
                gpioa::{PA9, PA10},
                gpioc::PC13, },
@@ -618,7 +599,7 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
 
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
@@ -629,9 +610,6 @@ mod app {
             .pclk1(80.mhz())
             .pclk2(80.mhz())
             .freeze(&mut flash.acr, &mut pwr);
-        
-        let cp = CorePeripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
 
         let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
         //         let mut gpiob  = p.GPIOB.split(&mut rcc.ahb2);
@@ -672,7 +650,7 @@ mod app {
             fn off(&mut self) -> () { self.set_high().unwrap()}
         }
     
-        (i2c, led, delay, tx)
+        (i2c, led, tx)
     }
     
 
@@ -724,12 +702,12 @@ mod app {
 
         let device: Peripherals = cx.device;
 
-        let (i2c, mut led, mut delay, mut tx) = setup(device);
+        let (i2c, mut led, mut tx) = setup(device);
 
         led.off();
 
         // Previously these were initialized static mut in fn measure()
-        let led_state: bool = false;
+        let led_state: bool;
         let env: [(f32, f32); 1200] = [(0.0, 0.0); 1200];
         let index: usize = 0;
         let measurements:[AlgorithmResult; 1200] =
@@ -739,7 +717,16 @@ mod app {
         let mut hdc2080 = Hdc20xx::new(manager.acquire(), Hdc20xxSlaveAddr::default());
         let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
         ccs811.software_reset().unwrap();
-        delay.delay_ms(10_u16);
+        
+        // Delay while ccs811 resets.
+        // Note that this delay cannot use SYST because Monotonics uses that (for spawn,
+        //   although spawn has not yet happened so there may be a way?)
+        
+        led.on();
+        asm::delay(3 * CLOCK); // (3 * CLOCK cycles give aprox 3 second delay
+        //delay::delay_ms(3_000_u16);
+        led.off();
+        led_state = false;
 
         let mut ccs811 = ccs811.start_application().ok().unwrap();
         let en = block!(hdc2080.read()).unwrap();

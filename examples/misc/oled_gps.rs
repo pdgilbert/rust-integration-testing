@@ -32,7 +32,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 use nb::block;
 
-use embedded_hal::blocking::delay::DelayMs;
+//use embedded_hal::blocking::delay::DelayMs;
 
 //builtin include FONT_6X10, FONT_8X13, ....
 use embedded_graphics::{

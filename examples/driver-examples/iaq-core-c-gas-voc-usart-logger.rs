@@ -57,7 +57,6 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        delay::Delay,
         device::USART1,
         gpio::{
             gpiob::{PB8, PB9},
@@ -68,7 +67,7 @@ mod app {
         pac,
         pac::Peripherals, //I2C1
         prelude::*,
-        serial::{Config, Rx, Serial, Tx},
+        serial::{Config, Serial, Tx},
     };
     
     #[cfg(feature = "stm32f1xx")]
@@ -76,16 +75,17 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     type LedType = PC13<Output<PushPull>>;
+    //impl LED
     
     #[cfg(feature = "stm32f1xx")]
     type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
-     
+    //BlockingI2c<I2C1, impl Pins<I2C1>>
+
     #[cfg(feature = "stm32f1xx")]
-    type TxType = Tx<pac::USART1>;
+    type TxType = Tx<USART1>;
    
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
     
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
@@ -96,10 +96,6 @@ mod app {
             .sysclk(72.mhz())
             .pclk1(36.mhz())
             .freeze(&mut flash.acr);
-    
-        // WHY DOES NEXT NOT CAUSE BULD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
     
         let mut gpiob = dp.GPIOB.split();
     
@@ -128,7 +124,7 @@ mod app {
             Config::default().baudrate(115200.bps()),
             clocks,
         );
-        let (tx, rx) = serial.split();
+        let (tx, _rx) = serial.split();
  
         let mut gpioc = dp.GPIOC.split();
         //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
@@ -149,7 +145,6 @@ mod app {
     
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        delay::Delay,
         gpio::{
             gpiob::{PB6, PB7},
             gpioe::PE9,
@@ -161,7 +156,7 @@ mod app {
         pac,
         pac::{CorePeripherals, Peripherals, I2C1, USART1},
         prelude::*,
-        serial::{Rx, RxPin, Serial, Tx, TxPin},
+        serial::{RxPin, Serial, Tx, TxPin},
     };
            
     #[cfg(feature = "stm32f3xx")]
@@ -184,10 +179,6 @@ mod app {
         let mut rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze(&mut flash.acr);
     
-        // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, clocks);
-    
         let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
         let scl = gpiob
             .pb6
@@ -198,7 +189,7 @@ mod app {
         let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
     
         let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-        let (tx, rx) = Serial::usart1(
+        let (tx, _rx) = Serial::usart1(
             dp.USART1,
             (
                 gpioa
@@ -218,7 +209,6 @@ mod app {
         let led = gpioe
             .pe9
             .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-        let delay = Delay::new(cp.SYST, clocks);
     
         impl LED for PE9<Output<PushPull>> {
             fn on(&mut self) -> () {
@@ -235,7 +225,6 @@ mod app {
     
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        delay::Delay,
         gpio::{
             gpiob::{PB8, PB9},
             gpioc::PC13,
@@ -245,7 +234,7 @@ mod app {
         pac,
         pac::{Peripherals, USART1}, //I2C1
         prelude::*,
-        serial::{config::Config, Rx, Serial, Tx},
+        serial::{config::Config, Serial, Tx},
     };
            
     #[cfg(feature = "stm32f4xx")]
@@ -253,24 +242,20 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     type LedType = PC13<Output<PushPull>>;
+    //impl LED
     
     #[cfg(feature = "stm32f4xx")]
     type I2cBus = I2c<pac::I2C1, (PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>)>; //NO BlockingI2c
+    //BlockingI2c<I2C1, impl Pins<I2C1>>
  
     #[cfg(feature = "stm32f4xx")]
     type TxType = Tx<USART1>;
    
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        //fn setup(dp: Peripherals) -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
-        //fn setup(dp: Peripherals) -> (I2c<I2C2, impl Pins<I2C2>, LedType, Delay, Tx<USART1>, Rx<USART1>> {
     
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze();
-    
-        // WHY DOES NEXT NOT CAUSE BUILD PROBLEM WITH  let mut core = cx.core; IN INTI?
-        let cp = cortex_m::Peripherals::take().unwrap();
-        let delay = Delay::new(cp.SYST, &clocks);
     
         let gpiob = dp.GPIOB.split();
     
@@ -282,7 +267,7 @@ mod app {
         let gpioa = dp.GPIOA.split();
         let tx = gpioa.pa9.into_alternate();
         let rx = gpioa.pa10.into_alternate();
-        let (tx, rx) = Serial::new(
+        let (tx, _rx) = Serial::new(
             dp.USART1,
             (tx, rx),
             Config::default().baudrate(115200.bps()),
@@ -319,7 +304,7 @@ mod app {
         pac::{Peripherals, USART2},
         pac,
         prelude::*,
-        serial::{Config, Oversampling, Rx, Serial, Tx},
+        serial::{Config, Oversampling, Serial, Tx},
     };
 
     #[cfg(feature = "stm32f7xx")]
@@ -344,7 +329,7 @@ mod app {
 
         let gpioa = dp.GPIOA.split();
 
-        let (tx, rx) = Serial::new(
+        let (tx, _rx) = Serial::new(
             dp.USART2,
             (
                 gpioa.pa2.into_alternate_af7(),
@@ -396,7 +381,7 @@ mod app {
         i2c::I2c,
         pac::{Peripherals, I2C1, USART2},
         prelude::*,
-        serial::{Rx, Tx},
+        serial::{Tx},
     };
     
     #[cfg(feature = "stm32h7xx")]
@@ -425,7 +410,7 @@ mod app {
 
         let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
-        let (tx, rx) = dp
+        let (tx, _rx) = dp
             .USART2
             .serial(
                 (
@@ -467,7 +452,7 @@ mod app {
         pac::Peripherals,
         prelude::*,
         rcc, // for ::Config but note name conflict with serial
-        serial::{Config, Rx, Serial2Ext, Tx},
+        serial::{Config, Serial2Ext, Tx},
     };
 
     #[cfg(feature = "stm32l0xx")]
@@ -483,7 +468,7 @@ mod app {
     type TxType = Tx<pac::USART1>;
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, Delay, TxType) {
+    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
 
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
         let gpioc = p.GPIOC.split(&mut rcc);
@@ -509,7 +494,7 @@ mod app {
         prelude::*,
         rcc::Config as rccConfig,
         stm32::{CorePeripherals, Peripherals, I2C1, USART1},
-        serial::{Config, Rx, SerialExt, Tx},
+        serial::{Config, SerialExt, Tx},
     };
    
     #[cfg(feature = "stm32l1xx")]
@@ -534,7 +519,7 @@ mod app {
 
         let gpioa = dp.GPIOA.split();
 
-        let (tx, rx) = dp
+        let (tx, _rx) = dp
             .USART1
             .usart(
                 (
