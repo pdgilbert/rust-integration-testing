@@ -31,7 +31,7 @@ jobs:
   bluepill:
     name: eg
     runs-on: ubuntu-latest
-#    continue-on-error: true
+    continue-on-error: true
     strategy:
       matrix:
         brd: [bluepill, ]  
@@ -107,7 +107,7 @@ jobs:
     name: CI
     runs-on: ubuntu-latest
     continue-on-error: true
-    fail-fast: false
+    #fail-fast: false
     strategy:
       matrix:        
         brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
@@ -503,6 +503,7 @@ jobs:
       #####  rtic examples  don't work on stmf0xx.  separate job? #####
 
       - name: Example iaq-core-c-gas-voc-usart-logger
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -510,6 +511,7 @@ jobs:
           use-cross: true
 
       - name: Example ccs811-gas-voc-usart-logger
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -517,18 +519,21 @@ jobs:
           use-cross: true
 
       - name: Example schedule
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example schedule
 
       - name: Example resource-user-struct
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example resource-user-struct
 
       - name: Example blink_rtic
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
