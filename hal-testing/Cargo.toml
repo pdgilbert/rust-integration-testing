@@ -54,8 +54,11 @@ veml6075        = ">=0.2"
 
 #cortex-m-rtic = ">=0.6" # needed for condition on different hals. Still not released.
 cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
-dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic" }
-shared-bus-rtic = { version = "0.2.2", optional = true }
+dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic", optional = true}
+
+# for example ccs811-gas-voc-usart-logger
+#  include *also* thumbv6 support
+shared-bus-rtic = { version = "0.2.2", features = ["thumbv6"], optional = true }
 
 # only certain versions of radio and radio-sx127x work together
 radio         = { version = "0.9.0" }
