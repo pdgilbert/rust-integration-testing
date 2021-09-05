@@ -154,7 +154,7 @@ mod app {
         },
         i2c::{I2c, SclPin, SdaPin},
         pac,
-        pac::{CorePeripherals, Peripherals, I2C1, USART1},
+        pac::{Peripherals, I2C1, USART1},
         prelude::*,
         serial::{RxPin, Serial, Tx, TxPin},
     };
@@ -490,10 +490,10 @@ mod app {
     use stm32l1xx_hal::{
         gpio::{Output, PushPull, OpenDrain,
                gpiob::{PB6, PB8, PB9},},
-        i2c::{I2c, Pins},
+        i2c::{I2c},
         prelude::*,
         rcc::Config as rccConfig,
-        stm32::{CorePeripherals, Peripherals, I2C1, USART1},
+        stm32::{Peripherals, I2C1, USART1},
         serial::{Config, SerialExt, Tx},
     };
    

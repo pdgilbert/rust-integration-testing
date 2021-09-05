@@ -545,6 +545,7 @@ jobs:
 # this requires 3 USARTs and  fails using stm32f042 which has only 2
 
       - name: Example serial_char
+        if: ${{ matrix.mcu != 'stm32f042'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build

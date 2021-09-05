@@ -172,7 +172,7 @@ mod app {
         },
         i2c::{I2c, SclPin, SdaPin},
         pac,
-        pac::{CorePeripherals, Peripherals, I2C1, USART1},
+        pac::{Peripherals, I2C1, USART1},
         prelude::*,
         serial::{RxPin, Serial, Tx, TxPin},
     };
@@ -319,7 +319,7 @@ mod app {
                gpiob::{PB8, PB9},
                },
         i2c::{BlockingI2c, Mode, PinScl, PinSda},
-        pac::{Peripherals, CorePeripherals, I2C1, USART2},
+        pac::{Peripherals, I2C1, USART2},
         pac,
         prelude::*,
         serial::{Config, Oversampling, Serial, Tx},
@@ -400,7 +400,7 @@ mod app {
         gpio::{Output, PushPull,
                gpioc::PC13 },
         i2c::I2c,
-        pac::{Peripherals, CorePeripherals, I2C1, USART2},
+        pac::{Peripherals, I2C1, USART2},
         prelude::*,
         serial::{Tx},
     };
@@ -507,7 +507,7 @@ mod app {
         i2c::{I2c, Pins},
         prelude::*,
         rcc::Config as rccConfig,
-        stm32::{CorePeripherals, Peripherals, I2C1, USART1},
+        stm32::{Peripherals, I2C1, USART1},
         serial::{Config, SerialExt, Tx},
     };
    
@@ -530,8 +530,6 @@ mod app {
     fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
 
         let mut rcc = dp.RCC.freeze(rccConfig::hsi());
-        let cp = CorePeripherals::take().unwrap();
-        let delay = cp.SYST.delay(rcc.clocks);
 
         let gpioa = dp.GPIOA.split();
 
@@ -578,7 +576,7 @@ mod app {
                gpioa::{PA9, PA10},
                gpioc::PC13, },
         i2c::{I2c, Config as i2cConfig},
-        pac::{CorePeripherals, Peripherals, I2C1, USART2},
+        pac::{Peripherals, I2C1, USART2},
         prelude::*,
         serial::{Serial, Tx, Config as serialConfig, },
     };
