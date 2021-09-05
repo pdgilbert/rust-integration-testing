@@ -1,5 +1,5 @@
 //! Blink (onboard) LED with short pulse very second and longer blink every ten seconds.
-//! On startup the LED is set on for about 5 seconds in the init process.
+//! On startup the LED is set on for about (at least) 5 seconds in the init process.
 //! Two processes are scheduled, `one` for pulse and `ten` for longer blink. These spawn
 //! a `blink` process that turns the led on and schedules another process to turn it off.
 
@@ -328,7 +328,7 @@ mod app {
         //   although spawn has not yet happened so there may be a way?)
         //   delay_ms() would need to use a timer other than default Systick
 
-        asm::delay(5 * CLOCK); // (5 * CLOCK cycles give aprox 5 second delay
+        asm::delay(5 * CLOCK); // (5 * CLOCK cycles gives aprox 5+ second delay
         //delay::delay_ms(5_000_u16);
 
         led.off();

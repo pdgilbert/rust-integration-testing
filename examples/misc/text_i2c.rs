@@ -15,7 +15,8 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_rt::{entry, exception, ExceptionFrame};
+use cortex_m_rt::{entry};
+//use cortex_m_rt::{entry, exception, ExceptionFrame};
 
 // old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
 // builtin include FONT_6X10, FONT_8X13, ....
@@ -337,7 +338,7 @@ fn main() -> ! {
     loop {}
 }
 
-#[exception]
-fn HardFault(ef: &ExceptionFrame) -> ! {
-    panic!("{:#?}", ef);
-}
+//#[exception]
+//fn HardFault(ef: &ExceptionFrame) -> ! {  // requires unsafe as of cortex-m-rt = "0.7.0"
+//    panic!("{:#?}", ef);
+//}
