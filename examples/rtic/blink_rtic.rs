@@ -1,4 +1,5 @@
 //! Blink (onboard) LED with short pulse very second and longer blink every ten seconds.
+//! On startup the LED is set on for about 5 seconds in the init process.
 //! Two processes are scheduled, `one` for pulse and `ten` for longer blink. These spawn
 //! a `blink` process that turns the led on and schedules another process to turn it off.
 
@@ -29,6 +30,9 @@ mod app {
     use dwt_systick_monotonic::DwtSystick;
     use rtic::time::duration::{Seconds, Milliseconds};
 
+    use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
+    //delay_ms could be used but needs to use a timer other than Systick
+    //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
     const ONE: Seconds = Seconds(1); 
     const TEN: Seconds = Seconds(10);
@@ -311,19 +315,28 @@ mod app {
 
     #[init]
     fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        //hprintln!("about to  mono = DwtSystick::new...").unwrap();
-        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
 
         //rtt_init_print!();
-        //rprintln!("blink example");
+        //rprintln!("blink_rtic example");
 
         let mut led = setup(cx.device);
+
+        led.on();
     
+        // In an application this delay may be while something initializes.
+        // Note that this delay cannot use SYST because Monotonics uses that (for spawn,
+        //   although spawn has not yet happened so there may be a way?)
+        //   delay_ms() would need to use a timer other than default Systick
+
+        asm::delay(5 * CLOCK); // (5 * CLOCK cycles give aprox 5 second delay
+        //delay::delay_ms(5_000_u16);
+
         led.off();
+
+        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
 
         ten::spawn().unwrap();
 
-        // may need small time offset to avoid collision
         one::spawn().unwrap();
     
        (Shared {led}, Local {}, init::Monotonics(mono))
