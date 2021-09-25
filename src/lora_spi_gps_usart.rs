@@ -496,7 +496,7 @@ pub fn setup() -> (
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         MODE,
-        MegaHertz(8).into(),
+        MegaHertz(8),
         clocks,
     );
 
