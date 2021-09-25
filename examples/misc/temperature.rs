@@ -1,4 +1,5 @@
-/*!  Measure the internal mcu temperature sensor and an analog external TMP36 sensor.
+/*!  BEWARE THIS IS NOT WORKING PROPERLY ON ALL MCUs!
+     Measure the internal mcu temperature sensor and an analog external TMP36 sensor.
      see https://github.com/stm32-rs/stm32f1xx-hal/blob/master/examples/adc.rs
      for stm32f4xx see examples in
       https://docs.rs/stm32f4xx-hal/0.8.3/stm32f4xx_hal/adc/struct.Adc.html
@@ -324,7 +325,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    adc::{Adc, CkMode},
+    adc::{Adc, ClockMode},
     gpio::{gpiob::PB1, Analog},
     pac::Peripherals,
     pac::{ADC1, ADC3},
@@ -356,14 +357,14 @@ fn setup() -> (
             p.ADC1,
             &mut p.ADC1_2,
             &mut rcc.ahb,
-            CkMode::default(),
+            ClockMode::default(),
             clocks,
         ),
         ad_2nd: Adc::adc3(
             p.ADC3,
             &mut p.ADC3_4,
             &mut rcc.ahb,
-            CkMode::default(),
+            ClockMode::default(),
             clocks,
         ),
     };

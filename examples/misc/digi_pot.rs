@@ -37,8 +37,6 @@ use embedded_hal::blocking::delay::DelayMs;
 
 use mcp4x;
 
-use mcp4x::{Channel, Mcp4x, MODE};
-
 pub trait LED {
     // depending on board wiring, `on` may be `set_high` or `set_low`, with `off` also reversed
     // implementation should deal with this difference
@@ -88,16 +86,16 @@ fn setup() -> (
     let mosi = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
     let mut cs = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
 
+    cs.set_high();
+
     let spi = Spi::spi1(
         dp.SPI1,
         (sck, miso, mosi),
         &mut afio.mapr,
-        MODE,
+        mcp4x::MODE,
         1_u32.mhz(),
         clocks,
     );
-
-    cs.set_high();
 
     let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
@@ -146,7 +144,7 @@ fn setup() -> (
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
     let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
 
-    let spi = Spi::spi1(
+    let spi = Spi::new(
         dp.SPI1,
         (
             gpioa
@@ -159,15 +157,16 @@ fn setup() -> (
                 .pa7
                 .into_af5_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
-        MODE,
         1_000_000.Hz(),
         clocks,
         &mut rcc.apb2,
     );
 
-    let cs = gpiob
+    let mut cs = gpiob
         .pb5
         .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+
+    cs.set_high().unwrap();
 
     let led = gpioe
         .pe15
@@ -221,12 +220,14 @@ fn setup() -> (
             gpioa.pa6.into_alternate(), // miso  on PA6
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
-        MODE,
+        mcp4x::MODE,
         MegaHertz(8),
         clocks,
     );
 
-    let cs = gpioa.pa1.into_push_pull_output();
+    let mut cs = gpioa.pa1.into_push_pull_output();
+
+    cs.set_high();
 
     let led = gpioc.pc13.into_push_pull_output();
     impl LED for PC13<Output<PushPull>> {
@@ -245,13 +246,11 @@ fn setup() -> (
 
 #[entry]
 fn main() -> ! {
-    let (spi, mut chip_select, mut led, mut delay) = setup();
+    let (spi, chip_select, mut led, mut delay) = setup();
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
-    chip_select.set_high();
-
-    let mut pot = Mcp4x::new_mcp42x(spi, chip_select);
+    let mut pot = mcp4x::Mcp4x::new_mcp42x(spi, chip_select);
 
     let mut position = 0;
     loop {
@@ -261,8 +260,8 @@ fn main() -> ! {
 
         delay.delay_ms(50_u16);
 
-        pot.set_position(Channel::Ch0, position).unwrap();
-        pot.set_position(Channel::Ch1, 255 - position).unwrap();
+        pot.set_position(mcp4x::Channel::Ch0, position).unwrap();
+        pot.set_position(mcp4x::Channel::Ch1, 255 - position).unwrap();
 
         if position == 255 {
             position = 0
