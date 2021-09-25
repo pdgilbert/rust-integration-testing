@@ -11,13 +11,13 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-# The first job is only on bluepill and only with dev-testing. It goes by example so they
+# The first job is only with dev-testing on bluepill and discovery-stm32f303. It goes by example so they
 # are all attempted. The job does not stop at the first example to fail. This is nice for 
 # identifying problems in the examples, but is slow because of rebuild for each example.
 # (It would be faster if I could get caching to work.)
-# The main testing is the 2nd job. It runs a matrix of 4 stratagies x 14 boards. 
+# The 2nd job runs a matrix of 4 stratagies x 14 boards. 
 # For each matrix point all examples are run with a single build. This is faster but
-# terminates on the first example failure.
+# terminates on the first example failure so examples that are known to fail are omitted.
 
 # The strategies are release-testing, driver-testing, hal-testing, and dev-testing.
 # The differnce is set in the Cargo.toml file in the manifest directories.
@@ -28,13 +28,13 @@ jobs:
 
 #################################################################################################
 
-  bluepill:
+  examples:
     name: eg
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
       matrix:
-        brd: [bluepill, ]  
+        brd: [bluepill, discovery-stm32f303]  
 
 
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
@@ -63,6 +63,10 @@ jobs:
              mcu:  stm32f103
              hal: "stm32f1xx"
              trg: "thumbv7m-none-eabi"
+           - brd: "discovery-stm32f303"
+             mcu:  stm32f303xc
+             hal: "stm32f3xx"
+             trg: "thumbv7em-none-eabihf"
 
     steps:
       - uses: actions/checkout@v2
@@ -103,7 +107,7 @@ jobs:
 
 #################################################################################################
 
-  examples:
+  boards:
     name: CI
     runs-on: ubuntu-latest
     continue-on-error: true
