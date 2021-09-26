@@ -279,7 +279,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 
     let clocks = rcc.cfgr.adcclk(2.mhz()).freeze(&mut flash.acr);
 
-    let mut gpiob = p.GPIOB.split(&mut rcc.apb2);
+    let mut gpiob = p.GPIOB.split();
 
     let adcs: Adcs<Adc<ADC1>> = Adcs {
         ad_1st: Adc::adc1(p.ADC1, clocks),
