@@ -232,12 +232,12 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink3
           use-cross: true
 
-#      - name: Example digi_pot
-#        uses: actions-rs/cargo@v1
-#        with:
-#          command: build
-#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example digi_pot
-#          use-cross: true
+      - name: Example digi_pot
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example digi_pot
+          use-cross: true
 
       - name: Example echo_by_char
         uses: actions-rs/cargo@v1
@@ -281,12 +281,12 @@ jobs:
 #          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example spi
 #          use-cross: true
 
-#      - name: Example temperature
-#        uses: actions-rs/cargo@v1
-#        with:
-#          command: build
-#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature
-#          use-cross: true
+      - name: Example temperature
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature
+          use-cross: true
 
       - name: Example text_i2c
         uses: actions-rs/cargo@v1
