@@ -375,9 +375,8 @@ mod app {
     
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{Output, PushPull, Alternate, OpenDrain,
-               gpioc::PC13, 
-               gpiob::{PB8, PB9}},
+        gpio::{Output, PushPull,
+               gpioc::PC13,},
         i2c::I2c,
         pac::{Peripherals, I2C1, USART2},
         prelude::*,
