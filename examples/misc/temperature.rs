@@ -1,4 +1,4 @@
-/*!  BEWARE THIS IS NOT WORKING PROPERLY ON ALL MCUs!
+/*!  BEWARE THIS IS NOT WORKING PROPERLY! Even on some MCUs where it builds some things faked.
      Measure the internal mcu temperature sensor and an analog external TMP36 sensor.
      see https://github.com/stm32-rs/stm32f1xx-hal/blob/master/examples/adc.rs
      for stm32f4xx see examples in
@@ -196,7 +196,7 @@ use stm32f1xx_hal::{
     prelude::*,
 };
 
-//  stm32f100 and stm32f101 only have one adc  CODE BELOW NEEDS TO B FIXED FOR THIS
+//  stm32f100 and stm32f101 only have one adc 
 #[cfg(any(feature = "stm32f101", feature = "stm32f100"))]
 use stm32f1xx_hal::{
     adc::Adc,
@@ -504,10 +504,8 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     adc::Adc,
-    //device::adc1::{config::AdcConfig, Adc, Temperature},
-    //device::{ADC1, ADC2},
     gpio::{gpiob::PB1, Analog},
-    pac::{Adc, Peripherals, ADC1, ADC2},
+    pac::{Peripherals, ADC1, ADC2},
     prelude::*,
 };
 
@@ -517,45 +515,51 @@ fn setup() -> (
     impl ReadTempC + ReadMV,
     Adcs<Adc<ADC1>, Adc<ADC2>>,
 ) {
-    // On stm32f722 a temperature sensor is internally connected to ???.
-    // Two adc's are used but no channel is specified for the mcutemp on adc3 because it uses an internal channel.
-    // stm32f722 has 3 12bit ADCs
-    // NOT YET BUILDING
+    // adc module in stm32f7xx_hal is only supported for stm32f765, stm32f767, and stm32f769. See
+    //    https://github.com/stm32-rs/stm32f7xx-hal/blob/master/src/lib.rs
+    // On stm32f722 a temperature sensor is internally connected to the same input channel as VBAT, ADC1_IN18.
+    // When the temperature sensor and VBAT conversion are enabled at the same time, only VBAT conversion is performed.
+    // The stm32f722 datasheet says it has 3 12bit ADCs.
+    // Switched from stm32f722 to stm32f769 for adc support, but internal mcu temperature is still FAKED!
     // see   https://github.com/stm32-rs/stm32f7xx-hal/issues/116
 
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(216.mhz()).freeze();
+    let mut rcc = p.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
-    let mut gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split();
 
     let adcs: Adcs<Adc<ADC1>, Adc<ADC2>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, clocks),
-        ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, clocks),
+        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, clocks, 4, true),  // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
+        ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, clocks, 4, true),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel
     // so no channel needs to be specified here.
 
-    let mcutemp: Sensor<Option<PB1<Analog>>> = Sensor { ch: None }; // no channel
+    let mcutemp: Sensor<Option<PB1<Analog>>> = Sensor {ch: None }; // no channel
 
     let tmp36: Sensor<PB1<Analog>> = Sensor {
-        ch: Some(gpiob.pb1.into_analog()),
-    }; //channel pb1
-
+        ch: gpiob.pb1.into_analog(),
+    }; 
+        
     impl ReadTempC for Sensor<Option<PB1<Analog>>> {
         fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
             match &mut self.ch {
                 // it should be possible to call next method here  read_tempC(ch) on Sensor<PB1<Analog>>
                 // but doesn't seem to get to this impl when there is Some(ch)?
-                Some(_ch) => {
-                    hprintln!("panic at Some(ch)").unwrap();
-                    panic!()
+                Some(ch) => {
+                    //hprintln!("panic at Some(ch)").unwrap();
+                    //panic!()
+                    let v: f32 = a.ad_2nd.read(ch).unwrap();
+                    (v / 12.412122) as i32 - 50 as i32
                 }
 
                 None => {
                     let z = &mut a.ad_1st;
-                    z.read_temp() as i32
+                    // Need internal hal setting ch 16.  See https://github.com/stm32-rs/stm32f7xx-hal/issues/116
+                    //z.read(&mut Temperature) as i32
+                    0.0 as i32 // internal temp returned as zero   FAKE READ
                 }
             }
         }
@@ -564,12 +568,10 @@ fn setup() -> (
     impl ReadTempC for Sensor<PB1<Analog>> {
         fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
             match &mut self.ch {
-                Some(ch) => {
+                ch => {
                     let v: f32 = a.ad_2nd.read(ch).unwrap();
                     (v / 12.412122) as i32 - 50 as i32
                 }
-
-                None => panic!(),
             }
         }
     }
@@ -578,8 +580,7 @@ fn setup() -> (
         // TMP36 on PB1 using ADC2
         fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> u32 {
             match &mut self.ch {
-                Some(ch) => a.ad_2nd.read(ch).unwrap(),
-                None => panic!(),
+                ch => a.ad_2nd.read(ch).unwrap(),
             }
         }
     }
