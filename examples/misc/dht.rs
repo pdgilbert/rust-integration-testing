@@ -315,7 +315,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{gpioa::PA8, OpenDrain, Output},
+    gpio::{gpioa::PA8, OpenDrain, Output, Alternate, AF0},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };

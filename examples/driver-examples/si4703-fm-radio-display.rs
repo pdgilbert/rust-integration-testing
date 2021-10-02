@@ -759,8 +759,7 @@ fn setup() -> (
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 
     let sda = sda
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper)
-        .into_af4(&mut gpiob.moder, &mut gpiob.afrh);
+        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     let stcint = gpiob
         .pb6
@@ -769,9 +768,8 @@ fn setup() -> (
     //this should be simpler
     let mut scl = gpiob
         .pb8
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper);
+        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
-    let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
     let i2c = I2c::i2c1(dp.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
 

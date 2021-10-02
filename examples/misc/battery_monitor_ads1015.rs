@@ -503,7 +503,10 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{Output, PushPull, //Alternate, OpenDrain, AF4,
+        gpioc::PC13,
+        //gpiob::{PB10, PB11},
+    },
     i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
@@ -518,6 +521,8 @@ fn setup() -> (
     impl LED,
     Delay,
 ) {
+    //fn setup() ->  (I2c<I2C2, (PB10<Alternate<AF4, OpenDrain>>, PB11<Alternate<AF4, OpenDrain>>)>,
+    //    PC13<Output<PushPull>>, Delay ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut flash = p.FLASH.constrain();
@@ -535,15 +540,15 @@ fn setup() -> (
     // following ttps://github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
     let mut scl = gpiob
         .pb10
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper); // scl on PB10
+        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
-    let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
+    //let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
     let mut sda = gpiob
         .pb11
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper); // sda on PB11
+        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
+    //let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
     let i2c = I2c::i2c2(p.I2C2, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
 

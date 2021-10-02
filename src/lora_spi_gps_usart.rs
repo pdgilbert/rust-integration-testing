@@ -974,9 +974,9 @@ pub fn setup() -> (
     let spi = Spi::spi1(
         p.SPI1,
         (
-            gpioa.pa5.into_af5(&mut gpioa.moder, &mut gpioa.afrl), // sck   on PA5
-            gpioa.pa6.into_af5(&mut gpioa.moder, &mut gpioa.afrl), // miso  on PA6
-            gpioa.pa7.into_af5(&mut gpioa.moder, &mut gpioa.afrl), // mosi  on PA7
+            gpioa.pa5.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
+            gpioa.pa6.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
+            gpioa.pa7.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         MODE,
         8.mhz(),
@@ -1014,8 +1014,8 @@ pub fn setup() -> (
     let (tx, rx) = Serial::usart2(
         p.USART2,
         (
-            gpioa.pa2.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //tx pa2  for GPS
-            gpioa.pa3.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //rx pa3  for GPS
+            gpioa.pa2.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS
+            gpioa.pa3.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS
         ),
         serial::Config::default().baudrate(9600.bps()),
         clocks,
@@ -1025,15 +1025,13 @@ pub fn setup() -> (
 
     let mut scl = gpioa
         .pa9
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // scl on PA9
+        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
     scl.internal_pull_up(&mut gpioa.pupdr, true);
-    let scl = scl.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
     let mut sda = gpioa
         .pa10
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // sda on PA10
+        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
     sda.internal_pull_up(&mut gpioa.pupdr, true);
-    let sda = sda.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
     let i2c = I2c::i2c1(p.I2C1, (scl, sda), Config::new(400.khz(), clocks), &mut rcc.apb1r1);
 

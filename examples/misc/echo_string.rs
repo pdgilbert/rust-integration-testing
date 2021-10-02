@@ -517,8 +517,8 @@ use stm32l4xx_hal::{
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (
-    TxDma<&'static mut [u8; 15], dma1::C4, Tx<USART1>>,
-    RxDma<&'static mut [u8; 15], dma1::C5, Rx<USART1>>,
+    TxDma<&'static mut [u8; 15], C4, Tx<USART1>>,
+    RxDma<&'static mut [u8; 15], C5, Rx<USART1>>,
 ) {
     //fn setup() ->  (impl WriteDma, impl ReadDma) {
 
@@ -537,8 +537,8 @@ fn setup() -> (
     let txrx1 = Serial::usart1(
         p.USART1,
         (
-            gpioa.pa9.into_af7(&mut gpioa.moder, &mut gpioa.afrh), //tx pa9
-            gpioa.pa10.into_af7(&mut gpioa.moder, &mut gpioa.afrh),
+            gpioa .pa9.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+            gpioa.pa10.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,

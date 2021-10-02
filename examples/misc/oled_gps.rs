@@ -484,8 +484,8 @@ fn setup() -> (
     let (tx2, rx2) = Serial::usart2(
         p.USART2,
         (
-            gpioa.pa2.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //tx pa2  for GPS rx
-            gpioa.pa3.into_af7(&mut gpioa.moder, &mut gpioa.afrl), //rx pa3  for GPS tx
+            gpioa.pa2.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS rx
+            gpioa.pa3.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS tx
         ),
         serialConfig::default().baudrate(9600.bps()),
         clocks,
@@ -497,15 +497,13 @@ fn setup() -> (
 
     let mut scl = gpioa
         .pa9
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // scl on PA9
+        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
     scl.internal_pull_up(&mut gpioa.pupdr, true);
-    let scl = scl.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
     let mut sda = gpioa
         .pa10
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // sda on PA10
+        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
     sda.internal_pull_up(&mut gpioa.pupdr, true);
-    let sda = sda.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
     (
         tx2,

@@ -575,7 +575,7 @@ mod app {
     type LedType = PC13<Output<PushPull>>;
             
     #[cfg(feature = "stm32l4xx")]
-    type I2cBus = I2c<I2C1, (PA9<Alternate<AF4, Output<OpenDrain>>>, PA10<Alternate<AF4, Output<OpenDrain>>>)>;
+    type I2cBus = I2c<I2C1, (PA9<Alternate<AF4, OpenDrain>>, PA10<Alternate<AF4, OpenDrain>>)>;
 
     #[cfg(feature = "stm32l4xx")]
     type TxType = Tx<USART2>;
@@ -599,8 +599,8 @@ mod app {
         let (tx, _rx) = Serial::usart2(
             dp.USART2,
             (
-                gpioa.pa2.into_af7(&mut gpioa.moder, &mut gpioa.afrl),
-                gpioa.pa3.into_af7(&mut gpioa.moder, &mut gpioa.afrl),
+                gpioa.pa2.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
+                gpioa.pa3.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
             ),
             serialConfig::default().baudrate(9600.bps()),
             clocks,
@@ -612,15 +612,13 @@ mod app {
 
         let mut scl = gpioa
             .pa9
-            .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // scl on PA9
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
         scl.internal_pull_up(&mut gpioa.pupdr, true);
-        let scl = scl.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
         let mut sda = gpioa
             .pa10
-            .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper); // sda on PA10
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
         sda.internal_pull_up(&mut gpioa.pupdr, true);
-        let sda = sda.into_af4(&mut gpioa.moder, &mut gpioa.afrh);
 
         let i2c = I2c::i2c1(dp.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);
 
