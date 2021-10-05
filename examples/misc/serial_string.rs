@@ -742,8 +742,8 @@ fn main() -> ! {
     //hprintln!(" buf4 {:?}", &buf4).unwrap();
 
     for i in buf4.iter() {
-        //hprintln!(" i is '{:?}'", i).unwrap();
-        hprintln!(" i is '{}'", from_utf8(i)).unwrap();
+        hprintln!(" i is '{:?}'", i).unwrap();
+        //hprintln!(" i is '{:?}'", from_utf8(i)).unwrap();
 
         rx = recv3.2.read_exact(send1.0, recv3.1); // rx ready to receive into send1 buf
                                                    // This requires buf3 has same size as buf1.

@@ -342,6 +342,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let mut pa8 = gpioa
         .pa8
         .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+//        .into_af0_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
     pa8.set_high().ok();

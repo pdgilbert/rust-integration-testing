@@ -144,21 +144,18 @@ mod app {
     }
     
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
-    use stm32f3xx_hal::{
-        gpio::{
+           use stm32f3xx_hal::{
+        gpio::{OpenDrain, Output, PushPull, AF4, AF7,
+            gpioa::PA9,
             gpiob::{PB6, PB7},
             gpioe::PE9,
-            Alternate, OpenDrain,
-            Otyper::Otype,
-            Output, PushPull, AF4,
         },
-        i2c::{I2c, SclPin, SdaPin},
-        pac,
+        i2c::{I2c},
         pac::{Peripherals, I2C1, USART1},
         prelude::*,
-        serial::{RxPin, Serial, Tx, TxPin},
+        serial::{Serial, Tx},
     };
-           
+    
     #[cfg(feature = "stm32f3xx")]
     const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
@@ -166,13 +163,16 @@ mod app {
     type LedType = PE9<Output<PushPull>>;
     
     #[cfg(feature = "stm32f3xx")]
-    type I2cBus = I2c<pac::I2C1, (PB6<Alternate<Otype, AF4>>, PB7<Alternate<Otype, AF4>>)>;
-    //type I2cBus = I2c<pac::I2C1, (PB6<Alternate<OpenDrain, <AF4>>>, PB7<Alternate<OpenDrain, <AF4>>>)>;
+    type I2cBus = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
+    //or type I2cBus = I2c<I2C1, (PB6<Alternate<OpenDrain, { 4_u8 }>>, PB7<Alternate<OpenDrain, { 4_u8 }>>)>;
     //type I2cBus = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
     
     #[cfg(feature = "stm32f3xx")]
-    type TxType = Tx<USART1, TxPin<USART1>>;
- 
+    type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
+    //type TxType = Tx<USART1, impl TxPin<USART1>>;  // impl is unstable in type alias
+    // See  https://github.com/stm32-rs/stm32f3xx-hal/issues/288
+    //   regarding why it is necessary to specify the concrete pin here.
+
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType ) {
         let mut flash = dp.FLASH.constrain();
@@ -189,7 +189,7 @@ mod app {
         let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
     
         let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-        let (tx, _rx) = Serial::usart1(
+        let (tx, _rx) = Serial::new(
             dp.USART1,
             (
                 gpioa
@@ -206,7 +206,7 @@ mod app {
         .split();
     
         let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-        let led = gpioe
+        let mut led = gpioe
             .pe9
             .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
     

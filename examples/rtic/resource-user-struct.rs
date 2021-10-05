@@ -27,14 +27,14 @@ mod app {
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::pac::Interrupt  as interrupt;
 
-    #[cfg(feature = "stm32f3xx")]
-    use stm32f3xx_hal::interrupt;
+    //#[cfg(feature = "stm32f3xx")]
+    //use stm32f3xx_hal::interrupt;
 
-    //##[cfg(feature = "stm32f3xx")]
-    //#mod interrupt {
-    //#  pub use stm32f3xx_hal::interrupt::*;
-    //#  pub use stm32f3xx_hal::interrupt::{USART1_EXTI25 as USART1, USART2_EXTI26  as USART2}; 
-    //#}
+    #[cfg(feature = "stm32f3xx")]
+    mod interrupt {
+      pub use stm32f3xx_hal::interrupt::*;
+      pub use stm32f3xx_hal::interrupt::{USART1_EXTI25 as USART1, USART2_EXTI26  as USART2}; 
+    }
 
     //#[cfg(feature = "stm32f3xx")]
     //use stm32f3xx_hal::interrupt::{USART1_EXTI25  as USART1,
@@ -73,14 +73,7 @@ mod app {
 
     #[init]
     fn init(_: init::Context) -> (Shared, Local, init::Monotonics) {
-        #[cfg(feature = "stm32f3xx")]
-        rtic::pend(interrupt::USART1_EXTI25);
-        #[cfg(feature = "stm32f3xx")]
-        rtic::pend(interrupt::USART2_EXTI26);
-
-        #[cfg(not(feature = "stm32f3xx"))]
         rtic::pend(interrupt::USART1);
-        #[cfg(not(feature = "stm32f3xx"))]
         rtic::pend(interrupt::USART2);
 
         (Shared { shared: 0 }, Local {}, init::Monotonics())
