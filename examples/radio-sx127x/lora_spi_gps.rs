@@ -16,7 +16,7 @@ use cortex_m_semihosting::*;
 
 use nb::block;
 
-use e_h_1a::blocking::delay::DelayMs;
+use e_h_1a::delay::blocking::DelayMs;
 
 use embedded_hal::serial::Read;
 
@@ -127,7 +127,7 @@ fn main() -> ! {
                 buffer.clear();
                 buf2.clear();
                 good = false;
-                match lora.try_delay_ms(5000u32) {
+                match lora.delay_ms(5000u32) {
                     Ok(b) => b, // b is ()
                     Err(_err) => {
                         hprintln!("Error returned from lora.try_delay_ms().").unwrap();

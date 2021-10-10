@@ -14,7 +14,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
-use e_h_1a::blocking::delay::DelayMs;
+use e_h_1a::delay::blocking::DelayMs;
 
 use radio::Receive;
 use radio_sx127x::prelude::PacketInfo;
@@ -58,7 +58,7 @@ fn main() -> ! {
             Err(err) => hprintln!("poll error {:?} ", err).unwrap(),
         };
 
-        match lora.try_delay_ms(100u32) {
+        match lora.delay_ms(100u32) {
             Ok(b) => b, // b is ()
             Err(_err) => {
                 hprintln!("Error returned from lora.try_delay_ms().").unwrap();

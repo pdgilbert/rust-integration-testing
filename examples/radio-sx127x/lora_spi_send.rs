@@ -42,7 +42,7 @@
 // The embedded_hal_compat crate is to smooth the transition for hal crates that are
 // not yet based on embedded_hal 1.0.0-alpha while rust-radio-sx127x is.
 // When passing the older hal crate objects to the newer rust-radio-sx127x methods
-// the objects are appended with .compat().
+// the objects are appended with .forward().
 
 // Development work on extensions are in repository https://github.com/pdgilbert/LoRaGPS-rust/
 
@@ -59,7 +59,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
-use e_h_1a::blocking::delay::DelayMs;
+use e_h_1a::delay::blocking::DelayMs;
 
 use radio::Transmit;
 
@@ -114,7 +114,7 @@ fn main() -> ! {
             }
         };
 
-        match lora.try_delay_ms(5000u32) {
+        match lora.delay_ms(5000u32) {
             Ok(b) => b, // b is ()
             Err(_err) => {
                 hprintln!("Error returned from lora.try_delay_ms().").unwrap();
