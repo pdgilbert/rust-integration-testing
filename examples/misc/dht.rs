@@ -27,9 +27,7 @@ use dht_sensor::dht11::Reading;
 use dht_sensor::dht22::Reading;
 use dht_sensor::*;
 
-use embedded_hal::{
-    blocking::delay::DelayMs,
-};
+use embedded_hal::blocking::delay::DelayMs;
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -315,7 +313,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{gpioa::PA8, OpenDrain, Output, Alternate, AF0},
+    gpio::{gpioa::PA8, Alternate, OpenDrain, Output, AF0},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
@@ -342,7 +340,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let mut pa8 = gpioa
         .pa8
         .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-//        .into_af0_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+    //        .into_af0_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
     pa8.set_high().ok();

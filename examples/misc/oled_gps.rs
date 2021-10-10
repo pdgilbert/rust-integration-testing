@@ -453,10 +453,10 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
+    i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
-    serial::{Rx, Serial, Tx, Config as serialConfig, },
+    serial::{Config as serialConfig, Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32l4xx")]
@@ -484,8 +484,12 @@ fn setup() -> (
     let (tx2, rx2) = Serial::usart2(
         p.USART2,
         (
-            gpioa.pa2.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS rx
-            gpioa.pa3.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS tx
+            gpioa
+                .pa2
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS rx
+            gpioa
+                .pa3
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS tx
         ),
         serialConfig::default().baudrate(9600.bps()),
         clocks,
@@ -495,20 +499,27 @@ fn setup() -> (
 
     // following github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
 
-    let mut scl = gpioa
-        .pa9
-        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
+    let mut scl =
+        gpioa
+            .pa9
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
     scl.internal_pull_up(&mut gpioa.pupdr, true);
 
-    let mut sda = gpioa
-        .pa10
-        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
+    let mut sda =
+        gpioa
+            .pa10
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
     sda.internal_pull_up(&mut gpioa.pupdr, true);
 
     (
         tx2,
         rx2,
-        I2c::i2c1(p.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1),   
+        I2c::i2c1(
+            p.I2C1,
+            (scl, sda),
+            i2cConfig::new(400.khz(), clocks),
+            &mut rcc.apb1r1,
+        ),
         Delay::new(cp.SYST, clocks),
     )
 }

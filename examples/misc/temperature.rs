@@ -196,7 +196,7 @@ use stm32f1xx_hal::{
     prelude::*,
 };
 
-//  stm32f100 and stm32f101 only have one adc 
+//  stm32f100 and stm32f101 only have one adc
 #[cfg(any(feature = "stm32f101", feature = "stm32f100"))]
 use stm32f1xx_hal::{
     adc::Adc,
@@ -530,19 +530,19 @@ fn setup() -> (
     let gpiob = p.GPIOB.split();
 
     let adcs: Adcs<Adc<ADC1>, Adc<ADC2>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, clocks, 4, true),  // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
+        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, clocks, 4, true), // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
         ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, clocks, 4, true),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel
     // so no channel needs to be specified here.
 
-    let mcutemp: Sensor<Option<PB1<Analog>>> = Sensor {ch: None }; // no channel
+    let mcutemp: Sensor<Option<PB1<Analog>>> = Sensor { ch: None }; // no channel
 
     let tmp36: Sensor<PB1<Analog>> = Sensor {
         ch: gpiob.pb1.into_analog(),
-    }; 
-        
+    };
+
     impl ReadTempC for Sensor<Option<PB1<Analog>>> {
         fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
             match &mut self.ch {

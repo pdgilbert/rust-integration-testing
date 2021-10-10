@@ -514,9 +514,7 @@ fn setup() -> (
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{Output, PushPull,
-           gpioa::PA1, 
-           gpioc::PC13},
+    gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
     spi::{MisoPin, MosiPin, SckPin, Spi},
@@ -550,9 +548,15 @@ fn setup() -> (
     let spi = Spi::spi1(
         dp.SPI1,
         (
-            gpioa.pa5.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
-            gpioa.pa6.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
-            gpioa.pa7.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
+            gpioa
+                .pa5
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
+            gpioa
+                .pa6
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
+            gpioa
+                .pa7
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         MODE,
         8.mhz(),

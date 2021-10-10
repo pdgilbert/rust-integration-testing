@@ -691,7 +691,7 @@ use stm32l4xx_hal::{
         gpioc::PC13,
         Input, Output, PullDown, PullUp, PushPull,
     },
-    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
+    i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
@@ -748,20 +748,25 @@ fn setup() -> (
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 
-    let sda = sda
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let sda = sda.into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     let stcint = gpiob
         .pb6
         .into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
     //this should be simpler
-    let mut scl = gpiob
-        .pb8
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let mut scl =
+        gpiob
+            .pb8
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
+    let i2c = I2c::i2c1(
+        dp.I2C1,
+        (scl, sda),
+        i2cConfig::new(400.khz(), clocks),
+        &mut rcc.apb1r1,
+    );
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob

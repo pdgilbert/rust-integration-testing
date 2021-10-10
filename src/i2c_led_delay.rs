@@ -435,7 +435,7 @@ pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, SclPin, SdaPin, Config},
+    i2c::{Config, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
@@ -464,17 +464,24 @@ pub fn setup() -> (
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
 
     // following ttps://github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
-    let mut scl = gpiob
-        .pb10
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
+    let mut scl =
+        gpiob
+            .pb10
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let mut sda = gpiob
-        .pb11
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
+    let mut sda =
+        gpiob
+            .pb11
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let i2c = I2c::i2c2(dp.I2C2, (scl, sda), Config::new(400.khz(), clocks),&mut rcc.apb1r1);
+    let i2c = I2c::i2c2(
+        dp.I2C2,
+        (scl, sda),
+        Config::new(400.khz(), clocks),
+        &mut rcc.apb1r1,
+    );
 
     let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
 
@@ -497,4 +504,4 @@ pub fn setup() -> (
     (i2c, led, delay)
 }
 
-// End of HAL/MCU specific setup. 
+// End of HAL/MCU specific setup.

@@ -263,7 +263,7 @@ pub fn setup() -> (
         gpiob.pb9.into_floating_input(&mut gpiob.crh).forward(),   //ReadyPin DIO1 on PB9
         gpioa.pa0.into_push_pull_output(&mut gpioa.crl).forward(), //ResetPin      on PA0
         delay.forward(),                                           //Delay
-        &CONFIG_RADIO,                                            //&Config
+        &CONFIG_RADIO,                                             //&Config
     )
     .unwrap(); // should handle error
 
@@ -327,7 +327,7 @@ use stm32f3xx_hal::{
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
-    serial::{Serial, Tx, Rx, TxPin, RxPin,},
+    serial::{Rx, RxPin, Serial, Tx, TxPin},
     spi::{Error, Spi},
 };
 
@@ -336,8 +336,8 @@ pub fn setup() -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2, impl TxPin<USART2> >,
-    Rx<USART2, impl RxPin<USART2> >,
+    Tx<USART2, impl TxPin<USART2>>,
+    Rx<USART2, impl RxPin<USART2>>,
     I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>,
     PE15<Output<PushPull>>,
 ) {
@@ -515,7 +515,7 @@ pub fn setup() -> (
         gpiob.pb9.into_floating_input().forward(),   //ReadyPin DI01 on PB9
         gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
         delay.forward(),                             //Delay
-        &CONFIG_RADIO,                              //&Config
+        &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
 
@@ -612,7 +612,7 @@ pub fn setup() -> (
         gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
         gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
         delay.forward(),                             //Delay
-        &CONFIG_RADIO,                              //&Config
+        &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
 
@@ -718,7 +718,7 @@ pub fn setup() -> (
         gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
         gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
         delay.forward(),                             //Delay
-        &CONFIG_RADIO,                              //&Config
+        &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
 
@@ -809,7 +809,7 @@ pub fn setup() -> (
         gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
         gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
         delay.forward(),                             //Delay
-        &CONFIG_RADIO,                              //&Config
+        &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
 
@@ -897,7 +897,7 @@ pub fn setup() -> (
         gpiob.pb10.into_floating_input().forward(),  //ReadyPin DIO1 on PB10 in board on Heltec
         gpioa.pa3.into_push_pull_output().forward(), //ResetPin      on PA3  in board on Heltec
         delay.forward(),                             //Delay
-        &CONFIG_RADIO,                              //&Config
+        &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
 
@@ -937,11 +937,11 @@ pub fn setup() -> (
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, SclPin, SdaPin, Config},
+    i2c::{Config, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
-    serial::{ Rx, Serial, Tx},
-    serial,  //for Config
+    serial, //for Config
+    serial::{Rx, Serial, Tx},
     spi::{Error, Spi},
 };
 
@@ -974,9 +974,15 @@ pub fn setup() -> (
     let spi = Spi::spi1(
         p.SPI1,
         (
-            gpioa.pa5.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
-            gpioa.pa6.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
-            gpioa.pa7.into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
+            gpioa
+                .pa5
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
+            gpioa
+                .pa6
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
+            gpioa
+                .pa7
+                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         MODE,
         8.mhz(),
@@ -1014,8 +1020,12 @@ pub fn setup() -> (
     let (tx, rx) = Serial::usart2(
         p.USART2,
         (
-            gpioa.pa2.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS
-            gpioa.pa3.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS
+            gpioa
+                .pa2
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2  for GPS
+            gpioa
+                .pa3
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3  for GPS
         ),
         serial::Config::default().baudrate(9600.bps()),
         clocks,
@@ -1023,17 +1033,24 @@ pub fn setup() -> (
     )
     .split();
 
-    let mut scl = gpioa
-        .pa9
-        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
+    let mut scl =
+        gpioa
+            .pa9
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
     scl.internal_pull_up(&mut gpioa.pupdr, true);
 
-    let mut sda = gpioa
-        .pa10
-        .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
+    let mut sda =
+        gpioa
+            .pa10
+            .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
     sda.internal_pull_up(&mut gpioa.pupdr, true);
 
-    let i2c = I2c::i2c1(p.I2C1, (scl, sda), Config::new(400.khz(), clocks), &mut rcc.apb1r1);
+    let i2c = I2c::i2c1(
+        p.I2C1,
+        (scl, sda),
+        Config::new(400.khz(), clocks),
+        &mut rcc.apb1r1,
+    );
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {

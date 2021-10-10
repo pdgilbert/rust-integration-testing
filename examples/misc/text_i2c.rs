@@ -15,7 +15,7 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_rt::{entry};
+use cortex_m_rt::entry;
 //use cortex_m_rt::{entry, exception, ExceptionFrame};
 
 // old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
@@ -272,7 +272,7 @@ fn setup() -> I2c<I2C1, impl Pins<I2C1>> {
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    i2c::{I2c, SclPin, SdaPin, Config},
+    i2c::{Config, I2c, SclPin, SdaPin},
     pac::{Peripherals, I2C2},
     prelude::*,
 };
@@ -293,18 +293,25 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb2);
 
     // following ttps://github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
-    let mut scl = gpiob
-        .pb10
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
+    let mut scl =
+        gpiob
+            .pb10
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let mut sda = gpiob
-        .pb11
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
+    let mut sda =
+        gpiob
+            .pb11
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
     // return i2c
-    I2c::i2c2(p.I2C2, (scl, sda), Config::new(400.khz(), clocks), &mut rcc.apb1r1)   
+    I2c::i2c2(
+        p.I2C2,
+        (scl, sda),
+        Config::new(400.khz(), clocks),
+        &mut rcc.apb1r1,
+    )
 }
 
 // End of hal/MCU specific setup. Following should be generic code.

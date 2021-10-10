@@ -537,8 +537,12 @@ fn setup() -> (
     let txrx1 = Serial::usart1(
         p.USART1,
         (
-            gpioa .pa9.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
-            gpioa.pa10.into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+            gpioa
+                .pa9
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+            gpioa
+                .pa10
+                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,

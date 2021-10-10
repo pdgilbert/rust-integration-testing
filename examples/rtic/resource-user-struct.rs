@@ -10,11 +10,11 @@ use panic_semihosting as _;
 use rtic::app;
 
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac  ))]
-#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac  ))]  //fails:  USART1 variant or associated item not found in `stm32f3xx_hal::interrupt
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac  ))] //fails:  USART1 variant or associated item not found in `stm32f3xx_hal::interrupt
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac  ))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32))]  //fails: trait `core::marker::Copy` is not implemented for `Interrupt
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32))] //fails: trait `core::marker::Copy` is not implemented for `Interrupt
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac  ))]
 
 //#[rtic::app(device = lm3s6965)]
@@ -25,15 +25,15 @@ mod app {
     //use lm3s6965::Interrupt;
 
     #[cfg(feature = "stm32f1xx")]
-    use stm32f1xx_hal::pac::Interrupt  as interrupt;
+    use stm32f1xx_hal::pac::Interrupt as interrupt;
 
     //#[cfg(feature = "stm32f3xx")]
     //use stm32f3xx_hal::interrupt;
 
     #[cfg(feature = "stm32f3xx")]
     mod interrupt {
-      pub use stm32f3xx_hal::interrupt::*;
-      pub use stm32f3xx_hal::interrupt::{USART1_EXTI25 as USART1, USART2_EXTI26  as USART2}; 
+        pub use stm32f3xx_hal::interrupt::*;
+        pub use stm32f3xx_hal::interrupt::{USART1_EXTI25 as USART1, USART2_EXTI26 as USART2};
     }
 
     //#[cfg(feature = "stm32f3xx")]

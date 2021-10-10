@@ -31,7 +31,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr,};
+use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
 
@@ -503,11 +503,13 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{Output, PushPull, //Alternate, OpenDrain, AF4,
+    gpio::{
         gpioc::PC13,
         //gpiob::{PB10, PB11},
+        Output,
+        PushPull, //Alternate, OpenDrain, AF4,
     },
-    i2c::{I2c, SclPin, SdaPin, Config as i2cConfig},
+    i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
@@ -538,19 +540,26 @@ fn setup() -> (
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb2);
 
     // following ttps://github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
-    let mut scl = gpiob
-        .pb10
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
+    let mut scl =
+        gpiob
+            .pb10
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
     //let scl = scl.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let mut sda = gpiob
-        .pb11
-        .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
+    let mut sda =
+        gpiob
+            .pb11
+            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
     //let sda = sda.into_af4(&mut gpiob.moder, &mut gpiob.afrh);
 
-    let i2c = I2c::i2c2(p.I2C2, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);   
+    let i2c = I2c::i2c2(
+        p.I2C2,
+        (scl, sda),
+        i2cConfig::new(400.khz(), clocks),
+        &mut rcc.apb1r1,
+    );
 
     let mut gpioc = p.GPIOC.split(&mut rcc.ahb2);
 
@@ -575,11 +584,13 @@ fn setup() -> (
 
 // End of hal/MCU specific setup. Following should be generic code.
 
-pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A 
-      ) -> (i16, i16, i16, [i16; 3]) {
+pub fn read_all<E, A: DynamicOneShot<Error = E>>(
+    adc_a: &mut A,
+    adc_b: &mut A,
+) -> (i16, i16, i16, [i16; 3]) {
     // Note scale_cur divides, scale_a and scale_b multiplies
     let scale_cur = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
-    //let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
+                        //let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
     let scale_b = 2; // calibrated to get mV    depends on FullScaleRange
 
     //TMP35 scale is 100 deg C per 1.0v (slope 10mV/deg C) and goes through
@@ -590,8 +601,9 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A
 
     //first adc  Note that readings are zero on USB power (programming) rather than battery.
 
-    let bat_ma  = block!(adc_a.read(ChannelSelection::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
-    let load_ma = block!(adc_a.read(ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
+    let bat_ma = block!(adc_a.read(ChannelSelection::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
+    let load_ma =
+        block!(adc_a.read(ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
 
     // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
     // also first adc
@@ -608,8 +620,8 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A
         block!(adc_b.read(ChannelSelection::SingleA2)).unwrap_or(8091) * scale_b,
     ];
 
-    let temp_c = block!(adc_b.read(ChannelSelection::SingleA3)).unwrap_or(8091) / scale_temp
-        - offset_temp;
+    let temp_c =
+        block!(adc_b.read(ChannelSelection::SingleA3)).unwrap_or(8091) / scale_temp - offset_temp;
 
     // third adc
     //let values_c = [
@@ -620,7 +632,7 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(adc_a: &mut A, adc_b: &mut A
     //];
 
     //(bat_mv, bat_ma, load_ma, temp_c, values_b )
-    (bat_ma, load_ma, temp_c, values_b )
+    (bat_ma, load_ma, temp_c, values_b)
 }
 
 fn display<S>(
@@ -704,9 +716,13 @@ fn main() -> ! {
     // This is very small for diff across low value shunt resistors
     //   but up to 5v for single pin with usb power.
     // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
-    adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+    adc_a
+        .set_full_scale_range(FullScaleRange::Within0_256V)
+        .unwrap();
     //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-    adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+    adc_b
+        .set_full_scale_range(FullScaleRange::Within4_096V)
+        .unwrap();
     //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 
     let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
@@ -717,12 +733,18 @@ fn main() -> ! {
         // Comment out blinking to calibrate scale.
         led.blink(10_u16, &mut delay);
 
-        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+        adc_a
+            .set_full_scale_range(FullScaleRange::Within4_096V)
+            .unwrap();
         //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
-        let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
-        adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+        let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0))
+            .unwrap_or(8091)
+            * scale_a;
+        adc_a
+            .set_full_scale_range(FullScaleRange::Within0_256V)
+            .unwrap();
 
-        let (bat_ma, load_ma, temp_c, values_b ) = read_all(&mut adc_a, &mut adc_b);
+        let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
 
         display(
             bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,
