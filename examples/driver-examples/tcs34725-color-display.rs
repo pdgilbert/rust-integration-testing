@@ -27,10 +27,10 @@ use cortex_m_rt::entry;
 use rtt_target::{rprintln, rtt_init_print};
 
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::Text,
+    text::{Baseline, Text},
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
@@ -38,20 +38,20 @@ use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
 #[entry]
 fn main() -> ! {
-    rtt_init_print!();
-    rprintln!("TCS34725 example");
+//    rtt_init_print!();
+//    rprintln!("TCS34725 example");
 
     let (i2c, mut led, mut delay) = setup();
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT)
         .text_color(BinaryColor::On)
         .build();
 
@@ -62,8 +62,7 @@ fn main() -> ! {
         // wait for measurement to be available
         delay.delay_ms(50_u8);
     }
-    let mut lines: [heapless::String<32>; 4] = [
-        heapless::String::new(),
+    let mut lines: [heapless::String<32>; 3] = [
         heapless::String::new(),
         heapless::String::new(),
         heapless::String::new(),
@@ -84,15 +83,13 @@ fn main() -> ! {
         lines[0].clear();
         lines[1].clear();
         lines[2].clear();
-        lines[3].clear();
 
-        write!(lines[0], "Red: {}", measurement.red).unwrap();
-        write!(lines[1], "Green: {}", measurement.green).unwrap();
-        write!(lines[2], "Blue: {}", measurement.blue).unwrap();
-        write!(lines[3], "Clear: {}", measurement.clear).unwrap();
+        write!(lines[0], "Red  Green  Blue").unwrap();
+        write!(lines[1], "{}  {}  {}", measurement.red, measurement.green, measurement.blue).unwrap();
+        write!(lines[2], "Clear:   {}",  measurement.clear).unwrap();
         display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::new(line, Point::new(0, i as i32 * 16), text_style)
+            Text::with_baseline(line, Point::new(0, i as i32 * 10), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
         }

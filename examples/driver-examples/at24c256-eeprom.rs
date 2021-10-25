@@ -27,6 +27,7 @@ use cortex_m_rt::entry;
 use embedded_hal::blocking::delay::DelayMs;
 
 use rtt_target::{rprintln, rtt_init_print};
+use cortex_m_semihosting::hprintln;
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
@@ -34,14 +35,18 @@ use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 fn main() -> ! {
     rtt_init_print!();
     rprintln!("AT24C256 example");
+    hprintln!("AT24C256 example").unwrap();
 
     let (i2c, mut led, mut delay) = setup();
 
-    let mut eeprom = Eeprom24x::new_24x256(i2c, SlaveAddr::Alternative(true, true, true));
+    let mut eeprom = Eeprom24x::new_24x256(i2c, SlaveAddr::default()); //SlaveAddr::Alternative(true, true, true));
     let memory_address = 0x01;
+    hprintln!("program").unwrap();
     eeprom
         .write_page(memory_address, &[0xAB, 0xCD, 0xEF, 0x12])
         .unwrap();
+    
+    hprintln!("check").unwrap();
 
     // wait maximum time necessary for write
     delay.delay_ms(5_u16);

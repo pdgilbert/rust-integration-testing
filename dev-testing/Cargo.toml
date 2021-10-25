@@ -195,6 +195,10 @@ name = "max30102-heart-usart"
 path = "examples/driver-examples/max30102-heart-usart.rs"
 
 [[example]]
+name = "max30102-display"
+path = "examples/driver-examples/max30102-display.rs"
+
+[[example]]
 name = "mcp7940n-rtc-display"
 path = "examples/driver-examples/mcp7940n-rtc-display.rs"
 
@@ -315,6 +319,10 @@ path = "examples/misc/serial_string.rs"
 [[example]]
 name = "temperature"
 path = "examples/misc/temperature.rs"
+
+[[example]]
+name = "temperature_display"
+path = "examples/misc/temperature_display.rs"
 
 [[example]]
 name = "gps_rw"

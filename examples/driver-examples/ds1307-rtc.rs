@@ -27,24 +27,33 @@ use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
+use cortex_m_semihosting::hprintln;
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
-    rprintln!("DS1307 example");
+    rprintln!("DS1307 real time clock example");
+    hprintln!("DS1307 real time clock example").unwrap();
 
     let (i2c, mut led, mut delay) = setup();
 
+    hprintln!("rtc").unwrap();
     let mut rtc = Ds1307::new(i2c);
+    hprintln!("begin").unwrap();
     let begin = NaiveDate::from_ymd(2020, 5, 2).and_hms(10, 21, 34);
+    hprintln!("rtc.set_datetime").unwrap();
     rtc.set_datetime(&begin).unwrap();
+    hprintln!("loop").unwrap();
     loop {
         let now = rtc.get_datetime().unwrap();
+        hprintln!("now {}", now).unwrap();
         if (now - begin).num_seconds() < 30 {
             // this will blink for 30 seconds
+            hprintln!("blink").unwrap();
             led.blink(250_u16, &mut delay);
+            hprintln!("delay").unwrap();
             delay.delay_ms(250_u16);
         }
     }

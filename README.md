@@ -116,12 +116,19 @@ in place then in one window run
 ```
 openocd -f interface/$INTERFACE.cfg -f target/$PROC.cfg 
 ```
-where INTERFACE is set for your probe, for example, `export INTERFACE=stlink-v2` or `export INTERFACE=stlink-v2-1`.
+where INTERFACE is set for your probe, for example, `export INTERFACE=stlink-v2` for a typical cheap dongle
+or `export INTERFACE=stlink-v2-1` for a slightly newer version.
 In another window do
 ```
 cargo  run --target $TARGET --features $HAL,$MCU --example xxx  [ --release]
 ```
 The `--release` will be needed if code is too big for memory.
+
+For examples that need a serial connection run a terminal session such as 
+```
+minicom -D /dev/ttyUSB0 -b9600
+```
+where 0 is replaced by the acive USB connection number which can be found with ` dmesg | grep -i tty `
 
 ## License
 

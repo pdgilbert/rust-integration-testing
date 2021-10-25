@@ -738,7 +738,8 @@ fn main() -> ! {
     // Write `Y` and wait until the write is successful
     block!(tx3.write(send)).ok();
 
-    hprintln!("   receiving on rx2 ...").unwrap();
+    // hprintln here can slow enough that transmition is missed
+    //hprintln!("   receiving on rx2 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
     let received = block!(rx2.read()).unwrap();
@@ -755,8 +756,8 @@ fn main() -> ! {
 
     hprintln!(
         "   tx3 to rx2  characters,  {} = {}",
-        from_utf8(&[received]).unwrap(),
-        from_utf8(&[send]).unwrap()
+        from_utf8(&[received]).unwrap_or(&"!"),
+        from_utf8(&[send]).unwrap_or(&"!")
     )
     .unwrap();
 

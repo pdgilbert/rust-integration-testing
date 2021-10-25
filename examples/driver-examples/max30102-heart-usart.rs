@@ -4,14 +4,24 @@
 //!
 //! To setup the serial communication, have a look at the discovery book:
 //! https://rust-embedded.github.io/discovery/10-serial-communication/index.html
+//! (It is 9600 baud standard serial from bluepill pin to serial display.)
 //!
+//!
+//! See https://github.com/eldruin/max3010x-rs for details of the driver API.
+//!
+//!  The data interpretation below needs some work and possibly wiring for LED power, int, etc.
+//!  See  https://datasheets.maximintegrated.com/en/ds/MAX30102.pdf
+//!       https://www.instructables.com/Pulse-Oximeter-With-Much-Improved-Precision/
+//!
+//! Bluepill setting are 
 //! ```
 //! BP   <-> MAX30102 <-> Serial
 //! GND  <-> GND      <-> GND
 //! 3.3V <-> VCC      <-> VDD
-//! PB6               <-> RX
+//! PB6 (TX)          <-> RX    9600 baud  PB7 (RX) is not used
 //! PB8  <-> SCL
 //! PB9  <-> SDA
+//!  need also LED power connections, etc.
 //! ```
 //!
 //! Run with:
@@ -21,11 +31,12 @@
 #![no_std]
 #![no_main]
 
-//use core::fmt::Write;
+use core::fmt::Write;  // for writeln!
 use cortex_m_rt::entry;
 use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
+use cortex_m_semihosting::hprintln;
 
 use nb::block;
 
@@ -707,10 +718,17 @@ fn setup() -> (
 
 #[entry]
 fn main() -> ! {
-    rtt_init_print!();
-    rprintln!("MAX30102 example");
+    let (i2c, mut led, mut delay, mut tx, _rx) = setup();
 
-    let (i2c, _led, mut delay, mut tx, _rx) = setup();
+    // Blink LED to indicate running.
+    led.blink(500_u16, &mut delay);
+
+    rtt_init_print!();
+    //rprintln!("test write to console ...");
+    hprintln!("test write to console ...").unwrap();
+    for byte in b"\r\nconsole connect check.\r\n" {
+        block!(tx.write(*byte)).ok();
+    }
 
     let mut max30102 = Max3010x::new_max30102(i2c);
     max30102.reset().unwrap();
@@ -732,12 +750,23 @@ fn main() -> ! {
     }
 
     loop {
+        // Blink LED to check that loop is arunning.
+        led.blink(50_u16, &mut delay);
+
+        hprintln!("loop i").unwrap();
+        //rprintln!("{}\r", data[i]);   // rprintln requires updated probe??
         delay.delay_ms(100_u8);
         let mut data = [0; 16];
         let read = max30102.read_fifo(&mut data).unwrap_or(0);
         for i in 0..read.into() {
-            //writeln!(tx, "{}\r", data[i],).unwrap();
-            block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
+              hprintln!("data {}", data[i]).unwrap();
+              writeln!(tx, "{}\r", data[i],).unwrap();  
+              //block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
         }
+        for byte in b"\r\n" {
+            block!(tx.write(*byte)).ok();
+        }
+
+        delay.delay_ms(3000_u16);
     }
 }

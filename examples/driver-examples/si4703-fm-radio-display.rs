@@ -35,10 +35,12 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::Text,
+    text::{Baseline, Text},
 };
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
+use cortex_m_semihosting::hprintln;
+
 use si4703::{
     reset_and_select_i2c_method1 as reset_si4703, ChannelSpacing, DeEmphasis, ErrorWithPin,
     SeekDirection, SeekMode, Si4703, Volume,
@@ -804,22 +806,32 @@ fn setup() -> (
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
-    rprintln!("Si4703 example");
+    //rprintln!("Si4703 example");
+    hprintln!("Si4703 example").unwrap();
 
     let (i2c, mut led, mut delay, mut buttons, stcint) = setup();
 
+    hprintln!("manage").unwrap();
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
 
+    hprintln!("text_style").unwrap();
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
 
+    let mut buffer: heapless::String<64> = heapless::String::new();
+    buffer.clear();
+    write!(buffer, "Radio init...").unwrap();
+    display.clear();
+    Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
+    display.flush().unwrap();
+ 
     let mut radio = Si4703::new(manager.acquire());
     radio.enable_oscillator().unwrap();
     delay.delay_ms(500_u16);
@@ -831,24 +843,32 @@ fn main() -> ! {
     radio.set_channel_spacing(ChannelSpacing::Khz100).unwrap();
     radio.unmute().unwrap();
 
-    let mut buffer: heapless::String<64> = heapless::String::new();
+    hprintln!("loop").unwrap();
+    write!(buffer, "\nloop...").unwrap();
+    display.clear();
+    Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
+    display.flush().unwrap();
+
     loop {
-        // Blink LED 0 every time a new seek is started
-        // to check that everything is actually running.
-        led.blink(50_u16, &mut delay);
+        // Blink LED to indicate looping.
+        led.blink(5000_u16, &mut delay);
 
         let should_seek_down = buttons.seekdown();
         let should_seek_up = buttons.seekup();
         if should_seek_down || should_seek_up {
+            // Blink LED every time a new seek is started
+            led.blink(50_u16, &mut delay);
+            led.blink(50_u16, &mut delay);
             buffer.clear();
-            write!(buffer, "Seeking...").unwrap();
+            hprintln!("Seeking...").unwrap();
+            write!(buffer, "\nSeeking...").unwrap();
 
             display.clear();
-            Text::new(&buffer, Point::zero(), text_style)
+            Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
-
             display.flush().unwrap();
+
             let direction = if should_seek_down {
                 SeekDirection::Down
             } else {
@@ -858,7 +878,7 @@ fn main() -> ! {
             buffer.clear();
             loop {
                 match radio.seek_with_stc_int_pin(SeekMode::Wrap, direction, &stcint) {
-                    Err(nb::Error::WouldBlock) => {}
+                    Err(nb::Error::WouldBlock) => {hprintln!("x").unwrap()}
                     Err(nb::Error::Other(ErrorWithPin::SeekFailed)) => {
                         write!(buffer, "Seek Failed!  ").unwrap();
                         break;
@@ -873,9 +893,10 @@ fn main() -> ! {
                         break;
                     }
                 }
+                hprintln!(".").unwrap();
             }
             display.clear();
-            Text::new(&buffer, Point::zero(), text_style)
+            Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
 
