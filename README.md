@@ -15,6 +15,7 @@ One strategy uses a recent release versions of both HAL crates and driver device
 The  second  uses a recent release versions of HAL crates and github versions of driver crates. 
 The   third  uses  github versions of HAL crates and a recent release versions of driver crates. 
 The  fourth  uses  github versions of both HAL crates and driver crates. 
+(Disabled driver-testing and hal-testing. The 2 stategies dev-testing and release-testing are sufficient for now.)
 
 The examples themselves are the same for all strategies, with the exception that breaking 
 updates might be accommodated.  However, in general it is not necessary to accommodate

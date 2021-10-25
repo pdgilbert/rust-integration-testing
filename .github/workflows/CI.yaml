@@ -15,15 +15,15 @@ jobs:
 # are all attempted. The job does not stop at the first example to fail. This is nice for 
 # identifying problems in the examples, but is slow because of rebuild for each example.
 # (It would be faster if I could get caching to work.)
-# The 2nd job runs a matrix of 4 stratagies x 14 boards. 
+# The 2nd job runs a matrix of 2 (previously 4) stratagies x 14 boards. 
 # For each matrix point all examples are run with a single build. This is faster but
 # terminates on the first example failure so examples that are known to fail are omitted.
 
 # The strategies are release-testing, driver-testing, hal-testing, and dev-testing.
 # The differnce is set in the Cargo.toml file in the manifest directories.
 # The release-testing uses release versions of both the driver crate and the HAL crate.
-# The driver-testing  uses the git versions of the driver crate and the release version of the HAL crate.
-# The   hal-testing   uses the release versions of the driver crate and the git version of the HAL crate.
+# disabled: The driver-testing  uses the git versions of the driver crate and the release version of the HAL crate.
+# disabled: The   hal-testing   uses the release versions of the driver crate and the git version of the HAL crate.
 # The   dev-testing   uses git versions of both the driver crate and the HAL crate.
 
 #################################################################################################
@@ -122,7 +122,8 @@ jobs:
         #  none-stm32f042,  always fails because it does not have 3 usarts
         #  stm32fxx_hal does not have adc support enabled for stm32f722. Switched to stm32f769
 
-        stg: [release-testing, driver-testing, hal-testing, dev-testing ]
+        #stg: [release-testing, driver-testing, hal-testing, dev-testing ]
+        stg: [release-testing, dev-testing ]
         include:
            #- brd: "none-stm32f042"  
            #  mcu:  stm32f042
