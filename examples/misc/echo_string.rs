@@ -329,13 +329,12 @@ fn setup() -> (
     let txrx1 = Serial::new(
         p.USART1,
         (
-            gpioa.pa9.into_alternate_af7(),
-            gpioa.pa10.into_alternate_af7(),
+            gpioa.pa9.into_alternate(),
+            gpioa.pa10.into_alternate(),
         ),
         Config::default().baudrate(9600.Bps()),
         clocks,
-    )
-    .unwrap();
+    );
 
     let (mut tx1, mut rx1) = txrx1.split();
 

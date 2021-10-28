@@ -1,4 +1,4 @@
- status of job CI($BOARD , dev-testing)   good  => all examples in CI job ran, otherwise first fail
+ status of job CI( $BOARD , dev-testing)   good  => all examples in CI job ran, otherwise first fail
 
 25-09-2021 - added temperature and digi_pot to CI job. The result in temperature is FAKED for several hals.
 28-09-2021 - switched from stm32f722 to stm32f769 because adc is not yet supported in hal for former.
@@ -24,3 +24,5 @@ none-stm32l4x1        dht          dht             dht
 
 `stm32f0xx-hal`,`, ``stm32f1xx-hal`, `stm32f3xx-hal`, `stm32f4xx-halstm32f7xx-hal`, `stm32h7xx-hal`, `stm32l0xx-hal`, `stm32l1xx-hal`, `stm32l4xx-hal`
 
+
+stm32f4xx-hal  jobs ARE NOT WORKING BECAUSE OF UPDATE CONFLICT

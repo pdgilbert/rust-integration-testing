@@ -301,7 +301,7 @@ mod app {
         gpio::{
             gpiob::{PB8, PB9},
             gpioc::PC13,
-            Alternate, Output, PushPull, AF4,
+            AlternateOD, Output, PushPull, AF4,
         },
         i2c::{BlockingI2c, Mode},
         pac,
@@ -317,7 +317,7 @@ mod app {
     type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32f7xx")]
-    type I2cBus = BlockingI2c<pac::I2C1, PB8<Alternate<AF4>>, PB9<Alternate<AF4>>>;
+    type I2cBus = BlockingI2c<pac::I2C1, PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>>;
     //type I2cBus = BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
 
     #[cfg(feature = "stm32f7xx")]
@@ -334,8 +334,8 @@ mod app {
         let (tx, _rx) = Serial::new(
             dp.USART2,
             (
-                gpioa.pa2.into_alternate_af7(),
-                gpioa.pa3.into_alternate_af7(),
+                gpioa.pa2.into_alternate(),
+                gpioa.pa3.into_alternate(),
             ),
             clocks,
             Config {
@@ -348,8 +348,8 @@ mod app {
 
         let gpiob = dp.GPIOB.split();
 
-        let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-        let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
+        let scl = gpiob.pb8.into_alternate_open_drain(); // scl on PB8
+        let sda = gpiob.pb9.into_alternate_open_drain(); // sda on PB9
 
         let i2c = BlockingI2c::i2c1(
             dp.I2C1,
@@ -365,10 +365,10 @@ mod app {
 
         impl LED for PC13<Output<PushPull>> {
             fn on(&mut self) -> () {
-                self.set_low().unwrap()
+                self.set_low()
             }
             fn off(&mut self) -> () {
-                self.set_high().unwrap()
+                self.set_high()
             }
         }
 

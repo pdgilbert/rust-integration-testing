@@ -363,8 +363,8 @@ fn setup() -> (
     let (tx1, rx1) = Serial::new(
         p.USART1,
         (
-            gpioa.pa9.into_alternate_af7(), //tx pa9
-            gpioa.pa10.into_alternate_af7(),
+            gpioa.pa9.into_alternate(), //tx pa9
+            gpioa.pa10.into_alternate(),
         ), //rx pa10
         clocks,
         Config {
@@ -378,8 +378,8 @@ fn setup() -> (
     let (tx2, rx2) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_af7(), //tx pa2
-            gpioa.pa3.into_alternate_af7(),
+            gpioa.pa2.into_alternate(), //tx pa2
+            gpioa.pa3.into_alternate(),
         ), //rx pa3
         clocks,
         Config {
@@ -395,8 +395,8 @@ fn setup() -> (
     let (tx3, rx3) = Serial::new(
         p.USART3,
         (
-            gpiob.pb10.into_alternate_af7(), //tx pb10
-            gpiob.pb11.into_alternate_af7(),
+            gpiob.pb10.into_alternate(), //tx pb10
+            gpiob.pb11.into_alternate(),
         ), //rx pb11
         clocks,
         Config {

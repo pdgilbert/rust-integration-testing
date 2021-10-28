@@ -588,9 +588,9 @@ pub fn setup() -> (
     let gpiob = p.GPIOB.split();
     let gpioc = p.GPIOC.split();
 
-    let sck = gpioa.pa5.into_alternate_af5(); // sck   on PA5
-    let miso = gpioa.pa6.into_alternate_af5(); // miso  on PA6
-    let mosi = gpioa.pa7.into_alternate_af5(); // mosi  on PA7
+    let sck = gpioa.pa5.into_alternate(); // sck   on PA5
+    let miso = gpioa.pa6.into_alternate(); // miso  on PA6
+    let mosi = gpioa.pa7.into_alternate(); // mosi  on PA7
 
     //   somewhere 8.mhz needs to be set in spi
 
@@ -619,8 +619,8 @@ pub fn setup() -> (
     let (tx, rx) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_af7(), //tx pa2  for GPS
-            gpioa.pa3.into_alternate_af7(), //rx pa3  for GPS
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS
+            gpioa.pa3.into_alternate(), //rx pa3  for GPS
         ),
         clocks,
         Config {
@@ -631,8 +631,8 @@ pub fn setup() -> (
     )
     .split();
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain();
-    let sda = gpiob.pb11.into_alternate_af4().set_open_drain();
+    let scl = gpiob.pb10.into_alternate_open_drain();
+    let sda = gpiob.pb11.into_alternate_open_drain();
 
     let i2c = BlockingI2c::i2c2(
         p.I2C2,
@@ -645,10 +645,10 @@ pub fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

@@ -191,7 +191,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    pa8.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer

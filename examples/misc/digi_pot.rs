@@ -324,9 +324,9 @@ fn setup() -> (
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split();
 
-    let sck = gpioa.pa5.into_alternate_af5(); // sck   on PA5
-    let miso = gpioa.pa6.into_alternate_af5(); // miso  on PA6
-    let mosi = gpioa.pa7.into_alternate_af5(); // mosi  on PA7
+    let sck = gpioa.pa5.into_alternate(); // sck   on PA5
+    let miso = gpioa.pa6.into_alternate(); // miso  on PA6
+    let mosi = gpioa.pa7.into_alternate(); // mosi  on PA7
 
     //   somewhere 8.mhz needs to be set in spi
 
@@ -337,16 +337,16 @@ fn setup() -> (
     );
 
     let mut cs = gpioa.pa1.into_push_pull_output();
-    cs.set_high().unwrap();
+    cs.set_high();
 
     let led = gpioc.pc13.into_push_pull_output();
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

@@ -291,28 +291,28 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     // all leds wire with pin as source, cathode connect to ground though a resistor.
     impl LED for PB13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB14<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
     impl LED for PB15<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
