@@ -15,6 +15,7 @@ edition = "2018"
 #stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 #stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
+stm32f3xx-hal = { git = "https://github.com/Sh3Rm4n/stm32f3xx-hal", optional = true, branch = "pac-upgrade" }
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
@@ -115,7 +116,7 @@ void                 = { version = ">=1.0.2", default-features = false } # err r
 # rtic does not work on stm32f0xx and stm32l0xx devices
 #stm32f0xx = ["stm32f0xx-hal/rt", "shared-bus-rtic"]
 stm32f1xx = ["stm32f1xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-#stm32f3xx = ["stm32f3xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
+stm32f3xx = ["stm32f3xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
 stm32f4xx = ["stm32f4xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
 stm32f7xx = ["stm32f7xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
 stm32h7xx = ["stm32h7xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
@@ -128,7 +129,7 @@ stm32l4xx = ["stm32l4xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
 stm32f100     = ["stm32f1xx-hal/stm32f100"  ]
 stm32f101     = ["stm32f1xx-hal/stm32f101"  ]
 stm32f103     = ["stm32f1xx-hal/stm32f103",    "stm32f1xx-hal/medium"]
-#stm32f303xc   = ["stm32f3xx-hal/stm32f303xc"] 
+stm32f303xc   = ["stm32f3xx-hal/stm32f303xc"] 
 stm32f401     = ["stm32f4xx-hal/stm32f401"  ] 
 stm32f405     = ["stm32f4xx-hal/stm32f405"  ] 
 stm32f411     = ["stm32f4xx-hal/stm32f411"  ] 
