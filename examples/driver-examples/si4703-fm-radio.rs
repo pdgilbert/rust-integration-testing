@@ -641,8 +641,8 @@ fn setup() -> (
     let clocks = rcc.clocks;
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let gpiob = dp.GPIOB.split();
-    let gpioc = dp.GPIOC.split();
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output();
 

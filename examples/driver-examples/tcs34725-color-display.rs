@@ -24,7 +24,7 @@ use core::fmt::Write;
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
 use cortex_m_rt::entry;
 
-use rtt_target::{rprintln, rtt_init_print};
+//use rtt_target::{rprintln, rtt_init_print};
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},

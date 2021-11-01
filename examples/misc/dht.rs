@@ -291,10 +291,10 @@ use embedded_hal::digital::v2::OutputPin;
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.freeze(rcc::Config::hsi());
+    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
     //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
-    let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
+    let mut pa8 = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
     pa8.set_high().ok();

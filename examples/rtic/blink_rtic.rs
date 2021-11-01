@@ -242,6 +242,7 @@ mod app {
         gpio::{gpiob::PB6, Output, PushPull},
         prelude::*,
         stm32::Peripherals,
+        rcc, // for ::Config but note name conflict with serial
     };
 
     #[cfg(feature = "stm32l1xx")]
@@ -255,7 +256,8 @@ mod app {
 
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) -> LedType {
-        let gpiob = dp.GPIOB.split();
+        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
+        let gpiob = dp.GPIOB.split(&mut rcc);
         let led = gpiob.pb6.into_push_pull_output();
 
         impl LED for PB6<Output<PushPull>> {

@@ -35,7 +35,7 @@ use core::fmt::Write;  // for writeln!
 use cortex_m_rt::entry;
 use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 use panic_rtt_target as _;
-use rtt_target::{rprintln, rtt_init_print};
+//use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
 use nb::block;
@@ -582,7 +582,7 @@ fn setup() -> (
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
     let clocks = rcc.clocks;
 
-    let gpiob = dp.GPIOB.split();
+    let gpiob = dp.GPIOB.split(&mut rcc);
 
     // could also have scl,sda  on PB6,PB7 or on PB10,PB11
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
@@ -603,7 +603,7 @@ fn setup() -> (
             self.set_low().unwrap()
         }
     }
-    let gpioa = dp.GPIOA.split();
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
     // Note that setting the alternate function mode and push_pull input/output
     // is not necessary. The hal code knows to do this for a usart.
@@ -723,7 +723,7 @@ fn main() -> ! {
     // Blink LED to indicate running.
     led.blink(500_u16, &mut delay);
 
-    rtt_init_print!();
+    //rtt_init_print!();
     //rprintln!("test write to console ...");
     hprintln!("test write to console ...").unwrap();
     for byte in b"\r\nconsole connect check.\r\n" {

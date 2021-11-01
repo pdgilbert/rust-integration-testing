@@ -788,7 +788,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
     //let clocks  = rcc.cfgr.freeze();
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
     //  see https://github.com/stm32-rs/stm32l1xx-hal/blob/master/examples/adc.rs
 
     let mut adc = p.ADC.adc(&mut rcc);

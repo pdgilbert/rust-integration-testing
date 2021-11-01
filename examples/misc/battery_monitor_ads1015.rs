@@ -475,7 +475,7 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
     let clocks = rcc.clocks;
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     // could also have scl,sda  on PB6,PB7 or on PB10,PB11
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
