@@ -34,7 +34,8 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        brd: [bluepill, discovery-stm32f303]  
+        brd: [discovery-stm32f303]  
+        #brd: [bluepill, discovery-stm32f303]  
 
 
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
@@ -114,10 +115,13 @@ jobs:
     #fail-fast: false
     strategy:
       matrix:        
-        brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
-              none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
-              none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
-        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        brd: [discovery-stm32f303, 
+              discovery-stm32l100, heltec-lora-node151, 
+              none-stm32f030,       none-stm32l0x2 ]
+        #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
+        #      none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
+        #      none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
+       #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         
         #  none-stm32f042,  always fails because it does not have 3 usarts
         #  stm32fxx_hal does not have adc support enabled for stm32f722. Switched to stm32f769
@@ -125,46 +129,46 @@ jobs:
         #stg: [release-testing, driver-testing, hal-testing, dev-testing ]
         stg: [release-testing, dev-testing ]
         include:
-           #- brd: "none-stm32f042"  
-           #  mcu:  stm32f042
-           #  hal: "stm32f0xx"
-           #  trg: "thumbv6m-none-eabi"
+           ##- brd: "none-stm32f042"  
+           ##  mcu:  stm32f042
+           ##  hal: "stm32f0xx"
+           ##  trg: "thumbv6m-none-eabi"
            - brd: "none-stm32f030"
              mcu:  stm32f030xc
              hal: "stm32f0xx"
              trg: "thumbv6m-none-eabi"   
-           - brd:  "none-stm32f100"
-             mcu:  stm32f100
-             hal: "stm32f1xx"
-             trg: "thumbv7m-none-eabi"
-           - brd: "none-stm32f101"
-             mcu:  stm32f101
-             hal: "stm32f1xx"
-             trg: "thumbv7m-none-eabi"
-           - brd: "bluepill"
-             mcu:  stm32f103
-             hal: "stm32f1xx"
-             trg: "thumbv7m-none-eabi"
+           #- brd:  "none-stm32f100"
+           #  mcu:  stm32f100
+           #  hal: "stm32f1xx"
+           #  trg: "thumbv7m-none-eabi"
+           #- brd: "none-stm32f101"
+           #  mcu:  stm32f101
+           #  hal: "stm32f1xx"
+           #  trg: "thumbv7m-none-eabi"
+           #- brd: "bluepill"
+           #  mcu:  stm32f103
+           #  hal: "stm32f1xx"
+           #  trg: "thumbv7m-none-eabi"
            - brd: "discovery-stm32f303"
              mcu:  stm32f303xc
              hal: "stm32f3xx"
              trg: "thumbv7em-none-eabihf"
-           - brd: "blackpill-stm32f401"
-             mcu:  stm32f401
-             hal: "stm32f4xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "blackpill-stm32f411"
-             mcu:  stm32f411
-             hal: "stm32f4xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32f769"
-             mcu:  stm32f769
-             hal: "stm32f7xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32h742"
-             mcu:  stm32h742             
-             hal: "stm32h7xx"
-             trg: "thumbv7em-none-eabihf"
+           #- brd: "blackpill-stm32f401"
+           #  mcu:  stm32f401
+           #  hal: "stm32f4xx"
+           #  trg: "thumbv7em-none-eabihf"
+           #- brd: "blackpill-stm32f411"
+           #  mcu:  stm32f411
+           #  hal: "stm32f4xx"
+           #  trg: "thumbv7em-none-eabihf"
+           #- brd: "none-stm32f769"
+           #  mcu:  stm32f769
+           #  hal: "stm32f7xx"
+           #  trg: "thumbv7em-none-eabihf"
+           #- brd: "none-stm32h742"
+           #  mcu:  stm32h742             
+           #  hal: "stm32h7xx"
+           #  trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32l0x2"
              mcu:  stm32l072kztx
              hal: "stm32l0xx"
@@ -177,10 +181,10 @@ jobs:
              mcu:  stm32l151
              hal: "stm32l1xx"
              trg: "thumbv7m-none-eabi"
-           - brd: "none-stm32l4x2"
-             mcu:  stm32l4x2
-             hal: "stm32l4xx"
-             trg: "thumbv7em-none-eabi"
+           #- brd: "none-stm32l4x2"
+           #  mcu:  stm32l4x2
+           #  hal: "stm32l4xx"
+           #  trg: "thumbv7em-none-eabi"
 
     steps:
       - uses: actions/checkout@v2
