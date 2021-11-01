@@ -28,8 +28,9 @@ stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = 
 
 dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branch = "main"}
 ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
-mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
 
+# examples//driver-examples/
+mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
 ad983x          = { git = "https://github.com/eldruin/ad983x-rs" }
 ads1x1x         = { git = "https://github.com/eldruin/ads1x1x-rs" }
 bmi160          = { git = "https://github.com/eldruin/bmi160-rs" }
@@ -54,9 +55,12 @@ veml6030        = { git = "https://github.com/eldruin/veml6030-rs" }
 veml6070        = { git = "https://github.com/eldruin/veml6070-rs" }
 veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 
+# examples/misc-i2c-drivers/
 #aht10           = { git = "https://github.com/heyitsanthony/aht10" }
 #aht20           = { git = "https://github.com/mythmon/aht20" }
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  NEEDS std
+vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
+
 
 #cortex-m-rtic = ">=0.6" # needed for condition on different hals. Still not released.
 cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
@@ -363,8 +367,12 @@ path = "examples/rtic/resource-user-struct.rs"
 
 [[example]]
 name = "aht10-display"
-path = "examples/misc-drivers/aht10-display.rs"
+path = "examples/misc--i2c-drivers/aht10-display.rs"
 
 #[[example]]
 #name = "hdc1080-display"
-#path = "examples/misc-drivers/hdc1080-display.rs"
+#path = "examples/misc-i2c-drivers/hdc1080-display.rs"
+
+[[example]]
+name = "vl53lox-display"
+path = "examples/misc-i2c-drivers/vl53lox-display.rs"
