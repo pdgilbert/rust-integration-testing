@@ -569,7 +569,7 @@ fn setup() -> (
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
     //let clocks  = rcc.cfgr.freeze();
 
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     // Note that setting the alternate function mode and push_pull input/output
     // is not necessary. The hal code knows to do this for a usart.
@@ -599,7 +599,7 @@ fn setup() -> (
         .unwrap()
         .split();
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     let (tx3, rx3) = p
         .USART3

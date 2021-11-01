@@ -422,7 +422,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     let (tx, rx) = p
         .USART1
@@ -437,7 +437,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
         .unwrap()
         .split();
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9

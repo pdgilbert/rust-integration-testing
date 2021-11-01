@@ -463,9 +463,9 @@ use embedded_hal::digital::v2::OutputPin;
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.freeze(rcc::Config::hsi());
+    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     // all leds wire with pin as source, cathode connect to ground though a resistor.
     impl LED for PB13<Output<PushPull>> {

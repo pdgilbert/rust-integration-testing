@@ -479,8 +479,8 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
-    let gpioa = dp.GPIOA.split();
-    let gpiob = dp.GPIOB.split();
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
 
     let spi = dp.SPI1.spi(
         (

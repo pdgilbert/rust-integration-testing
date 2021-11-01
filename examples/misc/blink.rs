@@ -303,9 +303,9 @@ use embedded_hal::digital::v2::OutputPin;
 fn setup() -> (PB6<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.freeze(rcc::Config::hsi());
+    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(& mut rcc);
 
     impl LED for PB6<Output<PushPull>> {
         fn on(&mut self) -> () {

@@ -38,7 +38,7 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 use panic_rtt_target as _;
-use rtt_target::{rprintln, rtt_init_print};
+//use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
 use si4703::{
@@ -653,8 +653,8 @@ fn setup() -> (
     let clocks = rcc.clocks;
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let gpiob = dp.GPIOB.split();
-    let gpioc = dp.GPIOC.split();
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output();
 
@@ -805,7 +805,7 @@ fn setup() -> (
 
 #[entry]
 fn main() -> ! {
-    rtt_init_print!();
+    //rtt_init_print!();
     //rprintln!("Si4703 example");
     hprintln!("Si4703 example").unwrap();
 

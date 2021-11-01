@@ -518,7 +518,7 @@ mod app {
     fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
         let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
-        let gpioa = dp.GPIOA.split();
+        let gpioa = dp.GPIOA.split(&mut rcc);
 
         let (tx, _rx) = dp
             .USART1
@@ -530,14 +530,13 @@ mod app {
             .unwrap()
             .split();
 
-        let gpiob = dp.GPIOB.split();
+        let gpiob = dp.GPIOB.split(&mut rcc);
 
         let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
         let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
 
         let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 
-        let gpiob = dp.GPIOB.split();
         let led = gpiob.pb6.into_push_pull_output();
 
         impl LED for PB6<Output<PushPull>> {

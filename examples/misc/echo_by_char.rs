@@ -256,7 +256,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
     //let clocks  = rcc.cfgr.freeze();
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     // following github.com/stm32-rs/stm32l1xx-hal/blob/master/examples/serial.rs
     // Note that setting the alternate function mode  and push_pull input/output is

@@ -473,18 +473,16 @@ fn setup() -> (
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
     p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let txrx1 = Serial::usart1(
-        p.USART1,
+    let txrx1 = p.USART1.usart(
         (
             gpioa.pa9, //tx pa9
             gpioa.pa10,
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
-        clocks,
-    )
-    .unwrap();
+        &mut rcc,
+    ).unwrap();
 
     let (mut tx1, mut rx1) = txrx1.split();
 

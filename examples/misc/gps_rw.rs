@@ -375,7 +375,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, Tx<USART1>, Rx<USART1>) {
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
     //let clocks  = rcc.cfgr.freeze();
 
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     let (txc, rxc) = p
         .USART2
