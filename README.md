@@ -129,7 +129,7 @@ For examples that need a serial connection run a terminal session such as
 ```
 minicom -D /dev/ttyUSB0 -b9600
 ```
-where 0 is replaced by the acive USB connection number which can be found with ` dmesg | grep -i tty `
+where 0 is replaced by the active USB connection number which can be found with ` dmesg | grep -i tty `
 
 ## License
 

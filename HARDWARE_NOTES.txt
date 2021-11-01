@@ -19,9 +19,11 @@ The echo previously worked if typing was adequately slow.
 
 bmi160-imu-display     discovery-stm32f303   2021/10/21              acc, gyro
                        bluepill
+                       blackpill-411         2021/10/31        fails - power problem?    
                     
 at24c256-eeprom.rs     discovery-stm32f303   2021/10/23               using SlaveAddr::default()
                        bluepill                           
+                       blackpill-411                        fails at eeprom.write_page(...
 
 tcs34725-color-display discovery-stm32f303   2021/10/23               output arranged for smaller display    
                        bluepill                                       not sure what data means
@@ -36,3 +38,8 @@ ds1307-rtc         discovery-stm32f303   disappears at rtc.set_datetime(&begin).
   (also with code from
    https://github.com/eldruin/driver-examples/blob/master/stm32f3-discovery/examples/ds1307-f3.rs
      modified with some print statements.)
+
+
+vl53lox-display        discovery-stm32f303   2021/10/30               working but shows 20mm min distance
+                       bluepill              2021/10/31   
+                       blackpill-411         2021/10/31            
