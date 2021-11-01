@@ -115,8 +115,11 @@ jobs:
     strategy:
       matrix:        
         brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
-              none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
-              none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
+              none-stm32f769, none-stm32h742,      none-stm32l4x2,
+              none-stm32f100, none-stm32f101,     ]
+        #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
+        #      none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
+        #      none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         
         #  none-stm32f042,  always fails because it does not have 3 usarts
@@ -125,14 +128,14 @@ jobs:
         #stg: [release-testing, driver-testing, hal-testing, dev-testing ]
         stg: [release-testing, dev-testing ]
         include:
-           #- brd: "none-stm32f042"  
-           #  mcu:  stm32f042
+           ##- brd: "none-stm32f042"  
+           ##  mcu:  stm32f042
+           ##  hal: "stm32f0xx"
+           ##  trg: "thumbv6m-none-eabi"
+           #- brd: "none-stm32f030"
+           #  mcu:  stm32f030xc
            #  hal: "stm32f0xx"
-           #  trg: "thumbv6m-none-eabi"
-           - brd: "none-stm32f030"
-             mcu:  stm32f030xc
-             hal: "stm32f0xx"
-             trg: "thumbv6m-none-eabi"   
+           #  trg: "thumbv6m-none-eabi"   
            - brd:  "none-stm32f100"
              mcu:  stm32f100
              hal: "stm32f1xx"
@@ -165,18 +168,18 @@ jobs:
              mcu:  stm32h742             
              hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32l0x2"
-             mcu:  stm32l072kztx
-             hal: "stm32l0xx"
-             trg: "thumbv6m-none-eabi"
-           - brd: "discovery-stm32l100"
-             mcu:  stm32l100
-             hal: "stm32l1xx"
-             trg: "thumbv7m-none-eabi"
-           - brd: "heltec-lora-node151"
-             mcu:  stm32l151
-             hal: "stm32l1xx"
-             trg: "thumbv7m-none-eabi"
+           #- brd: "none-stm32l0x2"
+           #  mcu:  stm32l072kztx
+           #  hal: "stm32l0xx"
+           #  trg: "thumbv6m-none-eabi"
+           #- brd: "discovery-stm32l100"
+           #  mcu:  stm32l100
+           #  hal: "stm32l1xx"
+           #  trg: "thumbv7m-none-eabi"
+           #- brd: "heltec-lora-node151"
+           #  mcu:  stm32l151
+           #  hal: "stm32l1xx"
+           #  trg: "thumbv7m-none-eabi"
            - brd: "none-stm32l4x2"
              mcu:  stm32l4x2
              hal: "stm32l4xx"
