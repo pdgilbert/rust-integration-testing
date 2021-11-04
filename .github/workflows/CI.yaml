@@ -116,7 +116,7 @@ jobs:
       matrix:        
         brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
               none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
-              none-stm32f100, none-stm32f101,     ]
+              none-stm32f100, none-stm32f101,      none-stm32f030,      ]
         #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
         #      none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l4x2,
         #      none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
@@ -128,14 +128,14 @@ jobs:
         #stg: [release-testing, driver-testing, hal-testing, dev-testing ]
         stg: [release-testing, dev-testing ]
         include:
-           ##- brd: "none-stm32f042"  
-           ##  mcu:  stm32f042
-           ##  hal: "stm32f0xx"
-           ##  trg: "thumbv6m-none-eabi"
-           #- brd: "none-stm32f030"
-           #  mcu:  stm32f030xc
+           #- brd: "none-stm32f042"  
+           #  mcu:  stm32f042
            #  hal: "stm32f0xx"
-           #  trg: "thumbv6m-none-eabi"   
+           #  trg: "thumbv6m-none-eabi"
+           - brd: "none-stm32f030"
+             mcu:  stm32f030xc
+             hal: "stm32f0xx"
+             trg: "thumbv6m-none-eabi"   
            - brd:  "none-stm32f100"
              mcu:  stm32f100
              hal: "stm32f1xx"
@@ -509,7 +509,7 @@ jobs:
           use-cross: true
 
 
-      #####  rtic examples  don't work on stmf0xx.  separate job? #####
+      #####  rtic examples  don't work on thumbv6m-none-eabi (stmf0xx and stm32l0xx) #####
 
       - name: Example iaq-core-c-gas-voc-usart-logger
         if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
