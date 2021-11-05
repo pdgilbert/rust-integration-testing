@@ -613,10 +613,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
             gpioa
                 .pa10
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,
@@ -629,10 +629,10 @@ fn setup() -> (
         (
             gpioa
                 .pa2
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
             gpioa
                 .pa3
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
         ),
         Config::default().baudrate(115_200.bps()),
         clocks,
@@ -647,10 +647,10 @@ fn setup() -> (
         (
             gpiob
                 .pb10
-                .into_af7_pushpull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
+                .into_alternate_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
             gpiob
                 .pb11
-                .into_af7_pushpull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
+                .into_alternate_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
         ),
         Config::default().baudrate(115_200.bps()),
         clocks,

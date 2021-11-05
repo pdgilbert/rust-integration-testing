@@ -296,13 +296,13 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
     let mut scl =
         gpiob
             .pb10
-            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
     let mut sda =
         gpiob
             .pb11
-            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
     // return i2c

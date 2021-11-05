@@ -556,16 +556,13 @@ mod app {
         gpio::{
             gpioa::{PA10, PA9},
             gpioc::PC13,
-            Alternate, OpenDrain, Output, PushPull, AF4,
+            Alternate, OpenDrain, Output, PushPull,
         },
         i2c::{Config as i2cConfig, I2c},
         pac::{Peripherals, I2C1, USART2},
         prelude::*,
         serial::{Config as serialConfig, Serial, Tx},
     };
-
-    #[cfg(feature = "stm32l4xx")]
-    use embedded_hal::digital::v2::OutputPin;
 
     #[cfg(feature = "stm32l4xx")]
     const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
@@ -577,8 +574,8 @@ mod app {
     type I2cBus = I2c<
         I2C1,
         (
-            PA9<Alternate<AF4, OpenDrain>>,
-            PA10<Alternate<AF4, OpenDrain>>,
+            PA9 <Alternate<OpenDrain, 4u8>>,   
+            PA10<Alternate<OpenDrain, 4u8>>,
         ),
     >;
 
@@ -605,10 +602,10 @@ mod app {
             (
                 gpioa
                     .pa2
-                    .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
+                    .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
                 gpioa
                     .pa3
-                    .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
+                    .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
             ),
             serialConfig::default().baudrate(9600.bps()),
             clocks,
@@ -621,13 +618,13 @@ mod app {
         let mut scl =
             gpioa
                 .pa9
-                .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
+                .into_alternate_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
         scl.internal_pull_up(&mut gpioa.pupdr, true);
 
         let mut sda =
             gpioa
                 .pa10
-                .into_af4_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
+                .into_alternate_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
         sda.internal_pull_up(&mut gpioa.pupdr, true);
 
         let i2c = I2c::i2c1(
@@ -644,10 +641,10 @@ mod app {
 
         impl LED for PC13<Output<PushPull>> {
             fn on(&mut self) -> () {
-                self.set_low().unwrap()
+                self.set_low()
             }
             fn off(&mut self) -> () {
-                self.set_high().unwrap()
+                self.set_high()
             }
         }
 

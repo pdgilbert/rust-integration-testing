@@ -549,13 +549,13 @@ fn setup() -> (
         (
             gpioa
                 .pa5
-                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // sck   on PA5
             gpioa
                 .pa6
-                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // miso  on PA6
             gpioa
                 .pa7
-                .into_af5_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         mcp4x::MODE,
         8.mhz(),
@@ -566,7 +566,7 @@ fn setup() -> (
     let mut cs = gpioa
         .pa1
         .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper);
-    cs.set_high().unwrap();
+    cs.set_high();
 
     let led = gpioc
         .pc13
@@ -574,10 +574,10 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

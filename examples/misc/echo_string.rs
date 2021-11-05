@@ -536,10 +536,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
             gpioa
                 .pa10
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
         clocks,

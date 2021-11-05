@@ -709,9 +709,6 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-use embedded_hal::digital::v2::{InputPin, OutputPin};
-
-#[cfg(feature = "stm32l4xx")]
 fn setup() -> (
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
@@ -741,10 +738,10 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -760,7 +757,7 @@ fn setup() -> (
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 
-    let sda = sda.into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let sda = sda.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     let stcint = gpiob
         .pb6
@@ -770,7 +767,7 @@ fn setup() -> (
     let mut scl =
         gpiob
             .pb8
-            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
     let i2c = I2c::i2c1(
@@ -791,10 +788,10 @@ fn setup() -> (
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
         fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
+            self.p_seekup.is_high()
         }
         fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
+            self.p_seekdown.is_high()
         }
     }
 

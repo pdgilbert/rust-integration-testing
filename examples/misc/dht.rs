@@ -313,13 +313,10 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{gpioa::PA8, Alternate, OpenDrain, Output, AF0},
+    gpio::{gpioa::PA8, OpenDrain, Output},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
-
-#[cfg(feature = "stm32l4xx")]
-use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
@@ -336,14 +333,14 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
         .pclk2(80.mhz())
         .freeze(&mut flash.acr, &mut pwr);
 
-    let gpioa = p.GPIOA.split(&mut rcc.ahb2);
+    let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
     let mut pa8 = gpioa
         .pa8
         .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
     //        .into_af0_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    pa8.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer

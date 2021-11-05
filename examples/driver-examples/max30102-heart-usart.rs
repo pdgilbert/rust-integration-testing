@@ -631,9 +631,6 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32l4xx")]
 fn setup() -> (
     I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>,
     impl LED,
@@ -659,13 +656,13 @@ fn setup() -> (
     let mut scl =
         gpiob
             .pb10
-            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB10
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
     let mut sda =
         gpiob
             .pb11
-            .into_af4_opendrain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB11
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
     let i2c = I2c::i2c2(
@@ -686,10 +683,10 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -700,10 +697,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
             gpioa
                 .pa10
-                .into_af7_pushpull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ),
         Config::default().baudrate(9600.bps()),
         clocks,

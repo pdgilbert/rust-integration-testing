@@ -280,9 +280,6 @@ mod app {
     };
 
     #[cfg(feature = "stm32l4xx")]
-    use embedded_hal::digital::v2::OutputPin;
-
-    #[cfg(feature = "stm32l4xx")]
     const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
@@ -298,10 +295,10 @@ mod app {
 
         impl LED for PC13<Output<PushPull>> {
             fn on(&mut self) -> () {
-                self.set_low().unwrap()
+                self.set_low()
             }
             fn off(&mut self) -> () {
-                self.set_high().unwrap()
+                self.set_high()
             }
         }
 
