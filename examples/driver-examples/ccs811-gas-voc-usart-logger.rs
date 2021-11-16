@@ -578,6 +578,9 @@ mod app {
     #[cfg(feature = "stm32l4xx")]
     type LedType = PC13<Output<PushPull>>;
 
+//    #[cfg(feature = "stm32l4xx")]
+//    type I2cBus = I2c<I2C1, pins(PA9, PA10)>;
+
     #[cfg(feature = "stm32l4xx")]
     type I2cBus = I2c<
         I2C1,

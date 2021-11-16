@@ -320,7 +320,6 @@ use stm32l4xx_hal::{
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
-    // OPEN DRAIN OUTPUT NOT RECOGNIZED AS INPUT See https://github.com/stm32-rs/stm32l4xx-hal/issues/144
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut flash = p.FLASH.constrain();
@@ -337,7 +336,6 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let mut pa8 = gpioa
         .pa8
         .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-    //        .into_af0_opendrain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
     pa8.set_high();

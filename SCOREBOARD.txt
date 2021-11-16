@@ -4,25 +4,30 @@
 28-09-2021 - switched from stm32f722 to stm32f769 because adc is not yet supported in hal for former.
              see https://github.com/stm32-rs/stm32f7xx-hal/issues/116
 
-                   24-09-2021  25-09-2021      28-09-2021
-none-stm32f030       good         good            good
+                   24-09-2021  25-09-2021      28-09-2021    5-11-2021
+none-stm32f030       good         good            good         good
 none-stm32f042     
-bluepill             good         good            good
-none-stm32f100       good      temperature        good
-none-stm32f101       good      temperature        good
-discovery-stm32f303  rtic         rtic            rtic
-blackpill-stm32f401  good         good            good
-blackpill-stm32f411  good         good            good
-nucleo-64            rtic         rtic            rtic
-none-stm32f769       good      temperature        good 
-none-stm32h742       good         good            good
-none-stm32l030       good         good            good
-none-stm32l0x2       good         good            good
-discovery-stm32l100  rtic         rtic            rtic
-heltec-lora-node151  rtic         rtic            rtic
-none-stm32l4x1        dht          dht             dht
-
-`stm32f0xx-hal`,`, ``stm32f1xx-hal`, `stm32f3xx-hal`, `stm32f4xx-halstm32f7xx-hal`, `stm32h7xx-hal`, `stm32l0xx-hal`, `stm32l1xx-hal`, `stm32l4xx-hal`
+bluepill             good         good            good         good
+none-stm32f100       good      temperature        good         good
+none-stm32f101       good      temperature        good         good
+discovery-stm32f303  rtic         rtic            rtic         good below
+blackpill-stm32f401  good         good            good         good
+blackpill-stm32f411  good         good            good         good
+nucleo-64            rtic         rtic            rtic         
+none-stm32f769       good      temperature        good         good 
+none-stm32h742       good         good            good         good
+none-stm32l030       good         good            good         below
+none-stm32l0x2       good         good            good         below
+discovery-stm32l100  rtic         rtic            rtic         good below
+heltec-lora-node151  rtic         rtic            rtic         good
+none-stm32l4x1        dht          dht             dht         good
 
 
-stm32f4xx-hal  jobs ARE NOT WORKING BECAUSE OF UPDATE CONFLICT
+> rtic examples do not work with `stm32f0xx-hal` and `stm32l0xx-hal` and are skipped.
+
+> temperature example skips actual read/calculation on several hals because of problems.
+
+> `stm32l0xx-hal` jobs working only on my special branch because of  UPDATE CONFLICT
+
+> `stm32f3xx-hal` and `stm32l1xx-hal` jobs working only using non-default hal branch because of  UPDATE CONFLICT
+
