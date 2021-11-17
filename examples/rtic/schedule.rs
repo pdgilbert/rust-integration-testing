@@ -24,14 +24,13 @@ use rtic::app;
 //#[rtic::app(device = lm3s6965, dispatchers = [SSI0])]
 
 mod app {
-    use cortex_m_semihosting::hprintln;
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::Seconds;
+    use cortex_m_semihosting::{hprintln};
+    use systick_monotonic::*;
 
     const MONO_HZ: u32 = 8_000_000; // 8 MHz
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = DwtSystick<MONO_HZ>;
+    type MyMono = Systick<MONO_HZ>;
 
     #[shared]
     struct Shared {}
@@ -41,19 +40,17 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut dcb = cx.core.DCB;
-        let dwt = cx.core.DWT;
         let systick = cx.core.SYST;
 
-        let mono = DwtSystick::new(&mut dcb, dwt, systick, 8_000_000);
+        let mono = Systick::new(systick, 8_000_000);
 
         hprintln!("init").ok();
 
         // Schedule `foo` to run 1 second in the future
-        foo::spawn_after(Seconds(1_u32)).ok();
+        foo::spawn_after(1.secs()).ok();
 
         // Schedule `bar` to run 2 seconds in the future
-        bar::spawn_after(Seconds(2_u32)).ok();
+        bar::spawn_after(2.secs()).ok();
 
         (Shared {}, Local {}, init::Monotonics(mono))
     }

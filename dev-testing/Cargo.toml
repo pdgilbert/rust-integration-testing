@@ -65,7 +65,8 @@ vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 
 #cortex-m-rtic = ">=0.6" # needed for condition on different hals. Still not released.
 cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
-dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic", optional = true}
+#dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic", optional = true}
+systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", branch = "new-trait-and-time-lib", optional = true }
 
 # for example ccs811-gas-voc-usart-logger
 #  include *also* thumbv6 support
@@ -120,14 +121,14 @@ void                 = { version = ">=1.0.2", default-features = false } # err r
 [features]
 # rtic does not work on stm32f0xx and stm32l0xx devices
 stm32f0xx = ["stm32f0xx-hal/rt", "shared-bus-rtic"]
-stm32f1xx = ["stm32f1xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-stm32f3xx = ["stm32f3xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-stm32f7xx = ["stm32f7xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-stm32h7xx = ["stm32h7xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
+stm32f1xx = ["stm32f1xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+stm32f3xx = ["stm32f3xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+stm32f4xx = ["stm32f4xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+stm32f7xx = ["stm32f7xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+stm32h7xx = ["stm32h7xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
 #stm32l0xx = ["stm32l0xx-hal/rt", "shared-bus-rtic"]
-stm32l1xx = ["stm32l1xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
-stm32l4xx = ["stm32l4xx-hal/rt", "shared-bus-rtic", "dwt-systick-monotonic"]
+stm32l1xx = ["stm32l1xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+stm32l4xx = ["stm32l4xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
 
 stm32f030xc   = ["stm32f0xx-hal/stm32f030xc"]
 stm32f042     = ["stm32f0xx-hal/stm32f042"  ]

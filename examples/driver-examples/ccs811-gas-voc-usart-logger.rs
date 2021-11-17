@@ -50,9 +50,6 @@ use rtic::app;
 
 mod app {
 
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::Seconds;
-
     use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
                        //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
@@ -66,9 +63,11 @@ mod app {
     use nb::block;
     use rtt_target::{rprintln, rtt_init_print};
     use shared_bus_rtic::SharedBus;
+    use systick_monotonic::*;
 
-    //const PERIOD: u32 = 1_000_000_000; // 10 seconds
-    const PERIOD: Seconds = Seconds(10);
+    //const PERIOD: u32 = 1_000_000_000; // clock pulses for 10 seconds
+    const PERIOD: u64 = 10;  // used as seconds
+    //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -672,7 +671,7 @@ mod app {
     }
 
     #[monotonic(binds = SysTick, default = true)]
-    type DwtMono = DwtSystick<CLOCK>;
+    type MyMono = Systick<CLOCK>;
 
     /*
      * shared-bus-rtic aggregate: multiple peripherals on a single i2c bus
@@ -700,8 +699,8 @@ mod app {
     }
 
     #[init]
-    fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let mono = Systick::new(cx.core.SYST, CLOCK);
 
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
@@ -745,8 +744,7 @@ mod app {
             .unwrap();
         ccs811.set_mode(MeasurementMode::ConstantPower1s).unwrap();
 
-        //cx.schedule.measure(cx.start + PERIOD.cycles()).unwrap();
-        measure::spawn_after(PERIOD).unwrap();
+        measure::spawn_after(PERIOD.secs()).unwrap();
 
         writeln!(tx, "start\r",).unwrap();
 
@@ -824,7 +822,6 @@ mod app {
                 })
                 .unwrap();
         }
-        //cx.schedule.measure(cx.scheduled + PERIOD.cycles()).unwrap();
-        measure::spawn_after(PERIOD).unwrap();
+        measure::spawn_after(PERIOD.secs()).unwrap();
     }
 }

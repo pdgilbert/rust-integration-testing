@@ -26,18 +26,17 @@ use rtic::app;
 mod app {
     //use cortex_m_semihosting::{debug, hprintln};
 
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::{Milliseconds, Seconds};
+    use systick_monotonic::*;
 
     use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
                        //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
-    const ONE: Seconds = Seconds(1);
-    const TEN: Seconds = Seconds(10);
+    const ONE: u64 = 1;  // used as seconds
+    const TEN: u64 = 10;
 
-    const ONE_DURATION: Milliseconds = Milliseconds(20);
-    const TEN_DURATION: Milliseconds = Milliseconds(500);
+    const ONE_DURATION: u32 = 20;  // used as milliseconds
+    const TEN_DURATION: u32 = 500;
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -315,7 +314,7 @@ mod app {
     }
 
     #[monotonic(binds = SysTick, default = true)]
-    type DwtMono = DwtSystick<CLOCK>;
+    type MyMono = Systick<CLOCK>;
 
     #[init]
     fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -336,7 +335,7 @@ mod app {
 
         led.off();
 
-        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
+        let mono = Systick::new(cx.core.SYST, CLOCK);
 
         ten::spawn().unwrap();
 
@@ -356,22 +355,22 @@ mod app {
     #[task(shared = [led])]
     fn one(_cx: one::Context) {
         // blink and re-spawn one process to repeat after ONE second
-        blink::spawn(ONE_DURATION).ok();
-        one::spawn_after(ONE).ok();
+        blink::spawn(ONE_DURATION.millisecs()).ok();
+        one::spawn_after(ONE.secs()).ok();
     }
 
     #[task(shared = [led])]
     fn ten(_cx: ten::Context) {
         // blink and re-spawn ten process to repeat after TEN seconds
-        blink::spawn(TEN_DURATION).ok();
-        ten::spawn_after(TEN).ok();
+        blink::spawn(TEN_DURATION.ms()).ok();
+        ten::spawn_after(TEN.secs()).ok();
     }
 
     #[task(shared = [led])]
-    fn blink(_cx: blink::Context, duration: Milliseconds<u32>) {
+    fn blink(_cx: blink::Context, duration: u64) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        crate::app::led_off::spawn_after(duration).ok();
+        crate::app::led_off::spawn_after(duration.ms()).ok();
         crate::app::led_on::spawn().ok();
     }
 

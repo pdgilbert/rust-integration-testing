@@ -43,16 +43,14 @@ use rtic::app;
 
 mod app {
 
-    use dwt_systick_monotonic::DwtSystick;
-    use rtic::time::duration::Seconds;
+    use systick_monotonic::*;
 
     use core::fmt::Write;
     use iaq_core::{IaqCore, Measurement};
     use nb::block;
     use rtt_target::{rprintln, rtt_init_print};
 
-    //const PERIOD: u32 = 1_000_000_000; // 10 seconds
-    const PERIOD: Seconds = Seconds(10);
+    const PERIOD: u64 = 10;
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -661,7 +659,7 @@ mod app {
     }
 
     #[monotonic(binds = SysTick, default = true)]
-    type DwtMono = DwtSystick<CLOCK>;
+    type MyMono = Systick<CLOCK>;
 
     #[shared]
     struct Shared {
@@ -678,8 +676,8 @@ mod app {
     }
 
     #[init]
-    fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = DwtSystick::new(&mut cx.core.DCB, cx.core.DWT, cx.core.SYST, CLOCK);
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+        let mono = Systick::new(cx.core.SYST, CLOCK);
 
         rtt_init_print!();
         rprintln!("iAQ-Core-C example");
@@ -699,7 +697,7 @@ mod app {
             resistance: 0,
         }; 2400];
 
-        measure::spawn_after(PERIOD).unwrap();
+        measure::spawn_after(PERIOD.secs()).unwrap();
 
         let sensor = IaqCore::new(i2c);
 
@@ -752,6 +750,6 @@ mod app {
                 .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
                 .unwrap();
         }
-        measure::spawn_after(PERIOD).unwrap();
+        measure::spawn_after(PERIOD.secs()).unwrap();
     }
 }
