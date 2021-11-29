@@ -27,7 +27,7 @@ none-stm32l4x1        dht          dht             dht         good
 
 > temperature example skips actual read/calculation on several hals because of problems.
 
-> `stm32l0xx-hal` jobs working only on my special branch because of  UPDATE CONFLICT
+> `stm32l0xx-hal` jobs working only on my special rust-integration-testing branch because of  UPDATE CONFLICT
 
 > `stm32f3xx-hal` and `stm32l1xx-hal` jobs working only using non-default hal branch because of  UPDATE CONFLICT
 

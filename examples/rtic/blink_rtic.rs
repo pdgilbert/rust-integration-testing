@@ -35,8 +35,8 @@ mod app {
     const ONE: u64 = 1;  // used as seconds
     const TEN: u64 = 10;
 
-    const ONE_DURATION: u32 = 20;  // used as milliseconds
-    const TEN_DURATION: u32 = 500;
+    const ONE_DURATION: u64 = 20;  // used as milliseconds
+    const TEN_DURATION: u64 = 500;
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -317,7 +317,7 @@ mod app {
     type MyMono = Systick<CLOCK>;
 
     #[init]
-    fn init(mut cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
 
@@ -355,14 +355,14 @@ mod app {
     #[task(shared = [led])]
     fn one(_cx: one::Context) {
         // blink and re-spawn one process to repeat after ONE second
-        blink::spawn(ONE_DURATION.millisecs()).ok();
+        blink::spawn(ONE_DURATION).ok();
         one::spawn_after(ONE.secs()).ok();
     }
 
     #[task(shared = [led])]
     fn ten(_cx: ten::Context) {
         // blink and re-spawn ten process to repeat after TEN seconds
-        blink::spawn(TEN_DURATION.ms()).ok();
+        blink::spawn(TEN_DURATION).ok();
         ten::spawn_after(TEN.secs()).ok();
     }
 
@@ -370,7 +370,7 @@ mod app {
     fn blink(_cx: blink::Context, duration: u64) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        crate::app::led_off::spawn_after(duration.ms()).ok();
+        crate::app::led_off::spawn_after(duration.millis()).ok();
         crate::app::led_on::spawn().ok();
     }
 
