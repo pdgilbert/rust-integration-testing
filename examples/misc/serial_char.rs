@@ -268,7 +268,7 @@ fn setup() -> (
             gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();
@@ -281,7 +281,7 @@ fn setup() -> (
             gpioa.pa3.into_alternate(),
         ), //rx pa3
         Config::default().baudrate(115_200.bps()), //.parity_odd() .stopbits(StopBits::STOP1)
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();
@@ -295,7 +295,7 @@ fn setup() -> (
             gpioa.pa12.into_alternate(),
         ), //rx pa12
         Config::default().baudrate(115_200.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();

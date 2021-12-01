@@ -310,7 +310,7 @@ fn setup() -> (
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), clocks);
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), &clocks);
 
     let delay = Delay::new(cp.SYST, &clocks);
 
@@ -337,7 +337,7 @@ fn setup() -> (
             gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();

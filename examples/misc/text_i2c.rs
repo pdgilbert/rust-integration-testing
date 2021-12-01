@@ -156,7 +156,7 @@ fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
     // return i2c
-    I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks)
+    I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks)
 }
 
 #[cfg(feature = "stm32f7xx")]

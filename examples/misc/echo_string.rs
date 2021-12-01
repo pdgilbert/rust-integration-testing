@@ -283,7 +283,7 @@ fn setup() -> (
         p.USART1,
         (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap();
 

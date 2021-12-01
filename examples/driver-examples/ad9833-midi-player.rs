@@ -275,7 +275,7 @@ fn setup() -> (
         ),
         MODE,
         MegaHertz(8),
-        clocks,
+        &clocks,
     );
 
     let cs = gpioa.pa1.into_push_pull_output();

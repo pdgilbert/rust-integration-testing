@@ -208,7 +208,7 @@ pub fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     let scl = gpiob.pb10.into_alternate_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate_open_drain(); // sda on PB3
 
-    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), clocks);
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.khz(), &clocks);
 
     let delay = Delay::new(cp.SYST, &clocks);
 

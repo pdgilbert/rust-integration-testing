@@ -366,7 +366,7 @@ fn setup() -> (
     let sda = sda.into_alternate().set_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
-    let i2c = I2c::new(dp.I2C1, (scl, sda), 400.khz(), clocks);
+    let i2c = I2c::new(dp.I2C1, (scl, sda), 400.khz(), &clocks);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),

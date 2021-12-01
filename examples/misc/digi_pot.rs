@@ -278,7 +278,7 @@ fn setup() -> (
         ),
         mcp4x::MODE,
         MegaHertz(8),
-        clocks,
+        &clocks,
     );
 
     let mut cs = gpioa.pa1.into_push_pull_output();

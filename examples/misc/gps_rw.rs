@@ -193,7 +193,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
             gpioa.pa10.into_alternate(), //rx pa10  for console
         ),
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();
@@ -207,7 +207,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
             gpioa.pa3.into_alternate(), //rx pa3  for GPS
         ),
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();

@@ -247,7 +247,7 @@ mod app {
         gpio::{
             gpiob::{PB8, PB9},
             gpioc::PC13,
-            AlternateOD, Output, PushPull, AF4,
+            Alternate, OpenDrain, Output, PushPull,
         },
         i2c::I2c, //Pins Mode
         pac,
@@ -264,7 +264,7 @@ mod app {
     //impl LED
 
     #[cfg(feature = "stm32f4xx")]
-    type I2cBus = I2c<pac::I2C1, (PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>)>; //NO BlockingI2c
+    type I2cBus = I2c<pac::I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>; //NO BlockingI2c
                                                                                   //BlockingI2c<I2C1, impl Pins<I2C1>>
 
     #[cfg(feature = "stm32f4xx")]
@@ -280,7 +280,7 @@ mod app {
         let scl = gpiob.pb8.into_alternate().set_open_drain();
         let sda = gpiob.pb9.into_alternate().set_open_drain();
 
-        let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), clocks);
+        let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), &clocks);
 
         let gpioa = dp.GPIOA.split();
         let tx = gpioa.pa9.into_alternate();
@@ -289,7 +289,7 @@ mod app {
             dp.USART1,
             (tx, rx),
             Config::default().baudrate(115200.bps()),
-            clocks,
+            &clocks,
         )
         .unwrap()
         .split();
