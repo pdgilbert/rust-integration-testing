@@ -67,6 +67,8 @@ cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
 #dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic", optional = true}
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", branch = "new-trait-and-time-lib", optional = true }
 systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
+# for duration timer in rtic
+fugit = { git = "https://github.com/korken89/fugit", optional = true }
 
 # for example ccs811-gas-voc-usart-logger
 #  include *also* thumbv6 support

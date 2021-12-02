@@ -27,6 +27,9 @@ mod app {
     //use cortex_m_semihosting::{debug, hprintln};
 
     use systick_monotonic::*;
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+    
+    use fugit::TimerDuration;
 
     use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
@@ -355,22 +358,22 @@ mod app {
     #[task(shared = [led])]
     fn one(_cx: one::Context) {
         // blink and re-spawn one process to repeat after ONE second
-        blink::spawn(ONE_DURATION).ok();
+        blink::spawn(ONE_DURATION.millis()).ok();
         one::spawn_after(ONE.secs()).ok();
     }
 
     #[task(shared = [led])]
     fn ten(_cx: ten::Context) {
         // blink and re-spawn ten process to repeat after TEN seconds
-        blink::spawn(TEN_DURATION).ok();
+        blink::spawn(TEN_DURATION.millis()).ok();
         ten::spawn_after(TEN.secs()).ok();
     }
 
     #[task(shared = [led])]
-    fn blink(_cx: blink::Context, duration: u64) {
+    fn blink(_cx: blink::Context, duration: TimerDuration<u64, CLOCK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        crate::app::led_off::spawn_after(duration.millis()).ok();
+        crate::app::led_off::spawn_after(duration).ok();
         crate::app::led_on::spawn().ok();
     }
 
