@@ -63,7 +63,7 @@ shared-bus-rtic = { version = "0.2.2", features = ["thumbv6"], optional = true }
 # only certain versions of radio and radio-sx127x work together
 #radio         = { version = "0.9.0" }
 #radio-sx127x  = { version = "0.11.0", default-features = false }
-radio         = { version = "0.9.1" }
+radio         = { version = "0.10.0" }
 #  should have release verion here
 radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
 
