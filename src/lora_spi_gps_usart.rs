@@ -497,7 +497,7 @@ pub fn setup() -> (
         ),
         MODE,
         MegaHertz(8),
-        clocks,
+        &clocks,
     );
 
     let delay = Delay::new(cp.SYST, &clocks);
@@ -532,7 +532,7 @@ pub fn setup() -> (
             gpioa.pa3.into_alternate(), //rx pa3  for GPS tx
         ),
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     )
     .unwrap()
     .split();
@@ -540,7 +540,7 @@ pub fn setup() -> (
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), clocks);
+    let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks);
 
     // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
