@@ -24,7 +24,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::{debug, hprintln};
 
     use systick_monotonic::*;
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -317,12 +317,13 @@ mod app {
     }
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<CLOCK>;
+    type MyMono = Systick<100>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
+        hprintln!("blink_rtic example").unwrap();
 
         let mut led = setup(cx.device);
 
@@ -343,6 +344,7 @@ mod app {
         ten::spawn().unwrap();
 
         one::spawn().unwrap();
+        hprintln!("init exit").unwrap();
 
         (Shared { led }, Local {}, init::Monotonics(mono))
     }
@@ -355,35 +357,43 @@ mod app {
     #[local]
     struct Local {}
 
-    #[task(shared = [led])]
+    #[task(shared = [led], capacity=10)]
     fn one(_cx: one::Context) {
         // blink and re-spawn one process to repeat after ONE second
-        blink::spawn(ONE_DURATION.millis()).ok();
+        //hprintln!("one").unwrap();
+        // blink::spawn(ONE_DURATION.millis()).ok();
+        blink::spawn(ONE_DURATION).unwrap();
         one::spawn_after(ONE.secs()).ok();
     }
 
-    #[task(shared = [led])]
+    #[task(shared = [led], capacity=10)]
     fn ten(_cx: ten::Context) {
         // blink and re-spawn ten process to repeat after TEN seconds
-        blink::spawn(TEN_DURATION.millis()).ok();
-        ten::spawn_after(TEN.secs()).ok();
+        hprintln!("ten").unwrap();
+        //blink::spawn(TEN_DURATION.millis()).ok();
+        blink::spawn_after(ONE_DURATION.millis(), TEN_DURATION - ONE_DURATION).unwrap(); // continues one on, otherwise one turns ten off
+        ten::spawn_after(TEN.secs()).unwrap();
     }
 
-    #[task(shared = [led])]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, CLOCK>) {
+    #[task(shared = [led], capacity=20)]
+    fn blink(_cx: blink::Context, duration: u64) {
+    //fn blink(_cx: blink::Context, duration: TimerDuration<u64, CLOCK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        crate::app::led_off::spawn_after(duration).ok();
-        crate::app::led_on::spawn().ok();
+        //hprintln!("blink {}", duration).unwrap();
+        crate::app::led_on::spawn().unwrap();
+        crate::app::led_off::spawn_after(duration.millis()).unwrap();
     }
 
-    #[task(shared = [led])]
+    #[task(shared = [led], capacity=10)]
     fn led_on(mut cx: led_on::Context) {
+        //hprintln!("on").unwrap();
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led])]
+    #[task(shared = [led], capacity=10)]
     fn led_off(mut cx: led_off::Context) {
+        //hprintln!("off").unwrap();
         cx.shared.led.lock(|led| led.off());
     }
 }

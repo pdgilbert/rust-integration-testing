@@ -30,7 +30,7 @@ mod app {
     const MONO_HZ: u32 = 8_000_000; // 8 MHz
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONO_HZ>;
+    type MyMono = Systick<100>;
 
     #[shared]
     struct Shared {}
@@ -40,28 +40,51 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let systick = cx.core.SYST;
+        //let systick = cx.core.SYST;
 
-        let mono = Systick::new(systick, 8_000_000);
+        let mono = Systick::new(cx.core.SYST, MONO_HZ);
 
-        hprintln!("init").ok();
+        //hprintln!("init").ok();
 
-        // Schedule `foo` to run 1 second in the future
-        foo::spawn_after(1.secs()).ok();
+        //hprintln!("init spawn").ok();
+        foo::spawn().ok();
+        bar::spawn().ok();
+        foo::spawn().ok();
+        foo::spawn().unwrap();
 
-        // Schedule `bar` to run 2 seconds in the future
-        bar::spawn_after(2.secs()).ok();
+        //hprintln!("init spawn_at").ok();
+        bar::spawn_at(monotonics::now() + 10.secs()).ok();
+        baz::spawn_at(monotonics::now() + 11.secs()).ok();
+        foo::spawn_at(monotonics::now() + 12.secs()).unwrap();
+
+        //hprintln!("init spawn_after").ok();
+        foo::spawn_after(5.secs()).unwrap();
+        baz::spawn_after(6.secs()).ok();
+        bar::spawn_after(7.secs()).ok();
+        cdr::spawn_after(8.secs()).ok();
+        
+        hprintln!("init ending").ok();
 
         (Shared {}, Local {}, init::Monotonics(mono))
     }
 
-    #[task]
+    #[task(capacity=5)]
     fn foo(_: foo::Context) {
         hprintln!("foo").ok();
     }
 
-    #[task]
+    #[task(capacity=3)]
     fn bar(_: bar::Context) {
         hprintln!("bar").ok();
+    }
+
+    #[task(capacity=2)]
+    fn baz(_: baz::Context) {
+        hprintln!("baz").ok();
+    }
+
+    #[task(capacity=1)]
+    fn cdr(_: cdr::Context) {
+        hprintln!("cdr").ok();
     }
 }
