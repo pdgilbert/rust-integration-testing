@@ -311,6 +311,10 @@ name = "dht"
 path = "examples/misc/dht.rs"
 
 [[example]]
+name = "oled_dht"
+path = "examples/misc/oled_dht.rs"
+
+[[example]]
 name = "digi_pot"
 path = "examples/misc/digi_pot.rs"
 
