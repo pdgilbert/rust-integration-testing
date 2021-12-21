@@ -51,6 +51,8 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
+use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
+
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] //  eg  stm32f030xc  stm32f042
@@ -66,6 +68,7 @@ use stm32f0xx_hal::{
 fn setup() -> (
     PA8<Output<OpenDrain>>,
     I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
+    impl LED,
     Delay,
 ) {
     let cp = CorePeripherals::take().unwrap();
@@ -88,7 +91,9 @@ fn setup() -> (
 
     let i2c = I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), &mut rcc);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split(&mut rcc));
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
@@ -102,11 +107,7 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (
-    PA8<Output<OpenDrain>>,
-    BlockingI2c<I2C2, impl Pins<I2C2>>,
-    Delay,
-) {
+fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
@@ -138,8 +139,10 @@ fn setup() -> (
         1000,
         1000,
     );
+
+    let led = setup_led(p.GPIOC.split());
     
-    (dht, i2c, delay)
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
@@ -154,6 +157,7 @@ use stm32f3xx_hal::{
 #[cfg(feature = "stm32f3xx")]
 fn setup() -> (PA8<Output<OpenDrain>>,
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
+    impl LED,
     Delay,
 ) {
     let cp = CorePeripherals::take().unwrap();
@@ -170,17 +174,17 @@ fn setup() -> (PA8<Output<OpenDrain>>,
 
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
-
     let scl = gpiob
         .pb8
         .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
     let sda = gpiob
         .pb9
         .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
-
     let i2c = I2c::new(p.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOE.split(&mut rcc.ahb));
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
@@ -193,7 +197,7 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.freeze();
@@ -214,7 +218,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
 
     let i2c   =  I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split());
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32f7xx")]
@@ -227,7 +233,7 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
@@ -245,7 +251,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C1, impl PinScl<I2C1>, impl
 
     let i2c = BlockingI2c::i2c1(p.I2C1, (scl, sda), Mode::standard(400_000.Hz()), clocks, &mut rcc.apb1, 1000);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split());
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32h7xx")]
@@ -261,7 +269,7 @@ use stm32h7xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let pwr = p.PWR.constrain();
@@ -280,7 +288,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1>, Delay) {
     let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
     let i2c = p.I2C1.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split(ccdr.peripheral.GPIOC));
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32l0xx")]
@@ -294,7 +304,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
@@ -309,7 +319,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
     let i2c = p.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split(&mut rcc));
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery kit stm32l100 and Heltec lora_node STM32L151CCU6
@@ -323,7 +335,7 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
@@ -338,7 +350,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
     let i2c = p.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 
-    (dht, i2c, delay)
+    let led = setup_led(gpiob.pb6);
+
+    (dht, i2c, led, delay)
 }
 
 #[cfg(feature = "stm32l4xx")]
@@ -351,7 +365,7 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>, Delay) {
+fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut flash = p.FLASH.constrain();
@@ -387,7 +401,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin
 
     let i2c = I2c::i2c1(p.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);
 
-    (dht, i2c, delay)
+    let led = setup_led(p.GPIOC.split(&mut rcc.ahb2));
+
+    (dht, i2c, led, delay)
 }
 
 // End of hal/MCU specific setup. Following should be generic code.
@@ -441,10 +457,9 @@ fn main() -> ! {
     //rprintln!("oled_dht example");
     //hprintln!("oled_dht example").unwrap();
 
-    //let (dht, i2c, mut led, mut delay) = setup();
-    let (mut dht, i2c, mut delay) = setup();
+    let (mut dht, i2c, mut led, mut delay) = setup();
 
-    //led.blink(500_u16, &mut delay);  // to confirm startup
+    led.blink(500_u16, &mut delay);  // to confirm startup
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
@@ -460,9 +475,8 @@ fn main() -> ! {
         .build();
 
     loop {
-        // Blink LED 0 to check that everything is actually running.
-        // If the LED 0 is off, something went wrong.
-        //led.blink(50_u16, &mut delay);
+        // Blink LED to check that everything is actually running.
+        led.blink(50_u16, &mut delay);
 
         match Reading::read(&mut delay, &mut dht) {
             Ok(Reading {
