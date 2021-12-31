@@ -62,13 +62,13 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
 
-#cortex-m-rtic = ">=0.6" # needed for condition on different hals. Still not released.
-cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
-#dwt-systick-monotonic = { git = "https://github.com/rtic-rs/dwt-systick-monotonic", optional = true}
-#systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", branch = "new-trait-and-time-lib", optional = true }
-systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
+cortex-m-rtic = ">=1.0" 
+#cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
+systick-monotonic = {version = "1.0.0", optional = true }
+#systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
 # for duration timer in rtic
-fugit = { git = "https://github.com/korken89/fugit", optional = true }
+fugit = { version = "0.3.3", optional = true }
+#fugit = { git = "https://github.com/korken89/fugit", optional = true }
 
 # for example ccs811-gas-voc-usart-logger
 #  include *also* thumbv6 support
@@ -378,8 +378,19 @@ name = "resource-user-struct"
 path = "examples/rtic/resource-user-struct.rs"
 
 [[example]]
+name = "dht_rtic"
+path = "examples/rtic/dht_rtic.rs"
+
+[[example]]
+name = "display_stuff_rtic"
+path = "examples/rtic/display_stuff_rtic.rs"
+
+
+# examples/misc-i2c-drivers
+
+[[example]]
 name = "aht10-display"
-path = "examples/misc--i2c-drivers/aht10-display.rs"
+path = "examples/misc-i2c-drivers/aht10-display.rs"
 
 #[[example]]
 #name = "hdc1080-display"
