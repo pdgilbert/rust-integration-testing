@@ -1,8 +1,9 @@
-//! Continuously measure the eCO2 and eTVOC in the air and print it to an
-//! SSD1306 OLED display.
+//! Continuously measure the eCO2 and eTVOC in the air and print it to an SSD1306 OLED display.
+//! This uses constant temperature and humidity rather than measuring. 
 //!
 //! Introductory blog post with some pictures here:
 //! https://blog.eldruin.com/ccs811-indoor-air-quality-sensor-driver-in-rust/
+//!   (See note about possible need to update firmware.)
 //!
 //!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
 //!  The specific function used will depend on the HAL setting (see README.md).
@@ -13,8 +14,8 @@
 //! BP   <-> CCS811 <-> Display
 //! GND  <-> GND    <-> GND
 //! 3.3V <-> VCC    <-> VDD
-//! PB8  <-> SCL    <-> SCL
-//! PB9  <-> SDA    <-> SDA
+//! PB8  <-> SCL    <-> SCL  PB8 with bluepill. Check src/i2c_led_delay.rs for other devices.
+//! PB9  <-> SDA    <-> SDA  PB9 with bluepill. Check src/i2c_led_delay.rs for other devices.
 //! GND  <-> nWAKE
 //! 3.3V <-> RST
 //! ```
@@ -37,9 +38,9 @@ use embedded_graphics::{
     mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
-    text::Text,
+    text::{Baseline, Text},
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};  // prelude has DisplaySize128x32,  DisplaySize128x64 
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
@@ -52,7 +53,7 @@ fn main() -> ! {
 
     let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire());
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
@@ -92,11 +93,12 @@ fn main() -> ! {
         for line in lines.iter_mut() {
             line.clear();
         }
-        write!(lines[0], "eCO2: {}", data.eco2).unwrap();
-        write!(lines[1], "eTVOC: {}", data.etvoc).unwrap();
+        write!(lines[0], "eCO2: {} ppm", data.eco2).unwrap();
+        write!(lines[1], "eTVOC: {} ppb", data.etvoc).unwrap();
         display.clear();
         for (i, line) in lines.iter().enumerate() {
-            Text::new(line, Point::new(0, i as i32 * 16), text_style)
+            //with font 6x10, 12 = 10 high + 2 space
+            Text::with_baseline(line, Point::new(0, i as i32 * 12), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
         }

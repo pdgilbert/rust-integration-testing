@@ -385,6 +385,10 @@ path = "examples/rtic/dht_rtic.rs"
 name = "display_stuff_rtic"
 path = "examples/rtic/display_stuff_rtic.rs"
 
+[[example]]
+name = "ccs811-co2-voc"
+path = "examples/rtic/ccs811-co2-voc.rs"
+
 
 # examples/misc-i2c-drivers
 

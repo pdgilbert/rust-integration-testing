@@ -12,8 +12,8 @@
 //! BP   <-> CCS811 <-> HDC2080 <-> Display
 //! GND  <-> GND    <-> GND     <-> GND
 //! 3.3V <-> VCC    <-> VCC     <-> VDD
-//! PB8  <-> SCL    <-> SCL     <-> SCL
-//! PB9  <-> SDA    <-> SDA     <-> SDA
+//! PB8  <-> SCL    <-> SCL     <-> SCL  PB8 with bluepill. Check src/i2c_led_delay.rs for other devices.
+//! PB9  <-> SDA    <-> SDA     <-> SDA  PB9 with bluepill. Check src/i2c_led_delay.rs for other devices.
 //! GND  <-> nWAKE
 //! 3.3V <-> RST
 //! ```

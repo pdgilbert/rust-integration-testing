@@ -6,6 +6,9 @@
 //!
 //!  Note that '--release' is needed when doing a run test on actual hardware. Otherwise
 //!  code is too slow for the timeout set in the crate and run gives 'Error Timeout'.
+//!
+//!  A good reference on performance of humidity sensors is
+//!     https://www.kandrsmith.org/RJS/Misc/hygrometers.html
 
 #![deny(unsafe_code)]
 #![no_main]
