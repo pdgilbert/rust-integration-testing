@@ -10,7 +10,7 @@ pub trait LED {
     fn on(&mut self) -> ();
     fn off(&mut self) -> ();
 
-    // default methods
+    // default methods. Note these use delay so do not use in rtic.
     fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
         self.on();
         delay.delay_ms(time);
@@ -82,13 +82,19 @@ use stm32f1xx_hal::{
     prelude::*,
 };
 
+// impl LED would work in function signature but does not work in rtic share
+// or impl LED for LedType .
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
+pub type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup_led(mut gpiox: Parts) -> LedType {
+//pub fn setup_led(mut gpiox: Parts) -> impl LED {
 //pub fn setup_led<T>(mut gpiox: T) -> impl LED 
 //where T: stm32f1xx_hal::gpio::gpioc::Parts, {
     let led = gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low()
         }

@@ -70,6 +70,9 @@ mod app {
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
+
+    use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED, LedType};
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull, //, State},
@@ -82,10 +85,6 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    // impl LED would work in function signature but does not work in share.
-    #[cfg(feature = "stm32f1xx")]
-    type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, AltDelay) {
@@ -121,18 +120,18 @@ mod app {
            1000,
        );
 
-       //let led = setup_led(dp.GPIOC.split()); 
-       let mut gpioc = dp.GPIOC.split();
-       let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-
-       impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-       }
+       let mut led = setup_led(dp.GPIOC.split()); 
+//       let mut gpioc = dp.GPIOC.split();
+//       let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+//
+//       impl LED for LedType {
+//            fn on(&mut self) -> () {
+//                self.set_low()
+//            }
+//            fn off(&mut self) -> () {
+//                self.set_high()
+//            }
+//       }
 
        led.off();
 
@@ -378,22 +377,11 @@ mod app {
     // End of hal/MCU specific setup. Following should be generic code.
 
 
-    //use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
-    // above is a problem because impl Led does not work in share, so LedType has to be defined
-    // and traits set here.
-
-    pub trait LED {
-        // depending on board wiring, on may be set_high or set_low, with off also reversed
-        // implementation should deal with this difference
-        fn on(&mut self) -> ();
-        fn off(&mut self) -> ();
-    }
-
     // A delay is used in sensor (dht) initialization and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least number of indicated clock cycles.
 
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay, ALTCLOCK};
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
 
 //  THIS NEEDS TYPES FIGURED OUT FOR SHARE. SEE DISPLAY_STUFF_RTIC FOR SIMPLER EXAMPLE
@@ -451,7 +439,7 @@ mod app {
         hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (mut dht, i2c, mut led, mut delay) = setup(cx.device);
+        let (dht, i2c, mut led, mut delay) = setup(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
@@ -498,7 +486,7 @@ mod app {
         //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
 
-        let mut delay = cx.local.delay;
+        let delay = cx.local.delay;
         let dht = cx.local.dht;
         //let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });  WHY DID THIS NOT NEED mut delay ?
         //let z = (delay).lock(|delay| { Reading::read(delay, dht) });             whereas this does need mut
