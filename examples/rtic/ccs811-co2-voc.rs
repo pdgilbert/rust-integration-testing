@@ -822,18 +822,22 @@ mod app {
         let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });
         let (temperature, humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
-               => (temperature, relative_humidity),
+               =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+                    (temperature, relative_humidity)
+                   },
             Err(e) 
-               =>  {hprintln!("dht Error {:?}. Using default.", e).unwrap(); 
+               =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
                     //panic!("Error reading DHT"),
-                    (25, 40)},  //supply default values
+                    (25, 40)  //supply default values
+                   },
         };
+        //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity).unwrap();
 
         let data = cx.shared.ccs811.lock(|ccs811| block!(ccs811.data()))
                          .unwrap_or(AlgorithmResult::default());
-
         hprintln!("ccs811 data eco2:{}, etvoc:{}, raw_current:{}, raw_volt:{}", 
                           data.eco2, data.etvoc, data.raw_current, data.raw_voltage).unwrap();
+
         cx.shared.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
 
 

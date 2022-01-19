@@ -12,6 +12,7 @@ use panic_halt as _;
 
 pub mod i2c_led_delay;
 pub mod lora_spi_gps_usart;
+pub mod alt_delay;
 
 // consider putting some real tests here
 

@@ -43,10 +43,6 @@ mod app {
     #[cfg(feature = "dht22")]
     use dht_sensor::dht22::Reading;
     use dht_sensor::*;
-        
-    use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
-                       //delay_ms could be used but needs to use a timer other than Systick
-                       //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -69,7 +65,7 @@ mod app {
     
     use fugit::TimerDuration;
 
-    const MONOTICK: u32 = 100;
+    const MONOTICK:  u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
@@ -85,23 +81,23 @@ mod app {
     };
 
     #[cfg(feature = "stm32f1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
+    // impl LED would work in function signature but does not work in share.
     #[cfg(feature = "stm32f1xx")]
     type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, Delay) {
-          //let mut gpioc = dp.GPIOC.split();
-          //let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-       // This delay used for dht initialization and read cannot be systick which is used by spawn.
-       let mut delay = asm::delay(5 * CLOCK); // (5 * CLOCK cycles gives aprox 5+ second delay
+    fn setup(dp: Peripherals) ->  (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, AltDelay) {
 
        let mut gpioa = dp.GPIOA.split();
 
        let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
-       delay.delay_ms(1000_u16); //  1 second delay for sensor initialization
+
+       // This delay used for dht initialization and read cannot be systick which is used by spawn.
+       let mut delay = AltDelay{};
+       delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
        let mut gpiob = dp.GPIOB.split();
 
@@ -125,8 +121,21 @@ mod app {
            1000,
        );
 
-       let led = setup_led(dp.GPIOC.split());
-    
+       //let led = setup_led(dp.GPIOC.split()); 
+       let mut gpioc = dp.GPIOC.split();
+       let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+
+       impl LED for PC13<Output<PushPull>> {
+            fn on(&mut self) -> () {
+                self.set_low()
+            }
+            fn off(&mut self) -> () {
+                self.set_high()
+            }
+       }
+
+       led.off();
+
        (dht, i2c, led, delay)
        }
 
@@ -138,7 +147,7 @@ mod app {
     };
 
     #[cfg(feature = "stm32f3xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
     type LedType = PE15<Output<PushPull>>;
@@ -174,7 +183,7 @@ mod app {
     };
 
     #[cfg(feature = "stm32f4xx")]
-    const CLOCK: u32 = 16_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -204,7 +213,7 @@ mod app {
     };
 
     #[cfg(feature = "stm32f7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -239,7 +248,7 @@ mod app {
     use embedded_hal::digital::v2::OutputPin;
 
     #[cfg(feature = "stm32h7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -275,7 +284,7 @@ mod app {
     };
 
     #[cfg(feature = "stm32l0xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -310,7 +319,7 @@ mod app {
     use embedded_hal::digital::v2::OutputPin;
 
     #[cfg(feature = "stm32l1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
     type LedType = PB6<Output<PushPull>>;
@@ -341,7 +350,7 @@ mod app {
     };
 
     #[cfg(feature = "stm32l4xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
     type LedType = PC13<Output<PushPull>>;
@@ -369,57 +378,67 @@ mod app {
     // End of hal/MCU specific setup. Following should be generic code.
 
 
-// 
-//    pub trait LED {
-//        // depending on board wiring, on may be set_high or set_low, with off also reversed
-//        // implementation should deal with this difference
-//        fn on(&mut self) -> ();
-//        fn off(&mut self) -> ();
-//    }
-use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
+    //use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
+    // above is a problem because impl Led does not work in share, so LedType has to be defined
+    // and traits set here.
 
-
-fn show_display<S>(
-    temperature: i8,
-    relative_humidity: u8,
-    text_style: MonoTextStyle<BinaryColor>,
-    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-) -> ()
-where
-    S: DisplaySize,
-{
-    let mut lines: [heapless::String<32>; 1] = [
-        heapless::String::new(),
-    ];
-
-    // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
-    // It is possible to use \n in place of separate writes, with one line rather than vector.
-
-    // UTF-8 text is 2 bytes (2 ascii characters) in strings like the next. Cutting an odd number of character from
-    // the next test_text can result in a build error message  `stream did not contain valid UTF-8` even with
-    // the line commented out!! The test_txt is taken from 
-    //      https://github.com/embedded-graphics/examples/blob/main/eg-0.7/examples/text-extended-characters.rs
-    
-    //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
-    //   degree symbol "°" is about                  ^^ here 
-    
-    write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
- 
-    disp.clear();
-    for i in 0..lines.len() {
-        // start from 0 requires that the top is used for font baseline
-        Text::with_baseline(
-            &lines[i],
-            Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-            text_style,
-            Baseline::Top,
-        )
-        .draw(&mut *disp)
-        .unwrap();
+    pub trait LED {
+        // depending on board wiring, on may be set_high or set_low, with off also reversed
+        // implementation should deal with this difference
+        fn on(&mut self) -> ();
+        fn off(&mut self) -> ();
     }
-    disp.flush().unwrap();
-    ()
-}
+
+    // A delay is used in sensor (dht) initialization and read. 
+    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
+    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least number of indicated clock cycles.
+
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay, ALTCLOCK};
+
+
+//  THIS NEEDS TYPES FIGURED OUT FOR SHARE. SEE DISPLAY_STUFF_RTIC FOR SIMPLER EXAMPLE
+//
+//fn show_display<S>(
+//    temperature: i8,
+//    relative_humidity: u8,
+//    text_style: MonoTextStyle<BinaryColor>,
+//    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+//) -> ()
+//where
+//    S: DisplaySize,
+//{
+//   let mut lines: [heapless::String<32>; 1] = [
+//       heapless::String::new(),
+//   ];
+//
+//   // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+//   // It is possible to use \n in place of separate writes, with one line rather than vector.
+//
+//   // UTF-8 text is 2 bytes (2 ascii characters) in strings like the next. Cutting an odd number of character from
+//   // the next test_text can result in a build error message  `stream did not contain valid UTF-8` even with
+//   // the line commented out!! The test_txt is taken from 
+//   //      https://github.com/embedded-graphics/examples/blob/main/eg-0.7/examples/text-extended-characters.rs
+//   
+//   //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+//   //   degree symbol "°" is about                  ^^ here 
+//   
+//   write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
+//
+//   disp.clear();
+//   for i in 0..lines.len() {
+//       // start from 0 requires that the top is used for font baseline
+//       Text::with_baseline(
+//           &lines[i],
+//           Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+//           text_style,
+//           Baseline::Top,
+//       )
+//       .draw(&mut *disp)
+//       .unwrap();
+//   }
+//   disp.flush().unwrap();
+//   ()
+//}
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -429,70 +448,78 @@ where
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
-        hprintln!("blink_rtic example").unwrap();
+        hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
         let (mut dht, i2c, mut led, mut delay) = setup(cx.device);
 
-            led.on();
-
-        let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-        let interface = I2CDisplayInterface::new(manager.acquire());
-
-        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
-            .into_buffered_graphics_mode();
-        display.init().unwrap();
-
-        let text_style = MonoTextStyleBuilder::new()
-            .font(&FONT_10X20)
-            .text_color(BinaryColor::On)
-            .build();
-
+        led.on();
+        delay.delay_ms(1000u32);  
         led.off();
 
-        let mono = Systick::new(cx.core.SYST, CLOCK);
+        let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+//        let interface = I2CDisplayInterface::new(manager.acquire());
+//
+//        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+//        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+//            .into_buffered_graphics_mode();
+//        display.init().unwrap();
+//
+//        let text_style = MonoTextStyleBuilder::new()
+//            .font(&FONT_10X20)
+//            .text_color(BinaryColor::On)
+//            .build();
+
+        let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, delay, dht, text_style, display }, Local {}, init::Monotonics(mono))
+        hprintln!("exit init").unwrap();
+        //(Shared {dht,  led, delay, text_style, display }, Local {}, init::Monotonics(mono))
+        (Shared { led, }, Local {dht, delay, }, init::Monotonics(mono))
     }
 
     #[shared]
     struct Shared {
-        led: LedType,
-        delay: Delay,
-        dht: PA8<Output<OpenDrain>>,
-        text_style: MonoTextStyle<BinaryColor>,
-        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
+        led:   LedType,      //impl LED, would be nice
     }
 
     #[local]
-    struct Local {}
+    struct Local {
+        dht:   PA8<Output<OpenDrain>>,
+        delay: AltDelay,
+//        text_style: MonoTextStyle<BinaryColor>,
+//        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
+    }
 
-    #[task(shared = [led, delay, dht, text_style, display], capacity=2)]
+    //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
+    #[task(shared = [led, ], local = [dht, delay,], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
-        // blink and re-spawn process to repeat
+        //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
 
-        //match Reading::read(&mut delay, &mut dht) {
-        //let z = Reading::read(&mut delay, &mut dht); 
-        let z = cx.shared.dht.lock(|dht| Reading::read(&mut delay, &mut dht));
-        match z {
-            Ok(Reading {
-                temperature,
-                relative_humidity,}) 
-               => {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
-                   show_display(temperature, relative_humidity, text_style, &mut display)},
-            Err(_e) 
-               =>  {//hprintln!("Error {:?}", e).unwrap(); 
-                    panic!("Error reading DHT")},
-        }
+        let mut delay = cx.local.delay;
+        let dht = cx.local.dht;
+        //let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });  WHY DID THIS NOT NEED mut delay ?
+        //let z = (delay).lock(|delay| { Reading::read(delay, dht) });             whereas this does need mut
+        let z = Reading::read(delay, dht);
+        let (temperature, humidity) = match z {
+            Ok(Reading {temperature, relative_humidity,})
+               =>  {hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
+                    //show_display(temperature, relative_humidity, text_style, &mut display)
+                    (temperature, relative_humidity)
+                   },
+            Err(e) 
+               =>  {hprintln!("dht Error {:?}", e).unwrap(); 
+                    //panic!("Error reading DHT")
+                    (25, 40)  //supply default values
+                   },
+        };
 
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
-    #[task(shared = [led, delay], capacity=2)]
+    #[task(shared = [led], capacity=2)]
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
@@ -501,12 +528,12 @@ where
         crate::app::led_off::spawn_after(duration).unwrap();
     }
 
-    #[task(shared = [led, delay], capacity=2)]
+    #[task(shared = [led], capacity=2)]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led, delay], capacity=2)]
+    #[task(shared = [led], capacity=2)]
     fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
