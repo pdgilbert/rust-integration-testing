@@ -71,12 +71,11 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
 
-    use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED, LedType};
+    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull, //, State},
-               gpioa::PA8, OpenDrain},
+        gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
         device::I2C2,
         i2c::{BlockingI2c, DutyCycle, Mode, Pins},
         pac::Peripherals,
@@ -121,18 +120,6 @@ mod app {
        );
 
        let mut led = setup_led(dp.GPIOC.split()); 
-//       let mut gpioc = dp.GPIOC.split();
-//       let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-//
-//       impl LED for LedType {
-//            fn on(&mut self) -> () {
-//                self.set_low()
-//            }
-//            fn off(&mut self) -> () {
-//                self.set_high()
-//            }
-//       }
-
        led.off();
 
        (dht, i2c, led, delay)
@@ -149,26 +136,11 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    type LedType = PE15<Output<PushPull>>;
-
-    #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) -> LedType {
         let mut rcc = dp.RCC.constrain();
         //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-        let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-        let mut led = gpioe
-            .pe15
-            .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-
-        impl LED for PE15<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
+        let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
         led.off();
 
         led
@@ -183,9 +155,6 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     const  MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f4xx")]
-    type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) -> LedType {
@@ -213,9 +182,6 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f7xx")]
-    type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) -> LedType {
@@ -248,9 +214,6 @@ mod app {
 
     #[cfg(feature = "stm32h7xx")]
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32h7xx")]
-    type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) -> LedType {
@@ -286,9 +249,6 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    type LedType = PC13<Output<PushPull>>;
-
-    #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) -> LedType {
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
         let gpioc = p.GPIOC.split(&mut rcc);
@@ -321,9 +281,6 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    type LedType = PB6<Output<PushPull>>;
-
-    #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) -> LedType {
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
         let gpiob = dp.GPIOB.split(&mut rcc);
@@ -350,9 +307,6 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32l4xx")]
-    type LedType = PC13<Output<PushPull>>;
 
     #[cfg(feature = "stm32l4xx")]
     fn setup(dp: Peripherals) -> LedType {

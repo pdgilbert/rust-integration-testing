@@ -4,20 +4,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub trait LED {
-    // depending on board wiring, on may be set_high or set_low, with off also reversed
-    // implementation should deal with this difference
-    fn on(&mut self) -> ();
-    fn off(&mut self) -> ();
-
-    // default methods. Note these use delay so do not use in rtic.
-    fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
-        self.on();
-        delay.delay_ms(time);
-        self.off();
-        delay.delay_ms(time); //consider delay.delay_ms(500u16);
-    }
-}
+pub use crate::led::{setup_led, LED, LedType};
 
 // setup() does all  HAL/MCU specific setup and returns generic hal device for use in main code.
 
@@ -29,22 +16,6 @@ use stm32f0xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
-
-#[cfg(feature = "stm32f0xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
-    let led = cortex_m::interrupt::free(move |cs| gpiox.pc13.into_push_pull_output(cs));
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32f0xx")]
 pub fn setup() -> (
@@ -76,38 +47,14 @@ pub fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
-    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
-// impl LED would work in function signature but does not work in rtic share
-// or impl LED for LedType .
 #[cfg(feature = "stm32f1xx")]
-pub type LedType = PC13<Output<PushPull>>;
-
-#[cfg(feature = "stm32f1xx")]
-pub fn setup_led(mut gpiox: Parts) -> LedType {
-//pub fn setup_led(mut gpiox: Parts) -> impl LED {
-//pub fn setup_led<T>(mut gpiox: T) -> impl LED 
-//where T: stm32f1xx_hal::gpio::gpioc::Parts, {
-    let led = gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
-
-    impl LED for LedType {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-    
-    led
-}
-
-#[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
+pub fn setup() -> (BlockingI2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
+    //                                           ..., impl LED, ... works too 
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
@@ -147,27 +94,10 @@ pub fn setup() -> (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    gpio::{gpioe::{PE9, Parts}, Output, PushPull},
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
-
-#[cfg(feature = "stm32f3xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
-    let led = gpiox.pe9.into_push_pull_output(&mut gpiox.moder, &mut gpiox.otyper);
-
-    impl LED for PE9<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32f3xx")]
 pub fn setup() -> (
@@ -204,27 +134,10 @@ pub fn setup() -> (
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     delay::Delay,
-    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
-    let led = gpiox.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
@@ -254,27 +167,10 @@ pub fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     delay::Delay,
-    gpio::{gpioc::{PC13,  Parts}, Output, PushPull},
     i2c::{BlockingI2c, Mode, PinScl, PinSda},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
-
-#[cfg(feature = "stm32f7xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
-    let led = gpiox.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32f7xx")]
 pub fn setup() -> (
@@ -314,30 +210,10 @@ pub fn setup() -> (
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
-
-#[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
-    let led = gpiox.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup() -> (I2c<I2C1>, impl LED, Delay) {
@@ -377,22 +253,6 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
-    let led = gpiox.pc13.into_push_pull_output(); 
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-    
-    led
-}
-
-#[cfg(feature = "stm32l0xx")]
 pub fn setup() -> (
     I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>,
     //I2c<I2C1, impl Pins<I2C1>>,
@@ -419,36 +279,16 @@ pub fn setup() -> (
     (i2c, led, delay)
 }
 
+
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     delay::Delay,
-    gpio::{gpiob::PB6, Output, PushPull, Input, Floating},
     i2c::{I2c, Pins},
     prelude::*,
     rcc, // for ::Config but avoid name conflict with serial
     stm32::{CorePeripherals, Peripherals, I2C1},
     //gpio::{gpiob::{PB8, PB9}, Output, OpenDrain, },
 };
-
-#[cfg(feature = "stm32l1xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32l1xx")]
-pub fn setup_led(pin: PB6<Input<Floating>>) -> impl LED {
-    //let led = gpiox.pb6.into_push_pull_output(); 
-    let led = pin.into_push_pull_output(); 
-
-    impl LED for PB6<Output<PushPull>> {
-        fn on(&mut self) -> () {
-           self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
@@ -480,22 +320,6 @@ use stm32l4xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
-
-#[cfg(feature = "stm32l4xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
-    let led = gpiox.pc13.into_push_pull_output(&mut gpiox.moder, &mut gpiox.otyper); 
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-    
-    led
-}
 
 #[cfg(feature = "stm32l4xx")]
 pub fn setup() -> (

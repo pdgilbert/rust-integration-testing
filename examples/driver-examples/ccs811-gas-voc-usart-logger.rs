@@ -317,9 +317,9 @@ mod app {
             gpioc::PC13,
             AlternateOD, Output, PushPull, AF4,
         },
-        i2c::{BlockingI2c, Mode, PinScl, PinSda},
+        i2c::{BlockingI2c, Mode, },
         pac,
-        pac::{Peripherals,  I2C1, USART2},
+        pac::{Peripherals, },
         prelude::*,
         serial::{Config, Oversampling, Serial, Tx},
     };
