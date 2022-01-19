@@ -53,15 +53,15 @@ mod app {
     //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
-    use embedded_graphics::{
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        pixelcolor::BinaryColor,
-        prelude::*,
-        text::{Baseline, Text},
-    };
+//    use embedded_graphics::{
+//        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+//        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+//        pixelcolor::BinaryColor,
+//        prelude::*,
+//        text::{Baseline, Text},
+//    };
 
-    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+//    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
     
     use fugit::TimerDuration;
 
@@ -86,16 +86,17 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, AltDelay) {
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, AltDelay) {
 
        let mut gpioa = dp.GPIOA.split();
 
-       let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-       dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
        // This delay used for dht initialization and read cannot be systick which is used by spawn.
-       let mut delay = AltDelay{};
-       delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+       let delay = AltDelay{};
 
        let mut gpiob = dp.GPIOB.split();
 
@@ -393,13 +394,16 @@ mod app {
         hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (dht, i2c, mut led, mut delay) = setup(cx.device);
+        let (mut dht, i2c, mut led, mut delay) = setup(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
         led.off();
 
-        let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+
+        let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
 //        let interface = I2CDisplayInterface::new(manager.acquire());
 //
 //        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
@@ -428,7 +432,7 @@ mod app {
 
     #[local]
     struct Local {
-        dht:   PA8<Output<OpenDrain>>,
+        dht:   DhtPin,
         delay: AltDelay,
 //        text_style: MonoTextStyle<BinaryColor>,
 //        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
@@ -445,7 +449,7 @@ mod app {
         //let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });  WHY DID THIS NOT NEED mut delay ?
         //let z = (delay).lock(|delay| { Reading::read(delay, dht) });             whereas this does need mut
         let z = Reading::read(delay, dht);
-        let (temperature, humidity) = match z {
+        let (_temperature, _humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
                     //show_display(temperature, relative_humidity, text_style, &mut display)
