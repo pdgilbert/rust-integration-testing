@@ -72,12 +72,11 @@ mod app {
 
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+    use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2};
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
-        device::I2C2,
-        i2c::{BlockingI2c, DutyCycle, Mode, Pins},
         pac::Peripherals,
         prelude::*,
     };
@@ -89,39 +88,22 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, BlockingI2c<I2C2, impl Pins<I2C2>>, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
 
        let mut gpioa = dp.GPIOA.split();
-
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-
-       // This delay used for dht initialization and read cannot be systick which is used by spawn.
-       let delay = AltDelay{};
-
-       let mut gpiob = dp.GPIOB.split();
 
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
-       let i2c = BlockingI2c::i2c2(
-           dp.I2C2,
-           (
-               gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
-               gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
-           ),
-           //&mut afio.mapr,  need this for i2c1 but not i2c2
-           Mode::Fast {
-               frequency: 400_000.hz(),
-               duty_cycle: DutyCycle::Ratio2to1,
-           },
-           clocks,
-           1000,
-           10,
-           1000,
-           1000,
-       );
+
+       //afio  needed for i2c1 (PB8, PB9) but not i2c2
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
+
+       // This delay used for dht initialization and read cannot be systick which is used by spawn.
+       let delay = AltDelay{};
 
        (dht, i2c, led, delay)
        }
@@ -404,7 +386,6 @@ mod app {
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
         let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-//        let interface = I2CDisplayInterface::new(manager.acquire());
 //
 //        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
 //        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -428,6 +409,7 @@ mod app {
     #[shared]
     struct Shared {
         led:   LedType,      //impl LED, would be nice
+        //manager??? ,  uses i2c:   I2c2Type, or text_style, display ??
     }
 
     #[local]

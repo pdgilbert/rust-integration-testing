@@ -5,6 +5,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 pub use crate::led::{setup_led, LED, LedType};
+pub use crate::i2c::{setup_i2c1, I2c1Type};
 
 // setup() does all  HAL/MCU specific setup and returns generic hal device for use in main code.
 
@@ -47,46 +48,21 @@ pub fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{CorePeripherals, Peripherals,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (BlockingI2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
-    //                                           ..., impl LED, ... works too 
-    let cp = CorePeripherals::take().unwrap();
+pub fn setup() -> (I2c1Type, LedType, Delay) {
+    //            (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, , Delay)  works too 
     let dp = Peripherals::take().unwrap();
 
-    let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let delay = Delay::new(cp.SYST, clocks);
-
-    let mut afio = dp.AFIO.constrain();
-
-    let mut gpiob = dp.GPIOB.split();
-
-    let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-    let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
-
-    let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
-        (scl, sda),
-        &mut afio.mapr,
-        Mode::Fast {
-            frequency: 100_000.hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
-    
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
+    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (i2c, led, delay)
 }
