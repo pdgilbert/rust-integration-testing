@@ -190,25 +190,35 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks) -> I2c2Type {
 
 
 #[cfg(feature = "stm32f7xx")]
+use stm32f7xx_hal::{
+    gpio::{AlternateOD, AF4,
+           gpiob::{PB8, PB9, PB10, PB11, Parts as PartsB},
+    },
+    i2c::{BlockingI2c, Mode, },
+    rcc::{Clocks, APB1},
+    pac::{I2C1, I2C2},
+    prelude::*,
+};
 
 #[cfg(feature = "stm32f7xx")]
-pub type I2c1Type =  BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
+pub type I2c1Type = BlockingI2c<I2C1, PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>>;
+//pub type I2c1Type =  BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &Clocks) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut APB1) -> I2c1Type {
 
     let scl = gpiob.pb8.into_alternate_open_drain(); // scl on PB8
     let sda = gpiob.pb9.into_alternate_open_drain(); // sda on PB9
 
     let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
+        i2c1,
         (scl, sda),
         //400.khz(),
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
         clocks,
-        &mut rcc.apb1,
+        &mut apb1,
         1000,
     );
 
@@ -216,22 +226,22 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &C
 }
 
 #[cfg(feature = "stm32f7xx")]
-pub type I2c2Type = BlockingI2c<I2C2, impl PinScl<I2C2>, impl PinSda<I2C2>>;   
-//NOT
-#[cfg(feature = "stm32f7xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
-    let scl = gpiob.pb8.into_alternate_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_open_drain(); // sda on PB9
+pub type I2c2Type = BlockingI2c<I2C2, PB10<AlternateOD<AF4>>, PB11<AlternateOD<AF4>>>;
 
-    let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
+#[cfg(feature = "stm32f7xx")]
+pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut APB1) -> I2c2Type {
+    let scl = gpiob.pb10.into_alternate_open_drain(); 
+    let sda = gpiob.pb11.into_alternate_open_drain(); 
+
+    let i2c = BlockingI2c::i2c2(
+        i2c2,
         (scl, sda),
         //400.khz(),
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
         clocks,
-        &mut rcc.apb1,
+        &mut apb1,
         1000,
     );
 
@@ -241,32 +251,33 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
+    gpio::gpiob::Parts as PartsB,
     i2c::I2c,
-    pac::{CorePeripherals, Peripherals, I2C1},
-    prelude::*,
+    pac::{I2C1, I2C4,},
+    rcc::{Ccdr, CoreClocks},
+    prelude::*, 
 };
 
 #[cfg(feature = "stm32h7xx")]
 pub type I2c1Type =  I2c<I2C1>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &Clocks) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, ccdr: Ccdr, &clocks: &CoreClocks) -> I2c1Type {
     let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
     let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
-    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
-
+    let i2c = i2c1.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
 
     i2c
 }
 
 #[cfg(feature = "stm32h7xx")]
-pub type I2c2Type =I2c<I2C2> ;   
-//NOT
+pub type I2c2Type =I2c<I2C4> ;   // there does not seem to be any I2c2. Using name I2c2 for I2c4
+
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
-    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C2, &clocks);
+pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, ccdr: Ccdr, &clocks: &CoreClocks) -> I2c2Type {
+    let scl = gpiob.pb8.into_alternate_af6().set_open_drain(); 
+    let sda = gpiob.pb9.into_alternate_af6().set_open_drain(); 
+    let i2c = i2c4.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C4, &clocks);
 
     i2c
 }

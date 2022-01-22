@@ -171,7 +171,7 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
+        gpio::{gpioa::PA8, Output, OpenDrain},
         pac::Peripherals,
         prelude::*,
     };
@@ -180,29 +180,32 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-        //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
+       let dht = dp.GPIOA.split().pa8.into_open_drain_output();
 
-        let gpioc = dp.GPIOC.split();
-        let led = gpioc.pc13.into_push_pull_output();
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze();
+       //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
-        led
+       let led = setup_led(dp.GPIOC.split());
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
     }
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
-        pac::Peripherals,
-        prelude::*,
+          gpio::{Output, OpenDrain, 
+                 gpioa::PA8,
+          },
+          i2c::I2c,
+          pac::Peripherals,
+          prelude::*,
     };
 
     #[cfg(feature = "stm32h7xx")]
@@ -212,26 +215,31 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-        let pwr = dp.PWR.constrain();
-        let vos = pwr.freeze();
-        let rcc = dp.RCC.constrain();
-        let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let pwr = dp.PWR.constrain();
+       let vos = pwr.freeze();
+       let rcc = dp.RCC.constrain();
+       let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let clocks = ccdr.clocks;
 
-        let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
-        let led = gpioc.pc13.into_push_pull_output();
+       let dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
+       let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 
-        led
-    }
+// setup_i2c2 NOT WORKING
+       let scl = gpiob.pb8.into_alternate_af6().set_open_drain(); // scl on PB8
+       let sda = gpiob.pb9.into_alternate_af6().set_open_drain(); // sda on PB9
+       let i2c = dp.I2C4.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C4, &clocks);
+//    let i2c = setup_i2c2(dp.I2C4, gpiob, ccdr, &clocks);
+
+       let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
+   }
 
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
@@ -250,16 +258,9 @@ mod app {
         let gpioc = p.GPIOC.split(&mut rcc);
         let led = gpioc.pc13.into_push_pull_output();
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
+       let delay = AltDelay{};
 
-        led
+       (dht, i2c, led, delay)
     }
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -282,16 +283,9 @@ mod app {
         let gpiob = dp.GPIOB.split(&mut rcc);
         let led = gpiob.pb6.into_push_pull_output();
 
-        impl LED for PB6<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
+       let delay = AltDelay{};
 
-        led
+       (dht, i2c, led, delay)
     }
 
     #[cfg(feature = "stm32l4xx")]
@@ -312,16 +306,9 @@ mod app {
             .pc13
             .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper);
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+       let delay = AltDelay{};
 
-        led
+       (dht, i2c, led, delay)
     }
 
     // End of hal/MCU specific setup. Following should be generic code.
