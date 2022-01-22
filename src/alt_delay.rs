@@ -14,6 +14,9 @@ use cortex_m::asm::delay; // argment in clock cycles so (5 * CLOCK) cycles gives
 
 //should be set for board not for HAL
 
+#[cfg(feature = "stm32f0xx")]
+pub const ALTCLOCK: u32 = 8_000_000;   // CHECK
+
 #[cfg(feature = "stm32f1xx")]
 pub const ALTCLOCK: u32 = 8_000_000; 
 

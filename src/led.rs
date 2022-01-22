@@ -1,3 +1,5 @@
+//! Note that (on board) led pin settings are specific to a board used for testing,
+//! despite the cfg feature flags suggesting it may be for a HAL.
 
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
@@ -16,12 +18,22 @@ pub trait LED {
 
 // impl LED would work in function signature but does not work in rtic share
 // or implimentation of methods,  so LedType is defined in the following.
+#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
+
+use stm32f0xx_hal::{
+    delay::Delay,
+    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
+    prelude::*,
+};
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
+pub type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32f0xx")]
+pub fn setup_led(gpiox: Parts) -> LedType {
     let led = cortex_m::interrupt::free(move |cs| gpiox.pc13.into_push_pull_output(cs));
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low().unwrap()
         }
@@ -102,10 +114,10 @@ use stm32f4xx_hal::{
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
+pub fn setup_led(gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output();
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low()
         }
@@ -129,10 +141,10 @@ use stm32f7xx_hal::{
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
+pub fn setup_led(gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output();
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low()
         }
@@ -158,10 +170,10 @@ use embedded_hal::digital::v2::OutputPin;
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_led(gpiox: Parts) -> impl LED {
+pub fn setup_led(gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output();
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low().unwrap()
         }
@@ -192,10 +204,10 @@ use stm32l0xx_hal::{
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
+pub fn setup_led(mut gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output(); 
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low()
         }
@@ -222,11 +234,11 @@ use embedded_hal::digital::v2::OutputPin;
 pub type LedType = PB6<Output<PushPull>>;
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup_led(pin: PB6<Input<Floating>>) -> impl LED {
+pub fn setup_led(pin: PB6<Input<Floating>>) -> LedType {
     //let led = gpiox.pb6.into_push_pull_output(); 
     let led = pin.into_push_pull_output(); 
 
-    impl LED for PB6<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
            self.set_high().unwrap()
         }
@@ -252,10 +264,10 @@ use stm32l4xx_hal::{
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_led(mut gpiox: Parts) -> impl LED {
+pub fn setup_led(mut gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output(&mut gpiox.moder, &mut gpiox.otyper); 
 
-    impl LED for PC13<Output<PushPull>> {
+    impl LED for LedType {
         fn on(&mut self) -> () {
             self.set_low()
         }

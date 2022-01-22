@@ -1,4 +1,8 @@
 //! NOT YET WORKING. NEED RTIC VERSION OF SSD1306 FOR OLED. COMPARE display_stuff_rtic
+//! 
+//! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
+//! despite the cfg feature flags suggesting it may be for a HAL.
+//! 
 //! Measure the temperature and humidity from a DHT11 or DHT22 on data pin (A8) and display on OLED with i2c.
 //! (Specify feature "dht22"for DHT22).
 //! Compare examples oled_dht, and blink_rtic.
@@ -89,7 +93,6 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-
        let mut gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
@@ -119,19 +122,25 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let mut rcc = dp.RCC.constrain();
-        //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+       let mut gpioa = dp.GPIOA.split();
+       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
-        let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-        led.off();
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-        led
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+       led.off();
+
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
     }
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
+        gpio::{Output, gpioa::PA8, OpenDrain}, 
         pac::Peripherals,
         prelude::*,
     };
@@ -140,21 +149,25 @@ mod app {
     const  MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let gpioc = dp.GPIOC.split();
-        let led = gpioc.pc13.into_push_pull_output();
+    type DhtPin = PA8<Output<OpenDrain>>;
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+       let gpioa = dp.GPIOA.split();
+       let dht = gpioa.pa8.into_open_drain_output();
 
-        led
-    }
+       let rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze();
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+
+       let mut led = setup_led(dp.GPIOC.split()); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
+   }
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
@@ -167,7 +180,7 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
         //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
         let gpioc = dp.GPIOC.split();
@@ -199,7 +212,7 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
         let pwr = dp.PWR.constrain();
         let vos = pwr.freeze();
         let rcc = dp.RCC.constrain();
@@ -232,7 +245,7 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
         let gpioc = p.GPIOC.split(&mut rcc);
         let led = gpioc.pc13.into_push_pull_output();
@@ -264,7 +277,7 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
         let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
         let gpiob = dp.GPIOB.split(&mut rcc);
         let led = gpiob.pb6.into_push_pull_output();
@@ -292,7 +305,7 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
         let mut rcc = dp.RCC.constrain();
         let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
         let led = gpioc
