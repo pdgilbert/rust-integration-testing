@@ -57,8 +57,8 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    i2c::{I2c,},
+    pac::{CorePeripherals, Peripherals,},
     prelude::*,
 };
 
@@ -68,12 +68,21 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
 
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    
+    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb), &mut flash, &mut rcc);
+// setup_i2c1 NOT WORKING
+    let scl = gpiob.pb6.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+    let sda = gpiob.pb7.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+    //    // //NOT sure if pull up is needed
+    //    scl.internal_pull_up(&mut gpiob.pupdr, true);
+    //    sda.internal_pull_up(&mut gpiob.pupdr, true);
+    let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+//    let i2c = setup_i2c1(dp.I2C1, gpiob, &clocks, &mut apb1);
 
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (i2c, led, delay)

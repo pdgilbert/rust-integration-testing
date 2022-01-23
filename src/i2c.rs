@@ -94,14 +94,13 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
 
 #[cfg(feature = "stm32f3xx")]
 use stm32f3xx_hal::{
-    i2c::{I2c, SclPin, SdaPin},
-    gpio::{Alternate, OpenDrain, AF4,
+    i2c::{I2c,},
+    gpio::{OpenDrain, AF4,
            gpioa::{PA9, PA10, Parts as PartsA}, 
            gpiob::{PB6, PB7,  Parts as PartsB}
     },
-    flash::Parts as flashParts,
-    rcc::{Clocks, Rcc},
-    pac::{CorePeripherals, Peripherals, I2C1, I2C2},
+    rcc::{Clocks, APB1},
+    pac::{I2C1, I2C2},
     prelude::*,
 };
 
@@ -110,18 +109,13 @@ pub type I2c1Type = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
 //pub type I2c1Type = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> ;
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: PartsB, flash: &mut flashParts, rcc: &mut Rcc) -> I2c1Type {
-    let scl = gpiob
-        .pb6
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-    let sda = gpiob
-        .pb7
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+pub fn setup_i2c1(i2c1: I2C1, mut gpiob: PartsB, clocks: Clocks, mut apb1: APB1) -> I2c1Type {
+    let scl = gpiob.pb6.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+    let sda = gpiob.pb7.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
     //    // //NOT sure if pull up is needed
     //    scl.internal_pull_up(&mut gpiob.pupdr, true);
     //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let i2c = I2c::new(i2c1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+    let i2c = I2c::new(i2c1, (scl, sda), 100_000.Hz(), clocks, &mut apb1);
 
     i2c
 }
@@ -131,18 +125,13 @@ pub type I2c2Type = I2c<I2C2, (PA9<AF4<OpenDrain>>, PA10<AF4<OpenDrain>>)>;
 //pub type I2c2Type = I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>;   
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpioa: PartsA, flash: &mut flashParts, rcc: &mut Rcc) -> I2c2Type {
-    let scl = gpioa
-        .pa9
-        .into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-    let sda = gpioa
-        .pa10
-        .into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+pub fn setup_i2c2(i2c2: I2C2 , mut gpioa: PartsA, clocks: Clocks, mut apb1: APB1) -> I2c2Type {
+    let scl =  gpioa.pa9.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+    let sda = gpioa.pa10.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
     //    // //NOT sure if pull up is needed
     //    scl.internal_pull_up(&mut gpiob.pupdr, true);
     //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let i2c = I2c::new(i2c2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+    let i2c = I2c::new(i2c2, (scl, sda), 100_000.Hz(), clocks, &mut apb1);
 
     i2c
 }

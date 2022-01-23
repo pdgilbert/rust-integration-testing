@@ -113,7 +113,10 @@ mod app {
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        gpio::{gpioe::PE15, Output, PushPull},
+        gpio::{Output, OpenDrain,
+               gpioa::{PA8,}, 
+        },
+        i2c::{I2c,},
         pac::Peripherals,
         prelude::*,
     };
@@ -122,15 +125,28 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-       let mut gpioa = dp.GPIOA.split();
-       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
+    type DhtPin = PA8<Output<OpenDrain>>;
 
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+    
+       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
-       let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+       //let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+
+// setup_i2c2 NOT WORKING
+       let scl =  gpioa.pa9.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       let sda = gpioa.pa10.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       //    // //NOT sure if pull up is needed
+       //    scl.internal_pull_up(&mut gpiob.pupdr, true);
+       //    sda.internal_pull_up(&mut gpiob.pupdr, true);
+       let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+//       let i2c = setup_i2c2(dp.I2C2, gpioa, &clocks);
+
+       let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
 
        let delay = AltDelay{};
