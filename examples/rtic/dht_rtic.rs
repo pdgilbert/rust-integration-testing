@@ -269,11 +269,18 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-        let gpioc = p.GPIOC.split(&mut rcc);
-        let led = gpioc.pc13.into_push_pull_output();
+    type DhtPin = PA8<Output<OpenDrain>>;
 
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+       // UNTESTED
+       let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+       let clocks = rcc.clocks;
+
+       let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+ 
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+       let led = setup_led(dp.GPIOC.split(&mut rcc));
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
@@ -281,10 +288,12 @@ mod app {
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
-        gpio::{gpiob::PB6, Output, PushPull},
-        prelude::*,
+        gpio::{OpenDrain, Output,
+               gpioa::PA8,
+        },
         stm32::Peripherals,
         rcc, // for ::Config but note name conflict with serial
+        prelude::*,
     };
 
     #[cfg(feature = "stm32l1xx")]
@@ -294,11 +303,27 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-        let gpiob = dp.GPIOB.split(&mut rcc);
-        let led = gpiob.pb6.into_push_pull_output();
+    type DhtPin = PA8<Output<OpenDrain>>;
 
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+       let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
+
+       let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+
+       let gpiob = dp.GPIOB.split(&mut rcc);
+
+       // Note this example is especially tricky:
+       //   The onboard led is on PB6 and i2c also uses gpiob  so there is a problem
+       //   with gpiob being moved by one and then not available for the other.
+
+// setup_i2c1 NOT WORKING
+       let scl = gpiob.pb10.into_open_drain_output();
+       let sda = gpiob.pb11.into_open_drain_output(); 
+       let i2c = dp.I2C2.i2c((scl, sda), 400.khz(), &mut rcc);
+//       let i2c = setup_i2c2(dp.I2C2, gpiob, rcc);
+
+       let led = setup_led(gpiob.pb6);
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
@@ -306,7 +331,9 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
+        gpio::{Output, OpenDrain,
+               gpioa::PA8,
+        },
         pac::Peripherals,
         prelude::*,
     };
@@ -315,13 +342,20 @@ mod app {
     const  MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
-        let mut rcc = dp.RCC.constrain();
-        let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
-        let led = gpioc
-            .pc13
-            .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper);
+    type DhtPin = PA8<Output<OpenDrain>>;
 
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+       let mut flash = dp.FLASH.constrain();
+       let mut rcc = dp.RCC.constrain();
+       let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
+       let clocks = rcc.cfgr.sysclk(80.mhz()).pclk1(80.mhz()).pclk2(80.mhz()).freeze(&mut flash.acr, &mut pwr);
+
+       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc.ahb2), &clocks, rcc.apb1r1);
+       let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)

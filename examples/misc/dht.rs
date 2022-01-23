@@ -263,10 +263,10 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     // next gives panicked at 'assertion failed: !sysclk_on_pll ||
     //                  sysclk <= sysclk_max && sysclk >= sysclk_min'
     //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
-    let mut pa8 = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+    let mut dht = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    dht.set_high().ok();
 
     // delay is used by `dht-sensor` to wait for signals
     //let mut delay = Delay::new(cp.SYST, clocks);   //SysTick: System Timer
@@ -275,7 +275,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay) //DHT data will be on A8
 }
 
 #[cfg(feature = "stm32l1xx")]
@@ -297,10 +297,10 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
     //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
-    let mut pa8 = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+    let mut dht = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    dht.set_high().ok();
 
     // delay is used by `dht-sensor` to wait for signals
     //let mut delay = Delay::new(cp.SYST, clocks);   //SysTick: System Timer
@@ -310,7 +310,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay) //DHT data will be on A8
 }
 
 #[cfg(feature = "stm32l4xx")]
@@ -336,12 +336,10 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
-    let mut pa8 = gpioa
-        .pa8
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+    let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high();
+    dht.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
@@ -349,7 +347,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay) //DHT data will be on A8
 }
 
 // End of hal/MCU specific setup. Following should be generic code.

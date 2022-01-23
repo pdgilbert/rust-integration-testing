@@ -255,8 +255,6 @@ pub fn setup_led(pin: PB6<Input<Floating>>) -> LedType {
 use stm32l4xx_hal::{
     delay::Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
-    i2c::{Config, I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
 };
 
