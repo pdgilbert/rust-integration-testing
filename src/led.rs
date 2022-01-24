@@ -231,7 +231,7 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-pub type LedType = PB6<Output<PushPull>>;
+pub type LedType = PB6<Output<PushPull>>;  // blue user LED on Discovery board
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_led(pin: PB6<Input<Floating>>) -> LedType {

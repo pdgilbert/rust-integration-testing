@@ -337,7 +337,8 @@ pub type I2c1Type = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
     // NOTE THIS SETUP FUNCTION IS NOTE USED, BECAUSE OF MOVE PROBLEMS
-    // could also have IC1 scl,sda on PB6,PB7 
+    // All pin possibities are gpiob:  PB10-11 on I2C2,  PB6-7 on I2C1, PB8-9 on I2C1, 
+    //  and the led is also on gpiob.
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
     let i2c = i2c1.i2c((scl, sda), 400.khz(), &mut rcc);
@@ -351,7 +352,7 @@ pub type I2c2Type = I2c<I2C2, (PB10<Output<OpenDrain>>, PB11<Output<OpenDrain>>)
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, mut rcc: Rcc) -> I2c2Type {
-    // NOTE THIS SETUP FUNCTION IS NOTE USED, BECAUSE OF MOVE PROBLEMS
+    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS. 
     let scl = gpiob.pb10.into_open_drain_output();
     let sda = gpiob.pb11.into_open_drain_output();
     let i2c = i2c2.i2c((scl, sda), 400.khz(), &mut rcc);
