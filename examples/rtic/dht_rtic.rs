@@ -138,13 +138,16 @@ mod app {
        //let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
 // setup_i2c2 NOT WORKING
-       let scl =  gpioa.pa9.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-       let sda = gpioa.pa10.into_af4_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
        //    // //NOT sure if pull up is needed
        //    scl.internal_pull_up(&mut gpiob.pupdr, true);
        //    sda.internal_pull_up(&mut gpiob.pupdr, true);
        let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
-//       let i2c = setup_i2c2(dp.I2C2, gpioa, &clocks);
+
+//     Note there is a "value used here after partial move" problem with I2C2 on gpioa
+//        because gpioa is used above for dht. And the only option for I2C2 seems to be gpioa.
+//       let i2c = setup_i2c2(dp.I2C2, gpioa, clocks, rcc.apb1);
 
        let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
@@ -219,7 +222,6 @@ mod app {
           gpio::{Output, OpenDrain, 
                  gpioa::PA8,
           },
-          i2c::I2c,
           pac::Peripherals,
           prelude::*,
     };
@@ -244,13 +246,9 @@ mod app {
        let dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+       let i2cx = ccdr.peripheral.I2C4;
 
-// setup_i2c2 NOT WORKING
-       let scl = gpiob.pb8.into_alternate_af6().set_open_drain(); // scl on PB8
-       let sda = gpiob.pb9.into_alternate_af6().set_open_drain(); // sda on PB9
-       let i2c = dp.I2C4.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C4, &clocks);
-//    let i2c = setup_i2c2(dp.I2C4, gpiob, ccdr, &clocks);
-
+       let i2c = setup_i2c2(dp.I2C4, gpiob, i2cx, &clocks);
        let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
        let delay = AltDelay{};
 

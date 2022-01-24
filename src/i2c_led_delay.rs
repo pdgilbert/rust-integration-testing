@@ -57,7 +57,6 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    i2c::{I2c,},
     pac::{CorePeripherals, Peripherals,},
     prelude::*,
 };
@@ -70,16 +69,16 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     
-    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+    let gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
 // setup_i2c1 NOT WORKING
-    let scl = gpiob.pb6.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-    let sda = gpiob.pb7.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+//    let scl = gpiob.pb6.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+//    let sda = gpiob.pb7.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
     //    // //NOT sure if pull up is needed
     //    scl.internal_pull_up(&mut gpiob.pupdr, true);
     //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
-//    let i2c = setup_i2c1(dp.I2C1, gpiob, &clocks, &mut apb1);
+//    let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+    let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
@@ -151,12 +150,9 @@ pub fn setup() -> (I2c<I2C1>, LedType, Delay) {
     let clocks = ccdr.clocks;
     
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let i2cx = ccdr.peripheral.I2C1;
 
-// setup_i2c1 NOT WORKING
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
-    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
-//    let i2c = setup_i2c1(dp.I2C1, gpiob, ccdr, &clocks);
+    let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
