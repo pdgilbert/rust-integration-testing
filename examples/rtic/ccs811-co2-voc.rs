@@ -87,17 +87,9 @@ mod app {
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         device::USART1,
-        gpio::{
+        gpio::{OpenDrain, Output,
             gpioa::{PA8},
-            gpiob::{PB8, PB9},
-            gpioc::PC13,
-            Alternate,
-            OpenDrain,
-            Output,
-            PushPull, //State,
         },
-        i2c::{BlockingI2c, Mode}, //Pins
-        pac,
         pac::Peripherals, //I2C1
         prelude::*,
         serial::{Config, Serial, Tx},
@@ -136,30 +128,30 @@ mod app {
         hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap();
 
         let mut gpioa = dp.GPIOA.split();
-        let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
+        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
-        let mut gpiob = dp.GPIOB.split();
-
-        //afio  needed for i2c1 (PB8, PB9) but not i2c2
-        let i2c = setup_i2c1(dp.I2C1, gpiob, &afio, &clocks);
+        let gpiob = dp.GPIOB.split();
 
         let mut led = setup_led(dp.GPIOC.split()); 
         led.off();
 
-        let mut delay = AltDelay{};
+        let delay = AltDelay{};
 
-        // This causes a move problem when using gpiob (PB6-7) because it is used above for i2c
-        //let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
-        //let rx = gpiob.pb7;
-        //let serial = Serial::usart1(
+        // NOTE, try to figure out the proper way to deal with this:
+        // Using gpiob (PB6-7) for serial causes a move problem because it is used for i2c.
+        // There is also a move problem with afio if setup_i2c1() is attempted before serial.
+        // (Serial::usart1() uses &mut afio.mapr whereas setup_i2c1() does not yet.)
+
+        //let (tx, _rx) = Serial::usart1(
         //    dp.USART1,
-        //    (tx, rx),
+        //    (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
+        //     gpiob.pb7),
         //    &mut afio.mapr,
         //    Config::default().baudrate(115200.bps()),
         //    clocks,
-        //);
+        //).split();
         // This causes a move problem with afio used above in setup_i2c1
-        let serial = Serial::usart1(
+        let (tx, _rx) = Serial::usart1(
            dp.USART1,
            (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
             gpioa.pa10,
@@ -167,10 +159,11 @@ mod app {
            &mut afio.mapr,
            Config::default().baudrate(115200.bps()), 
            clocks,
-        );
-        let (tx, _rx) = serial.split();
+        ).split();
 
-       
+        //afio  needed for i2c1 (PB8, PB9) but not i2c2
+        let i2c = setup_i2c1(dp.I2C1, gpiob, afio, &clocks);
+   
         (dht, i2c, led, tx, delay)
     }
 
@@ -775,7 +768,7 @@ mod app {
 
     //#[task(shared = [dht, ccs811, led, tx, delay], local = [env, index, measurements], capacity=5)]
     #[task(shared = [led,], local = [dht, ccs811, delay, tx,], capacity=2)]
-    fn measure(mut cx: measure::Context) {
+    fn measure(cx: measure::Context) {
         //hprintln!("measure").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
 
