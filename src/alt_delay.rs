@@ -18,7 +18,7 @@ use cortex_m::asm::delay; // argment in clock cycles so (5 * CLOCK) cycles gives
 pub const ALTCLOCK: u32 = 8_000_000;   // CHECK
 
 #[cfg(feature = "stm32f1xx")]
-pub const ALTCLOCK: u32 = 8_000_000; 
+pub const ALTCLOCK: u32 = 4_000_000;   //5_000_000;  // really 8_000_000;  but not providing enough delay for DHT-11
 
 #[cfg(feature = "stm32f3xx")]
 pub const  ALTCLOCK: u32 = 8_000_000;

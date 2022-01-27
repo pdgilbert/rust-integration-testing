@@ -56,6 +56,15 @@ mod app {
     const READ_INTERVAL: u64 = 10;  // used as seconds
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
+    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1};
+
+    // A delay is used in sensor (dht) initialization and read. 
+    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
+    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
+    //  number of indicated clock cycles.
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+
 
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
@@ -74,7 +83,6 @@ mod app {
  
     use nb::block;
     
-    //use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -95,22 +103,18 @@ mod app {
         serial::{Config, Serial, Tx},
     };
 
-    #[cfg(feature = "stm32f1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    type LedType = PC13<Output<PushPull>>;
-    //impl LED, Delay
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
-    //BlockingI2c<I2C1, impl Pins<I2C1>>
+    type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) -> (PA8<Output<OpenDrain>>, I2cBus, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -120,6 +124,7 @@ mod app {
             //.sysclk(72.mhz()) // system clock 8 MHz default, max 72MHz
             //.pclk1(36.mhz())  // system clock 8 MHz default, max 36MHz ?
             .freeze(&mut flash.acr);
+        //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
         hprintln!("hclk {:?}",   clocks.hclk()).unwrap();
         hprintln!("sysclk {:?}", clocks.sysclk()).unwrap();
@@ -131,57 +136,41 @@ mod app {
         hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap();
 
         let mut gpioa = dp.GPIOA.split();
-
         let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
-
-        let mut delay = AltDelay{};
-        delay.delay_ms(2000u32);  // 2 second for sensor to initialize
 
         let mut gpiob = dp.GPIOB.split();
 
-        let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-        let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
+        //afio  needed for i2c1 (PB8, PB9) but not i2c2
+        let i2c = setup_i2c1(dp.I2C1, gpiob, &afio, &clocks);
 
-        let i2c = BlockingI2c::i2c1(
-            dp.I2C1,
-            (scl, sda),
-            &mut afio.mapr,
-            Mode::Standard {
-                frequency: 100_000.hz(),
-            },
-            clocks,
-            1000,
-            10,
-            1000,
-            1000,
-        );
-        let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
-        let rx = gpiob.pb7;
+        let mut led = setup_led(dp.GPIOC.split()); 
+        led.off();
+
+        let mut delay = AltDelay{};
+
+        // This causes a move problem when using gpiob (PB6-7) because it is used above for i2c
+        //let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
+        //let rx = gpiob.pb7;
+        //let serial = Serial::usart1(
+        //    dp.USART1,
+        //    (tx, rx),
+        //    &mut afio.mapr,
+        //    Config::default().baudrate(115200.bps()),
+        //    clocks,
+        //);
+        // This causes a move problem with afio used above in setup_i2c1
         let serial = Serial::usart1(
-            dp.USART1,
-            (tx, rx),
-            &mut afio.mapr,
-            Config::default().baudrate(115200.bps()),
-            clocks,
+           dp.USART1,
+           (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
+            gpioa.pa10,
+           ),
+           &mut afio.mapr,
+           Config::default().baudrate(115200.bps()), 
+           clocks,
         );
         let (tx, _rx) = serial.split();
 
-        //let led = setup_led(dp.GPIOC.split());
-        let mut gpioc = dp.GPIOC.split();
-        let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
-
-        led.off();
-        
+       
         (dht, i2c, led, tx, delay)
     }
 
@@ -689,78 +678,39 @@ mod app {
 
     // End of hal/MCU specific setup. Following should be generic code.
 
-    pub trait LED {
-        // depending on board wiring, on may be set_high or set_low, with off also reversed
-        // implementation should deal with this difference
-        fn on(&mut self) -> ();
-        fn off(&mut self) -> ();
-    }
-
-    use embedded_hal::blocking::delay::{DelayMs, DelayUs};
-
-    // A delay is used in sensor (dht) initialization and read. 
-    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
-    // asm::delay is not an accurate timer but gives a delay at least number of indicated clock cycles.
-
-    use cortex_m::asm::delay; // argment in clock cycles so (5 * CLOCK) cycles gives aprox 5 second delay
-
-    pub struct AltDelay {}
-
-    impl DelayUs<u8> for AltDelay {
-        fn delay_us(&mut self, t:u8) {
-            delay((t as u32) * (CLOCK / 1_000_000)); 
-        }
-    }
-
-    impl DelayUs<u32> for AltDelay {
-        fn delay_us(&mut self, t:u32) {
-            delay((t as u32) * (CLOCK / 1_000_000)); 
-        }
-    }
-
-    impl DelayMs<u8> for AltDelay {
-        fn delay_ms(&mut self, ms: u8) {
-            delay((ms as u32) * (CLOCK / 1000)); 
-        }
-    }
-
-    impl DelayMs<u32> for AltDelay {
-        fn delay_ms(&mut self, ms: u32) {
-            delay((ms as u32) * (CLOCK / 1000)); 
-        }
-    }
-
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<MONOTICK>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = Systick::new(cx.core.SYST, CLOCK);
+        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         //rtt_init_print!();
         //rprintln!("CCS811 example");
 
         let (mut dht, i2c, mut led, mut tx, mut delay) = setup(cx.device);
    
-        // 5 sec alt delay check
         led.on(); 
-        delay.delay_ms(5000u32);  // 5 sec alt delay check
+        delay.delay_ms(1000u32);
         led.off();
 
         // 5 sec systick timer  check
         // beware this needs to happen before other spawn activity interferes with led.
-        led_on::spawn_after(1.secs()).unwrap(); 
-        led_off::spawn_after(6.secs()).unwrap();
+        //led_on::spawn_after(1.secs()).unwrap(); 
+        //led_off::spawn_after(6.secs()).unwrap();
 
-        // check dht
+        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        
+        // intial dht reading
         let (temperature, humidity) = match Reading::read(&mut delay, &mut dht) {
-            Ok(Reading{temperature, relative_humidity,}) 
-               => {hprintln!("dht initialized. {} deg C, {}% RH", temperature, relative_humidity).unwrap();
-                   (temperature, relative_humidity)
-                  },
+            Ok(Reading {temperature, relative_humidity,})
+               =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+                    (temperature, relative_humidity)
+                   },
             Err(e) 
-               =>  {hprintln!("dht initialize Error {:?}. Using default.", e).unwrap(); 
+               =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
                     //panic!("Error reading DHT"),
                     (25, 40)  //supply default values
                    },
@@ -772,16 +722,27 @@ mod app {
         //let measurements: [AlgorithmResult; 1200] = [AlgorithmResult {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
-        let manager = shared_bus_rtic::new!(i2c, I2cBus);
+        //let manager = shared_bus_rtic::new!(i2c, I2cBus);
+        let manager = shared_bus_rtic::new!(i2c, I2c1Type);
+        //let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+
+//    let interface = I2CDisplayInterface::new(manager.acquire());
+//    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+//        .into_buffered_graphics_mode();
 
         let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
+        hprintln!("let mut ccs811 = Ccs811Awake::new(").unwrap();
         ccs811.software_reset().unwrap();
+        hprintln!("_reset").unwrap();
 
         delay.delay_ms(3000u32);  // Delay while ccs811 resets
+        hprintln!("delay.delay_ms(3000u32)").unwrap();
 
         let mut ccs811 = ccs811.start_application().ok().unwrap();
+        hprintln!("let mut ccs811 = ccs811.start_application(").unwrap();
         ccs811.set_environment(temperature.into(), humidity.into()).unwrap(); //i8 into f32, u8 into f32
         ccs811.set_mode(MeasurementMode::ConstantPower1s).unwrap();
+        hprintln!("ccs811.set_mode(3000u32)").unwrap();
 
         // make certain this does not start sooner than end of systick timer led check above
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
@@ -789,18 +750,15 @@ mod app {
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {dht, ccs811, led, tx, delay, }, 
-         Local {}, 
-         init::Monotonics(mono))
+//let () = ccs811;
+//    expected struct `embedded_ccs811::Ccs811Awake`, found `()`
+        (Shared {led}, Local {dht, ccs811, tx, delay,}, init::Monotonics(mono))
     }
 
     #[shared]
     struct Shared {
-        dht: PA8<Output<OpenDrain>>,
-        ccs811: Ccs811Awake<SharedBus<I2cBus>, Ccs811Mode::App>,
         led: LedType,
-        tx: TxType,
-        delay: AltDelay,
+        //manager??? ,  uses i2c:   I2c1Type, or text_style, display ??
         //env: [(f32, f32); 1200],
         //index: usize,
         //measurements: [AlgorithmResult; 1200],
@@ -808,18 +766,23 @@ mod app {
 
     #[local]
     struct Local {
+        dht: DhtPin,
+        ccs811: Ccs811Awake<SharedBus<I2c1Type>, Ccs811Mode::App>,
+        //ccs811: Ccs811Awake<BusProxy<'_, cortex_m::interrupt::Mutex<RefCell<I2c1Type>>, I2c1Type>, _>,
+        tx: TxType,
+        delay: AltDelay,
     }
 
     //#[task(shared = [dht, ccs811, led, tx, delay], local = [env, index, measurements], capacity=5)]
-    #[task(shared = [dht, ccs811, led, tx, delay, ], capacity=5)]
+    #[task(shared = [led,], local = [dht, ccs811, delay, tx,], capacity=2)]
     fn measure(mut cx: measure::Context) {
         //hprintln!("measure").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
 
         // this might be nicer if read could be done by spawn rather than wait for delay
-        let delay = cx.shared.delay;
-        let dht = cx.shared.dht;
-        let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });
+        let delay = cx.local.delay;
+        let dht = cx.local.dht;
+        let z = Reading::read(delay, dht);
         let (temperature, humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
@@ -833,15 +796,16 @@ mod app {
         };
         //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity).unwrap();
 
-        let data = cx.shared.ccs811.lock(|ccs811| block!(ccs811.data()))
-                         .unwrap_or(AlgorithmResult::default());
+        //let data = cx.share.ccs811.lock(|ccs811| block!(ccs811.data())).unwrap_or(AlgorithmResult::default());
+        let data = block!(cx.local.ccs811.data()).unwrap_or(AlgorithmResult::default());
         hprintln!("ccs811 data eco2:{}, etvoc:{}, raw_current:{}, raw_volt:{}", 
                           data.eco2, data.etvoc, data.raw_current, data.raw_voltage).unwrap();
 
-        cx.shared.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
+        //cx.share.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
+        cx.local.ccs811.set_environment(temperature.into(), humidity.into()).unwrap();
 
 
-//       cx.shared.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
+//       cx.local.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
 //       for i in 0..*cx.local.index {
 //           let data = cx.local.measurements[i];
 //           let en = if i == 0 {
@@ -849,9 +813,9 @@ mod app {
 //           } else {
 //               cx.local.env[i - 1]
 //           };
-//           //writeln!(cx.shared.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
+//           //writeln!(cx.local.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
 //           //        data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1 ).unwrap();
-//           cx.shared
+//           cx.local
 //               .tx
 //               .lock(|tx| {
 //                   writeln!(
@@ -865,7 +829,7 @@ mod app {
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
-    #[task(shared = [led], capacity=5)]
+    #[task(shared = [led], capacity=2)]
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
@@ -874,12 +838,12 @@ mod app {
         crate::app::led_off::spawn_after(duration).unwrap();
     }
 
-    #[task(shared = [led], capacity=5)]
+    #[task(shared = [led], capacity=2)]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=5)]
+    #[task(shared = [led], capacity=2)]
     fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }

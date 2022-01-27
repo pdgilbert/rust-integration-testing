@@ -78,6 +78,12 @@ mod app {
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
     use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2};
 
+    // A delay is used in sensor (dht) initialization and read. 
+    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
+    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
+    //  number of indicated clock cycles.
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
@@ -362,11 +368,6 @@ mod app {
     // End of hal/MCU specific setup. Following should be generic code.
 
 
-    // A delay is used in sensor (dht) initialization and read. 
-    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
-    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least number of indicated clock cycles.
-
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
 
 //  THIS NEEDS TYPES FIGURED OUT FOR SHARE. SEE DISPLAY_STUFF_RTIC FOR SIMPLER EXAMPLE
@@ -446,6 +447,13 @@ mod app {
 //            .build();
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
+
+        // next turn LED for a period of time that can be used to calibrate the delay timer.
+        // Ensure that nothing is spawned above. This relies on delay blocking.
+        led.on();
+        delay.delay_ms(10000u32);  
+        led.off();
+        delay.delay_ms(1000u32);  
 
         read_and_display::spawn().unwrap();
 
