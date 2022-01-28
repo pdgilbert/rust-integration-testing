@@ -54,7 +54,7 @@ jobs:
               iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger,
               lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
               blink_rtic,              schedule,                         resource-user-struct,
-              dht_rtic                 ccs811-co2-voc, ]
+              dht_rtic,                ccs811-co2-voc, ]
 
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
