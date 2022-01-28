@@ -125,7 +125,7 @@ mod app {
         hprintln!("pclk1_tim {:?}", clocks.pclk1_tim()).unwrap();
         hprintln!("pclk2_tim {:?}", clocks.pclk2_tim()).unwrap();
         hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
-        hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap();
+        //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
 
         let mut gpioa = dp.GPIOA.split();
         let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
@@ -310,7 +310,7 @@ mod app {
            ),
            clocks,
            Config {
-               baud_rate: 115200.bps(), //Bps??
+               baud_rate: 115200.Bps(), //should be bps. See https://github.com/stm32-rs/stm32f7xx-hal/issues/141
                oversampling: Oversampling::By16,
                character_match: None,
            },
