@@ -53,7 +53,8 @@ jobs:
               veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
               iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger,
               lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
-              blink_rtic,              schedule,                         resource-user-struct, ]
+              blink_rtic,              schedule,                         resource-user-struct,
+              ccs811-co2-voc, ]
 
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
@@ -566,6 +567,20 @@ jobs:
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink_rtic
+
+      - name: Example dht_rtic
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht_rtic
+
+      - name: Example ccs811-co2-voc
+        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-co2-voc
 
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
