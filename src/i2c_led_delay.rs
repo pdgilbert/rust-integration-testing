@@ -47,7 +47,7 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), dp.AFIO.constrain(), &clocks);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
@@ -71,15 +71,7 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
     
     let gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-// setup_i2c1 NOT WORKING
-//    let scl = gpiob.pb6.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-//    let sda = gpiob.pb7.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-    //    // //NOT sure if pull up is needed
-    //    scl.internal_pull_up(&mut gpiob.pupdr, true);
-    //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-//    let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
     let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
-
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
@@ -235,7 +227,7 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc.cfgr.sysclk(80.mhz()).pclk1(80.mhz()).pclk2(80.mhz()).freeze(&mut flash.acr, &mut pwr);
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, rcc.apb1r1);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 

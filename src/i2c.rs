@@ -43,7 +43,7 @@ pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<
 // this works in a function signature BlockingI2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &Clocks) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &Clocks) -> I2c1Type {
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
 
@@ -126,7 +126,7 @@ pub type I2c2Type = I2c<I2C2, (PA9<AF4<OpenDrain>>, PA10<AF4<OpenDrain>>)>;
 
 #[cfg(feature = "stm32f3xx")]
 pub fn setup_i2c2(i2c2: I2C2 , mut gpioa: PartsA, clocks: Clocks, mut apb1: APB1) -> I2c2Type {
-    // NOTE THIS SETUP FUNCTION IS NOTE USED, BECAUSE OF MOVE PROBLEMS
+    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS
     let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
     let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
     //    // //NOT sure if pull up is needed
@@ -377,14 +377,14 @@ pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<Ope
 //pub type I2c1Type =  I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, &clocks: &Clocks, mut apb1r1: APB1R1) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, &clocks: &Clocks, apb1r1: &mut APB1R1) -> I2c1Type {
     let mut scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
     let mut sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let i2c = I2c::i2c1(i2c1, (scl, sda), Config::new(400.khz(), clocks), &mut apb1r1 );
+    let i2c = I2c::i2c1(i2c1, (scl, sda), Config::new(400.khz(), clocks), apb1r1 );
 
     i2c
 }
