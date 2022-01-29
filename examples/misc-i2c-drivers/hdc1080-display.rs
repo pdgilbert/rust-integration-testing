@@ -41,8 +41,8 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -58,7 +58,7 @@ fn main() -> ! {
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
     // Start the sensor.
-    let mut sensor = Hdc1080::new(manager.acquire());
+    let mut sensor = Hdc1080::new(manager.acquire_i2c());
 
     sensor.read_temperature_start().unwrap();
     delay.delay_ms(500_u16);

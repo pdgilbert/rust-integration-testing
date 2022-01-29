@@ -809,8 +809,8 @@ fn main() -> ! {
     let (i2c, mut led, mut delay, mut buttons, stcint) = setup();
 
     hprintln!("manage").unwrap();
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -829,7 +829,7 @@ fn main() -> ! {
     Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
     display.flush().unwrap();
  
-    let mut radio = Si4703::new(manager.acquire());
+    let mut radio = Si4703::new(manager.acquire_i2c());
     radio.enable_oscillator().unwrap();
     delay.delay_ms(500_u16);
     radio.enable().unwrap();

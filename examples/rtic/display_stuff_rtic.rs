@@ -424,8 +424,8 @@ where
 
         led.on();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)

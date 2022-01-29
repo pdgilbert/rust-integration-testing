@@ -118,8 +118,8 @@ fn main() -> ! {
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -131,8 +131,8 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    //let mut adc = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::default());
-    let mut adc = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::Alternative(false, false)); //addr = GND
+    //let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::default());
+    let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
     //                                                                           (false, true)); //addr =  V
 
     // to measure [0-5V] use FullScaleRange::Within6_144V

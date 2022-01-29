@@ -75,6 +75,7 @@ mod app {
 
     // set up for shared bus even though only one i2c device is used here
     use shared_bus_rtic::SharedBus;
+    use shared_bus::{I2cProxy, NullMutex};
 
     use embedded_ccs811::{
         mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
@@ -578,14 +579,14 @@ mod app {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
         //let manager = shared_bus_rtic::new!(i2c, I2cBus);
-        let manager = shared_bus_rtic::new!(i2c, I2c1Type);
-        //let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+        //let manager = shared_bus_rtic::new!(i2c, I2c1Type);
+        let manager = shared_bus::BusManagerSimple::new(i2c);
 
-//    let interface = I2CDisplayInterface::new(manager.acquire());
+//    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
 //        .into_buffered_graphics_mode();
 
-        let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
+        let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
         hprintln!("let mut ccs811 = Ccs811Awake::new(").unwrap();
         ccs811.software_reset().unwrap();
         hprintln!("_reset").unwrap();
@@ -622,8 +623,10 @@ mod app {
     #[local]
     struct Local {
         dht: DhtPin,
-        ccs811: Ccs811Awake<SharedBus<I2c1Type>, Ccs811Mode::App>,
+        ccs811: Ccs811Awake<I2cProxy<'static, I2c1Type>, Ccs811Mode::App>,
+        //ccs811: Ccs811Awake<SharedBus<I2c1Type>, Ccs811Mode::App>,
         //ccs811: Ccs811Awake<BusProxy<'_, cortex_m::interrupt::Mutex<RefCell<I2c1Type>>, I2c1Type>, _>,
+        //ccs811: embedded_ccs811::Ccs811Awake<I2cProxy<'static, NullMutex<I2c1Type>>, _>,
         tx: TxType,
         delay: AltDelay,
     }

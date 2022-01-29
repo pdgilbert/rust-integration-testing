@@ -722,9 +722,10 @@ mod app {
             raw_voltage: 0,
         }; 1200];
 
-        let manager = shared_bus_rtic::new!(i2c, I2cBus);
-        let mut hdc2080 = Hdc20xx::new(manager.acquire(), Hdc20xxSlaveAddr::default());
-        let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
+        let manager = shared_bus::BusManagerSimple::new(i2c);
+        //let manager = shared_bus_rtic::new!(i2c, I2cBus);
+        let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
+        let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
         ccs811.software_reset().unwrap();
 
         // Delay while ccs811 resets.
