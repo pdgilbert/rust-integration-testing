@@ -28,7 +28,9 @@ use embedded_ccs811::{
 use hdc20xx::{Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+//use embedded_hal::blocking::delay::DelayMs;
+use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+
 use heapless::String;
 use nb::block;
 
@@ -52,8 +54,9 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -64,8 +67,8 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut hdc2080 = Hdc20xx::new(manager.acquire(), Hdc20xxSlaveAddr::default());
-    let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
+    let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
+    let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
     ccs811.software_reset().unwrap();
     delay.delay_ms(10_u16);
     let mut lines: [String<32>; 4] = [String::new(), String::new(), String::new(), String::new()];
