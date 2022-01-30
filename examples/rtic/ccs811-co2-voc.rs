@@ -75,6 +75,7 @@ mod app {
 
     // set up for shared bus even though only one i2c device is used here
     use shared_bus_rtic::SharedBus;
+    //use shared_bus_rtic::export::interrupt::Mutex;
     use shared_bus::{I2cProxy, NullMutex};
 
     use embedded_ccs811::{
@@ -580,7 +581,10 @@ mod app {
 
         //let manager = shared_bus_rtic::new!(i2c, I2cBus);
         //let manager = shared_bus_rtic::new!(i2c, I2c1Type);
-        let manager = shared_bus::BusManagerSimple::new(i2c);
+        // see https://github.com/Rahix/shared-bus#sharing-across-multiple-tasksthreads
+        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+
+        //let manager = shared_bus::BusManagerSimple::new(i2c);
 
 //    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -610,6 +614,8 @@ mod app {
 //    expected struct `embedded_ccs811::Ccs811Awake`, found `()`
         (Shared {led}, Local {dht, ccs811, tx, delay,}, init::Monotonics(mono))
     }
+//note: expected struct `embedded_ccs811::Ccs811Awake<shared_bus::I2cProxy<'static, rtic::export::interrupt::Mutex<        I2c<_, _>>>, _>`
+//         found struct `embedded_ccs811::Ccs811Awake<shared_bus::I2cProxy<'_     , rtic::export::interrupt::Mutex<RefCell<I2c<_, _>>>>, _>`
 
     #[shared]
     struct Shared {
@@ -623,7 +629,10 @@ mod app {
     #[local]
     struct Local {
         dht: DhtPin,
-        ccs811: Ccs811Awake<I2cProxy<'static, I2c1Type>, Ccs811Mode::App>,
+        ccs811: Ccs811Awake<I2cProxy<'static,  rtic::export::interrupt::Mutex<I2c1Type>>, Ccs811Mode::App>,
+        //ccs811: Ccs811Awake<I2cProxy<'static,  rtic::export::interrupt::Mutex<I2c1Type>>, Ccs811Mode::App>,
+        //ccs811: Ccs811Awake<I2cProxy<'static, NullMutex<I2c1Type>>, Ccs811Mode::App>,
+        //ccs811: Ccs811Awake<I2cProxy<'static, I2c1Type>, Ccs811Mode::App>,
         //ccs811: Ccs811Awake<SharedBus<I2c1Type>, Ccs811Mode::App>,
         //ccs811: Ccs811Awake<BusProxy<'_, cortex_m::interrupt::Mutex<RefCell<I2c1Type>>, I2c1Type>, _>,
         //ccs811: embedded_ccs811::Ccs811Awake<I2cProxy<'static, NullMutex<I2c1Type>>, _>,
