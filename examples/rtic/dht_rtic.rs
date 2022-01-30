@@ -434,7 +434,8 @@ mod app {
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
-        let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+        //let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+        let _manager = shared_bus::BusManagerSimple::new(i2c);
 //
 //        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
 //        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)

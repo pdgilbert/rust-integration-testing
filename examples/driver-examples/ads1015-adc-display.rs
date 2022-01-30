@@ -47,8 +47,8 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -58,7 +58,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut adc = Ads1x1x::new_ads1015(manager.acquire(), SlaveAddr::default());
+    let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::default());
     // need to be able to measure [0-5V]
     adc.set_full_scale_range(FullScaleRange::Within6_144V)
         .unwrap();

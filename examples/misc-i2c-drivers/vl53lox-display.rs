@@ -46,8 +46,8 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -63,7 +63,7 @@ fn main() -> ! {
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
     // Start the sensor. with default configuration
-    let mut tof = vl53l0x::VL53L0x::new(manager.acquire()).expect("vl");
+    let mut tof = vl53l0x::VL53L0x::new(manager.acquire_i2c()).expect("vl");
     
     tof.set_measurement_timing_budget(200000).expect("timbudg");
     tof.start_continuous(0).expect("start cont");

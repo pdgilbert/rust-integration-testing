@@ -42,8 +42,8 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -60,9 +60,9 @@ fn main() -> ! {
 
     // Start the sensor.
     //let mut device = Aht20::new(i2c, delay).unwrap();
-    //let mut device = Aht20::new(manager.acquire(), SlaveAddr::default());
+    //let mut device = Aht20::new(manager.acquire_i2c(), SlaveAddr::default());
     THIS DOES NOT SEEM TO ALLOW SHARING THE BUS
-    let mut device = Aht20::new(manager.acquire(), delay);
+    let mut device = Aht20::new(manager.acquire_i2c(), delay);
 
     loop {
         //rprintln!("loop i");

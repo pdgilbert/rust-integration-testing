@@ -47,8 +47,8 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
-    let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire());
+    let manager = shared_bus::BusManagerSimple::new(i2c);
+    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0) //128x64 128x32
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -62,7 +62,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut imu = Bmi160::new_with_i2c(manager.acquire(), SlaveAddr::Alternative(true));
+    let mut imu = Bmi160::new_with_i2c(manager.acquire_i2c(), SlaveAddr::Alternative(true));
     imu.set_accel_power_mode(AccelerometerPowerMode::Normal)
         .unwrap();
     imu.set_gyro_power_mode(GyroscopePowerMode::Normal).unwrap();

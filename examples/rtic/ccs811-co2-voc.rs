@@ -74,7 +74,12 @@ mod app {
     use dht_sensor::*;
 
     // set up for shared bus even though only one i2c device is used here
-    use shared_bus_rtic::SharedBus;
+    //use shared_bus_rtic::SharedBus;
+    //use shared_bus_rtic::export::interrupt::Mutex;
+    //use shared_bus::{I2cProxy, NullMutex};
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
 
     use embedded_ccs811::{
         mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
@@ -299,7 +304,9 @@ mod app {
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
-       let led = setup_led(dp.GPIOC.split());
+       let mut led = setup_led(dp.GPIOC.split());
+       led.off();
+
        let delay = AltDelay{};
 
        let (tx, _rx) = Serial::new(
@@ -357,9 +364,10 @@ mod app {
        let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
 
        let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
-       let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
-       let delay = AltDelay{};
+       let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+       led.off();
 
+       let delay = AltDelay{};
 
        let (tx, _rx) = dp
            .USART2
@@ -401,7 +409,9 @@ mod app {
        let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
  
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
-       let led = setup_led(dp.GPIOC.split(&mut rcc));
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc));
+       led.off();
+
        let delay = AltDelay{};
 
        let (tx, _rx) = dp.USART1.usart(
@@ -446,7 +456,6 @@ mod app {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpioa = dp.GPIOA.split(&mut rcc);
-
        let dht = gpioa.pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(&mut rcc);
@@ -457,7 +466,9 @@ mod app {
        let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 //       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
-       let led = setup_led(gpiob.pb6);
+       let mut led = setup_led(gpiob.pb6);
+       led.off();
+
        let delay = AltDelay{};
 
 
@@ -509,7 +520,9 @@ mod app {
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
-       let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+       led.off();
+
        let delay = AltDelay{};
 
        let (tx, _rx) = Serial::usart2(
@@ -577,15 +590,13 @@ mod app {
         //let measurements: [AlgorithmResult; 1200] = [AlgorithmResult {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
-        //let manager = shared_bus_rtic::new!(i2c, I2cBus);
-        let manager = shared_bus_rtic::new!(i2c, I2c1Type);
-        //let manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
+       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
 
-//    let interface = I2CDisplayInterface::new(manager.acquire());
+//    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
 //        .into_buffered_graphics_mode();
 
-        let mut ccs811 = Ccs811Awake::new(manager.acquire(), Ccs811SlaveAddr::default());
+        let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
         hprintln!("let mut ccs811 = Ccs811Awake::new(").unwrap();
         ccs811.software_reset().unwrap();
         hprintln!("_reset").unwrap();
@@ -605,8 +616,6 @@ mod app {
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
         writeln!(tx, "start\r",).unwrap();
 
-//let () = ccs811;
-//    expected struct `embedded_ccs811::Ccs811Awake`, found `()`
         (Shared {led}, Local {dht, ccs811, tx, delay,}, init::Monotonics(mono))
     }
 
@@ -619,11 +628,11 @@ mod app {
         //measurements: [AlgorithmResult; 1200],
     }
 
+
     #[local]
     struct Local {
         dht: DhtPin,
-        ccs811: Ccs811Awake<SharedBus<I2c1Type>, Ccs811Mode::App>,
-        //ccs811: Ccs811Awake<BusProxy<'_, cortex_m::interrupt::Mutex<RefCell<I2c1Type>>, I2c1Type>, _>,
+        ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2c1Type>>>, Ccs811Mode::App>,
         tx: TxType,
         delay: AltDelay,
     }
