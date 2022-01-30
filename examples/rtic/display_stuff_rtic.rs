@@ -30,7 +30,6 @@ mod app {
     use cortex_m_semihosting::{hprintln};
 
     use core::fmt::Write;
-    use core::cell::RefCell;
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -49,7 +48,10 @@ mod app {
         text::{Baseline, Text},
     };
 
-    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+    //use ssd1306::{prelude::*, Ssd1306, I2CDisplayInterface,mode::BufferedGraphicsMode};
+    use ssd1306::{prelude::{I2CInterface, DisplaySize, DisplaySize128x32, DisplayRotation},
+                  Ssd1306, I2CDisplayInterface,
+                  mode::BufferedGraphicsMode};
 
     use systick_monotonic::*;
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -64,10 +66,9 @@ mod app {
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
     use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2, I2c1Type, setup_i2c1,};
 
-    // set up for shared bus even though only one i2c device is used here
-    use shared_bus_rtic::SharedBus;
-    //use shared_bus_rtic::export::interrupt::Mutex;
-    use shared_bus::{I2cProxy, NullMutex};
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
 
 
     #[cfg(feature = "stm32f1xx")]
@@ -84,17 +85,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    type DisplayType = ();
-    //Ssd1306<I2CInterface<BusProxy<'static, Mutex<RefCell<BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>> ;
-    //type DisplayType = u8;
-    //Ssd1306<I2CInterface<BusProxy<'_, cortex_m::interrupt::Mutex<RefCell<_>>, _>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>>
-    //Ssd1306<I2CInterface<BusProxy<'_, Mutex<RefCell<BlockingI2c<I2C2, impl Pins<I2C2>>>>, BlockingI2c<I2C2, impl Pins<I2C2>>>>, DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
-
-    //type DisplayType = Ssd1306<I2CInterface<BusProxy<'_, Mutex<RefCell<BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>> ;
-    //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-
-    #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  ( BlockingI2c<I2C2, impl Pins<I2C2>>, LedType) {
+    fn setup(dp: Peripherals) ->  (I2c1Type, LedType) {
 
        let mut gpioa = dp.GPIOA.split();
 
@@ -122,7 +113,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
         let mut rcc = dp.RCC.constrain();
         //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
@@ -156,21 +147,11 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    type DisplayType =  //();
-      Ssd1306<I2CInterface<I2cProxy<'static, rtic::export::interrupt::Mutex<RefCell<I2c2Type>>>>, 
-         //(stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 4_u8>, 'B', 10_u8>, stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 9_u8>, 'B', 3_u8>)>>>>>, 
-         ssd1306::prelude::DisplaySize128x32, 
-         BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>>;
-    //Ssd1306<I2CInterface<I2cProxy<'static, NullMutex<_>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>>;
-    //Ssd1306<I2CInterface<BusProxy<'_, Mutex<RefCell<BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>> ;
-    //type DisplayType = Ssd1306<I2CInterface<BusProxy<'_, Mutex<RefCell<BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, BlockingI2c<I2C2, impl stm32f1xx_hal::i2c::Pins<I2C2>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<ssd1306::prelude::DisplaySize128x32>> ;
-
-    #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> (I2c2Type, LedType) {
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -189,22 +170,17 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
         //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
-        let gpioc = dp.GPIOC.split();
-        let led = gpioc.pc13.into_push_pull_output();
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+       let mut led = setup_led(dp.GPIOC.split());
+       led.off();
 
-        (i2c, led)
+       (i2c, led)
     }
 
     #[cfg(feature = "stm32h7xx")]
@@ -221,25 +197,21 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let pwr = dp.PWR.constrain();
-        let vos = pwr.freeze();
-        let rcc = dp.RCC.constrain();
-        let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+       let pwr = dp.PWR.constrain();
+       let vos = pwr.freeze();
+       let rcc = dp.RCC.constrain();
+       let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let clocks = ccdr.clocks;
 
-        let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
-        let led = gpioc.pc13.into_push_pull_output();
+       let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+       let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
+       let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
+       let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+       led.off();
 
-        (i2c, led)
+       (i2c, led)
     }
 
     #[cfg(feature = "stm32l0xx")]
@@ -254,21 +226,15 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-        let gpioc = p.GPIOC.split(&mut rcc);
-        let led = gpioc.pc13.into_push_pull_output();
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+       let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+       let clocks = rcc.clocks;
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc));
+       led.off();
 
-        (i2c, led)
+       (i2c, led)
     }
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -286,21 +252,20 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-        let gpiob = dp.GPIOB.split(&mut rcc);
-        let led = gpiob.pb6.into_push_pull_output();
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+       let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
+       let gpiob = dp.GPIOB.split(&mut rcc);
 
-        impl LED for PB6<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
+// setup_i2c1 NOT WORKING
+       let scl = gpiob.pb8.into_open_drain_output();
+       let sda = gpiob.pb9.into_open_drain_output(); 
+       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+//       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
-        (i2c, led)
+       let mut led = setup_led(gpiob.pb6);
+       led.off();
+
+       (i2c, led)
     }
 
     #[cfg(feature = "stm32l4xx")]
@@ -314,23 +279,20 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> LedType {
-        let mut rcc = dp.RCC.constrain();
-        let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
-        let led = gpioc
-            .pc13
-            .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper);
+    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc
+           .cfgr
+           .sysclk(80.mhz())
+           .pclk1(80.mhz())
+           .pclk2(80.mhz())
+           .freeze(&mut flash.acr, &mut pwr);
 
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+       led.off();
 
-        (i2c, led)
+       (i2c, led)
     }
 
     // End of hal/MCU specific setup. Following should be generic code.
@@ -385,7 +347,7 @@ mod app {
        led.on();
 
        //let manager = shared_bus::BusManagerSimple::new(i2c);
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c).unwrap();
+       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
 
        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
@@ -406,18 +368,16 @@ mod app {
 
            (Shared { led }, Local { display, text_style }, init::Monotonics(mono))
     }
-//note: expected struct `Ssd1306<ssd1306::prelude::I2CInterface<I2cProxy<'static, rtic::export::interrupt::Mutex<RefCell<I2c<_, I2c<I2C2, (stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 4_u8>, 'B', 10_u8>, stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 9_u8>, 'B', 3_u8>)>>>>>>, _, _>`
-//         found struct `Ssd1306<ssd1306::prelude::I2CInterface<I2cProxy<'_     , rtic::export::interrupt::Mutex<RefCell<I2c<_,           (stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 4_u8>, 'B', 10_u8>, stm32f4xx_hal::gpio::Pin<Alternate<OpenDrain, 9_u8>, 'B', 3_u8>)>>>>>, _, _>`
-
 
     #[shared]
     struct Shared {
         led: LedType,
     }
+ 
 
     #[local]
     struct Local {
-        display: DisplayType,
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>,
         text_style: MonoTextStyle<'static, BinaryColor>,
     }
 
@@ -445,9 +405,7 @@ mod app {
                 Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
                 cx.local.text_style,
                 Baseline::Top,
-            )
-            .draw(&mut cx.local.display)
-            .unwrap();
+            ).draw(&mut cx.local.display).unwrap();
         }
         cx.local.display.flush().unwrap();
            
