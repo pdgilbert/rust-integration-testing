@@ -33,8 +33,6 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 //use cortex_m_semihosting::*;
 
-use embedded_hal::blocking::delay::DelayMs;
-
 use mcp4x;
 
 pub trait LED {

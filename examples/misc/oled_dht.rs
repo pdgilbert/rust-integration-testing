@@ -30,8 +30,6 @@ use dht_sensor::dht11::Reading;
 use dht_sensor::dht22::Reading;
 use dht_sensor::*;
 
-use embedded_hal::blocking::delay::DelayMs;
-
 // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
 // DisplaySize128x32:
 //    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high

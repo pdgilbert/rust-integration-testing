@@ -30,8 +30,6 @@ use dht_sensor::dht11::Reading;
 use dht_sensor::dht22::Reading;
 use dht_sensor::*;
 
-use embedded_hal::blocking::delay::DelayMs;
-
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 // See dht-sensor git discussion in issues #1  and #2

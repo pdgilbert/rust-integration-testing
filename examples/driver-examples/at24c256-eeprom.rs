@@ -24,12 +24,18 @@
 use eeprom24x::{Eeprom24x, SlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
 
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+
+// A BIT WEIRD THAT THESE DO NOT WORK.  COMPARE i2c_led_delay
+//use embedded_hal::blocking::delay::delay;
+//use stm32f4xx_hal::delay::Delay;
+// BUT THIS DOES
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
 #[entry]
 fn main() -> ! {

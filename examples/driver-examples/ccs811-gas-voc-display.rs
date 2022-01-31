@@ -27,7 +27,7 @@
 use embedded_ccs811::{prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode, SlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+
 use heapless::String;
 use nb::block;
 
@@ -43,6 +43,9 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};  // prelude has DisplaySize128x32,  DisplaySize128x64 
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
 #[entry]
 fn main() -> ! {
