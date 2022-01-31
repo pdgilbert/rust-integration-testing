@@ -81,9 +81,9 @@ jobs:
 #            hal: "stm32f3xx"
 #            trg: "thumbv7em-none-eabihf"
           - brd: "blackpill-stm32f411"
-            mcu:  stm32f103
-            hal: "stm32f1xx"
-            trg: "thumbv7m-none-eabi"
+            mcu:  stm32f411
+            hal: "stm32f4xx"
+            trg: "thumbv7em-none-eabihf"
 
    steps:
      - uses: actions/checkout@v2
