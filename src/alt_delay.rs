@@ -48,19 +48,39 @@ pub struct AltDelay {}
 
 // NEED TO FIX NEXT
 
-//impl DelayUs for AltDelay {
-//   //type Error: core::fmt::Debug = panic!();   
-//   //type Error = DelayUs::Error;
-//   //type Error = embedded_hal::delay::blocking::DelayUs::Error;
-//
-//   fn delay_us(&mut self, us: u32) -> Result<(), Self::Error>{
-//       delay((us as u32) * (ALTCLOCK / 1_000_000)); 
-//   }
-//
-//   fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error>{
-//       delay((ms as u32) * (ALTCLOCK / 1000)); 
-//       Ok(())
-//   }
-//}
+// might also get this from stm32f4xx-hal/src/delay/hal_02.rs ?
+pub use old_e_h::blocking::delay::DelayMs; // for compatability with old stuff
+
+use embedded_hal::delay::blocking::DelayUs;
+use cortex_m::asm::delay;
+
+impl DelayUs for AltDelay {
+    type Error = core::convert::Infallible;
+
+   fn delay_us(&mut self, us: u32) -> Result<(), Self::Error>{
+       delay((us as u32) * (ALTCLOCK / 1_000_000)); 
+       Ok(())
+   }
+
+   fn delay_ms(&mut self, ms: u32) -> Result<(), Self::Error>{
+       delay((ms as u32) * (ALTCLOCK / 1000)); 
+       Ok(())
+   }
+}
+
+// newer (circa Feb 2022)  usage has  delay_ms in trait  DelayUs but
+// dht needs DelayMs trait 
+
+impl<T: core::ops::Mul<Output = u32> + core::convert::From<u32>>  DelayMs<T> for AltDelay {
+//      doesn't satisfy `_: Sized`
+//    | doesn't satisfy `_: TimerExt`
+//    | doesn't satisfy `_: stm32f4xx_hal::fugit::Instance`
+
+   fn delay_ms(&mut self, ms: T) -> (){
+       let ms2 = (ms * (ALTCLOCK / 1_000).into()) as u32;
+       //ms.checked_mul(ALTCLOCK / 1000)
+       delay(ms2); 
+   }
+}
 
 

@@ -107,6 +107,20 @@ jobs:
          command: tree
          args:  --manifest-path dev-testing/Cargo.toml 
 
+     - name: tree -i embedded-hal:0.2.6
+       #--manifest-path to find Caro.toml.      
+       uses: actions-rs/cargo@v1 
+       with:
+         command: tree -i embedded-hal:0.2.6
+         args:  --manifest-path dev-testing/Cargo.toml 
+
+     - name: tree -i embedded-hal:1.0.0-alpha.6
+       #--manifest-path to find Caro.toml.      
+       uses: actions-rs/cargo@v1 
+       with:
+         command: tree -i embedded-hal:1.0.0-alpha.6
+         args:  --manifest-path dev-testing/Cargo.toml 
+
      - name: Build
        uses: actions-rs/cargo@v1 
        with:

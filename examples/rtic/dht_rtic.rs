@@ -82,7 +82,8 @@ mod app {
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+use embedded_hal::delay::blocking::DelayUs;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay, DelayMs};
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -428,11 +429,11 @@ mod app {
         let (mut dht, i2c, mut led, mut delay) = setup(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        DelayMs::delay.delay_ms(1000u32);  
         led.off();
 
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
-        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        DelayMs::delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
         //let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
         let _manager = shared_bus::BusManagerSimple::new(i2c);
@@ -452,9 +453,9 @@ mod app {
         // next turn LED for a period of time that can be used to calibrate the delay timer.
         // Ensure that nothing is spawned above. This relies on delay blocking.
         led.on();
-        delay.delay_ms(10000u32);  
+        DelayMs::delay.delay_ms(10000u32);  
         led.off();
-        delay.delay_ms(1000u32);  
+        DelayMs::delay.delay_ms(1000u32);  
 
         read_and_display::spawn().unwrap();
 

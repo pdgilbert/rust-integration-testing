@@ -15,7 +15,7 @@ edition = "2021"
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", branch = "e-hal", optional = true } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
 #stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
@@ -70,15 +70,17 @@ systick-monotonic = {version = "1.0.0", optional = true }
 fugit = { version = "0.3.3", optional = true }
 #fugit = { git = "https://github.com/korken89/fugit", optional = true }
 
-# for example ccs811-gas-voc-usart-logger
+# for example ccs811-gas-voc-usart-logger  I THINK shared-bus-rtic IS NO LONGER NEEDED
 #  include *also* thumbv6 support
-shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", features = ["thumbv6"], optional = true }
+#shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", features = ["thumbv6"], optional = true }
 
 # only certain versions of radio, radio-sx127x, embedded-hal_1.0.0-alpha and embedded-hal-compat work together
 #radio         = { version = "0.9.0" }
 #radio-sx127x  = { version = "0.11.0", default-features = false }
 #rm for eh-1 radio = { version = "0.9.1" }
 #radio         = { version = "0.10.0" }
+# NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS
+# AND SEE ALSO src/lib.rs
 #rm for eh-1 radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
 
 #  check:  diff dev-testing/Cargo.toml release-testing/Cargo.toml
@@ -89,6 +91,7 @@ shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", fea
 # incorporated when the update does not break things.
 
 #embedded-hal = {version = "^0.2.4" }
+old-e-h      = { version = "0.2.6", package = "embedded-hal" }
 embedded-hal = {version = "1.0.0-alpha.6,<1.0.0-alpha.7", package = "embedded-hal" }  
 
 embedded-graphics = ">=0.7"
@@ -123,16 +126,17 @@ void                 = { version = ">=1.0.2", default-features = false } # err r
 
 
 [features]
-# rtic does not work on stm32f0xx and stm32l0xx devices
-stm32f0xx = ["stm32f0xx-hal/rt", "shared-bus-rtic"]
-stm32f1xx = ["stm32f1xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-stm32f3xx = ["stm32f3xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-stm32f7xx = ["stm32f7xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-stm32h7xx = ["stm32h7xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-#stm32l0xx = ["stm32l0xx-hal/rt", "shared-bus-rtic"]
-stm32l1xx = ["stm32l1xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
-stm32l4xx = ["stm32l4xx-hal/rt", "shared-bus-rtic", "systick-monotonic"]
+# rtic does not work on stm32f0xx and stm32l0xx devices?? OLD??
+#stm32f0xx = ["stm32f0xx-hal/rt", "shared-bus-rtic" ]
+stm32f0xx = ["stm32f0xx-hal/rt", ]
+stm32f1xx = ["stm32f1xx-hal/rt",  "systick-monotonic"]
+stm32f3xx = ["stm32f3xx-hal/rt",  "systick-monotonic"]
+stm32f4xx = ["stm32f4xx-hal/rt",  "systick-monotonic"]
+stm32f7xx = ["stm32f7xx-hal/rt",  "systick-monotonic"]
+stm32h7xx = ["stm32h7xx-hal/rt",  "systick-monotonic"]
+#stm32l0xx =["stm32l0xx-hal/rt", ]
+stm32l1xx = ["stm32l1xx-hal/rt",  "systick-monotonic"]
+stm32l4xx = ["stm32l4xx-hal/rt",  "systick-monotonic"]
 
 stm32f030xc   = ["stm32f0xx-hal/stm32f030xc"]
 stm32f042     = ["stm32f0xx-hal/stm32f042"  ]

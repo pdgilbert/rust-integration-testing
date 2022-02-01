@@ -6,14 +6,14 @@ use panic_halt as _;
 
 use core::convert::Infallible;
 
-use e_h_1a::delay::blocking::DelayMs;
+//eh use e_h_1a::delay::blocking::DelayMs;
 
 // The embedded_hal_compat crate is to smooth the transition for hal crates that are
 // not yet based on embedded_hal 1.0.0-alpha while rust-radio-sx127x is.
 // When passing the older hal crate objects to the newer rust-radio-sx127x methods
 // the objects are appended with .forward().
 
-use embedded_hal_compat::ForwardCompat;
+//eh use embedded_hal_compat::ForwardCompat;
 
 // MODE needs the old version as it is passed to the device hal crates
 use embedded_hal::spi::{Mode, Phase, Polarity};
