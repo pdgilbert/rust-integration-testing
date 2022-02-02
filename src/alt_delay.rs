@@ -83,4 +83,5 @@ impl<T: core::ops::Mul<Output = u32> + core::convert::From<u32>>  DelayMs<T> for
    }
 }
 
+//impl Instance for DelayMs<u32> { }
 
