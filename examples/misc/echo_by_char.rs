@@ -15,12 +15,12 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use rtt_target::{rprintln, rtt_init_print};
+//use rtt_target::{rprintln, rtt_init_print};
+use cortex_m_semihosting::hprintln;
 
 use cortex_m_rt::entry;
 //use core::fmt::Write;  // for writeln, but not supported by stm32f3xx_hal
 use core::str::from_utf8;
-//use cortex_m_semihosting::hprintln;
 use nb::block;
 
 //use embedded_hal::serial;
@@ -79,7 +79,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
             gpioa.pa10,
         ), //rx pa10
         &mut afio.mapr,
-        Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
+        Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1),
         clocks,
     )
     .split()
@@ -318,20 +318,20 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
 
 #[entry]
 fn main() -> ! {
-    rtt_init_print!();
-    rprintln!("blink example");
+    //rtt_init_print!();
+    //rprintln!("echo_by_char example");
 
     let (mut tx1, mut rx1) = setup();
 
-    //hprintln!("test write to console ...").unwrap();
-    rprintln!("test write to console ...");
+    hprintln!("test write to console ...").unwrap();
+    //rprintln!("test write to console ...");
 
     for byte in b"\r\nconsole connect check.\r\n" {
         block!(tx1.write(*byte)).ok();
     }
 
-    //hprintln!("test read and write by char. Please type into the console ...").unwrap();
-    rprintln!("test read and write by char. Please type into the console ...");
+    hprintln!("test read and write by char. Please type into the console ...").unwrap();
+    //rprintln!("test read and write by char. Please type into the console ...");
     //writeln!(tx1, "\r\nPlease type (slowly) into the console below:\r\n").unwrap();
     for byte in b"\r\nType (slowly) below:\r\n" {
         block!(tx1.write(*byte)).ok();
@@ -340,8 +340,9 @@ fn main() -> ! {
     loop {
         // Read a byte and write
         let received = block!(rx1.read()).unwrap();
+        hprintln!("received").unwrap();
         block!(tx1.write(received)).ok();
-        //hprintln!("{}", from_utf8(&[received]).unwrap()).unwrap();
-        rprintln!("{}", from_utf8(&[received]).unwrap());
+        hprintln!("{}", from_utf8(&[received]).unwrap()).unwrap();
+        //rprintln!("{}", from_utf8(&[received]).unwrap());
     }
 }
