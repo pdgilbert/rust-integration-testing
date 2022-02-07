@@ -42,16 +42,17 @@ mod app {
 
     use embedded_graphics::{
         //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle},  //FONT_6X10  FONT_8X13
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
     };
 
     //use ssd1306::{prelude::*, Ssd1306, I2CDisplayInterface,mode::BufferedGraphicsMode};
-    use ssd1306::{prelude::{I2CInterface, DisplaySize, DisplaySize128x32, DisplayRotation},
-                  Ssd1306, I2CDisplayInterface,
-                  mode::BufferedGraphicsMode};
+//    use ssd1306::{prelude::{I2CInterface, DisplaySize, DisplaySize128x32, DisplayRotation},
+//                  Ssd1306, I2CDisplayInterface,
+//                  mode::BufferedGraphicsMode};
+    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
     use systick_monotonic::*;
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -337,36 +338,36 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+       let mono = Systick::new(cx.core.SYST, MONOCLOCK);
        //rtt_init_print!();
-       //rprintln!("blink_rtic example");
-       hprintln!("blink_rtic example").unwrap();
+       //rprintln!("isplay_stuff_rtic example");
+       hprintln!("display_stuff_rtic example").unwrap();
 
-       //let mut led = setup(cx.device);
        let (i2c, mut led) = setup(cx.device);
 
        led.on();
 
-       //let manager = shared_bus::BusManagerSimple::new(i2c);
        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
 
        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-       //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-       let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+
+       let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
           .into_buffered_graphics_mode();
 
-       let text_style = MonoTextStyleBuilder::new()
-           .font(&FONT_10X20)
-           .text_color(BinaryColor::On)
-           .build();
+       display.init().unwrap();
+       hprintln!("display.init",).unwrap();
 
-           led.off();
+       Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+          .draw(&mut display).unwrap();
+       hprintln!("Text::with_baseline",).unwrap();
 
-           let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+       led.off();
 
-           display_stuff::spawn().unwrap();
+       display_stuff::spawn().unwrap();
 
-           (Shared { led }, Local { display, text_style }, init::Monotonics(mono))
+       (Shared { led }, Local { display, text_style }, init::Monotonics(mono))
     }
 
     #[shared]
@@ -377,7 +378,7 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>,
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, ssd1306::prelude::DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
         text_style: MonoTextStyle<'static, BinaryColor>,
     }
 
@@ -397,18 +398,18 @@ mod app {
        
         write!(lines[0], "stuff").unwrap();
      
-        cx.local.display.clear();
-        for i in 0..lines.len() {
-            // start from 0 requires that the top is used for font baseline
-            Text::with_baseline(
-                &lines[i],
-                Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-                cx.local.text_style,
-                Baseline::Top,
-            ).draw(&mut cx.local.display).unwrap();
-        }
-        cx.local.display.flush().unwrap();
-           
+//       cx.local.display.clear();
+//       for i in 0..lines.len() {
+//           // start from 0 requires that the top is used for font baseline
+//           Text::with_baseline(
+//               &lines[i],
+//               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+//               cx.local.text_style,
+//               Baseline::Top,
+//           ).draw(&mut cx.local.display).unwrap();
+//       }
+//       cx.local.display.flush().unwrap();
+//          
         display_stuff::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
