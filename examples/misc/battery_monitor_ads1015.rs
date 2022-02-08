@@ -32,7 +32,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 //use cortex_m_semihosting::{debug, hprintln};
-use cortex_m_semihosting::{hprintln};
+//use cortex_m_semihosting::{hprintln};
 //use rtt_target::{rprintln, rtt_init_print};
 
 use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
@@ -221,11 +221,11 @@ fn setup() -> (
     let mut scl =
         gpiob
             .pb8
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     let mut sda =
         gpiob
             .pb9
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     // not sure if pull up is needed
     scl.internal_pull_up(&mut gpiob.pupdr, true);
@@ -752,7 +752,7 @@ fn main() -> ! {
 
         let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
 
-        hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+        //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
 
         display(
             bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,

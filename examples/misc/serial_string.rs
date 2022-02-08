@@ -21,7 +21,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 //use nb::block;
 
-use core::str::from_utf8;
+//use core::str::from_utf8;
 
 #[cfg(feature = "stm32f0xx")] //  eg blue pill stm32f103
 use stm32f0xx_hal::{
@@ -219,10 +219,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
             gpioa
                 .pa10
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
         ),
         9600.Bd(),
         clocks,
@@ -235,10 +235,10 @@ fn setup() -> (
         (
             gpioa
                 .pa2
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
             gpioa
                 .pa3
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
         ),
         115_200.Bd(), // or 9600.bps(),
         clocks,
@@ -253,10 +253,10 @@ fn setup() -> (
         (
             gpiob
                 .pb10
-                .into_af7_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
+                .into_af_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
             gpiob
                 .pb11
-                .into_af7_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
+                .into_af_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
         ),
         115_200.Bd(), // or 9600.bps(),
         clocks,

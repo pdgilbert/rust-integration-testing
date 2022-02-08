@@ -172,10 +172,10 @@ fn setup() -> (
         (
             gpioa
                 .pa2
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2 for GPS rx
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2 for GPS rx
             gpioa
                 .pa3
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3 for GPS tx
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3 for GPS tx
         ),
         9600.Bd(), // 115_200.Bd(),
         clocks,
@@ -187,10 +187,10 @@ fn setup() -> (
 
     let scl = gpiob
         .pb8
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
     let sda = gpiob
         .pb9
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
 
     (
         tx2,

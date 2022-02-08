@@ -120,11 +120,11 @@ fn setup() -> I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> {
     let mut scl =
         gpiob
             .pb8
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
     let mut sda =
         gpiob
             .pb9
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
 
     // not sure if pull up is needed
     scl.internal_pull_up(&mut gpiob.pupdr, true);

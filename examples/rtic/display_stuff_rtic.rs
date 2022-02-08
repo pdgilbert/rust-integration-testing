@@ -65,6 +65,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+    #[allow(unused_imports)]
     use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2, I2c1Type, setup_i2c1,};
 
     use shared_bus::{I2cProxy};
@@ -271,7 +272,6 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
         pac::Peripherals,
         prelude::*,
     };

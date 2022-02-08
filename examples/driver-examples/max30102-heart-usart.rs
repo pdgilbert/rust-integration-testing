@@ -246,10 +246,10 @@ fn setup() -> (
 
     let scl = gpiob
         .pb6
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
     let sda = gpiob
         .pb7
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
 
     //    // not sure if pull up is needed
     //    scl.internal_pull_up(&mut gpiob.pupdr, true);
@@ -264,10 +264,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
             gpioa
                 .pa10
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh),
         ),
         9600.Bd(),
         clocks,
