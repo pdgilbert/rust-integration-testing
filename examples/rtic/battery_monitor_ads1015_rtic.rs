@@ -48,7 +48,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1};   //, I2c2Type, setup_i2c2};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1, I2c2Type, setup_i2c2};
 
     // A delay is used in some sensor initializations and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -171,11 +171,11 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2c2Type, LedType, AltDelay) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -386,7 +386,9 @@ mod app {
 
         //type BusManagerCortexM<BUS> = BusManager<CortexMMutex<BUS>>;
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+        // NEED TO RESOLVE 1 OR 2 FOR COMMON CODE
+        //let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c).unwrap();
 
         let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
@@ -394,35 +396,25 @@ mod app {
 
         let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
-        hprintln!("let mut disp",).unwrap();
 
         delay.delay_ms(2000u32);
 
         display.init().unwrap();
-        hprintln!("disp.init",).unwrap();
 
         Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
            .draw(&mut display).unwrap();
-        hprintln!("Text::with_baseline",).unwrap();
 
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
         let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
-        hprintln!("let mut adc_b",).unwrap();
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small for diff across low value shunt resistors for current
         //   but up to 5v when measuring usb power.
         // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
-//asm::bkpt();
 
+        // wiring error such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         //adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
-        //hprintln!("adc_a.set_full_scale_range",).unwrap();
         //adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap_or(());
-        //block!(adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap_or(()));
-        //hprintln!("z {:?}", z);   // gives z Err(I2C(ARBITRATION))
-
-        //let z = z.unwrap();
-        hprintln!("adc_b.set_full_scale_range",).unwrap();
 
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
 
@@ -441,8 +433,9 @@ mod app {
 
     #[local]
     struct Local {
-        adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-        adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+        // NEED TO RESOLVE 1 OR 2 FOR COMMON CODE
+        adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+        adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
         SingleA0:         ChannelSelection,
         SingleA1:         ChannelSelection,
         SingleA2:         ChannelSelection,
@@ -452,17 +445,17 @@ mod app {
 
     #[task(shared = [led], local = [adc_a, adc_b, SingleA0, SingleA1, SingleA2, SingleA3, DifferentialA2A3], capacity=4)]
     fn measure(cx: measure::Context) {
-        hprintln!("measure").unwrap();
-        blink::spawn(BLINK_DURATION.millis()).ok();
+       hprintln!("measure").unwrap();
+       blink::spawn(BLINK_DURATION.millis()).ok();
 
-//        cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-//        let _bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, SingleA0)).unwrap_or(8091)* SCALE_A;
-//        cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
+       let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, SingleA0)).unwrap_or(8091)* SCALE_A;
+       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
-        //first adc  Note that readings will be zero using USB power (ie while programming) 
-        // but not when using battery.
+       //first adc  Note that readings will be zero using USB power (ie while programming) 
+       // but not when using battery.
 
-        let bat_ma = block!(DynamicOneShot::read(cx.local.adc_a, DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+       let bat_ma = block!(DynamicOneShot::read(cx.local.adc_a, DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
        let load_ma =
            block!(DynamicOneShot::read(cx.local.adc_a, DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
@@ -480,9 +473,8 @@ mod app {
 
         //showDisplay(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp);
         
-        //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
-        hprintln!("                bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}",         bat_ma, load_ma, temp_c, values_b).unwrap();
-
+        hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+ 
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
