@@ -1,3 +1,6 @@
+# Check with
+# yamllint CI.yaml | grep syntax
+
 on:
   push:
     branches: [ main, old-cortex-m-rt_0.6]
