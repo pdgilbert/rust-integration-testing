@@ -1,3 +1,6 @@
+# Check with
+# yamllint CI.yaml | grep syntax
+
 on:
   push:
     branches: [ main, eh-1-alpha]
@@ -40,7 +43,7 @@ jobs:
     strategy:
       matrix:
         brd: [blackpill-stm32f411]  
-        #brd: [bluepill, discovery-stm32f303]
+        # brd: [bluepill, discovery-stm32f303]
 
 
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
@@ -67,7 +70,7 @@ jobs:
 
 #       #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
 #       # (somewhat trivial here because there is only bluepill)
-       include:
+        include:
 #          - brd: "bluepill"
 #            mcu:  stm32f103
 #            hal: "stm32f1xx"
