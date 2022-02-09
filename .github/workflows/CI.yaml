@@ -31,9 +31,10 @@ jobs:
 
 #################################################################################################
 
+# examples:
+#   name: eg
   examples:
     name: eh-1
-#   name: eg
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
