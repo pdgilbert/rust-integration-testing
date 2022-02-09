@@ -31,21 +31,14 @@ jobs:
 
 #################################################################################################
 
-# examples:
-#   name: eg
-#   runs-on: ubuntu-latest
-#   continue-on-error: true
-#   strategy:
-#     matrix:
-#       brd: [bluepill, discovery-stm32f303]  
-
   examples:
     name: eh-1
+#   name: eg
     runs-on: ubuntu-latest
     continue-on-error: true
     strategy:
       matrix:
-        brd: [blackpill-stm32f411]  
+        brd: [blackpill-stm32f411]  #[bluepill, discovery-stm32f303]
 
 
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
@@ -612,12 +605,12 @@ jobs:
 #         command: build
 #         args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-co2-voc
 
-      - name: Example battery_monitor_ads1015_rtic
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example battery_monitor_ads1015_rtic
-          use-cross: true
+#     - name: Example battery_monitor_ads1015_rtic
+#       uses: actions-rs/cargo@v1
+#       with:
+#         command: build
+#         args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example battery_monitor_ads1015_rtic
+#         use-cross: true
 
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
