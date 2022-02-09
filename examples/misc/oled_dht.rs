@@ -174,10 +174,10 @@ fn setup() -> (PA8<Output<OpenDrain>>,
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
     let scl = gpiob
         .pb8
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
     let sda = gpiob
         .pb9
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
     let i2c = I2c::new(p.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 
     let led = setup_led(p.GPIOE.split(&mut rcc.ahb));

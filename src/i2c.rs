@@ -148,6 +148,7 @@ use stm32f4xx_hal::{
     prelude::*,
 };
 
+
 #[cfg(feature = "stm32f4xx")]
 pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
 //pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;

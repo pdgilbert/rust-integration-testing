@@ -31,6 +31,10 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
+//use cortex_m_semihosting::{debug, hprintln};
+//use cortex_m_semihosting::{hprintln};
+//use rtt_target::{rprintln, rtt_init_print};
+
 use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
 
 use core::fmt::Write;
@@ -217,11 +221,11 @@ fn setup() -> (
     let mut scl =
         gpiob
             .pb8
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // scl on PB8
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     let mut sda =
         gpiob
             .pb9
-            .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh); // sda on PB9
+            .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     // not sure if pull up is needed
     scl.internal_pull_up(&mut gpiob.pupdr, true);
@@ -604,7 +608,7 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(
 
     // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
     // also first adc
-    // skip until working see
+    // Read in main loop and skip here until working see
     //    https://github.com/eldruin/ads1x1x-rs/issues/10?_pjax=%23repo-content-pjax-container
     //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
     //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
@@ -679,6 +683,7 @@ where
     ()
 }
 
+
 #[entry]
 fn main() -> ! {
     let (i2c, mut led, mut delay) = setup();
@@ -705,6 +710,10 @@ fn main() -> ! {
     )
     .draw(&mut disp)
     .unwrap();
+
+    // For shared_bus::BusManagerSimple the type of next is 
+    //   adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, NullMutex<I2c1Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+    // That changes a bit in rtic examples because BusManagerSimple cannot be used.
 
     let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
     let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
@@ -742,6 +751,8 @@ fn main() -> ! {
             .unwrap();
 
         let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
+
+        //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
 
         display(
             bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,

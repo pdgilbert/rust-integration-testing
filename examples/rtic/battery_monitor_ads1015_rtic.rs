@@ -1,5 +1,6 @@
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
-//!   compare examples/misc/battery_monitor_ads1015.rs
+// CONSIDER DOING THIS WITH DMA FOLLOWING stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma.rs
+//! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -23,11 +24,13 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
+
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
     //use rtt_target::{rprintln, rtt_init_print};
 
-    use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr, 
+    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
+                  ChannelSelection,
                   ic::{Ads1015, Resolution12Bit},
                   interface::I2cInterface};
     //use core::fmt::Write;
@@ -39,19 +42,20 @@ mod app {
     use fugit::TimerDuration;
 
     const MONOTICK: u32 = 100;
-    const READ_INTERVAL: u64 = 10;  // used as seconds
+    const READ_INTERVAL:  u64 =  2;  // used as seconds
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1};   //, I2c2Type, setup_i2c2};
+    #[allow(unused_imports)]
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1, I2c2Type, setup_i2c2};
 
-    // A delay is used in sensor (dht) initialization and read. 
+    // A delay is used in some sensor initializations and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
     use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
-    // set up for shared bus even though only one i2c device is used here
+    // set up for shared bus
    // use shared_bus_rtic::SharedBus;
     //use shared_bus_rtic::export::interrupt::Mutex;
     use shared_bus::{I2cProxy};
@@ -59,6 +63,15 @@ mod app {
     use cortex_m::interrupt::Mutex;
     //  or      rtic::Mutex;
     //  or      rtic::export::interrupt::Mutex;
+
+    use embedded_graphics::{
+        mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10  FONT_8X13
+        pixelcolor::BinaryColor,
+        prelude::*,
+        text::{Baseline, Text},
+    };
+
+    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
     use nb::block;
     
@@ -77,7 +90,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -116,10 +132,6 @@ mod app {
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        gpio::{
-            gpioa::{PA8, PA9},
-            OpenDrain, Output, PushPull, AF7,
-        },
         pac::{Peripherals, },
         prelude::*,
     };
@@ -128,14 +140,14 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, AltDelay) {
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType, AltDelay) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut flash.acr);
     
-       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-
        let gpiob = dp.GPIOB.split(&mut rcc.ahb);
        let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
@@ -157,11 +169,14 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -186,7 +201,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let gpioa = dp.GPIOA.split();
        let dht   = gpioa .pa8.into_open_drain_output();
 
@@ -218,7 +236,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -251,7 +272,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    type DhtPin = PA8<Output<OpenDrain>>;
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
 
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
@@ -271,27 +292,20 @@ mod app {
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
-        gpio::{OpenDrain, Output,
-               gpioa::PA8,
-        },
         prelude::*,
         rcc::Config as rccConfig,
         stm32::{Peripherals},
     };
 
     #[cfg(feature = "stm32l1xx")]
-    use embedded_hal::digital::v2::OutputPin;
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
 
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
-
-       let gpioa = dp.GPIOA.split(&mut rcc);
-
-       let dht = gpioa.pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(&mut rcc);
 
@@ -309,15 +323,15 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        gpio::{OpenDrain, Output,
-            gpioa::PA8,
-        },
         pac::{Peripherals,},
         prelude::*,
     };
 
     #[cfg(feature = "stm32l4xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32l4xx")]
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
 
     #[cfg(feature = "stm32l4xx")]
     fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
@@ -330,9 +344,6 @@ mod app {
             .pclk1(80.mhz())
             .pclk2(80.mhz())
             .freeze(&mut flash.acr, &mut pwr);
-
-       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
-       let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
        let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
@@ -361,7 +372,8 @@ mod app {
         let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         //rtt_init_print!();
-        //rprintln!("CCS811 example");
+        //rprintln!("battery_monitor_ads1015_rtic example");
+        hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
         let (i2c, mut led, mut delay) = setup(cx.device);
    
@@ -369,30 +381,21 @@ mod app {
         delay.delay_ms(1000u32);
         led.off();
 
-        //type BusManagerCortexM<BUS> = BusManager<CortexMMutex<BUS>>;
+        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
-        //let manager = shared_bus::BusManagerSimple::new(i2c);
+        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-//       let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        let text_style = MonoTextStyleBuilder::new().font(&FONT_8X13).text_color(BinaryColor::On).build();
 
-//       let mut disp = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-//           .into_buffered_graphics_mode();
-//       disp.init().unwrap();
+        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+            .into_buffered_graphics_mode();
 
-//       let text_style = MonoTextStyleBuilder::new()
-//           .font(&FONT_8X13) //.&FONT_6X10  &FONT_8X13
-//           .text_color(BinaryColor::On)
-//           .build();
+        delay.delay_ms(2000u32);
 
-//       Text::with_baseline(
-//           "Display initialized ...",
-//           Point::zero(),
-//           text_style,
-//           Baseline::Top,
-//       )
-//       .draw(&mut disp)
-//       .unwrap();
+        display.init().unwrap();
+
+        Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+           .draw(&mut display).unwrap();
 
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
         let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
@@ -402,14 +405,29 @@ mod app {
         //   but up to 5v when measuring usb power.
         // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
 
-        adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
-        adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+        // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
+        match adc_a.set_full_scale_range(FullScaleRange::Within0_256V) {
+            Ok(())   =>  (),
+            Err(e) =>  {hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                        panic!("panic")
+                       },
+        };
+
+        match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
+            Ok(())   =>  (),
+            Err(e) =>  {hprintln!("Error {:?} in adc_2.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                        panic!("panic")
+                       },
+        };
 
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
 
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
-        (Shared {led}, Local {adc_a, adc_b}, init::Monotonics(mono))
+        (Shared {led}, 
+         Local {adc_a, adc_b, }, 
+         init::Monotonics(mono)
+        )
     }
 
     #[shared]
@@ -419,40 +437,42 @@ mod app {
 
     #[local]
     struct Local {
-        adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-        adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-    }
+       adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+        adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+   }
 
-    #[task(shared = [led], local = [adc_a, adc_b, ], capacity=2)]
+    #[task(shared = [led], local = [adc_a, adc_b,], capacity=4)]
     fn measure(cx: measure::Context) {
-        //hprintln!("measure").unwrap();
-        blink::spawn(BLINK_DURATION.millis()).ok();
+       //hprintln!("measure").unwrap();
+       blink::spawn(BLINK_DURATION.millis()).ok();
 
-        cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-        let _bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
-        cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
+       let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
+       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
-        //first adc  Note that readings will be zero using USB power (ie while programming) 
-        // but not when using battery.
+       //first adc  Note that readings will be zero using USB power (ie while programming) 
+       // but not when using battery.
 
-        let _bat_ma = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+       let bat_ma =
+           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
-       let _load_ma =
+       let load_ma =
            block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
        // second adc
-       let _values_b = [
+       let values_b = [
            block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
            block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
            block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
        ];
 
-       let _temp_c =
+       let temp_c =
            block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
 
-
-        //display(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp);
-
+        //showDisplay(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp);
+        
+        hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+ 
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 

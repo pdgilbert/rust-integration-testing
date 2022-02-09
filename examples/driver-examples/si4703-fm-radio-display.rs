@@ -292,14 +292,14 @@ fn setup() -> (
         .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let sda = sda.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     let stcint = gpiob
         .pb6
         .into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
     let scl = gpiob
         .pb8
-        .into_af4_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 

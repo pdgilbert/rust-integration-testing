@@ -21,7 +21,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 //use nb::block;
 
-use core::str::from_utf8;
+//use core::str::from_utf8;
 
 #[cfg(feature = "stm32f0xx")] //  eg blue pill stm32f103
 use stm32f0xx_hal::{
@@ -219,10 +219,10 @@ fn setup() -> (
         (
             gpioa
                 .pa9
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
             gpioa
                 .pa10
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
         ),
         9600.Bd(),
         clocks,
@@ -235,10 +235,10 @@ fn setup() -> (
         (
             gpioa
                 .pa2
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
             gpioa
                 .pa3
-                .into_af7_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
         ),
         115_200.Bd(), // or 9600.bps(),
         clocks,
@@ -253,10 +253,10 @@ fn setup() -> (
         (
             gpiob
                 .pb10
-                .into_af7_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
+                .into_af_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //tx pb10
             gpiob
                 .pb11
-                .into_af7_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
+                .into_af_push_pull(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh), //rx pb11
         ),
         115_200.Bd(), // or 9600.bps(),
         clocks,
@@ -276,8 +276,8 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    pac::Peripherals,
-    pac::{USART1, USART2, USART6},
+    dma::{config, traits::StreamISR, MemoryToPeripheral, Stream4, StreamsTuple, Transfer},
+    pac::{Peripherals, USART1, USART2, USART6},
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
 };
@@ -335,7 +335,14 @@ fn setup() -> (
     .unwrap()
     .split();
 
-    (tx1, rx1, tx2, rx2, tx3, rx3)
+    let dma1 = p.DMA1.split();
+    let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
+    let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
+    let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);
+
+    (
+        tx1, tx1_ch, rx1, rx1_ch, tx2, tx2_ch, rx2, rx2_ch, tx3, tx3_ch, rx3, rx3_ch,
+    )
 }
 
 #[cfg(feature = "stm32f7xx")]
