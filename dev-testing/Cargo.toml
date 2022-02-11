@@ -28,7 +28,9 @@ stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = 
 
 dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branch = "main"}
 ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
-# for some reason ssd1306 fixes  (BETTER FIX IS TO PROVIDE PROPER memory.x)
+#ssd1306         = { path = "/home/paul/githubClones/ssd1306"  } 
+# NEEDS TO BE FIXED TO PROVIDE PROPER memory.x
+# for some reason ssd1306 fixes 
 #  linking with `rust-lld` failed: exit status: 1
 #  ...
 # >>> INCLUDE memory.x
@@ -134,7 +136,7 @@ void                 = { version = ">=1.0.2", default-features = false } # err r
 stm32f0xx = ["stm32f0xx-hal/rt", "systick-monotonic"]
 stm32f1xx = ["stm32f1xx-hal/rt", "systick-monotonic"]
 stm32f3xx = ["stm32f3xx-hal/rt", "systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal/rt", "systick-monotonic"]
+stm32f4xx = ["stm32f4xx-hal/rt", "systick-monotonic", "dwt-systick-monotonic"]
 stm32f7xx = ["stm32f7xx-hal/rt", "systick-monotonic"]
 stm32h7xx = ["stm32h7xx-hal/rt", "systick-monotonic"]
 #stm32l0xx =["stm32l0xx-hal/rt", "systick-monotonic"]
@@ -400,6 +402,10 @@ path = "examples/rtic/ccs811-co2-voc.rs"
 [[example]]
 name = "battery_monitor_ads1015_rtic"
 path = "examples/rtic/battery_monitor_ads1015_rtic.rs"
+
+[[example]]
+name = "battery_monitor_ads1015_rtic_dma"
+path = "examples/rtic/battery_monitor_ads1015_rtic_dma.rs"
 
 
 # examples/misc-i2c-drivers
