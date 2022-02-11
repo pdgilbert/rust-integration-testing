@@ -154,10 +154,9 @@ pub fn setup() -> (I2c<I2C1>, LedType, Delay) {
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     delay::Delay,
-    gpio::{
-        gpiob::{PB8, PB9},
-        gpioc::{PC13, Parts},
-        OpenDrain, Output, PushPull,
+    gpio::{OpenDrain, Output, PushPull,
+           gpiob::{PB8, PB9, Parts as PartsB},
+           gpioc::{PC13, Parts as PartsC},
     },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -171,7 +170,7 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
     let clocks = rcc.clocks;
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc, &clocks);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 

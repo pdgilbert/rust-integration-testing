@@ -278,14 +278,15 @@ pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, i2c: I2c4, &clocks: &CoreClocks) ->
 use stm32l0xx_hal::{
     delay::Delay,
     gpio::{
-        gpiob::{PB8, PB9},
-        gpioc::{PC13, Parts},
+        gpiob::{PB8, PB9, Parts as PartsB},
+        gpioc::{PC13, Parts as PartsC},
         OpenDrain, Output, PushPull,
     },
     i2c::I2c,
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{CorePeripherals, Peripherals, I2C1, I2C2},
     prelude::*,
     rcc, // for ::Config but //Note name conflict with serial
+    rcc::{Clocks, Rcc},
 };
 
 #[cfg(feature = "stm32l0xx")]
@@ -293,13 +294,13 @@ pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
                   //I2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &Clocks) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, mut gpiob: PartsB, mut rcc: Rcc, &clocks: &Clocks) -> I2c1Type {
 
     // could also have scl on PB6, sda on PB7
     //BlockingI2c::i2c1(
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c = dp.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
+    let i2c = i2c1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     i2c
 }
@@ -308,13 +309,13 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, mut afio: afioParts, &clocks: &C
 pub type I2c2Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;   
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
+pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: PartsB, mut rcc: Rcc, &clocks: &Clocks) -> I2c2Type {
 
     // could also have scl on PB6, sda on PB7
     //BlockingI2c::i2c1(
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c = dp.I2C1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
+    let i2c = i2c2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     i2c
 }
@@ -337,7 +338,7 @@ pub type I2c1Type = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
-    // NOTE THIS SETUP FUNCTION IS NOTE USED, BECAUSE OF MOVE PROBLEMS
+    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS
     // All pin possibities are gpiob:  PB10-11 on I2C2,  PB6-7 on I2C1, PB8-9 on I2C1, 
     //  and the led is also on gpiob.
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
