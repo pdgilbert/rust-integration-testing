@@ -101,7 +101,7 @@ fugit = { version = "0.3.3", optional = true }
 
 #embedded-hal = {version = "^0.2.4" }
 old-e-h      = { version = "0.2.6", package = "embedded-hal" }
-embedded-hal = {version = "1.0.0-alpha.6,<1.0.0-alpha.7", package = "embedded-hal" }  
+embedded-hal = {version = "1.0.0-alpha.7,<1.0.0-alpha.8", package = "embedded-hal" }  
 
 embedded-graphics = ">=0.7"
 #shared-bus = { version = "0.2.2", features = ["cortex-m"] } 
