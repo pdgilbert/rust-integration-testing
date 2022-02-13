@@ -1,5 +1,6 @@
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
-// CONSIDER DOING THIS WITH DMA FOLLOWING stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma.rs
+// Following stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma regarding dma use.
+//! See examples/rtic/battery_monitor_ads1015_rtic.rs  for non-dma version..
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
 
 #![deny(unsafe_code)]
@@ -17,7 +18,7 @@ use rtic::app;
 
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3, EXTI0 ] ))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
@@ -36,6 +37,8 @@ mod app {
     //use core::fmt::Write;
 
     use systick_monotonic::*;
+    use dwt_systick_monotonic::DwtSystick;  // structure has both dwt: DWT and  systick: SYST, ???
+    //use dwt_systick_monotonic::Systick;  
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
 
@@ -367,9 +370,16 @@ mod app {
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<MONOTICK>;
 
+    #[monotonic(binds = EXTI0)]
+    type MyMono2 = DwtSystick<MONOTICK>;
+
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+        let mut dcb = cx.core.DCB;
+        let dwt = cx.core.DWT;
+
+        let mono  =    Systick::new(cx.core.SYST,  MONOCLOCK);
+        let mono2 = DwtSystick::new(&mut dcb, dwt, cx.core.EXTI0, MONOCLOCK);
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
@@ -426,7 +436,7 @@ mod app {
 
         (Shared {led}, 
          Local {adc_a, adc_b, }, 
-         init::Monotonics(mono)
+         init::Monotonics(mono, mono2)
         )
     }
 

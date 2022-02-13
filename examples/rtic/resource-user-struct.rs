@@ -9,6 +9,7 @@ use panic_semihosting as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac  ))] //fails:  USART1 variant or associated item not found in `stm32f3xx_hal::interrupt
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac  ))]
@@ -23,6 +24,9 @@ mod app {
     use cortex_m_semihosting::{debug, hprintln};
 
     //use lm3s6965::Interrupt;
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::pac::Interrupt as interrupt;
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::pac::Interrupt as interrupt;

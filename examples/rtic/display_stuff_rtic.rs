@@ -17,6 +17,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -72,6 +73,34 @@ mod app {
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::Peripherals,
+        prelude::*,
+    };
+ 
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32f0xx")]
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       (i2c, led)
+    }
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{

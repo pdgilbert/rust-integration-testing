@@ -13,7 +13,8 @@ use panic_halt as _;
 pub mod i2c_led_delay;
 pub mod led;
 pub mod i2c;
-// temp rm for eh-1   pub mod lora_spi_gps_usart;
+// pub mod lora_spi_gps_usart; 
+
 pub mod alt_delay;
 
 //NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS

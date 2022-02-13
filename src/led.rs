@@ -209,10 +209,10 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
     impl LED for LedType {
         fn on(&mut self) -> () {
-            self.set_low()
+            self.set_low().unwrap()
         }
         fn off(&mut self) -> () {
-            self.set_high()
+            self.set_high().unwrap()
         }
     }
     

@@ -26,6 +26,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -35,18 +36,21 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
-    
-    use systick_monotonic::*;
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
     use dht_sensor::dht11::Reading;
     #[cfg(feature = "dht22")]
     use dht_sensor::dht22::Reading;
     use dht_sensor::*;
+
+    //use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::{hprintln};
+    
+    use systick_monotonic::*;
+
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+    use fugit::TimerDuration;
+
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -67,8 +71,6 @@ mod app {
 
 //    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
     
-    use fugit::TimerDuration;
-
     const MONOTICK:  u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
 
@@ -76,7 +78,6 @@ mod app {
 
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2};
 
     // A delay is used in sensor (dht) initialization and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -84,6 +85,42 @@ mod app {
     //  number of indicated clock cycles.
 use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::alt_delay::{AltDelay, DelayMs};
+
+
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::Peripherals,
+        prelude::*,
+    };
+ 
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+       let gpioa = dp.GPIOA.split(&mut rcc);
+       let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
+       dht.set_high().ok();
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
+    }
+
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -99,15 +136,19 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
        let rcc = dp.RCC.constrain();
+       let mut afio = dp.AFIO.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
        //afio  needed for i2c1 (PB8, PB9) but not i2c2
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut afio, &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -135,26 +176,29 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
     
        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-       //let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
-
-// setup_i2c2 NOT WORKING
-       let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-       let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       // setup_i2c2 does not work. There is a "value used here after partial move" problem with I2C2 on gpioa
+       //    because gpioa is used above for dht. And the only option for I2C2 seems to be gpioa.
+       //    gpioa can be used without setup_i2c2 using
+       // let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       // let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       // let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
        //    // //NOT sure if pull up is needed
        //    scl.internal_pull_up(&mut gpiob.pupdr, true);
        //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-       let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+       // let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
 
-//     Note there is a "value used here after partial move" problem with I2C2 on gpioa
-//        because gpioa is used above for dht. And the only option for I2C2 seems to be gpioa.
-//       let i2c = setup_i2c2(dp.I2C2, gpioa, clocks, rcc.apb1);
+       let gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
        let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
@@ -178,14 +222,17 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
 
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -209,20 +256,24 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let dht = dp.GPIOA.split().pa8.into_open_drain_output();
 
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
        //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
        let led = setup_led(dp.GPIOC.split());
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
     }
+
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
@@ -243,7 +294,10 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -253,14 +307,15 @@ use embedded_hal::delay::blocking::DelayUs;
        let dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-       let i2cx = ccdr.peripheral.I2C4;
+       let i2cx = ccdr.peripheral.I2C1;
 
-       let i2c = setup_i2c2(dp.I2C4, gpiob, i2cx, &clocks);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
        let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
-   }
+    }
+
 
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
@@ -277,7 +332,10 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -290,6 +348,7 @@ use embedded_hal::delay::blocking::DelayUs;
 
        (dht, i2c, led, delay)
     }
+
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
@@ -311,7 +370,10 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
        let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
@@ -322,17 +384,18 @@ use embedded_hal::delay::blocking::DelayUs;
        //   The onboard led is on PB6 and i2c also uses gpiob  so there is a problem
        //   with gpiob being moved by one and then not available for the other.
 
-// setup_i2c1 NOT WORKING
-       let scl = gpiob.pb10.into_open_drain_output();
-       let sda = gpiob.pb11.into_open_drain_output(); 
-       let i2c = dp.I2C2.i2c((scl, sda), 400.khz(), &mut rcc);
-//       let i2c = setup_i2c2(dp.I2C2, gpiob, rcc);
+       // setup_i2c1 NOT WORKING
+       let scl = gpiob.pb8.into_open_drain_output();
+       let sda = gpiob.pb9.into_open_drain_output(); 
+       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+       //   let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
        let led = setup_led(gpiob.pb6);
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
     }
+
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
@@ -350,7 +413,10 @@ use embedded_hal::delay::blocking::DelayUs;
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -359,7 +425,7 @@ use embedded_hal::delay::blocking::DelayUs;
        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc.ahb2), &clocks, rcc.apb1r1);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
        let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        let delay = AltDelay{};
 
@@ -435,8 +501,7 @@ use embedded_hal::delay::blocking::DelayUs;
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         DelayMs::delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
-        //let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-        let _manager = shared_bus::BusManagerSimple::new(i2c);
+        let _manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 //
 //        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
 //        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)

@@ -1,34 +1,26 @@
+# The rustflags link-arg is needed to link and run, and linking fails if memory.x is not found.
+# In a situation where linking and running is not done (e.g. CI on github) the link-arg
+# setting could be ommitted so the build does not fail when memory.x is not found.
+# linking may cause size failure when --release is needed and not set, 
+# and also cause interference with `cargo embed ...`
+
 [target.thumbv7m-none-eabi]
+#runner = "probe-run --chip $CHIP
 #runner = 'arm-none-eabi-gdb'
 runner = "gdb-multiarch -q -x openocd.gdb"
-# need following for link and load with `cargo  run ...` but it may require memory.x,
-# linking may cause failure when --release is needed,
-# and also cause interference with `cargo embed ...`
-rustflags = [
-  "-C", "link-arg=-Tlink.x",
-]
+rustflags = [ "-C", "link-arg=-Tlink.x",]
 
 [target.thumbv7em-none-eabi]
 #runner = 'arm-none-eabi-gdb'
 runner = "gdb-multiarch -q -x openocd.gdb"
-#rustflags = [
-#  "-C", "link-arg=-Tlink.x",
-#]
+rustflags = [ "-C", "link-arg=-Tlink.x",]
 
 [target.thumbv7em-none-eabihf]
 #runner = 'arm-none-eabi-gdb'
 runner = "gdb-multiarch -q -x openocd.gdb"
-# with --release these flags cause 
-#    rust-lld: error: undefined symbol: _SEGGER_RTT
-# in some examples
-rustflags = [
-  "-C", "link-arg=-Tlink.x",
-]
+rustflags = [ "-C", "link-arg=-Tlink.x",]
 
 [target.riscv32imac-unknown-none-elf]
 #runner = 'riscv64-unknown-elf-gdb -x openocd.gdb'
 runner = "gdb-multiarch -q -x openocd.gdb"
-#rustflags = [
-#  #"-C", "link-arg=-memory-CB.x",
-#  "-C", "link-arg=-Tlink.x",
-#]
+rustflags = [ "-C", "link-arg=-Tlink.x",]
