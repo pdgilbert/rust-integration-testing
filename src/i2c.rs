@@ -5,10 +5,10 @@
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     gpio::{Alternate, AF1,
-           gpiob::{PB7, PB8, Parts}, 
+           gpiob::{PB7, PB8, PB10, PB11, Parts}, 
     },
     i2c::{I2c, },
-    pac::{I2C1},
+    pac::{I2C1, I2C2},
     rcc::Rcc,
     prelude::*,
 };
@@ -27,6 +27,24 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: Parts, rcc: &mut Rcc) -> I2c1Type {
 
     i2c
 }
+
+
+#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
+pub type I2c2Type = I2c<I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
+
+#[cfg(feature = "stm32f0xx")]
+pub fn setup_i2c2(i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> I2c2Type {
+    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
+        (gpiob.pb10.into_alternate_af1(cs),
+         gpiob.pb11.into_alternate_af1(cs),
+        )
+    });
+    let i2c = I2c::i2c2(i2c2, (scl, sda), 400.khz(), rcc);
+
+    i2c
+}
+
+
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{

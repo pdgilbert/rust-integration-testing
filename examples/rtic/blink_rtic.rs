@@ -15,6 +15,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -336,7 +337,7 @@ mod app {
         //   although spawn has not yet happened so there may be a way?)
         //   delay_ms() would need to use a timer other than default Systick
 
-        asm::delay(5 * CLOCK); // (5 * CLOCK cycles gives aprox 5+ second delay
+        asm::delay(5 * MONOCLOCK); // (5 * CLOCK cycles gives aprox 5+ second delay
                                //delay::delay_ms(5_000_u16);
 
         led.off();

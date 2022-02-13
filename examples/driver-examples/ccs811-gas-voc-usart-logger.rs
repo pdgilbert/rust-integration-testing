@@ -41,6 +41,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -58,10 +59,6 @@ mod app {
     use core::fmt::Write;
     
     use systick_monotonic::*;
-    
-    // Much of the setup is done in modules led and i2c in scr/i2c.rs and scr/led.rs
-    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1};
 
     use embedded_ccs811::{
         mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
@@ -79,6 +76,49 @@ mod app {
     const MONOTICK: u32 = 100;
     const PERIOD: u64 = 10;  // used as seconds
     //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
+    
+    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        pac::{Peripherals, USART1},
+        prelude::*,
+        serial::{Serial, Tx},
+   };
+
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+   
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    type TxType = Tx<USART1>;
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (I2cType, LedType, TxType) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+       let gpioa = dp.GPIOA.split(&mut rcc);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let (tx, rx) = cortex_m::interrupt::free(move |cs| {
+           (
+               gpioa.pa9.into_alternate_af1(cs),  //tx pa9
+               gpioa.pa10.into_alternate_af1(cs), //rx pa10
+           )
+       });
+
+       let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
+
+       (i2c, led, tx)
+    }
+
+
+
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -92,10 +132,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -150,10 +193,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f3xx")]
     type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        //fn setup(dp: Peripherals) -> (I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>, LedType, TxType ) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
@@ -196,10 +242,13 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f4xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
@@ -235,10 +284,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f7xx")]
     type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
        //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
@@ -279,10 +331,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32h7xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -327,7 +382,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> LedType {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->(I2cType, LedType, TxType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
 
@@ -359,10 +417,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpiob = dp.GPIOB.split(&mut rcc);
@@ -401,10 +462,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l4xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -470,8 +534,7 @@ mod app {
         }; 1200];
 
         // rtic needs task sharing not provided by BusManagerSimple: 
-        //let manager = shared_bus::BusManagerSimple::new(i2c);
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
         let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
         let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
@@ -504,8 +567,8 @@ mod app {
     #[shared]
     struct Shared {
         led: LedType,
-        ccs811:  Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2c1Type>>>, Ccs811Mode::App>,
-        hdc2080:     Hdc20xx<I2cProxy<'static,   Mutex<RefCell<I2c1Type>>>, Hdc20xxMode::OneShot>,
+        ccs811:  Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
+        hdc2080:     Hdc20xx<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Hdc20xxMode::OneShot>,
         tx: TxType,
     }
 

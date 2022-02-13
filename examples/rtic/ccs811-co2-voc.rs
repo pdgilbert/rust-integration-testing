@@ -30,8 +30,8 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-//#[#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -57,7 +57,6 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1};
 
     // A delay is used in sensor (dht) initialization and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -88,6 +87,55 @@ mod app {
  
     use nb::block;
     
+ 
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::{Peripherals, USART1},
+        prelude::*,
+        serial::{Serial, Tx},
+   };
+
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    type TxType = Tx<USART1>;
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+       let gpioa = dp.GPIOA.split(&mut rcc);
+
+       let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
+       dht.set_high().ok();
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       let (tx, rx) = cortex_m::interrupt::free(move |cs| {
+           (
+               gpioa.pa9.into_alternate_af1(cs),  //tx pa9
+               gpioa.pa10.into_alternate_af1(cs), //rx pa10
+           )
+       });
+
+       let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
+
+       (dht, i2c, led, tx, delay)
+    }
+
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -106,12 +154,15 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f1xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -181,6 +232,9 @@ mod app {
 
     #[cfg(feature = "stm32f3xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f3xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
     type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
@@ -189,7 +243,7 @@ mod app {
     //   regarding why it is necessary to specify the concrete pin here.
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, AltDelay) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut flash.acr);
@@ -239,12 +293,15 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f4xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
 
@@ -289,12 +346,15 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f7xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
     type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
        let gpioa = dp.GPIOA.split();
        let dht   = gpioa .pa8.into_open_drain_output();
 
@@ -344,12 +404,15 @@ mod app {
 
     #[cfg(feature = "stm32h7xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32h7xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -399,9 +462,12 @@ mod app {
 
     #[cfg(feature = "stm32l0xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32l0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -447,12 +513,15 @@ mod app {
 
     #[cfg(feature = "stm32l1xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32l1xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpioa = dp.GPIOA.split(&mut rcc);
@@ -500,12 +569,15 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32l4xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c1Type, LedType, TxType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
         let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -590,7 +662,7 @@ mod app {
         //let measurements: [AlgorithmResult; 1200] = [AlgorithmResult {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+       let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
 //    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -632,7 +704,7 @@ mod app {
     #[local]
     struct Local {
         dht: DhtPin,
-        ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2c1Type>>>, Ccs811Mode::App>,
+        ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
         delay: AltDelay,
     }

@@ -33,6 +33,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -51,6 +52,52 @@ mod app {
     use rtt_target::{rprintln, rtt_init_print};
 
     const PERIOD: u64 = 10;
+
+    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::{Peripherals, USART1},
+        prelude::*,
+        serial::{Serial, Tx},
+    };
+
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    type TxType = Tx<USART1>;
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (I2cType, LedType, TxType) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+       let gpioa = dp.GPIOA.split(&mut rcc);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let (tx, rx) = cortex_m::interrupt::free(move |cs| {
+           (
+               gpioa.pa9.into_alternate_af1(cs),  //tx pa9
+               gpioa.pa10.into_alternate_af1(cs), //rx pa10
+           )
+       });
+
+       let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
+
+       (i2c, led, tx)
+    }
+
+
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
@@ -651,33 +698,27 @@ mod app {
 
     // End of hal/MCU specific setup. Following should be generic code.
 
-    pub trait LED {
-        // depending on board wiring, on may be set_high or set_low, with off also reversed
-        // implementation should deal with this difference
-        fn on(&mut self) -> ();
-        fn off(&mut self) -> ();
-    }
 
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<CLOCK>;
+    type MyMono = Systick<MONOCLOCK>;
 
     #[shared]
     struct Shared {
-        led: LedType,
-        sensor: IaqCore<I2cBus>,
+        sensor: IaqCore<I2cType>,
         tx: TxType,
     }
 
     #[local]
     struct Local {
-        led_state: bool,
         index: usize,
         measurements: [Measurement; 2400],
+        led: LedType,
+        led_state: bool,
     }
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = Systick::new(cx.core.SYST, CLOCK);
+        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         rtt_init_print!();
         rprintln!("iAQ-Core-C example");
@@ -705,26 +746,26 @@ mod app {
 
         (
             Shared {
-                led: led,
                 sensor: sensor,
                 tx: tx,
             },
             Local {
-                led_state: led_state,
                 index: index,
                 measurements: measurements,
+                led: led,
+                led_state: led_state,
             },
             init::Monotonics(mono),
         )
     }
 
-    #[task(shared = [led, sensor, tx], local = [led_state, index, measurements])]
+    #[task(shared = [sensor, tx], local = [index, measurements, led, led_state, ])]
     fn measure(mut cx: measure::Context) {
         if *cx.local.led_state {
-            cx.shared.led.lock(|led| led.off());
+            cx.local.led.lock(|led| led.off());
             *cx.local.led_state = false;
         } else {
-            cx.shared.led.lock(|led| led.on());
+            cx.local.led.lock(|led| led.on());
             *cx.local.led_state = true;
         }
 

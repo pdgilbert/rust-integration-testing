@@ -26,6 +26,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -84,6 +85,40 @@ mod app {
     //  number of indicated clock cycles.
     use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::Peripherals,
+        prelude::*,
+    };
+ 
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+
+    #[cfg(feature = "stm32f0xx")]
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+       let gpioa = dp.GPIOA.split(&mut rcc);
+       let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
+       dht.set_high().ok();
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       (dht, i2c, led, delay)
+    }
+
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
@@ -98,7 +133,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
@@ -134,7 +172,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
     
@@ -177,7 +218,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
 
@@ -208,7 +252,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let dht = dp.GPIOA.split().pa8.into_open_drain_output();
 
        let mut rcc = dp.RCC.constrain();
@@ -222,6 +269,7 @@ mod app {
 
        (dht, i2c, led, delay)
     }
+
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
@@ -242,7 +290,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -259,7 +310,8 @@ mod app {
        let delay = AltDelay{};
 
        (dht, i2c, led, delay)
-   }
+    }
+
 
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
@@ -276,7 +328,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -289,6 +344,7 @@ mod app {
 
        (dht, i2c, led, delay)
     }
+
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
@@ -310,7 +366,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
        let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
@@ -333,6 +392,7 @@ mod app {
        (dht, i2c, led, delay)
     }
 
+
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
         gpio::{Output, OpenDrain,
@@ -349,7 +409,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2c2Type, LedType, AltDelay) {
+    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -434,8 +497,7 @@ mod app {
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
-        //let _manager = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>, _>::new(i2c);
-        let _manager = shared_bus::BusManagerSimple::new(i2c);
+        let _manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 //
 //        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
 //        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)

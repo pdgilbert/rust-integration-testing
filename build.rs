@@ -24,7 +24,7 @@ fn main() {
         "STM32L0X2",
         "STM32L100",
         "STM32L151",
-        "STM32L4X2",
+        "STM32L422",
         "LM3S6965",
         "GD32VF103CB",
         "GD32VF103C8",
