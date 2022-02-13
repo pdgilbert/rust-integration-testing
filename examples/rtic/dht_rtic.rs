@@ -78,7 +78,6 @@ mod app {
 
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2};
 
     // A delay is used in sensor (dht) initialization and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -102,7 +101,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f0xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
 
     #[cfg(feature = "stm32f0xx")]
     fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
@@ -136,7 +135,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -144,10 +143,11 @@ mod app {
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
        let rcc = dp.RCC.constrain();
+       let mut afio = dp.AFIO.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
        //afio  needed for i2c1 (PB8, PB9) but not i2c2
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut afio, &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -175,7 +175,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f3xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -185,19 +185,19 @@ mod app {
        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-       //let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
-
-// setup_i2c2 NOT WORKING
-       let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-       let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       // setup_i2c2 does not work. There is a "value used here after partial move" problem with I2C2 on gpioa
+       //    because gpioa is used above for dht. And the only option for I2C2 seems to be gpioa.
+       //    gpioa can be used without setup_i2c2 using
+       // let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       // let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
+       // let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
        //    // //NOT sure if pull up is needed
        //    scl.internal_pull_up(&mut gpiob.pupdr, true);
        //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-       let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+       // let i2c = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
 
-//     Note there is a "value used here after partial move" problem with I2C2 on gpioa
-//        because gpioa is used above for dht. And the only option for I2C2 seems to be gpioa.
-//       let i2c = setup_i2c2(dp.I2C2, gpioa, clocks, rcc.apb1);
+       let gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
        let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
@@ -221,7 +221,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f4xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -231,7 +231,7 @@ mod app {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -255,7 +255,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f7xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -265,7 +265,7 @@ mod app {
        let clocks = rcc.cfgr.freeze();
        //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
        let led = setup_led(dp.GPIOC.split());
        let delay = AltDelay{};
@@ -293,7 +293,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32h7xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -306,9 +306,9 @@ mod app {
        let dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-       let i2cx = ccdr.peripheral.I2C4;
+       let i2cx = ccdr.peripheral.I2C1;
 
-       let i2c = setup_i2c2(dp.I2C4, gpiob, i2cx, &clocks);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
        let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
        let delay = AltDelay{};
 
@@ -331,7 +331,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l0xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -369,7 +369,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l1xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -383,11 +383,11 @@ mod app {
        //   The onboard led is on PB6 and i2c also uses gpiob  so there is a problem
        //   with gpiob being moved by one and then not available for the other.
 
-// setup_i2c1 NOT WORKING
-       let scl = gpiob.pb10.into_open_drain_output();
-       let sda = gpiob.pb11.into_open_drain_output(); 
-       let i2c = dp.I2C2.i2c((scl, sda), 400.khz(), &mut rcc);
-//       let i2c = setup_i2c2(dp.I2C2, gpiob, rcc);
+       // setup_i2c1 NOT WORKING
+       let scl = gpiob.pb8.into_open_drain_output();
+       let sda = gpiob.pb9.into_open_drain_output(); 
+       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+       //   let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
        let led = setup_led(gpiob.pb6);
        let delay = AltDelay{};
@@ -412,7 +412,7 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l4xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
@@ -424,7 +424,7 @@ mod app {
        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc.ahb2), &clocks, rcc.apb1r1);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
        let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        let delay = AltDelay{};
 
