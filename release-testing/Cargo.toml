@@ -97,7 +97,7 @@ rtt-target = { version =  ">=0.3.1", features = ["cortex-m"] }
 #embedded-hal  1.0.0-alpha
 e-h-1a = { version = "1.0.0-alpha.5, <1.0.0-alpha.6", package = "embedded-hal" }  
 
-embedded-hal-compat = "0.4.0" 
+embedded-hal-compat = "0.5.0" 
 #embedded-hal-compat = { git = "https://github.com/ryankurte/embedded-hal-compat.git", branch = "main", optional = true}
 
 cortex-m-semihosting = { version = "0.3.7" }
