@@ -15,6 +15,7 @@ use panic_halt as _;
 
 use rtic::app;
 
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -46,8 +47,6 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    #[allow(unused_imports)]
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1, I2c2Type, setup_i2c2};
 
     // A delay is used in some sensor initializations and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -74,23 +73,48 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
     use nb::block;
+
+
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        pac::Peripherals,
+        prelude::*,
+    };
+ 
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (I2cType, LedType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       (i2c, led, delay)
+    }
     
+
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        gpio::{OpenDrain, Output,
-            gpioa::{PA8},
-        },
         pac::Peripherals, //I2C1
         prelude::*,
     };
-
 
     #[cfg(feature = "stm32f1xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
@@ -113,9 +137,6 @@ mod app {
         hprintln!("pclk2_tim {:?}", clocks.pclk2_tim()).unwrap();
         hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
         //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
-
-        let mut gpioa = dp.GPIOA.split();
-        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
         let gpiob = dp.GPIOB.split();
 
@@ -140,7 +161,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) -> (I2cType, LedType, AltDelay) {
@@ -169,14 +190,14 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -189,10 +210,6 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        gpio::{Output, OpenDrain,
-            gpioa::PA8,
-        },
-        pac,
         pac::{Peripherals, },
         prelude::*,
     };
@@ -201,13 +218,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
-       let gpioa = dp.GPIOA.split();
-       let dht   = gpioa .pa8.into_open_drain_output();
-
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
        //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
@@ -222,21 +236,15 @@ mod app {
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{Output, OpenDrain,
-               gpioa::PA8
-        },
-        pac::{Peripherals, USART2},
+        pac::Peripherals,
         prelude::*,
     };
-
-    #[cfg(feature = "stm32h7xx")]
-    use embedded_hal::digital::v2::OutputPin;
 
     #[cfg(feature = "stm32h7xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
@@ -245,10 +253,6 @@ mod app {
        let rcc = dp.RCC.constrain();
        let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
        let clocks = ccdr.clocks;
-
-       let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
-
-       let dht = gpioa.pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
        let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
@@ -272,10 +276,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -301,10 +305,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpiob = dp.GPIOB.split(&mut rcc);
@@ -331,10 +335,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
         let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
