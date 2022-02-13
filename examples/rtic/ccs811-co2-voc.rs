@@ -40,31 +40,11 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
-    //use rtt_target::{rprintln, rtt_init_print};
-
-    use core::fmt::Write;
-
-    use systick_monotonic::*;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
-    use fugit::TimerDuration;
-
-    const MONOTICK: u32 = 100;
-    const READ_INTERVAL: u64 = 10;  // used as seconds
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
-
-    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-
-    // A delay is used in sensor (dht) initialization and read. 
-    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
-    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
-    //  number of indicated clock cycles.
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
-
-
+    use embedded_ccs811::{
+        mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
+        SlaveAddr as Ccs811SlaveAddr,
+    };
+ 
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
     use dht_sensor::dht11::Reading;
@@ -72,21 +52,35 @@ mod app {
     use dht_sensor::dht22::Reading;
     use dht_sensor::*;
 
+
+    //use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::{hprintln};
+    //use rtt_target::{rprintln, rtt_init_print};
+
+    use core::fmt::Write;
+    use systick_monotonic::*;
+    use nb::block;
+
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+    use fugit::TimerDuration;
+
     // set up for shared bus even though only one i2c device is used here
-    //use shared_bus_rtic::SharedBus;
-    //use shared_bus_rtic::export::interrupt::Mutex;
-    //use shared_bus::{I2cProxy, NullMutex};
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    use embedded_ccs811::{
-        mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
-        SlaveAddr as Ccs811SlaveAddr,
-    };
- 
-    use nb::block;
-    
+    const MONOTICK: u32 = 100;
+    const READ_INTERVAL: u64 = 10;  // used as seconds
+    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+
+    // A delay is used in sensor (dht) initialization and read. 
+    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
+    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
+    //  number of indicated clock cycles.
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+
+    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+
  
 
     #[cfg(feature = "stm32f0xx")]

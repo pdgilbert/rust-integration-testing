@@ -43,31 +43,38 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
+    use iaq_core::{IaqCore, Measurement};
 
-    use systick_monotonic::*;
+    //use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
+                       //delay_ms could be used but needs to use a timer other than Systick
+                       //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
     use core::fmt::Write;
-    use iaq_core::{IaqCore, Measurement};
+    
+    use systick_monotonic::*;
+
     use nb::block;
     use rtt_target::{rprintln, rtt_init_print};
 
-    const PERIOD: u64 = 10;
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
 
+    const MONOTICK: u32 = 100;
+    const PERIOD: u64 = 10;  // used as seconds
+    //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
+    
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{
-        gpio::{gpioa::PA8, OpenDrain, Output},
         pac::{Peripherals, USART1},
         prelude::*,
         serial::{Serial, Tx},
-    };
+   };
 
     #[cfg(feature = "stm32f0xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f0xx")]
-    type DhtPin = PA8<Output<OpenDrain>>;
    
     #[cfg(feature = "stm32f0xx")]
     use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
@@ -99,40 +106,26 @@ mod app {
 
 
 
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         device::USART1,
-        gpio::{
-            gpiob::{PB8, PB9},
-            gpioc::PC13,
-            Alternate,
-            OpenDrain,
-            Output,
-            PushPull, //State,
-        },
-        i2c::{BlockingI2c, Mode},
-        pac,
-        pac::Peripherals, //I2C1
+        pac::Peripherals, 
         prelude::*,
         serial::{Config, Serial, Tx},
     };
 
     #[cfg(feature = "stm32f1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    type LedType = PC13<Output<PushPull>>;
-    //impl LED
-
-    #[cfg(feature = "stm32f1xx")]
-    type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
-    //BlockingI2c<I2C1, impl Pins<I2C1>>
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -143,353 +136,225 @@ mod app {
             .pclk1(36.mhz())
             .freeze(&mut flash.acr);
 
-        let mut gpiob = dp.GPIOB.split();
+        let gpiob = dp.GPIOB.split();
 
-        let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-        let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
+        //afio  needed for i2c1 (PB8, PB9) but not i2c2
+        let i2c = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
 
-        let i2c = BlockingI2c::i2c1(
-            dp.I2C1,
-            (scl, sda),
-            &mut afio.mapr,
-            Mode::Standard {
-                frequency: 100_000.hz(),
-            },
-            clocks,
-            1000,
-            10,
-            1000,
-            1000,
-        );
-        let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
-        let rx = gpiob.pb7;
-        let serial = Serial::usart1(
-            dp.USART1,
-            (tx, rx),
-            &mut afio.mapr,
-            Config::default().baudrate(115200.bps()),
-            clocks,
-        );
-        let (tx, _rx) = serial.split();
-
-        let mut gpioc = dp.GPIOC.split();
-        //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-        let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
+        let mut led = setup_led(dp.GPIOC.split()); 
         led.off();
+
+        // NOTE, try to figure out the proper way to deal with this:
+        // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.
+        // (There can also a move problem with afio if setup_i2c1() takes afio rather than &mut afio,
+        // but that can be resolved by just doing serial() before setup_i2c1().)
+
+        let mut gpioa = dp.GPIOA.split();
+        let (tx, _rx) = Serial::usart1(
+           dp.USART1,
+           // (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
+           //  gpiob.pb7,
+           (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
+            gpioa.pa10,
+           ),
+           &mut afio.mapr,
+           Config::default().baudrate(115200.bps()), 
+           clocks,
+        ).split();
+   
 
         (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        gpio::{
+        gpio::{PushPull, AF7,
             gpioa::PA9,
-            gpiob::{PB6, PB7},
-            gpioe::PE9,
-            OpenDrain, Output, PushPull, AF4, AF7,
         },
-        i2c::I2c,
-        pac::{Peripherals, I2C1, USART1},
+        pac::{Peripherals, USART1},
         prelude::*,
         serial::{Serial, Tx},
     };
 
     #[cfg(feature = "stm32f3xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    type LedType = PE9<Output<PushPull>>;
-
-    #[cfg(feature = "stm32f3xx")]
-    type I2cBus = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
-    //or type I2cBus = I2c<I2C1, (PB6<Alternate<OpenDrain, { 4_u8 }>>, PB7<Alternate<OpenDrain, { 4_u8 }>>)>;
-    //type I2cBus = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
     type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
-    //type TxType = Tx<USART1, impl TxPin<USART1>>;  // impl is unstable in type alias
-    // See  https://github.com/stm32-rs/stm32f3xx-hal/issues/288
-    //   regarding why it is necessary to specify the concrete pin here.
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let mut flash = dp.FLASH.constrain();
-        let mut rcc = dp.RCC.constrain();
-        let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       //fn setup(dp: Peripherals) -> (I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>, LedType, TxType ) {
+       let mut flash = dp.FLASH.constrain();
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-        let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
-        let scl =
-            gpiob
-                .pb6
-                .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-        let sda =
-            gpiob
-                .pb7
-                .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-        let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
+       let gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
-        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-        let (tx, _rx) = Serial::new(
-            dp.USART1,
-            (
-                gpioa
-                    .pa9
-                    .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
-                gpioa
-                    .pa10
-                    .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
-            ),
-            115200.Bd(),
-            clocks,
-            &mut rcc.apb2,
-        )
-        .split();
+       let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+       led.off();
 
-        let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-        let mut led = gpioe
-            .pe9
-            .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+       let (tx, _rx) = Serial::new(
+           dp.USART1,
+           (
+               gpioa
+                   .pa9
+                   .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
+               gpioa
+                   .pa10
+                   .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
+           ),
+           115200.Bd(),
+           clocks,
+           &mut rcc.apb2,
+       )
+       .split();
 
-        impl LED for PE9<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
-        led.off();
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        gpio::{
-            gpiob::{PB8, PB9},
-            gpioc::PC13,
-            Alternate, OpenDrain, Output, PushPull,
-        },
-        i2c::I2c, //Pins Mode
-        pac,
         pac::{Peripherals, USART1}, //I2C1
         prelude::*,
         serial::{config::Config, Serial, Tx},
     };
 
     #[cfg(feature = "stm32f4xx")]
-    const CLOCK: u32 = 16_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    type LedType = PC13<Output<PushPull>>;
-    //impl LED
-
-    #[cfg(feature = "stm32f4xx")]
-    type I2cBus = I2c<pac::I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>; //NO BlockingI2c
-                                                                                  //BlockingI2c<I2C1, impl Pins<I2C1>>
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let rcc = dp.RCC.constrain();
-        let clocks = rcc.cfgr.freeze();
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       let rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze();
 
-        let gpiob = dp.GPIOB.split();
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
-        let scl = gpiob.pb8.into_alternate().set_open_drain();
-        let sda = gpiob.pb9.into_alternate().set_open_drain();
+       let mut led = setup_led(dp.GPIOC.split()); 
+       led.off();
 
-        let i2c = I2c::new(dp.I2C1, (scl, sda), 100.khz(), &clocks);
+       let gpioa = dp.GPIOA.split();
+       let tx = gpioa.pa9.into_alternate();
+       let rx = gpioa.pa10.into_alternate();
+       let (tx, _rx) = Serial::new(
+           dp.USART1,
+           (tx, rx),
+           Config::default().baudrate(115200.bps()),
+           &clocks,
+       )
+       .unwrap()
+       .split();
 
-        let gpioa = dp.GPIOA.split();
-        let tx = gpioa.pa9.into_alternate();
-        let rx = gpioa.pa10.into_alternate();
-        let (tx, _rx) = Serial::new(
-            dp.USART1,
-            (tx, rx),
-            Config::default().baudrate(115200.bps()),
-            &clocks,
-        )
-        .unwrap()
-        .split();
-
-        let gpioc = dp.GPIOC.split();
-        //let mut led = gpioc.pc13.into_push_pull_output_with_state(&mut gpioc.crh, State::Low);
-        let led = gpioc.pc13.into_push_pull_output();
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
-        //led.off();   NEED TO FIX
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        gpio::{
-            gpiob::{PB8, PB9},
-            gpioc::PC13,
-            AlternateOD, Output, PushPull, AF4,
-        },
-        i2c::{BlockingI2c, Mode},
         pac,
-        pac::{Peripherals, USART2},
+        pac::{Peripherals, },
         prelude::*,
         serial::{Config, Oversampling, Serial, Tx},
     };
 
     #[cfg(feature = "stm32f7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    type LedType = PC13<Output<PushPull>>;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
-    type I2cBus = BlockingI2c<pac::I2C1, PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>>;
-    //type I2cBus = BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
+    type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    type TxType = Tx<USART2>;
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
+       //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
-    #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
-        let mut rcc = dp.RCC.constrain();
-        let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
-        let gpioa = dp.GPIOA.split();
+       let mut led = setup_led(dp.GPIOC.split());
+       led.off();
 
-        let (tx, _rx) = Serial::new(
-            dp.USART2,
-            (
-                gpioa.pa2.into_alternate(),
-                gpioa.pa3.into_alternate(),
-            ),
-            clocks,
-            Config {
-                baud_rate: 9600.Bps(),
-                oversampling: Oversampling::By16,
-                character_match: None,
-            },
-        )
-        .split();
+       let gpioa = dp.GPIOA.split();
 
-        let gpiob = dp.GPIOB.split();
+       let (tx, _rx) = Serial::new(
+           dp.USART2,
+           (
+               gpioa.pa2.into_alternate(),
+               gpioa.pa3.into_alternate(),
+           ),
+           clocks,
+           Config {
+               baud_rate: 9600.Bps(),
+               oversampling: Oversampling::By16,
+               character_match: None,
+           },
+       )
+       .split();
 
-        let scl = gpiob.pb8.into_alternate_open_drain(); // scl on PB8
-        let sda = gpiob.pb9.into_alternate_open_drain(); // sda on PB9
-
-        let i2c = BlockingI2c::i2c1(
-            dp.I2C1,
-            (scl, sda),
-            Mode::standard(400_000.Hz()),
-            clocks,
-            &mut rcc.apb1,
-            1000,
-        );
-
-        let gpioc = dp.GPIOC.split();
-        let led = gpioc.pc13.into_push_pull_output();
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
-        i2c::I2c,
-        pac::{Peripherals, I2C1, USART2},
+        pac::{Peripherals, USART2},
         prelude::*,
         serial::Tx,
     };
 
     #[cfg(feature = "stm32h7xx")]
-    use embedded_hal::digital::v2::OutputPin;
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32h7xx")]
-    type LedType = PC13<Output<PushPull>>;
-
-    #[cfg(feature = "stm32h7xx")]
-    type I2cBus = I2c<I2C1>;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let pwr = dp.PWR.constrain();
-        let vos = pwr.freeze();
-        let rcc = dp.RCC.constrain();
-        let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
-        let clocks = ccdr.clocks;
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       let pwr = dp.PWR.constrain();
+       let vos = pwr.freeze();
+       let rcc = dp.RCC.constrain();
+       let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let clocks = ccdr.clocks;
 
-        let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
+       let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+       let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
 
-        let (tx, _rx) = dp
-            .USART2
-            .serial(
-                (
-                    gpioa.pa2.into_alternate_af7(),
-                    gpioa.pa3.into_alternate_af7(),
-                ),
-                9600.bps(),
-                ccdr.peripheral.USART2,
-                &clocks,
-            )
-            .unwrap()
-            .split();
+       let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
+       let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+       led.off();
 
-        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+       let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
-        let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-        let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
+       let (tx, _rx) = dp
+           .USART2
+           .serial(
+               (
+                   gpioa.pa2.into_alternate_af7(),
+                   gpioa.pa3.into_alternate_af7(),
+               ),
+               9600.bps(),
+               ccdr.peripheral.USART2,
+               &clocks,
+           )
+           .unwrap()
+           .split();
 
-        let i2c = dp
-            .I2C1
-            .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
-
-        let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
-        let led = gpioc.pc13.into_push_pull_output();
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32l0xx")]
@@ -498,222 +363,153 @@ mod app {
         pac::Peripherals,
         prelude::*,
         rcc, // for ::Config but note name conflict with serial
-        serial::{Config, Serial2Ext, Tx},
     };
 
     #[cfg(feature = "stm32l0xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    type LedType = PC13<Output<PushPull>>;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
-    type I2cBus = BlockingI2c<pac::I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
+    fn setup(dp: Peripherals) ->(I2cType, LedType, TxType) {
+       let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+       let clocks = rcc.clocks;
 
-    #[cfg(feature = "stm32l0xx")]
-    type TxType = Tx<pac::USART1>;
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc));
+       led.off();
 
-    #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-        let gpioc = p.GPIOC.split(&mut rcc);
-        let led = gpioc.pc13.into_push_pull_output();
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-        }
+       let (tx, _rx) = dp.USART1.usart(
+            gpioa.pa9,
+            gpioa.pa10,
+            Config::default().baudrate(115200.Bd()),
+            &mut rcc,
+        )
+        .unwrap()
+        .split();
 
         (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
-        gpio::{
-            gpiob::{PB6, PB8, PB9},
-            OpenDrain, Output, PushPull,
-        },
-        i2c::I2c,
         prelude::*,
         rcc::Config as rccConfig,
         serial::{Config, SerialExt, Tx},
-        stm32::{Peripherals, I2C1, USART1},
+        stm32::{Peripherals, USART1},
     };
 
     #[cfg(feature = "stm32l1xx")]
-    use embedded_hal::digital::v2::OutputPin;
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32l1xx")]
-    type LedType = PB6<Output<PushPull>>;
-
-    #[cfg(feature = "stm32l1xx")]
-    type I2cBus = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
-        let gpioa = dp.GPIOA.split(&mut rcc);
+       let gpiob = dp.GPIOB.split(&mut rcc);
 
-        let (tx, _rx) = dp
-            .USART1
-            .usart(
-                (gpioa.pa9, gpioa.pa10),
-                Config::default().baudrate(9600.bps()),
-                &mut rcc,
-            )
-            .unwrap()
-            .split();
+// setup_i2c1 NOT WORKING
+       let scl = gpiob.pb8.into_open_drain_output();
+       let sda = gpiob.pb9.into_open_drain_output(); 
+       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+//       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
-        let gpiob = dp.GPIOB.split(&mut rcc);
+       let mut led = setup_led(gpiob.pb6);
+       led.off();
 
-        let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-        let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
+       let gpioa = dp.GPIOA.split(&mut rcc);
+       let (tx, _rx) = dp
+           .USART1
+           .usart(
+               (gpioa.pa9, gpioa.pa10),
+               Config::default().baudrate(9600.bps()),
+               &mut rcc,
+           )
+           .unwrap()
+           .split();
 
-        let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-
-        let led = gpiob.pb6.into_push_pull_output();
-
-        impl LED for PB6<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        gpio::{
-            gpioa::{PA10, PA9},
-            gpioc::PC13,
-            Alternate, OpenDrain, Output, PushPull,
-        },
-        i2c::{Config as i2cConfig, I2c},
-        pac::{Peripherals, I2C1, USART2},
+        pac::{Peripherals, USART2},
         prelude::*,
         serial::{Config as serialConfig, Serial, Tx},
     };
 
     #[cfg(feature = "stm32l4xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    type LedType = PC13<Output<PushPull>>;
-
-    #[cfg(feature = "stm32l4xx")]
-    type I2cBus = I2c<
-        I2C1,
-        (
-            PA9 <Alternate<OpenDrain, 4u8>>,   
-            PA10<Alternate<OpenDrain, 4u8>>,
-        ),
-    >;
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> (I2cBus, LedType, TxType) {
-        let mut flash = dp.FLASH.constrain();
-        let mut rcc = dp.RCC.constrain();
-        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
-        let clocks = rcc
-            .cfgr
-            .sysclk(80.mhz())
-            .pclk1(80.mhz())
-            .pclk2(80.mhz())
-            .freeze(&mut flash.acr, &mut pwr);
+    fn setup(dp: Peripherals) -> (I2cType, LedType, TxType) {
+       let mut flash = dp.FLASH.constrain();
+       let mut rcc = dp.RCC.constrain();
+       let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
+       let clocks = rcc
+           .cfgr
+           .sysclk(80.mhz())
+           .pclk1(80.mhz())
+           .pclk2(80.mhz())
+           .freeze(&mut flash.acr, &mut pwr);
 
-        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
-        //         let mut gpiob  = p.GPIOB.split(&mut rcc.ahb2);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+       led.off();
 
-        let (tx, _rx) = Serial::usart2(
-            dp.USART2,
-            (
-                gpioa
-                    .pa2
-                    .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
-                gpioa
-                    .pa3
-                    .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
-            ),
-            serialConfig::default().baudrate(9600.bps()),
-            clocks,
-            &mut rcc.apb1r1,
-        )
-        .split();
+       let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+ 
+       let (tx, _rx) = Serial::usart2(
+           dp.USART2,
+           (
+               gpioa
+                   .pa2
+                   .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
+               gpioa
+                   .pa3
+                   .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
+           ),
+           serialConfig::default().baudrate(9600.bps()),
+           clocks,
+           &mut rcc.apb1r1,
+       )
+       .split();
 
-        // following github.com/stm32-rs/stm32l4xx-hal/blob/master/examples/i2c_write.rs
-
-        let mut scl =
-            gpioa
-                .pa9
-                .into_alternate_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // scl on PA9
-        scl.internal_pull_up(&mut gpioa.pupdr, true);
-
-        let mut sda =
-            gpioa
-                .pa10
-                .into_alternate_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
-        sda.internal_pull_up(&mut gpioa.pupdr, true);
-
-        let i2c = I2c::i2c1(
-            dp.I2C1,
-            (scl, sda),
-            i2cConfig::new(400.khz(), clocks),
-            &mut rcc.apb1r1,
-        );
-
-        let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
-        let led = gpioc
-            .pc13
-            .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper);
-
-        impl LED for PC13<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_low()
-            }
-            fn off(&mut self) -> () {
-                self.set_high()
-            }
-        }
-
-        (i2c, led, tx)
+       (i2c, led, tx)
     }
 
     // End of hal/MCU specific setup. Following should be generic code.
 
-
     #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOCLOCK>;
+    type MyMono = Systick<MONOTICK>;
 
     #[shared]
     struct Shared {
-        sensor: IaqCore<I2cType>,
+        led: LedType,
+        //sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
+        sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>>,
+        //sensor: IaqCore<I2cType>,
         tx: TxType,
     }
 
     #[local]
     struct Local {
+        led_state: bool,
         index: usize,
         measurements: [Measurement; 2400],
-        led: LedType,
-        led_state: bool,
     }
 
     #[init]
@@ -729,7 +525,6 @@ mod app {
 
         led.off();
 
-        // Previously these were initialized static mut in fn measure()
         let led_state: bool = false;
         let index: usize = 0;
         let measurements: [Measurement; 2400] = [Measurement {
@@ -738,34 +533,26 @@ mod app {
             resistance: 0,
         }; 2400];
 
-        measure::spawn_after(PERIOD.secs()).unwrap();
+        // rtic needs task sharing not provided by BusManagerSimple: 
+        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
-        let sensor = IaqCore::new(i2c);
+        let sensor = IaqCore::new(manager.acquire_i2c());
+
+        measure::spawn_after(PERIOD.secs()).unwrap();
 
         writeln!(tx, "start\r",).unwrap();
 
-        (
-            Shared {
-                sensor: sensor,
-                tx: tx,
-            },
-            Local {
-                index: index,
-                measurements: measurements,
-                led: led,
-                led_state: led_state,
-            },
-            init::Monotonics(mono),
+        (Shared {led, sensor, tx}, Local {led_state, index, measurements}, init::Monotonics(mono),
         )
     }
 
-    #[task(shared = [sensor, tx], local = [index, measurements, led, led_state, ])]
+    #[task(shared = [led, sensor, tx], local = [led_state, index, measurements,])]
     fn measure(mut cx: measure::Context) {
         if *cx.local.led_state {
-            cx.local.led.lock(|led| led.off());
+            cx.shared.led.lock(|led| led.off());
             *cx.local.led_state = false;
         } else {
-            cx.local.led.lock(|led| led.on());
+            cx.shared.led.lock(|led| led.on());
             *cx.local.led_state = true;
         }
 

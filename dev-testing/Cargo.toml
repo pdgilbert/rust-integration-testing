@@ -82,12 +82,12 @@ fugit = { version = "0.3.3", optional = true }
 #  include *also* thumbv6 support. It seems shared-bus-rtic is no longer needed.
 # shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", features = ["thumbv6"], optional = true }
 
-# only certain versions of radio, radio-sx127x, embedded-hal_1.0.0-alpha and embedded-hal-compat work together
-#radio         = { version = "0.9.0" }
-#radio-sx127x  = { version = "0.11.0", default-features = false }
-radio         = { version = "0.9.1" }
-#radio         = { version = "0.10.0" }
-radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
+## only certain versions of radio, radio-sx127x, embedded-hal_1.0.0-alpha and embedded-hal-compat work together
+##radio         = { version = "0.9.0" }
+##radio-sx127x  = { version = "0.11.0", default-features = false }
+#radio         = { version = "0.9.1" }
+##radio         = { version = "0.10.0" }
+#radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
 
 #  check:  diff dev-testing/Cargo.toml release-testing/Cargo.toml
 #
@@ -117,11 +117,15 @@ rtt-target = { version =  ">=0.3.1", features = ["cortex-m"] }
 # for radio-sx127x  https://github.com/rust-iot/rust-radio-sx127x
 
 #embedded-hal  1.0.0-alpha
-e-h-1a = { version = "1.0.0-alpha.5,<1.0.0-alpha.6", package = "embedded-hal" }  
+#e-h-1a = { version = "1.0.0-alpha.5,<1.0.0-alpha.6", package = "embedded-hal" }  
 # alpha.6 requires changes to delay and radio-sx127x support. See branch eh-1-alpha
 #e-h-1a = { version = "1.0.0-alpha.6,<1.0.0-alpha.7", package = "embedded-hal" }  
+#e-h-1a = { version = "1.0.0-alpha.7,<1.0.0-alpha.8", package = "embedded-hal" }  
 
-embedded-hal-compat = "0.4.0" 
+#stm32f4xx IS NOW NEEDS 1.0.0-alpha.7 AND radio, radio-sx127x, embedded-hal-compat, NEED alpha.5
+# src/lib.rs also has lora_spi_gps_usart;  commented out
+
+#embedded-hal-compat = "0.4.0" 
 #embedded-hal-compat = { git = "https://github.com/ryankurte/embedded-hal-compat.git", branch = "main", optional = true}
 
 cortex-m-semihosting = { version = "0.3.7" }

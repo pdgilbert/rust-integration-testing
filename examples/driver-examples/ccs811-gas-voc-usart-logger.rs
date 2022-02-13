@@ -51,23 +51,19 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-
-    use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
-                       //delay_ms could be used but needs to use a timer other than Systick
-                       //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
-
-    use core::fmt::Write;
-    
-    use systick_monotonic::*;
-
     use embedded_ccs811::{
         mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
         SlaveAddr as Ccs811SlaveAddr,
     };
 
     use hdc20xx::{mode as Hdc20xxMode, Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
-    use nb::block;
+
+    //uuse cortex_m_semihosting::{hprintln};
     use rtt_target::{rprintln, rtt_init_print};
+
+    use core::fmt::Write; 
+    use systick_monotonic::*;
+    use nb::block;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -78,6 +74,14 @@ mod app {
     //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
     
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+
+    // cortex_m::asm  delay is only used in init. 
+    // See other examples for the case when a shared delay is needed.
+    use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
+                       //delay_ms could be used but needs to use a timer other than Systick
+                       //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
+
+
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{

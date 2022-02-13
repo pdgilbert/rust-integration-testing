@@ -510,28 +510,28 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-display
           use-cross: true
 
-      #####  sx127x examples  #####
+//     #####  sx127x examples  #####
 
-      - name: sx127x lora_spi_send
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_send
-          use-cross: true
+//     - name: sx127x lora_spi_send
+//       uses: actions-rs/cargo@v1
+//       with:
+//         command: build
+//         args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_send
+//         use-cross: true
 
-      - name: sx127x lora_spi_receive
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_receive
-          use-cross: true
+//     - name: sx127x lora_spi_receive
+//       uses: actions-rs/cargo@v1
+//       with:
+//         command: build
+//         args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_receive
+//         use-cross: true
 
-      - name: sx127x lora_spi_gps
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_gps
-          use-cross: true
+//     - name: sx127x lora_spi_gps
+//       uses: actions-rs/cargo@v1
+//       with:
+//         command: build
+//         args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example lora_spi_gps
+//         use-cross: true
 
 
       #####  rtic examples  don't work on thumbv6m-none-eabi (stmf0xx and stm32l0xx) #####

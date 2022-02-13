@@ -25,6 +25,9 @@ mod app {
 
     //use lm3s6965::Interrupt;
 
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::pac::Interrupt as interrupt;
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::pac::Interrupt as interrupt;
 

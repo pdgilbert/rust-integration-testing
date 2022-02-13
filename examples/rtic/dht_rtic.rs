@@ -36,18 +36,21 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
-    
-    use systick_monotonic::*;
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
     use dht_sensor::dht11::Reading;
     #[cfg(feature = "dht22")]
     use dht_sensor::dht22::Reading;
     use dht_sensor::*;
+
+    //use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::{hprintln};
+    
+    use systick_monotonic::*;
+
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+    use fugit::TimerDuration;
+
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -68,8 +71,6 @@ mod app {
 
 //    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
     
-    use fugit::TimerDuration;
-
     const MONOTICK:  u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
 
@@ -84,6 +85,8 @@ mod app {
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
     use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+
+
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{

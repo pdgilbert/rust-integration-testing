@@ -34,7 +34,14 @@
 use core::fmt::Write;  // for writeln!
 use cortex_m_rt::entry;
 use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
-use panic_rtt_target as _;
+#[cfg(debug_assertions)]
+use panic_semihosting as _;
+
+#[cfg(not(debug_assertions))]
+use panic_halt as _;
+
+//use panic_rtt_target as _;  THIS CAUSE LINK PROBLEM ... undefined symbol: _SEGGER_RTT
+
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
