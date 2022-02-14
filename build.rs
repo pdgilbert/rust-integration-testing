@@ -1,6 +1,6 @@
 // following https://doc.rust-lang.org/cargo/reference/build-scripts.html
 use std::env;
-//use std::io::Write;         //needed for debugging
+use std::io::Write;         //needed for debugging
 //use std::path::PathBuf;     //needed for one approach
 //use std::fs;                //needed for one approach
 
@@ -45,8 +45,8 @@ fn main() {
     // could be conflicts (in the unlikely situation) where two mcu's have the same triple and
     // different memory layouts.
 
-    // The memoryNote.txt file is just to record some debugging information
-    //let mut df = std::fs::File::create("memoryNote.txt").unwrap();
+    // The BUILD.RS.log text file is just to record some debugging information
+    //DBG  let mut df = std::fs::File::create("BUILD.RS.log").unwrap();
 
     // It is assumed that only one MCU feature will be specified. If there are more then
     // only the first is found (but actual code may be a mess if cargo really lets you do that).
@@ -54,18 +54,18 @@ fn main() {
     let pre = "CARGO_FEATURE_".to_owned();
 
     // For debugging. Write all CARGO_FEATURE_  mcu variables to file
-    //for m in &mcus {
-    //   match env::var_os(pre.clone() + m) {
-    //      None    => df.write(format!("{}{} is not set\n", pre, m).as_bytes()).unwrap(),
-    //      Some(x) => df.write(format!("{}{} is {:?}\n", pre, m, x).as_bytes()).unwrap()
-    //      };
-    //   };
+    //DBG for m in &mcus {
+    //DBG   match env::var_os(pre.clone() + m) {
+    //DBG      None    => df.write(format!("{}{} is not set\n", pre, m).as_bytes()).unwrap(),
+    //DBG      Some(x) => df.write(format!("{}{} is {:?}\n", pre, m, x).as_bytes()).unwrap()
+    //DBG      };
+    //DBG   };
 
     // For debugging. Write all env variables to file
-    //df.write(format!("env::vars() gives\n").as_bytes()).unwrap();
-    //for (key, value) in env::vars() {
-    //     df.write(format!("   {:?}: {:?}\n", key, value).as_bytes()).unwrap();
-    //     };
+    //DBG   df.write(format!("env::vars() gives\n").as_bytes()).unwrap();
+    //DBG   for (key, value) in env::vars() {
+    //DBG       df.write(format!("   {:?}: {:?}\n", key, value).as_bytes()).unwrap();
+    //DBG       };
 
     // Compare mcus elements against CARGO_FEATURE_* env variables to determine directory of
     // memory.x file to use.
@@ -76,6 +76,7 @@ fn main() {
     let d = "memoryMaps/".to_owned();
     for m in &mcus {
         let v = env::var_os(pre.clone() + m);
+        //DBG  df.write(format!("considering {:?} \n", v).as_bytes()).unwrap();
         if v.is_some() {
             indir = d + m;
             break;
@@ -87,8 +88,9 @@ fn main() {
     // but do not expect to compile examples. (There will be a 'cannot find linker script memory.x' error.)
 
     if !indir.is_empty() {
-        //df.write(format!("in mcu found condition.\n").as_bytes()).unwrap();
+        //DBG df.write(format!("in mcu found condition.\n").as_bytes()).unwrap();
         let infile = indir.clone() + "/memory.x";
+        //DBG  df.write(format!("using {:?} \n", infile).as_bytes()).unwrap();
 
         // one approach
         //let outdir  = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
@@ -102,7 +104,7 @@ fn main() {
         println!("cargo:rerun-if-changed=build.rs");
         println!("cargo:rerun-if-changed={}", infile);
     } else {
-        //df.write(format!("mcu NOT found condition.\n").as_bytes()).unwrap();
+        //DBG  df.write(format!("mcu NOT found condition.\n").as_bytes()).unwrap();
         println!();
     }
 }
