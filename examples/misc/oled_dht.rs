@@ -216,7 +216,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, impl LED, Del
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    let i2c   =  I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks);
+    let i2c   =  I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks);
 
     let led = setup_led(p.GPIOC.split());
 

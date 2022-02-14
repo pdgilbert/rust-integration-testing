@@ -446,15 +446,13 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     //from datasheet:To synchronize A/D conversion and timers, the ADCs could be triggered by
     //any of TIM1,TIM2, TIM3, TIM4 or TIM5 timer.
 
-    let clocks = rcc
+    let _clocks = rcc
         .cfgr
-        .hclk(48.mhz())
-        .sysclk(48.mhz())
-        .pclk1(24.mhz())
-        .pclk2(24.mhz())
+        .hclk(48.MHz())
+        .sysclk(48.MHz())
+        .pclk1(24.MHz())
+        .pclk2(24.MHz())
         .freeze();
-
-    hprintln!("sysclk freq: {}", clocks.sysclk().0).unwrap();
 
     let gpiob = p.GPIOB.split();
 

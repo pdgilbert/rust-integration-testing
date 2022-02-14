@@ -240,7 +240,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
     (
         tx2,
         rx2,
-        I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks), // i2c
+        I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks), // i2c
         Delay::new(cp.SYST, &clocks),
     )
 }
