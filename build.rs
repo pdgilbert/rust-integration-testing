@@ -1,14 +1,37 @@
-// following https://doc.rust-lang.org/cargo/reference/build-scripts.html
+// This file (build.rs) needs to be in the package root.
+// It is called by cargo before the linker and is used to arrange for the linker to 
+// find the proper memory.x file. The memory.x files are assumed to be in directories
+// memoryMaps/xxx/ in the package root, where xxx is replaced by one of the MCU directories
+// indicated in the main function below. (For example,  memoryMaps/STM32F401/memory.x )
+//
+// Alternately, the xxx directory can be specified by setting an environment variable $MEMMAP.
+// Note that these directory names should be in upper case because CARGO_FEATURE_* env variables 
+// are in upper case. For consistency, the $MEMMAP environment variable is also converted to upper case.
+//
+// The location to the memory.x file is added to the linker's search path rather than copying
+// the file to the target directory. This allows for the possibility that there may be different
+// memory.x files for a given target triple.  It also helps to prevent memory.x files
+// being left in the target directory where they can be mistakenly found by the linker.
+//
+// Case sensitive matching is used. The code uses the first location found in the order 
+//
+//        - environment variable $MEMMAP, 
+//
+//        - the first directory in MemoryMaps matching a CARGO_FEATURE_* env variable
+//
+//        - otherwise no search path is added and memory.x will be found as usual in the root directory.
+//
+// This means the  $MEMMAP value can be used as a standard way to override the CARGO_FEATURE_* value.
+// Using $MEMMAP allows setting any special hardware specific map. Note that setting $MEMMAP to an non-existent
+// location for the memory.x file will result in a linker error  
+//       linking with `rust-lld` failed: exit status: 1 ... cannot find linker script memory.x  >>> INCLUDE memory.x
+//
+// This is also the usual error message when no memory.x file is found.
+
 use std::env;
-use std::io::Write;         //needed for debugging
-//use std::path::PathBuf;     //needed for one approach
-//use std::fs;                //needed for one approach
+//DBG use std::io::Write;         //needed for debugging
 
 fn main() {
-    // This file (build.rs) needs to be in the package root.
-    // It is called before the linker and used to arrange for the linker to find the
-    // proper memory.x file for the MCU. The memory.x files are assumed to be in a
-    // directory memoryMaps/xxx/  where xxx is replaced by an one of
 
     let mcus = [
         "STM32F042",
@@ -31,27 +54,10 @@ fn main() {
         "GD32VF103_EXTRA",
     ];
 
-    // For example,   memoryMaps/STM32F401/memory.x
-    // Note that the MCU string must be in upper case because it is also used to
-    // find the  CARGO_FEATURE_xxx environment variable (eg CARGO_FEATURE_STM32F401)
-    // which is in upper case.
-
-    // There are two possible appraches: one is to copy the appropriate memory.x file into the OUT_DIR
-    // where compiled pieces are placed for linking, then add that dir to the linker search path.
-    // (Adding to path may be redundant, the OUT_DIR is probably already in the search path.)
-    // The second approach is to simply add the location of the appropriate memory.x file to
-    // the search path. This is not only quicker, but has the advantage that the memory.x file
-    // can be MCU specific. In the copy appraoch the OUT_DIR is only MCU triple specific, so there
-    // could be conflicts (in the unlikely situation) where two mcu's have the same triple and
-    // different memory layouts.
-
-    // The BUILD.RS.log text file is just to record some debugging information
-    //DBG  let mut df = std::fs::File::create("BUILD.RS.log").unwrap();
-
-    // It is assumed that only one MCU feature will be specified. If there are more then
-    // only the first is found (but actual code may be a mess if cargo really lets you do that).
-
     let pre = "CARGO_FEATURE_".to_owned();
+
+    // The BUILD.RS.log text file is just to record debugging information
+    //DBG let mut df = std::fs::File::create("BUILD.RS.log").unwrap();
 
     // For debugging. Write all CARGO_FEATURE_  mcu variables to file
     //DBG for m in &mcus {
@@ -67,40 +73,44 @@ fn main() {
     //DBG       df.write(format!("   {:?}: {:?}\n", key, value).as_bytes()).unwrap();
     //DBG       };
 
-    // Compare mcus elements against CARGO_FEATURE_* env variables to determine directory of
-    // memory.x file to use.
-    // If there is no MCU feature identified then the usual default is that memory.x is
-    // searched for in the package root.
+    let mut mem_map : String = "".to_string();
 
-    let mut indir: String = "".to_string();
-    let d = "memoryMaps/".to_owned();
-    for m in &mcus {
-        let v = env::var_os(pre.clone() + m);
-        //DBG  df.write(format!("considering {:?} \n", v).as_bytes()).unwrap();
-        if v.is_some() {
-            indir = d + m;
-            break;
+    for (key, value) in env::vars() {
+        if key.eq("MEMMAP")  {
+           //DBG df.write(format!(" MEMMAP is {:?}: {:?}\n", key, value).as_bytes()).unwrap();
+           mem_map = value.to_uppercase();
+           break;
         };
-    }
+    };
 
+    // If location has not been set by MEMMAP, compare mcus elements against CARGO_FEATURE_* env 
+    // variables to determine directory of memory.x file to use.
+   
+    if mem_map.is_empty() {
+       for m in &mcus {
+           let v = env::var_os(pre.clone() + m);
+           if v.is_some() {
+               mem_map = m.to_string();
+               break;
+           };
+       }
+    };
+
+    let indir = if mem_map.is_empty() {"".to_string()}
+                else {"memoryMaps/".to_owned() + &mem_map};
+
+    //DBG df.write(format!(" {:?}\n",mem_map).as_bytes()).unwrap();
+
+ 
     // Adding an empty search path causes problems compiling the crate, so skip if memory.x not found.
     // This allows 'cargo build  --features $MCU ' to work
     // but do not expect to compile examples. (There will be a 'cannot find linker script memory.x' error.)
 
     if !indir.is_empty() {
-        //DBG df.write(format!("in mcu found condition.\n").as_bytes()).unwrap();
         let infile = indir.clone() + "/memory.x";
-        //DBG  df.write(format!("using {:?} \n", infile).as_bytes()).unwrap();
+        //DBG df.write(format!("using {:?} \n", infile).as_bytes()).unwrap();
 
-        // one approach
-        //let outdir  = &PathBuf::from(env::var_os("OUT_DIR").unwrap());
-        //let outfile = &PathBuf::from(env::var_os("OUT_DIR").unwrap()).join("memory.x");
-        //fs::copy(&infile, outfile).unwrap();  // Copy memory.x to OUT_DIR. Possibly should handle error.
-        //println!("cargo:rustc-link-search={}", outdir.display());
-
-        // other approach
         println!("cargo:rustc-link-search={}", indir);
-
         println!("cargo:rerun-if-changed=build.rs");
         println!("cargo:rerun-if-changed={}", infile);
     } else {
