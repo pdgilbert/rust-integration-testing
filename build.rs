@@ -13,7 +13,8 @@
 // memory.x files for a given target triple.  It also helps to prevent memory.x files
 // being left in the target directory where they can be mistakenly found by the linker.
 //
-// Case sensitive matching is used. The code uses the first location found in the order 
+// Case sensitive matching is used but MEMMAP is first converted to upper case. 
+// The code uses the first location found in the order 
 //
 //        - environment variable $MEMMAP, 
 //
@@ -22,11 +23,17 @@
 //        - otherwise no search path is added and memory.x will be found as usual in the root directory.
 //
 // This means the  $MEMMAP value can be used as a standard way to override the CARGO_FEATURE_* value.
+//
 // It also provides a mechanism to specify a location in cases where MCU features are not provided,
 // e.g.  to run examples in a device crate:
-//    MEMMAP=stm32f103  cargo build --target thumbv7m-none-eabi  --release  --examples
+//    MEMMAP=STM32F103  cargo build --target thumbv7m-none-eabi  --release  --examples
 //    MEMMAP=stm32f103  cargo build --target thumbv7m-none-eabi  --release  --example blink
-
+//
+// Note however, this mechanism only finds the memory.x for the linker.  It does not override 
+// a `use` statement in the code. So if example code specifies use stm32f1xx_hal and MEMMAP=stm32f411 
+// there will be a mismatch of the compile target and the linker memory map. (Sometimes works but 
+// not recommended.)
+//
 // Using $MEMMAP allows setting any special hardware specific map. Note that setting $MEMMAP to an non-existent
 // location for the memory.x file will result in a linker error  
 //       linking with `rust-lld` failed: exit status: 1 ... cannot find linker script memory.x  >>> INCLUDE memory.x

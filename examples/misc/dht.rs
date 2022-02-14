@@ -154,13 +154,12 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
     let clocks = rcc
         .cfgr
-        .hclk(48.mhz())
-        .sysclk(48.mhz())
-        .pclk1(24.mhz())
-        .pclk2(24.mhz())
+        .hclk(48.MHz())
+        .sysclk(48.MHz())
+        .pclk1(24.MHz())
+        .pclk2(24.MHz())
         .freeze();
 
-    hprintln!("sysclk freq: {}", clocks.sysclk().0).unwrap();
     let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
 
     // Pulling the pin high to avoid confusing the sensor when initializing.

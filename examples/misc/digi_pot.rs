@@ -249,7 +249,6 @@ use stm32f4xx_hal::{
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, TransferModeNormal},
-    time::MegaHertz,
 };
 
 #[cfg(feature = "stm32f4xx")]
@@ -263,7 +262,7 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split();
@@ -276,7 +275,7 @@ fn setup() -> (
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         mcp4x::MODE,
-        MegaHertz(8),
+        8.MHz(),
         &clocks,
     );
 

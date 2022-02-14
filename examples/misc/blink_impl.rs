@@ -170,10 +170,10 @@ fn setup() -> (impl LED, Delay) {
     let rcc = p.RCC.constrain();
     let clocks = rcc
         .cfgr
-        .hclk(48.mhz())
-        .sysclk(48.mhz())
-        .pclk1(24.mhz())
-        .pclk2(24.mhz())
+        .hclk(48.MHz())
+        .sysclk(48.MHz())
+        .pclk1(24.MHz())
+        .pclk2(24.MHz())
         .freeze();
 
     let gpioc = p.GPIOC.split();
