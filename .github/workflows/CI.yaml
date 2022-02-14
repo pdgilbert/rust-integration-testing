@@ -107,17 +107,17 @@ jobs:
           command: tree
           args:  --manifest-path dev-testing/Cargo.toml 
 
-      - name: tree -i embedded-hal:0.2.6
+      - name: tree -i embedded-hal:0.2.7
         uses: actions-rs/cargo@v1 
         with:
           command: tree
-          args:  --manifest-path dev-testing/Cargo.toml  -i embedded-hal:0.2.6
+          args:  --manifest-path dev-testing/Cargo.toml  -i embedded-hal:0.2.7
 
-      - name: tree -i embedded-hal:1.0.0-alpha.6
+      - name: tree -i embedded-hal:1.0.0-alpha.7
         uses: actions-rs/cargo@v1 
         with:
           command: tree
-          args:  --manifest-path dev-testing/Cargo.toml  -i embedded-hal:1.0.0-alpha.6
+          args:  --manifest-path dev-testing/Cargo.toml  -i embedded-hal:1.0.0-alpha.7
 
       - name: Build
         uses: actions-rs/cargo@v1 
