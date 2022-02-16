@@ -180,9 +180,12 @@ mod app {
        (i2c, led, delay)
     }
 
+
+
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        pac::{Peripherals, },
+        fugit::Delay,
+        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -193,7 +196,10 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
+    pub type DelayType = Delay<TIM2, 1000000_u32>;  // MONOCLOCK gives expected `16000000_u32`, found `1000000_u32
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, DelayType) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
@@ -202,10 +208,12 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       let delay = AltDelay{};
+       //let delay = AltDelay{};
+       let delay = dp.TIM2.delay_us(&clocks);
 
        (i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32f7xx")]
