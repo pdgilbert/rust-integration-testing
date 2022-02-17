@@ -217,7 +217,7 @@ fn setup() -> (
     let mut flash = p.FLASH.constrain();
     let rcc = p.RCC.constrain();
 
-    let clocks = rcc.cfgr.adcclk(2.mhz()).freeze(&mut flash.acr);
+    let clocks = rcc.cfgr.adcclk(2.MHz()).freeze(&mut flash.acr);
 
     // with above on bluepill  clocks.sysclk() is  8 Mhz and  clocks.adcclk() is  2 Mhz
     // with below on bluepill  clocks.sysclk() is 56 Mhz and  clocks.adcclk() is 14 Mhz

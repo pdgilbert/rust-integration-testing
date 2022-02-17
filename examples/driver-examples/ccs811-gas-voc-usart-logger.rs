@@ -148,9 +148,9 @@ mod app {
         let mut afio = dp.AFIO.constrain();
         let clocks = rcc
             .cfgr
-            .use_hse(8.mhz())
-            .sysclk(72.mhz())
-            .pclk1(36.mhz())
+            .use_hse(8.MHz())
+            .sysclk(72.MHz())
+            .pclk1(36.MHz())
             .freeze(&mut flash.acr);
 
         let gpiob = dp.GPIOB.split();

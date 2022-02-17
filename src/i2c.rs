@@ -2,6 +2,7 @@
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
 
+
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     gpio::{Alternate, AF1,
@@ -53,7 +54,7 @@ use stm32f1xx_hal::{
     gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
     afio::Parts as afioParts,
     rcc::Clocks,
-    prelude::*,
+    prelude::*
 };
 
 #[cfg(feature = "stm32f1xx")]
@@ -70,7 +71,7 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &
         (scl, sda),
         &mut afio.mapr,
         Mode::Fast {
-            frequency: 100_000.hz(),
+            frequency: 100_000_u32.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
@@ -96,7 +97,7 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
         ),
         //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000_u32.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
@@ -108,6 +109,7 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
 
     i2c
 }
+
 
 
 #[cfg(feature = "stm32f3xx")]
@@ -156,6 +158,7 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpioa: PartsA, clocks: Clocks, mut apb1: APB1
 }
 
 
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     i2c::{I2c,},
@@ -196,6 +199,7 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks) -> I2c2Type {
 
     i2c
 }
+
 
 
 #[cfg(feature = "stm32f7xx")]
@@ -258,6 +262,7 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut A
 }
 
 
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     gpio::gpiob::Parts as PartsB,
@@ -290,6 +295,7 @@ pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, i2c: I2c4, &clocks: &CoreClocks) ->
 
     i2c
 }
+
 
 
 #[cfg(feature = "stm32l0xx")]
@@ -339,6 +345,7 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: PartsB, mut rcc: Rcc, &clocks: &Clocks
 }
 
 
+
 #[cfg(feature = "stm32l1xx")]
 use stm32l1xx_hal::{
     i2c::I2c,
@@ -379,6 +386,7 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, mut rcc: Rcc) -> I2c2Type {
 
     i2c
 }
+
 
 
 #[cfg(feature = "stm32l4xx")]
