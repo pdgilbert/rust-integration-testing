@@ -246,7 +246,7 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")]
 // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
@@ -295,7 +295,8 @@ fn setup() -> (
         }
     }
 
-    let delay = Delay::new(cp.SYST, &clocks);
+    //let delay = Delay::new(cp.SYST, &clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     (spi, cs, led, delay)
 }

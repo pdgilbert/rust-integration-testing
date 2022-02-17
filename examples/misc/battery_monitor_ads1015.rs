@@ -139,6 +139,8 @@ fn setup() -> (
     (i2c, led, delay) // return tuple (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
     delay::Delay,
@@ -197,6 +199,8 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
 
     (i2c, led, delay) // return tuple (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
@@ -264,9 +268,11 @@ fn setup() -> (
     (i2c, led, delay) // return tuple (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -291,7 +297,8 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 
     let i2c = I2c::new(p.I2C1, (scl, sda), 400.kHz(), &clocks);
 
-    let delay = Delay::new(cp.SYST, &clocks);
+    //let delay = Delay::new(cp.SYST, &clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     // led
     let gpioc = p.GPIOC.split();
@@ -308,6 +315,8 @@ fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
 
     (i2c, led, delay) // return tuple (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{

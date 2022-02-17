@@ -144,6 +144,8 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     )
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
@@ -206,9 +208,11 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     )
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{
         gpiob::{PB13, PB14, PB15},
         Output, PushPull,
@@ -265,9 +269,11 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
         gpiob.pb13.into_push_pull_output(), // led on pb13
         gpiob.pb14.into_push_pull_output(), // led on pb14
         gpiob.pb15.into_push_pull_output(), // led on pb15
-        Delay::new(cp.SYST, &clocks),
+        cp.SYST.delay(&clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{

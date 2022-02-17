@@ -104,6 +104,8 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
     )
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
@@ -142,9 +144,11 @@ fn setup() -> (PE15<Output<PushPull>>, Delay) {
     )
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
@@ -180,9 +184,11 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        Delay::new(cp.SYST, &clocks),
+        cp.SYST.delay(&clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{

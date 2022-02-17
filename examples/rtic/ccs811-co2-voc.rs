@@ -279,10 +279,11 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
+        timer::FDelay,
         gpio::{OpenDrain, Output,
                gpioa::PA8,
         },
-        pac::{Peripherals, USART1}, //I2C1
+        pac::{Peripherals, USART1, TIM2}, //I2C1
         prelude::*,
         serial::{config::Config, Serial, Tx},
     };
@@ -300,7 +301,10 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType = FDelay<TIM2, 1000000_u32>;
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
 
@@ -312,7 +316,8 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       let delay = AltDelay{};
+       //let delay = AltDelay{};
+       let delay = dp.TIM2.delay_us(&clocks);
 
        let tx = gpioa.pa9.into_alternate();
        let rx = gpioa.pa10.into_alternate();
@@ -713,7 +718,7 @@ mod app {
         dht: DhtPin,
         ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
-        delay: AltDelay,
+        delay:DelayType,
     }
 
     //#[task(shared = [dht, ccs811, led, tx, delay], local = [env, index, measurements], capacity=5)]

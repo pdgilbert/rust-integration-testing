@@ -187,9 +187,11 @@ fn setup() -> (PA8<Output<OpenDrain>>,
     (dht, i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2},
     prelude::*,
@@ -201,7 +203,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, impl LED, Del
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.freeze();
-    let mut delay =  Delay::new(cp.SYST, &clocks);
+    
+    //let mut delay =  Delay::new(cp.SYST, &clocks);
+    let mut delay = cp.SYST.delay(&clocks);
 
     let mut dht = p.GPIOA.split().pa8.into_open_drain_output();
     dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -222,6 +226,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C2, impl Pins<I2C2>>, impl LED, Del
 
     (dht, i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -255,6 +261,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C1, impl PinScl<I2C1>, impl
 
     (dht, i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{

@@ -56,6 +56,8 @@ pub trait LED {
     }
 }
 
+
+
 #[cfg(feature = "stm32f0xx")] //  eg  stm32f303x4
 use stm32f0xx_hal::{
     delay::Delay,
@@ -88,6 +90,8 @@ fn setup() -> (impl LED, Delay) {
     (led, Delay::new(cp.SYST, &rcc))
 }
 
+
+
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
     delay::Delay,
@@ -119,6 +123,8 @@ fn setup() -> (impl LED, Delay) {
         Delay::new(cp.SYST, clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
@@ -154,9 +160,11 @@ fn setup() -> (impl LED, Delay) {
     )
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
@@ -193,9 +201,11 @@ fn setup() -> (impl LED, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        Delay::new(cp.SYST, &clocks),
+        cp.SYST.delay(&clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -229,6 +239,8 @@ fn setup() -> (impl LED, Delay) {
         Delay::new(cp.SYST, clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
