@@ -277,7 +277,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     let mut flash = p.FLASH.constrain();
     let rcc = p.RCC.constrain();
 
-    let clocks = rcc.cfgr.adcclk(2.mhz()).freeze(&mut flash.acr);
+    let clocks = rcc.cfgr.adcclk(2.MHz()).freeze(&mut flash.acr);
 
     let mut gpiob = p.GPIOB.split();
 
