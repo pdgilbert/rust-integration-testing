@@ -143,6 +143,7 @@ mod app {
     };
 
 
+
     #[cfg(feature = "stm32f1xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
@@ -210,6 +211,8 @@ mod app {
         (dht, i2c, led, tx, delay)
     }
 
+
+
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
         gpio::{
@@ -272,6 +275,8 @@ mod app {
        (dht, i2c, led, tx, delay)
     }
 
+
+
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
         gpio::{OpenDrain, Output,
@@ -322,6 +327,7 @@ mod app {
 
        (dht, i2c, led, tx, delay)
     }
+
 
 
     #[cfg(feature = "stm32f7xx")]
@@ -379,6 +385,8 @@ mod app {
 
       (dht, i2c, led, tx, delay)
     }
+
+
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
@@ -443,6 +451,8 @@ mod app {
        (dht, i2c, led, tx, delay)
     }
 
+
+
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull, OpenDrain, gpioa::PA8},
@@ -485,6 +495,7 @@ mod app {
 
        (dht, i2c, led, tx, delay)
     }
+
 
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -547,6 +558,8 @@ mod app {
 
        (dht, i2c, led, tx, delay)
     }
+
+
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{

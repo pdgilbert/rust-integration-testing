@@ -118,37 +118,37 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
-        let mut flash = dp.FLASH.constrain();
-        let rcc = dp.RCC.constrain();
-        let mut afio = dp.AFIO.constrain();
-        let clocks = rcc
-            .cfgr
-            //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
-            //.sysclk(72.mhz()) // system clock 8 MHz default, max 72MHz
-            //.pclk1(36.mhz())  // system clock 8 MHz default, max 36MHz ?
-            .freeze(&mut flash.acr);
-        //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+       let mut flash = dp.FLASH.constrain();
+       let rcc = dp.RCC.constrain();
+       let mut afio = dp.AFIO.constrain();
+       let clocks = rcc
+           .cfgr
+           //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
+           //.sysclk(72.mhz()) // system clock 8 MHz default, max 72MHz
+           //.pclk1(36.mhz())  // system clock 8 MHz default, max 36MHz ?
+           .freeze(&mut flash.acr);
+       //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-        hprintln!("hclk {:?}",   clocks.hclk()).unwrap();
-        hprintln!("sysclk {:?}", clocks.sysclk()).unwrap();
-        hprintln!("pclk1 {:?}",  clocks.pclk1()).unwrap();
-        hprintln!("pclk2 {:?}",  clocks.pclk2()).unwrap();
-        hprintln!("pclk1_tim {:?}", clocks.pclk1_tim()).unwrap();
-        hprintln!("pclk2_tim {:?}", clocks.pclk2_tim()).unwrap();
-        hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
-        //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
+       hprintln!("hclk {:?}",   clocks.hclk()).unwrap();
+       hprintln!("sysclk {:?}", clocks.sysclk()).unwrap();
+       hprintln!("pclk1 {:?}",  clocks.pclk1()).unwrap();
+       hprintln!("pclk2 {:?}",  clocks.pclk2()).unwrap();
+       hprintln!("pclk1_tim {:?}", clocks.pclk1_tim()).unwrap();
+       hprintln!("pclk2_tim {:?}", clocks.pclk2_tim()).unwrap();
+       hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
+       //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
 
-        let gpiob = dp.GPIOB.split();
+       let gpiob = dp.GPIOB.split();
 
-        //afio  needed for i2c1 (PB8, PB9) but not i2c2
-        let i2c = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
+       //afio  needed for i2c1 (PB8, PB9) but not i2c2
+       let i2c = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
 
-        let mut led = setup_led(dp.GPIOC.split()); 
-        led.off();
+       let mut led = setup_led(dp.GPIOC.split()); 
+       led.off();
 
-        let delay = AltDelay{};
+       let delay = AltDelay{};
 
-        (i2c, led, delay)
+       (i2c, led, delay)
     }
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
@@ -242,6 +242,8 @@ mod app {
       (i2c, led, delay)
     }
 
+
+
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
         pac::Peripherals,
@@ -272,6 +274,8 @@ mod app {
        (i2c, led, delay)
     }
 
+
+
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull, OpenDrain, gpioa::PA8},
@@ -300,6 +304,7 @@ mod app {
 
        (i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -332,6 +337,8 @@ mod app {
 
        (i2c, led, delay)
     }
+
+
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
