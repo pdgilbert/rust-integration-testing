@@ -214,8 +214,9 @@ use embedded_hal::delay::blocking::DelayUs;
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
+        timer::FDelay,
         gpio::{Output, gpioa::PA8, OpenDrain}, 
-        pac::Peripherals,
+        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -229,7 +230,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    pub type DelayType = FDelay<TIM2, 1000000_u32>;
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
 
@@ -241,7 +245,8 @@ use embedded_hal::delay::blocking::DelayUs;
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       let delay = AltDelay{};
+       //let delay = AltDelay{};
+       let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
    }
@@ -547,7 +552,7 @@ use embedded_hal::delay::blocking::DelayUs;
     #[local]
     struct Local {
         dht:   DhtPin,
-        delay: AltDelay,
+        delay: DelayType,
 //        text_style: MonoTextStyle<BinaryColor>,
 //        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
     }

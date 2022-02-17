@@ -85,6 +85,8 @@ fn setup() -> (
     (tx2, rx2, i2c, Delay::new(cp.SYST, &rcc))
 }
 
+
+
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
     delay::Delay,
@@ -145,6 +147,8 @@ fn setup() -> (
     (tx, rx, i2c, Delay::new(cp.SYST, clocks))
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
@@ -200,9 +204,11 @@ fn setup() -> (
     )
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
@@ -241,9 +247,11 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
         tx2,
         rx2,
         I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks), // i2c
-        Delay::new(cp.SYST, &clocks),
+        cp.SYST.delay(&clocks),
     )
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{

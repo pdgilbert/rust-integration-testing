@@ -314,7 +314,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
@@ -338,7 +338,8 @@ fn setup() -> (
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let mut delay = Delay::new(cp.SYST, &clocks);
+    //let mut delay = Delay::new(cp.SYST, &clocks);
+    let mut delay = cp.SYST.delay(&clocks);
 
     // led
     let gpioc = dp.GPIOC.split();

@@ -68,6 +68,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     (dht, delay)
 }
 
+
+
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
@@ -102,6 +104,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     (pa8, delay) //DHT data will be on A8
 }
 
+
+
 #[cfg(feature = "stm32f3xx")]
 use stm32f3xx_hal::{
     delay::Delay,
@@ -134,9 +138,11 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     (pa8, delay) //DHT data will be on A8
 }
 
+
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     gpio::{gpioa::PA8, OpenDrain, Output},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
@@ -166,13 +172,16 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     pa8.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
-    let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
+    //let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
+    let mut delay = cp.SYST.delay(&clocks);
 
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
     (pa8, delay) //DHT data will be on A8
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{

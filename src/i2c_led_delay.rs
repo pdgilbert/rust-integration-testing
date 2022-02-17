@@ -80,7 +80,7 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::Delay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
@@ -98,7 +98,9 @@ pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
     let led = setup_led(dp.GPIOC.split());
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
+    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
+    let cp = CorePeripherals::take().unwrap();
+    let delay = cp.SYST.delay(&clocks);
 
     (i2c, led, delay)
 }
