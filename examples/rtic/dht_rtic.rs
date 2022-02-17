@@ -83,7 +83,6 @@ mod app {
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
 
 
@@ -104,7 +103,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
 
     #[cfg(feature = "stm32f0xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f0xx")]
     fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {    
@@ -142,7 +141,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -186,7 +185,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -241,9 +240,6 @@ mod app {
     pub type DelayType = FDelay<TIM2, 1000000_u32>;
 
     #[cfg(feature = "stm32f4xx")]
-    pub type DelayType =  AltDelay;
-
-    #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output();
@@ -281,7 +277,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -323,7 +319,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -365,7 +361,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -407,7 +403,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -454,7 +450,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
