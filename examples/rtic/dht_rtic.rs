@@ -117,7 +117,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -159,7 +159,7 @@ mod app {
        led.off();
 
        // This delay used for dht initialization and read cannot be systick which is used by spawn.
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
        }
@@ -212,7 +212,7 @@ mod app {
        let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -252,7 +252,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       //let delay = AltDelay{};
+       //let delay = DelayType{};
        let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
@@ -290,7 +290,7 @@ mod app {
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
        let led = setup_led(dp.GPIOC.split());
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -336,7 +336,7 @@ mod app {
 
        let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
        let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -373,7 +373,7 @@ mod app {
  
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
        let led = setup_led(dp.GPIOC.split(&mut rcc));
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -424,7 +424,7 @@ mod app {
        //   let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
        let led = setup_led(gpiob.pb6);
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
@@ -464,7 +464,7 @@ mod app {
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
        let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        (dht, i2c, led, delay)
     }
