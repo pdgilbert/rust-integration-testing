@@ -122,6 +122,7 @@ use embedded_hal::delay::blocking::DelayUs;
     }
 
 
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
@@ -159,12 +160,13 @@ use embedded_hal::delay::blocking::DelayUs;
        (dht, i2c, led, delay)
        }
 
+
+
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
         gpio::{Output, OpenDrain,
                gpioa::{PA8,}, 
         },
-        i2c::{I2c,},
         pac::Peripherals,
         prelude::*,
     };
@@ -208,6 +210,8 @@ use embedded_hal::delay::blocking::DelayUs;
        (dht, i2c, led, delay)
     }
 
+
+
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
         gpio::{Output, gpioa::PA8, OpenDrain}, 
@@ -241,6 +245,8 @@ use embedded_hal::delay::blocking::DelayUs;
 
        (dht, i2c, led, delay)
    }
+
+
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
@@ -317,6 +323,7 @@ use embedded_hal::delay::blocking::DelayUs;
     }
 
 
+
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull},
@@ -348,6 +355,7 @@ use embedded_hal::delay::blocking::DelayUs;
 
        (dht, i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
@@ -395,6 +403,7 @@ use embedded_hal::delay::blocking::DelayUs;
 
        (dht, i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32l4xx")]

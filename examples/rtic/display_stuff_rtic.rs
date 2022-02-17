@@ -66,8 +66,6 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    #[allow(unused_imports)]
-    use rust_integration_testing_of_examples::i2c::{I2c2Type, setup_i2c2, I2c1Type, setup_i2c1,};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -88,10 +86,10 @@ mod app {
     type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f0xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
 
     #[cfg(feature = "stm32f0xx")]
-    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
+    fn setup(mut dp: Peripherals) ->  (I2cType, LedType) {    
        let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
 
        let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
@@ -104,10 +102,6 @@ mod app {
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull, //, State},
-               gpioa::PA8, OpenDrain},
-        device::I2C2,
-        i2c::{BlockingI2c, DutyCycle, Mode, Pins},
         pac::Peripherals,
         prelude::*,
     };
@@ -116,15 +110,16 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
-       let mut gpioa = dp.GPIOA.split();
-
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType) {
        let rcc = dp.RCC.constrain();
+       let mut afio = dp.AFIO.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
        //afio  needed for i2c1 (PB8, PB9) but not i2c2
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut afio, &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
@@ -135,7 +130,6 @@ mod app {
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        gpio::{gpioe::PE15, Output, PushPull},
         pac::Peripherals,
         prelude::*,
     };
@@ -144,33 +138,28 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
-        let mut rcc = dp.RCC.constrain();
-        //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
-        let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-        let mut led = gpioe
-            .pe15
-            .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
+       let mut flash = dp.FLASH.constrain();
+       let mut rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    
+       let gpiob = dp.GPIOB.split(&mut rcc.ahb);
+       let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
 
-        impl LED for PE15<Output<PushPull>> {
-            fn on(&mut self) -> () {
-                self.set_high().unwrap()
-            }
-            fn off(&mut self) -> () {
-                self.set_low().unwrap()
-            }
-        }
-        led.off();
+       let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+       led.off();
 
-        (i2c, led)
+       (i2c, led)
     }
+
+
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
-        i2c::I2c,
-        pac::{Peripherals, I2C2},
+        pac::{Peripherals, },
         prelude::*,
     };
 
@@ -178,7 +167,10 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
@@ -190,9 +182,10 @@ mod app {
        (i2c, led)
     }
 
+
+
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
         pac::Peripherals,
         prelude::*,
     };
@@ -201,7 +194,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
         //let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
@@ -214,21 +210,22 @@ mod app {
        (i2c, led)
     }
 
+
+
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
         pac::Peripherals,
         prelude::*,
     };
 
     #[cfg(feature = "stm32h7xx")]
-    use embedded_hal::digital::v2::OutputPin;
-
-    #[cfg(feature = "stm32h7xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -245,6 +242,8 @@ mod app {
        (i2c, led)
     }
 
+
+
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull},
@@ -257,7 +256,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
 
@@ -268,22 +270,23 @@ mod app {
        (i2c, led)
     }
 
+
+
     #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
     use stm32l1xx_hal::{
-        gpio::{gpiob::PB6, Output, PushPull},
         prelude::*,
         stm32::Peripherals,
         rcc, // for ::Config but note name conflict with serial
     };
 
     #[cfg(feature = "stm32l1xx")]
-    use embedded_hal::digital::v2::OutputPin;
-
-    #[cfg(feature = "stm32l1xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
        let gpiob = dp.GPIOB.split(&mut rcc);
 
@@ -299,6 +302,8 @@ mod app {
        (i2c, led)
     }
 
+
+
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
         pac::Peripherals,
@@ -309,8 +314,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> (I2c1Type, LedType) {
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) -> (I2cType, LedType) {
+       let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
+       let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
        let clocks = rcc
            .cfgr
            .sysclk(80.mhz())
@@ -319,6 +329,7 @@ mod app {
            .freeze(&mut flash.acr, &mut pwr);
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
+
        let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        led.off();
 
@@ -376,7 +387,7 @@ mod app {
 
        led.on();
 
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c).unwrap();
+       let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
@@ -407,7 +418,7 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, ssd1306::prelude::DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, ssd1306::prelude::DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
         text_style: MonoTextStyle<'static, BinaryColor>,
     }
 
