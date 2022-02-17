@@ -199,7 +199,7 @@ fn setup() -> (
         (scl, sda),
         &mut afio.mapr,
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,

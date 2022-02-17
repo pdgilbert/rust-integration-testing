@@ -154,9 +154,9 @@ fn setup() -> (
 
     let clocks = rcc
         .cfgr
-        .use_hse(8.mhz())
-        .sysclk(72.mhz())
-        .pclk1(36.mhz())
+        .use_hse(8.MHz())
+        .sysclk(72.MHz())
+        .pclk1(36.MHz())
         .freeze(&mut flash.acr);
 
     let mut afio = dp.AFIO.constrain();
@@ -171,7 +171,7 @@ fn setup() -> (
         (scl, sda),
         &mut afio.mapr,
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,

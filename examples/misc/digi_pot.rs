@@ -148,7 +148,7 @@ fn setup() -> (
         (sck, miso, mosi),
         &mut afio.mapr,
         mcp4x::MODE,
-        1_u32.mhz(),
+        1_u32.MHz(),
         clocks,
     );
 

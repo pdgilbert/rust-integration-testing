@@ -128,7 +128,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, impl 
         ),
         //&mut afio.mapr,  need this for i2c1 but not i2c2
         Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,

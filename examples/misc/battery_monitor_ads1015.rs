@@ -172,7 +172,7 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
         ),
         //&mut afio.mapr,  need this for i2c1 but not i2c2
         Mode::Fast {
-            frequency: 100_000.hz(),
+            frequency: 100_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,

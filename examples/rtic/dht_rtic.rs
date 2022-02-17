@@ -83,8 +83,9 @@ mod app {
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
-use embedded_hal::delay::blocking::DelayUs;
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay, DelayMs};
+
+  use embedded_hal::delay::blocking::DelayUs;
+  use rust_integration_testing_of_examples::alt_delay::{AltDelay, DelayMs};
 
 
 
@@ -105,7 +106,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
 
     #[cfg(feature = "stm32f0xx")]
-    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {    
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {    
        let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
        let gpioa = dp.GPIOA.split(&mut rcc);
        let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
@@ -140,7 +144,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
@@ -181,7 +188,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
     
@@ -270,7 +280,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let dht = dp.GPIOA.split().pa8.into_open_drain_output();
 
        let mut rcc = dp.RCC.constrain();
@@ -284,6 +297,7 @@ use embedded_hal::delay::blocking::DelayUs;
 
        (dht, i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32h7xx")]
@@ -308,7 +322,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -347,7 +364,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -386,7 +406,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
        let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
@@ -430,7 +453,10 @@ use embedded_hal::delay::blocking::DelayUs;
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, AltDelay) {
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
+
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);

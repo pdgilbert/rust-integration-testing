@@ -104,7 +104,10 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f0xx")]
-    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {    
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {    
        let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
        let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -157,7 +160,10 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -240,7 +246,10 @@ mod app {
     //   regarding why it is necessary to specify the concrete pin here.
 
     #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32f3xx")]
+    fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, DelayType) {
        let mut flash = dp.FLASH.constrain();
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze(&mut flash.acr);
@@ -359,7 +368,10 @@ mod app {
     type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32f7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
        let gpioa = dp.GPIOA.split();
        let dht   = gpioa .pa8.into_open_drain_output();
 
@@ -419,7 +431,10 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32h7xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
@@ -461,7 +476,7 @@ mod app {
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull, OpenDrain, gpioa::PA8},
-        pac::Peripherals,
+        pac::{Peripherals, USART1},
         prelude::*,
         rcc, // for ::Config but note name conflict with serial
     };
@@ -474,9 +489,15 @@ mod app {
    
     #[cfg(feature = "stm32l0xx")]
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+   
+    #[cfg(feature = "stm32l0xx")]
+    type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32l0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
@@ -531,7 +552,10 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32l1xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpioa = dp.GPIOA.split(&mut rcc);
@@ -589,7 +613,10 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, AltDelay) {
+    pub type DelayType =  AltDelay;
+
+    #[cfg(feature = "stm32l4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
         let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
