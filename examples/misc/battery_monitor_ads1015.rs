@@ -10,6 +10,9 @@
 //!  See https://blog.eldruin.com/ads1x1x-analog-to-digital-converter-driver-in-rust/
 //!    for much more detailed description.
 
+//! See examples/rtic/battery_monitor_ads1015_rtic.rs  foran rtic version..
+//! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for an rtic version using dma bufferring.
+
 // Example use of impl trait: If scl and sda are on PB8 and PB9 (eg in stm32f1xx below) then
 //    fn setup() ->  (BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>,
 //    PC13<Output<PushPull>>, Delay ) {
@@ -266,12 +269,12 @@ use stm32f4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C2},
+    pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
+fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
 
@@ -283,10 +286,10 @@ fn setup() -> (I2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
+    let scl = gpiob.pb8.into_alternate().set_open_drain(); 
+    let sda = gpiob.pb9.into_alternate().set_open_drain();
 
-    let i2c = I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks);
+    let i2c = I2c::new(p.I2C1, (scl, sda), 400.kHz(), &clocks);
 
     let delay = Delay::new(cp.SYST, &clocks);
 

@@ -1,4 +1,4 @@
-//!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
+//!  CLEANUP DESCRIPTION. DISPLAY OR LOG???  SO FAR WORKING ONLY WITH STM32F4XX
 // Following stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma regarding dma use.
 //! See examples/rtic/battery_monitor_ads1015_rtic.rs  for non-dma version..
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
@@ -16,13 +16,13 @@ use panic_halt as _;
 
 use rtic::app;
 
-#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3, EXTI0 ] ))]
-#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [ TIM3 ]))]
 
 mod app {
 
@@ -37,7 +37,7 @@ mod app {
     //use core::fmt::Write;
 
     use systick_monotonic::*;
-    use dwt_systick_monotonic::DwtSystick;  // structure has both dwt: DWT and  systick: SYST, ???
+    //use dwt_systick_monotonic::DwtSystick;  // structure has both dwt: DWT and  systick: SYST, ???
     //use dwt_systick_monotonic::Systick;  
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -49,23 +49,17 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    #[allow(unused_imports)]
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, setup_i2c1, I2c2Type, setup_i2c2};
 
-    // A delay is used in some sensor initializations and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
+    // NEED THIS UNTIL ALL EXAMPLES ARE CONVERTED TO SOMETHING BETTER (as in stm32f4xx)
+    #[allow(unused_imports)]
     use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
-    // set up for shared bus
-   // use shared_bus_rtic::SharedBus;
-    //use shared_bus_rtic::export::interrupt::Mutex;
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
-    //  or      rtic::Mutex;
-    //  or      rtic::export::interrupt::Mutex;
 
     use embedded_graphics::{
         mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10  FONT_8X13
@@ -79,12 +73,40 @@ mod app {
     use nb::block;
     
 
+
+
+    #[cfg(feature = "stm32f0xx")]
+    use stm32f0xx_hal::{
+        pac::Peripherals,
+        prelude::*,
+    };
+ 
+    #[cfg(feature = "stm32f0xx")]
+    const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32f0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
+
+    #[cfg(feature = "stm32f0xx")]
+    fn setup(mut dp: Peripherals) ->  (I2cType, LedType, AltDelay) {    
+       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+
+       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let delay = AltDelay{};
+
+       (i2c, led, delay)
+    }
+    
+
+
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        gpio::{OpenDrain, Output,
-            gpioa::{PA8},
-        },
-        pac::Peripherals, //I2C1
+        //delay::Delay,
+        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -93,10 +115,13 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f1xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
+    pub type DelayType = AltDelay;
+
+    #[cfg(feature = "stm32f1xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, DelayType) {
         let mut flash = dp.FLASH.constrain();
         let rcc = dp.RCC.constrain();
         let mut afio = dp.AFIO.constrain();
@@ -117,9 +142,6 @@ mod app {
         hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
         //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
 
-        let mut gpioa = dp.GPIOA.split();
-        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-
         let gpiob = dp.GPIOB.split();
 
         //afio  needed for i2c1 (PB8, PB9) but not i2c2
@@ -129,9 +151,13 @@ mod app {
         led.off();
 
         let delay = AltDelay{};
+        //let delay = dp.TIM2.delay_us(&clocks);
+        //let delay = Delay::new(dp.TIM2, clocks);
 
         (i2c, led, delay)
     }
+
+
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
@@ -143,7 +169,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f3xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) -> (I2cType, LedType, AltDelay) {
@@ -162,9 +188,12 @@ mod app {
        (i2c, led, delay)
     }
 
+
+
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        pac::{Peripherals, },
+        fugit::Delay,
+        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -172,22 +201,27 @@ mod app {
     const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f4xx")]
-    pub type I2cType = I2c2Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
+    pub type DelayType = Delay<TIM2, 1000000_u32>;  // MONOCLOCK gives expected `16000000_u32`, found `1000000_u32
+
+    #[cfg(feature = "stm32f4xx")]
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, DelayType) {
        let rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
 
-       let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
 
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       let delay = AltDelay{};
-
+       //let delay = AltDelay{};
+       let delay = dp.TIM2.delay_us(&clocks);
+ 
        (i2c, led, delay)
     }
+
 
 
     #[cfg(feature = "stm32f7xx")]
@@ -204,7 +238,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32f7xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
@@ -239,7 +273,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
@@ -275,7 +309,7 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l0xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
@@ -304,10 +338,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l1xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
        let gpiob = dp.GPIOB.split(&mut rcc);
@@ -334,10 +368,10 @@ mod app {
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32l4xx")]
-    pub type I2cType = I2c1Type;   // This is wiring used on this MCU
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) ->  (I2c1Type, LedType, AltDelay) {
+    fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
         let mut flash = dp.FLASH.constrain();
         let mut rcc = dp.RCC.constrain();
         let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -369,21 +403,20 @@ mod app {
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<MONOTICK>;
+    //type MyMono = DwtSystick<MONOTICK>;
 
-    #[monotonic(binds = EXTI0)]
-    type MyMono2 = DwtSystick<MONOTICK>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mut dcb = cx.core.DCB;
-        let dwt = cx.core.DWT;
+        //let mut dcb = cx.core.DCB;
+        //let dwt = cx.core.DWT;
+        //let mono = DwtSystick::new(&mut dcb, dwt, cx.core.SYST, MONOCLOCK);  //needs both SYST and dwt for comparison. 
 
         let mono  =    Systick::new(cx.core.SYST,  MONOCLOCK);
-        let mono2 = DwtSystick::new(&mut dcb, dwt, cx.core.EXTI0, MONOCLOCK);
 
         //rtt_init_print!();
-        //rprintln!("battery_monitor_ads1015_rtic example");
-        hprintln!("battery_monitor_ads1015_rtic example").unwrap();
+        //rprintln!("battery_monitor_ads1015_rtic_dma example");
+        hprintln!("battery_monitor_ads1015_rtic_dma example").unwrap();
 
         let (i2c, mut led, mut delay) = setup(cx.device);
    
@@ -436,7 +469,7 @@ mod app {
 
         (Shared {led}, 
          Local {adc_a, adc_b, }, 
-         init::Monotonics(mono, mono2)
+         init::Monotonics(mono)
         )
     }
 
@@ -448,7 +481,7 @@ mod app {
     #[local]
     struct Local {
        adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-        adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_b: Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
     }
 
     #[idle(local = [])]

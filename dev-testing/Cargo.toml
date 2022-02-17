@@ -74,7 +74,8 @@ cortex-m-rtic = ">=1.0"
 #cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
 systick-monotonic = {version = "1.0.0", optional = true }
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
-dwt-systick-monotonic = {version = "1.0" , optional = true }  # needed for adc_dma_rtic fiddling but if not optional it stops build with stm32f0xx
+#dwt-systick-monotonic = {version = "1.0" , optional = true }  # needed for adc_dma_rtic fiddling but if not optional it stops build with stm32f0xx
+dwt-systick-monotonic = {git = "https://github.com/rtic-rs/dwt-systick-monotonic" , optional = true }
 
 # for duration timer in rtic
 fugit = { version = "0.3.3", optional = true }
