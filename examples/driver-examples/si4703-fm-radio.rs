@@ -200,10 +200,8 @@ fn setup() -> (
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input,
         gpiob::{PB10, PB11, PB6},
-        gpioe::PE9,
-        Input, Output, PushPull,
     },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -226,9 +224,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-
-    let led = setup_led(p.GPIOE.split(&mut rcc.ahb));
+    let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 

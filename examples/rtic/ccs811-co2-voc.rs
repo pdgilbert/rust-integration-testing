@@ -284,7 +284,7 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        timer::FDelay,
+        timer::Delay,
         gpio::{OpenDrain, Output,
                gpioa::PA8,
         },
@@ -306,7 +306,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f4xx")]
-    pub type DelayType = FDelay<TIM2, 1000000_u32>;
+    pub type DelayType = Delay<TIM2, 1000000_u32>;
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
