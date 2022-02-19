@@ -112,7 +112,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, impl 
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, &clocks);
 
     let mut gpioa = p.GPIOA.split();
 

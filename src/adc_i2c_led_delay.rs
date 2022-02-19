@@ -87,7 +87,7 @@ pub fn setup() -> (SensorType, I2c1Type, LedType, Delay) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
 
     (sens, i2c, led, delay)
 }

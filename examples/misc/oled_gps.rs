@@ -144,7 +144,7 @@ fn setup() -> (
         1000,
     );
 
-    (tx, rx, i2c, Delay::new(cp.SYST, clocks))
+    (tx, rx, i2c, Delay::new(cp.SYST, &clocks))
 }
 
 

@@ -189,7 +189,7 @@ fn setup() -> (
     let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, &clocks);
 
     let mut afio = dp.AFIO.constrain();
 

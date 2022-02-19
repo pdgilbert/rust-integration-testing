@@ -91,7 +91,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
 
     // delay is used by `dht-sensor` to wait for signals
-    let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
+    let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
 
     let mut gpioa = p.GPIOA.split();
     let mut pa8 = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);

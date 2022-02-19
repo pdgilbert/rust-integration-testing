@@ -182,7 +182,7 @@ fn setup() -> (BlockingI2c<I2C2, impl Pins<I2C2>>, impl LED, Delay) {
         1000,
     );
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     // led
     let mut gpioc = p.GPIOC.split();

@@ -120,7 +120,7 @@ fn setup() -> (impl LED, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(&mut gpioc.crh), // led on pc13 with on/off
-        Delay::new(cp.SYST, clocks),
+        Delay::new(cp.SYST, &clocks),
     )
 }
 

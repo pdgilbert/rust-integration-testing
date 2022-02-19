@@ -164,7 +164,7 @@ fn setup() -> (
         }
     }
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     (spi, cs, led, delay)
 }

@@ -140,7 +140,7 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
         gpiob.pb13.into_push_pull_output(&mut gpiob.crh), // led on pb13
         gpiob.pb14.into_push_pull_output(&mut gpiob.crh), // led on pb14
         gpiob.pb15.into_push_pull_output(&mut gpiob.crh), // led on pb15
-        Delay::new(cp.SYST, clocks),
+        Delay::new(cp.SYST, &clocks),
     )
 }
 

@@ -183,7 +183,7 @@ fn setup() -> (
 
     let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
