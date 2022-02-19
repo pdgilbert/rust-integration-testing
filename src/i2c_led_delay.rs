@@ -80,14 +80,17 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
+pub type DelayType = SysDelay;
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();

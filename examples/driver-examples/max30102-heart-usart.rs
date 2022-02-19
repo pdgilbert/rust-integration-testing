@@ -291,7 +291,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},

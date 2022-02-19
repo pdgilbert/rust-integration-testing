@@ -212,7 +212,7 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB13, PB14, PB15},
         Output, PushPull,

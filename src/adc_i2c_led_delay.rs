@@ -137,7 +137,7 @@ pub fn setup() -> (SensorType, I2c1Type, LedType, Delay) {
 use stm32f4xx_hal::{
     adc::{config::AdcConfig, Adc}, //SampleTime
     gpio::{Analog, gpioa::PA1},
-    timer::Delay,
+    timer::SysDelay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, ADC1, I2C1},
     prelude::*,
@@ -147,7 +147,10 @@ use stm32f4xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
+pub type DelayType = SysDelay;
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup() -> (SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
