@@ -10,6 +10,8 @@ use panic_halt as _;
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type};
 
+
+
 // setup() does all  HAL/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -32,6 +34,8 @@ pub fn setup() -> ( I2c1Type, LedType, Delay) {
     (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
@@ -53,6 +57,8 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
@@ -77,6 +83,8 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
@@ -107,6 +115,8 @@ pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
