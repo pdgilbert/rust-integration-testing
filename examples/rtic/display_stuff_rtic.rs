@@ -338,6 +338,7 @@ mod app {
 
     // End of hal/MCU specific setup. Following should be generic code.
 
+type Text_Style: MonoTextStyle<'static, BinaryColor> = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
 //fn show_display<S>(
 //    text_style: MonoTextStyle<'static, BinaryColor>,
@@ -407,7 +408,8 @@ mod app {
 
        display_stuff::spawn().unwrap();
 
-       (Shared { led }, Local { display, text_style }, init::Monotonics(mono))
+       //(Shared { led }, Local { display, text_style }, init::Monotonics(mono))
+       (Shared { led }, Local { display }, init::Monotonics(mono))
     }
 
     #[shared]
@@ -421,10 +423,11 @@ mod app {
         display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
-        text_style: MonoTextStyle<'static, BinaryColor>,
+        //text_style: MonoTextStyle<'static, BinaryColor>,
     }
 
-    #[task(shared = [led, ], local = [display, text_style,], capacity=2)]
+    //#[task(shared = [led, ], local = [display, text_style,], capacity=2)]
+    #[task(shared = [ led, ], local = [ display, ], capacity=2)]
     fn display_stuff(cx: display_stuff::Context) {
         // blink and re-spawn process to repeat
         blink::spawn(BLINK_DURATION.millis()).ok();

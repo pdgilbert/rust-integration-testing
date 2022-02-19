@@ -1,3 +1,5 @@
+//!  Building and run tested on Blackpill, Feb 17, 2022
+//!
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
 //! This example is derived from driver-examples/ccs811-gas-voc-usart-logger.rs
 //! which comes from examples by Diego Barrios Romero.
@@ -6,12 +8,13 @@
 //!
 //! Below has been substantially modified for rtic 1.0.0 and to run with various HALs,
 //! and to use a DHT11 sensor to compensate for the ambient temperature and humidity,
-//! and to remove some logging.
+//! and to disable logging.
 //! (See driver-examples/ccs811-gas-voc-usart-logger.rs for hdc2080
 //!   temperature and humidity sensor which uses i2c. That example also keeps logging info.)
 
-//! Continuously measure the eCO2 and eTVOC in the air, logs the values and sends
-//! them through the serial interface every 10 seconds.
+//! Continuously measure the eCO2 and eTVOC in the air, 
+//! DISABLED logs the values and sends
+//! DISABLED them through the serial interface every 10 seconds.
 //!
 //! The hardware configuration for the STM32F103 "Bluepill" board uses 
 //!   PB6 for RX,  PB8 for SCL, PB9  <-> SDA,  nWAKE to GND, RST to 3.3v.
@@ -52,7 +55,6 @@ mod app {
     use dht_sensor::dht22::Reading;
     use dht_sensor::*;
 
-
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
     //use rtt_target::{rprintln, rtt_init_print};
@@ -72,12 +74,6 @@ mod app {
     const MONOTICK: u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
-
-    // A delay is used in sensor (dht) initialization and read. 
-    // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
-    // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
-    //  number of indicated clock cycles.
-    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
     use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
 
@@ -104,7 +100,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f0xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f0xx")]
     fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {    
@@ -119,7 +115,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, rx) = cortex_m::interrupt::free(move |cs| {
            (
@@ -160,7 +156,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32f1xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -195,7 +191,7 @@ mod app {
         let mut led = setup_led(dp.GPIOC.split()); 
         led.off();
 
-        let delay = AltDelay{};
+        let delay = DelayType{};
 
         // NOTE, try to figure out the proper way to deal with this:
         // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.
@@ -246,7 +242,7 @@ mod app {
     //   regarding why it is necessary to specify the concrete pin here.
 
     #[cfg(feature = "stm32f3xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f3xx")]
     fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -263,7 +259,7 @@ mod app {
        let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, _rx) = Serial::new(
            dp.USART1,
@@ -325,7 +321,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split()); 
        led.off();
 
-       //let delay = AltDelay{};
+       //let delay = DelayType{};
        let delay = dp.TIM2.delay_us(&clocks);
 
        let tx = gpioa.pa9.into_alternate();
@@ -368,7 +364,7 @@ mod app {
     type TxType = Tx<pac::USART2>;
 
     #[cfg(feature = "stm32f7xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -384,7 +380,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split());
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, _rx) = Serial::new(
            dp.USART2,
@@ -431,7 +427,7 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32h7xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32h7xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -452,7 +448,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, _rx) = dp
            .USART2
@@ -494,7 +490,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l0xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -508,7 +504,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split(&mut rcc));
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, _rx) = dp.USART1.usart(
             gpioa.pa9,
@@ -552,7 +548,7 @@ mod app {
     type TxType = Tx<USART1>;
 
     #[cfg(feature = "stm32l1xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -572,7 +568,7 @@ mod app {
        let mut led = setup_led(gpiob.pb6);
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
 
        let (tx, _rx) = dp
@@ -613,7 +609,7 @@ mod app {
     type TxType = Tx<USART2>;
 
     #[cfg(feature = "stm32l4xx")]
-    pub type DelayType =  AltDelay;
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l4xx")]
     fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -634,7 +630,7 @@ mod app {
        let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        led.off();
 
-       let delay = AltDelay{};
+       let delay = DelayType{};
 
        let (tx, _rx) = Serial::usart2(
            dp.USART2,
@@ -746,6 +742,14 @@ mod app {
         ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
         delay:DelayType,
+    }
+
+    #[idle(local = [])]
+    fn idle(_cx: idle::Context) -> ! {
+        hprintln!("idle with wfi started").unwrap();
+        loop { // Wait For Interrupt allows sleep (vs default nop which does not). It may affect debugging.
+           rtic::export::wfi()
+        }
     }
 
     //#[task(shared = [dht, ccs811, led, tx, delay], local = [env, index, measurements], capacity=5)]

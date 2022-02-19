@@ -1,6 +1,7 @@
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
 // CONSIDER DOING THIS WITH DMA FOLLOWING stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma.rs
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
+//! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for version using dma.
 
 #![deny(unsafe_code)]
 #![no_std]
