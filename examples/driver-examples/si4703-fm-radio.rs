@@ -55,10 +55,8 @@ use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
     },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -80,12 +78,10 @@ fn setup() -> (
     let mut delay = Delay::new(cp.SYST, &rcc);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let (led, scl, mut sda, mut rst, stcint, seekup, seekdown) =
+    let (scl, mut sda, mut rst, stcint, seekup, seekdown) =
         cortex_m::interrupt::free(move |cs| {
             (
-                gpioc.pc13.into_push_pull_output(cs),
                 gpiob.pb8.into_alternate_af1(cs),
                 //gpiob.pb9.into_alternate_af1(cs),      //for i2c
                 gpiob.pb9.into_push_pull_output(cs), //for reset
