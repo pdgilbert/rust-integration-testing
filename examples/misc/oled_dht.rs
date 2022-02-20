@@ -345,20 +345,21 @@ use stm32l1xx_hal::{
 #[cfg(feature = "stm32l1xx")]
 fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, impl Pins<I2C1>>, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
+
     let mut delay = cp.SYST.delay(rcc.clocks);
 
-    let mut dht = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+    let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
     dht.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
     delay.delay_ms(1000_u16);//  1 second delay for sensor initialization
 
-    let gpiob = p.GPIOB.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c = p.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 
-    let led = setup_led(gpiob.pb6);
+    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
 
     (dht, i2c, led, delay)
 }

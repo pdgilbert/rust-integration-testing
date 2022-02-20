@@ -226,11 +226,7 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
-        gpio::{Output, OpenDrain,
-            gpioa::PA8,
-        },
-        pac,
-        pac::{Peripherals, },
+       pac::{Peripherals, },
         prelude::*,
     };
 
@@ -242,15 +238,11 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
-       let gpioa = dp.GPIOA.split();
-       let dht   = gpioa .pa8.into_open_drain_output();
-
        let mut rcc = dp.RCC.constrain();
        let clocks = rcc.cfgr.freeze();
        //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
-
        let led = setup_led(dp.GPIOC.split());
        let delay = AltDelay{};
 
@@ -259,15 +251,9 @@ mod app {
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-        gpio::{Output, OpenDrain,
-               gpioa::PA8
-        },
-        pac::{Peripherals, USART2},
+        pac::{Peripherals,},
         prelude::*,
     };
-
-    #[cfg(feature = "stm32h7xx")]
-    use embedded_hal::digital::v2::OutputPin;
 
     #[cfg(feature = "stm32h7xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
@@ -282,10 +268,6 @@ mod app {
        let rcc = dp.RCC.constrain();
        let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
        let clocks = ccdr.clocks;
-
-       let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
-
-       let dht = gpioa.pa8.into_open_drain_output();
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
        let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
@@ -344,15 +326,8 @@ mod app {
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
-       let gpiob = dp.GPIOB.split(&mut rcc);
-
-// setup_i2c1 NOT WORKING
-       let scl = gpiob.pb8.into_open_drain_output();
-       let sda = gpiob.pb9.into_open_drain_output(); 
-       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-//       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
-
-       let led = setup_led(gpiob.pb6);
+       let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
        let delay = AltDelay{};
 
        (i2c, led, delay)

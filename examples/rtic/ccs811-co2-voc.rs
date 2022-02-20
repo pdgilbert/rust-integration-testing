@@ -557,19 +557,10 @@ mod app {
        let gpioa = dp.GPIOA.split(&mut rcc);
        let dht = gpioa.pa8.into_open_drain_output();
 
-       let gpiob = dp.GPIOB.split(&mut rcc);
-
-// setup_i2c1 NOT WORKING
-       let scl = gpiob.pb8.into_open_drain_output();
-       let sda = gpiob.pb9.into_open_drain_output(); 
-       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-//       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
-
-       let mut led = setup_led(gpiob.pb6);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
        led.off();
 
        let delay = DelayType{};
-
 
        let (tx, _rx) = dp
            .USART1
@@ -580,6 +571,8 @@ mod app {
            )
            .unwrap()
            .split();
+
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
        (dht, i2c, led, tx, delay)
     }

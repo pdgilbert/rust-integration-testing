@@ -248,7 +248,7 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     delay::Delay,
-    gpio::{gpiob::PB6, Output, PushPull, Input, Floating},
+    gpio::{gpioc::PC9, Output, PushPull, Input, Floating},
     prelude::*,
 };
 
@@ -256,11 +256,10 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-pub type LedType = PB6<Output<PushPull>>;  // blue user LED on Discovery board
+pub type LedType = PC9<Output<PushPull>>;  //LEDs on STM32L100 Discovery kit: PC9 is green LD3,  PC8 is blue LD4, 
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup_led(pin: PB6<Input<Floating>>) -> LedType {
-    //let led = gpiox.pb6.into_push_pull_output(); 
+pub fn setup_led(pin: PC9<Input<Floating>>) -> LedType {
     let led = pin.into_push_pull_output(); 
 
     impl LED for LedType {

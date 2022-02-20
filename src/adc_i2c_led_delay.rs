@@ -309,7 +309,9 @@ pub fn setup() -> (SensorType, I2c1Type, LedType, Delay) {
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     adc::{Adc, Precision},
-    gpio::{Analog, gpioa::PA1},
+    gpio::{Analog, 
+           gpioa::PA1,
+     },
     delay::Delay,
     i2c::{I2c, Pins},
     prelude::*,
@@ -338,19 +340,8 @@ pub fn setup() -> (SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
      }
 
-    let gpiob = dp.GPIOB.split(&mut rcc);
-
-    // Note this example is especially tricky:
-    //   The onboard led is on PB6 and i2c also uses gpiob  so there is a problem
-    //   with gpiob being moved by one and then not available for the other.
-
-// setup_i2c1 NOT WORKING
-    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-//    let i2c = setup_i2c1(dp.I2C1, &mut gpiob, rcc);
-
-    let led = setup_led(gpiob.pb6);
+    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (sens, i2c, led, delay)

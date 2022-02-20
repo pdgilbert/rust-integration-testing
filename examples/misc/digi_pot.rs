@@ -393,7 +393,9 @@ fn setup() -> (
 #[cfg(feature = "stm32l1xx")] // eg  Discovery kit stm32l100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     delay::Delay,
-    gpio::{gpioa::PA4, Output, PushPull},
+    gpio::{Output, PushPull,
+           gpioa::PA4, 
+    },
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     spi::{Pins, Spi},
@@ -414,8 +416,9 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
+    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+
     let gpioa = dp.GPIOA.split(&mut rcc);
-    let gpiob = dp.GPIOB.split(&mut rcc);
 
     let spi = dp.SPI1.spi(
         (
@@ -430,8 +433,6 @@ fn setup() -> (
 
     let mut cs = gpioa.pa4.into_push_pull_output();
     cs.set_high().unwrap();
-
-    let led = setup_led(gpiob.pb6);
 
     (spi, cs, led, cp.SYST.delay(rcc.clocks))
 }
