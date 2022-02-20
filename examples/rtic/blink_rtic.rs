@@ -189,8 +189,7 @@ mod app {
     #[cfg(feature = "stm32l1xx")]
     fn setup(dp: Peripherals) -> LedType {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-       let gpiob = dp.GPIOB.split(&mut rcc);
-       let led = setup_led(gpiob.pb6);
+       let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
 
        led
     }

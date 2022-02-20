@@ -211,19 +211,8 @@ pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
     let clocks = rcc.clocks;
 
-    let gpiob = dp.GPIOB.split(&mut rcc);
-
-    // Note this example is especially tricky:
-    //   The onboard led is on PB6 and i2c also uses gpiob  so there is a problem
-    //   with gpiob being moved by one and then not available for the other.
-
-// setup_i2c1 NOT WORKING
-    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-//    let i2c = setup_i2c1(dp.I2C1, &mut gpiob, rcc);
-
-    let led = setup_led(gpiob.pb6);
+    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (i2c, led, delay)

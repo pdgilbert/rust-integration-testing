@@ -55,10 +55,8 @@ use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
     },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -80,12 +78,10 @@ fn setup() -> (
     let mut delay = Delay::new(cp.SYST, &rcc);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let (led, scl, mut sda, mut rst, stcint, seekup, seekdown) =
+    let (scl, mut sda, mut rst, stcint, seekup, seekdown) =
         cortex_m::interrupt::free(move |cs| {
             (
-                gpioc.pc13.into_push_pull_output(cs),
                 gpiob.pb8.into_alternate_af1(cs),
                 //gpiob.pb9.into_alternate_af1(cs),      //for i2c
                 gpiob.pb9.into_push_pull_output(cs), //for reset
@@ -331,10 +327,8 @@ fn setup() -> (
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     delay::Delay,
-    gpio::{
-        gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+    gpio::{Input, PullDown, PullUp,
+           gpiob::{PB10, PB11, PB6},
     },
     i2c::{BlockingI2c, Mode, PinScl, PinSda},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -355,11 +349,9 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze();
     let mut delay = Delay::new(cp.SYST, clocks);
 
+    let led = setup_led(dp.GPIOC.split());
+
     let gpiob = dp.GPIOB.split();
-    let gpioc = dp.GPIOC.split();
-
-    let led = setup_led(p.GPIOC.split());
-
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
 
@@ -401,10 +393,8 @@ fn setup() -> (
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
     },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -412,7 +402,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::{InputPin,};
 
 #[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
@@ -426,9 +416,8 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
-    let led = setup_led(p.GPIOC.split(ccdr.peripheral.GPIOC));
+    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -526,10 +515,8 @@ fn setup() -> (
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     delay::Delay,
-    gpio::{
-        gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+    gpio::{Input, PullDown, PullUp,
+           gpiob::{ PB10, PB11, PB6},
     },
     i2c::{I2c, Pins},
     prelude::*,
@@ -538,7 +525,7 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::v2::{InputPin};
 
 #[cfg(feature = "stm32l1xx")]
 fn setup() -> (
@@ -552,23 +539,19 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
     let clocks = rcc.clocks;
+
     let mut delay = Delay::new(cp.SYST, clocks);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let gpioc = dp.GPIOC.split(&mut rcc);
-
-    let led = setup_led(gpiob.pb6);
-
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
-
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
     let sda = sda.into_open_drain_output();
     let stcint = gpiob.pb6.into_pull_up_input();
-
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
 
     let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),

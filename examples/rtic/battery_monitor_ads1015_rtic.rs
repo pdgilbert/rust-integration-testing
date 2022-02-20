@@ -185,7 +185,7 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        timer::FDelay,
+        timer::Delay,
         pac::{Peripherals, TIM2},
         prelude::*,
     };
@@ -197,8 +197,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
-    pub type DelayType = FDelay<TIM2, 1000000_u32>;
-    //pub type DelayType = Delay<TIM2, 1000000_u32>;  // MONOCLOCK gives expected `16000000_u32`, found `1000000_u32
+    pub type DelayType = Delay<TIM2, 1000000_u32>;  // MONOCLOCK gives expected `16000000_u32`, found `1000000_u32
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, DelayType) {
@@ -297,8 +296,6 @@ mod app {
        // UNTESTED
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
-
-       let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
  
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
        let led = setup_led(dp.GPIOC.split(&mut rcc));
@@ -326,15 +323,8 @@ mod app {
     fn setup(dp: Peripherals) ->  (I2cType, LedType, AltDelay) {
        let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
-       let gpiob = dp.GPIOB.split(&mut rcc);
-
-// setup_i2c1 NOT WORKING
-       let scl = gpiob.pb8.into_open_drain_output();
-       let sda = gpiob.pb9.into_open_drain_output(); 
-       let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-//       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
-
-       let led = setup_led(gpiob.pb6);
+       let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
        let delay = AltDelay{};
 
        (i2c, led, delay)
