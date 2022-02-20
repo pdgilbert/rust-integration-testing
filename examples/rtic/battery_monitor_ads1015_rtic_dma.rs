@@ -192,7 +192,7 @@ mod app {
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        timer::FDelay,
+        timer::Delay,
         pac::{Peripherals, TIM2},
         prelude::*,
     };
@@ -204,8 +204,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
     #[cfg(feature = "stm32f4xx")]
-    pub type DelayType = FDelay<TIM2, 1000000_u32>;
-    //pub type DelayType = Delay<TIM2>;  // MONOCLOCK gives expected `16000000_u32`, found `1000000_u32
+    type DelayType = Delay<TIM2, 1000000_u32>;
 
     #[cfg(feature = "stm32f4xx")]
     fn setup(dp: Peripherals) ->  (I2cType, LedType, DelayType) {
