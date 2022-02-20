@@ -10,6 +10,8 @@ use panic_halt as _;
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type};
 
+
+
 // setup() does all  HAL/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -32,6 +34,8 @@ pub fn setup() -> ( I2c1Type, LedType, Delay) {
     (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     delay::Delay,
@@ -49,10 +53,12 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
@@ -78,16 +84,21 @@ pub fn setup() -> (I2c1Type, LedType,Delay) {
     (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
+pub type DelayType = SysDelay;
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
@@ -105,6 +116,8 @@ pub fn setup() -> (I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
     (i2c, led, delay)
 }
 
+
+
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     delay::Delay,
@@ -119,12 +132,13 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let clocks = rcc.cfgr.freeze();
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
-
     let led = setup_led(dp.GPIOC.split());
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
@@ -152,6 +166,8 @@ pub fn setup() -> (I2c<I2C1>, LedType, Delay) {
 
     (i2c, led, delay)
 }
+
+
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{

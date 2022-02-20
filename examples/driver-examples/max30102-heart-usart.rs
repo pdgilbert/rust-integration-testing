@@ -183,7 +183,7 @@ fn setup() -> (
 
     let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = Delay::new(cp.SYST, &clocks);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
@@ -291,7 +291,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},

@@ -277,7 +277,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     let mut flash = p.FLASH.constrain();
     let rcc = p.RCC.constrain();
 
-    let clocks = rcc.cfgr.adcclk(2.mhz()).freeze(&mut flash.acr);
+    let clocks = rcc.cfgr.adcclk(2.MHz()).freeze(&mut flash.acr);
 
     let mut gpiob = p.GPIOB.split();
 
@@ -586,6 +586,8 @@ fn setup() -> (
     (mcutemp, tmp36, adcs)
 }
 
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     //rcc::rec::AdcClkSel,
@@ -703,6 +705,8 @@ fn setup() -> (
     (mcutemp, tmp36, adcs)
 }
 
+
+
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     adc::{Adc, Ready, VTemp},
@@ -767,6 +771,8 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
 
     (mcutemp, tmp36, adcs)
 }
+
+
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery kit stm32l100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
@@ -838,6 +844,8 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 
     (mcutemp, tmp36, adcs)
 }
+
+
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{

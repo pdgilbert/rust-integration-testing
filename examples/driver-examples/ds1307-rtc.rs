@@ -21,7 +21,7 @@
 #![no_std]
 #![no_main]
 
-use ds1307::{Ds1307, NaiveDate, Rtcc};
+use ds1307::{Ds1307, NaiveDate, DateTimeAccess};
 
 use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
 use cortex_m_rt::entry;
@@ -47,7 +47,7 @@ fn main() -> ! {
     rtc.set_datetime(&begin).unwrap();
     hprintln!("loop").unwrap();
     loop {
-        let now = rtc.get_datetime().unwrap();
+        let now = rtc.datetime().unwrap();
         hprintln!("now {}", now).unwrap();
         if (now - begin).num_seconds() < 30 {
             // this will blink for 30 seconds

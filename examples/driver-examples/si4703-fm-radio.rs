@@ -29,27 +29,12 @@
 
 use cortex_m_rt::entry;
 use nb::block;
-use panic_rtt_target as _;
+//use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 use si4703::{
     reset_and_select_i2c_method1 as reset_si4703, ChannelSpacing, DeEmphasis, SeekDirection,
     SeekMode, Si4703, Volume,
 };
-
-pub trait LED {
-    // depending on board wiring, on may be set_high or set_low, with off also reversed
-    // implementation should deal with this difference
-    fn on(&mut self) -> ();
-    fn off(&mut self) -> ();
-
-    // default methods
-    fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
-        self.on();
-        delay.delay_ms(time);
-        self.off();
-        delay.delay_ms(time); //consider delay.delay_ms(500u16);
-    }
-}
 
 pub struct SeekPins<T, U> {
     p_seekup: T,
@@ -62,6 +47,8 @@ pub trait SEEK {
     fn seekdown(&mut self) -> bool;
     //fn stcint(&mut self) -> ;
 }
+
+use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -112,16 +99,8 @@ fn setup() -> (
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
     let sda = cortex_m::interrupt::free(move |cs| sda.into_alternate_af1(cs));
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
     let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), &mut rcc);
+    let led = setup_led(dp.GPIOC.split(&mut rcc));
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: seekup,
@@ -168,21 +147,11 @@ fn setup() -> (
     let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = Delay::new(cp.SYST, &clocks);
 
     let mut afio = dp.AFIO.constrain();
 
-    let mut gpioc = dp.GPIOC.split();
-    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
+    let led = setup_led(dp.GPIOC.split());
 
     let mut gpiob = dp.GPIOB.split();
 
@@ -226,13 +195,13 @@ fn setup() -> (
     (i2c, led, delay, buttons, stcint)
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
-    gpio::{
+    gpio::{Input,
         gpiob::{PB10, PB11, PB6},
-        gpioe::PE9,
-        Input, Output, PushPull,
     },
     i2c::{I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -255,20 +224,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
-
-    let led = gpioe
-        .pe9
-        .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
-
-    impl LED for PE9<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
+    let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
@@ -314,11 +270,9 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
-    gpio::{
-        gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+    timer::SysDelay as Delay,
+    gpio::{Input, PullDown, PullUp,
+           gpiob::{PB10, PB11, PB6},        
     },
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -341,19 +295,6 @@ fn setup() -> (
     //let mut delay = Delay::new(cp.SYST, &clocks);
     let mut delay = cp.SYST.delay(&clocks);
 
-    // led
-    let gpioc = dp.GPIOC.split();
-    let led = gpioc.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-
     let gpiob = dp.GPIOB.split(); // for i2c
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
@@ -368,6 +309,7 @@ fn setup() -> (
     let stcint = gpiob.pb6.into_pull_up_input();
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+    let led = setup_led(dp.GPIOC.split());
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
@@ -416,17 +358,7 @@ fn setup() -> (
     let gpiob = dp.GPIOB.split();
     let gpioc = dp.GPIOC.split();
 
-    // led
-    let led = gpioc.pc13.into_push_pull_output(); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
+    let led = setup_led(p.GPIOC.split());
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -496,17 +428,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
-    // led
-    let led = gpioc.pc13.into_push_pull_output(); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
+    let led = setup_led(p.GPIOC.split(ccdr.peripheral.GPIOC));
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -571,17 +493,7 @@ fn setup() -> (
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    // led
-    let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
+    let led = setup_led(p.GPIOC.split(&mut rcc));
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -645,16 +557,7 @@ fn setup() -> (
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let led = gpioc.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
+    let led = setup_led(gpiob.pb6);
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -687,10 +590,8 @@ fn setup() -> (
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{
-        gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+    gpio::{Input, PullDown, PullUp,
+           gpiob::{PB10, PB11, PB6},
     },
     i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -719,20 +620,7 @@ fn setup() -> (
 
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
-
-    let led = gpioc
-        .pc13
-        .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
+    let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
 

@@ -144,7 +144,7 @@ fn setup() -> (
         1000,
     );
 
-    (tx, rx, i2c, Delay::new(cp.SYST, clocks))
+    (tx, rx, i2c, Delay::new(cp.SYST, &clocks))
 }
 
 
@@ -208,7 +208,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
-    timer::Delay,
+    timer::SysDelay as Delay,
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
