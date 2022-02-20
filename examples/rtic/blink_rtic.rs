@@ -197,7 +197,6 @@ mod app {
 
     #[cfg(feature = "stm32l4xx")]
     use stm32l4xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
         pac::Peripherals,
         prelude::*,
     };

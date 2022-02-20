@@ -590,10 +590,8 @@ fn setup() -> (
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
-    gpio::{
-        gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+    gpio::{Input, PullDown, PullUp,
+           gpiob::{PB10, PB11, PB6},
     },
     i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -622,7 +620,7 @@ fn setup() -> (
 
     let mut delay = Delay::new(cp.SYST, clocks);
 
-    let led = setup_led(p.GPIOC.split(&mut rcc.ahb2));
+    let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
 
