@@ -132,7 +132,6 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let clocks = rcc.cfgr.freeze();
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
-
     let led = setup_led(dp.GPIOC.split());
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 

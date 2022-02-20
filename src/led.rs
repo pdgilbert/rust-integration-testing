@@ -7,12 +7,37 @@ pub trait LED {
     fn on(&mut self) -> ();
     fn off(&mut self) -> ();
 
-    // default methods. Note these use delay so do not use in rtic.
+    // default methods. Note these use delay so DO NOT USE IN rtic.
+
     fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
         self.on();
         delay.delay_ms(time);
         self.off();
         delay.delay_ms(time); //consider delay.delay_ms(500u16);
+    }
+
+    fn blink_ok(&mut self, delay: &mut Delay) -> () {
+        let dot: u16 = 5;
+        let dash: u16 = 200;
+        let spc: u16 = 500;
+        let space: u16 = 1000;
+        let end: u16 = 1500;
+
+        // dash-dash-dash
+        self.blink(dash, delay);
+        delay.delay_ms(spc);
+        self.blink(dash, delay);
+        delay.delay_ms(spc);
+        self.blink(dash, delay);
+        delay.delay_ms(space);
+
+        // dash-dot-dash
+        self.blink(dash, delay);
+        delay.delay_ms(spc);
+        self.blink(dot, delay);
+        delay.delay_ms(spc);
+        self.blink(dash, delay);
+        delay.delay_ms(end);
     }
 }
 
