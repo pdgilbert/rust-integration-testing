@@ -1,4 +1,4 @@
-//! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
+//! Note that pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
 #[cfg(debug_assertions)]
