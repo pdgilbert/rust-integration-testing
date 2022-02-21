@@ -50,7 +50,10 @@ use stm32f0xx_hal::{
 // open_drain_output is really input and output
 
 #[cfg(feature = "stm32f0xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
+type DhtType = PA8<Output<OpenDrain>>;
+
+#[cfg(feature = "stm32f0xx")]
+fn setup() -> (DhtType, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let mut p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
@@ -83,27 +86,28 @@ use stm32f1xx_hal::{
 // open_drain_output is really input and output
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
+type DhtType = PA8<Output<OpenDrain>>;
 
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
+#[cfg(feature = "stm32f1xx")]
+fn setup() -> (DhtType, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
 
-    let mut gpioa = p.GPIOA.split();
-    let mut pa8 = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-    //let mut pa8 = cortex_m::interrupt::free(|cs| pa8.into_open_drain_output(cs));
-
+    let mut gpioa = dp.GPIOA.split();
+    let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high();
+    dht.set_high();
 
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay) //DHT data will be on A8
 }
 
 
@@ -117,19 +121,20 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
+type DhtType = PA8<Output<OpenDrain>>;
 
-    let mut rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
-    let mut pa8 = gpioa
-        .pa8
-        .into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+#[cfg(feature = "stm32f3xx")]
+fn setup() -> (DhtType, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+    let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
 
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high().ok();
+    dht.set_high().ok();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
@@ -137,7 +142,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay)
 }
 
 
@@ -151,15 +156,18 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")] // Use HSE oscillator
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
+type DhtType = PA8<Output<OpenDrain>>;
 
-    //let clocks =  p.RCC.constrain().cfgr.freeze();
+#[cfg(feature = "stm32f4xx")] // Use HSE oscillator
+fn setup() -> (DhtType, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+
+    //let clocks =  dp.RCC.constrain().cfgr.freeze();
     // next gives panicked at 'assertion failed: !sysclk_on_pll ||
     //                  sysclk <= sysclk_max && sysclk >= sysclk_min'
-    //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
+    //let clocks = dp.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
     let clocks = rcc
         .cfgr
         .hclk(48.MHz())
@@ -168,10 +176,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
         .pclk2(24.MHz())
         .freeze();
 
-    let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
-
+    let mut dht = dp.GPIOA.split().pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high();
+    dht.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     //let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
@@ -180,7 +187,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay) //DHT data will be on A8
 }
 
 
@@ -194,15 +201,17 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")] // Use HSE oscillator
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
+type DhtType = PA8<Output<OpenDrain>>;
+
+#[cfg(feature = "stm32f7xx")] // Use HSE oscillator
+fn setup() -> (DhtType, Delay) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
+    let dp = Peripherals::take().unwrap();
+    let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
-    let mut pa8 = p.GPIOA.split().pa8.into_open_drain_output();
-
+    let mut dht = dp.GPIOA.split().pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    pa8.set_high();
+    dht.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
@@ -210,8 +219,10 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
 
-    (pa8, delay) //DHT data will be on A8
+    (dht, delay)
 }
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
@@ -225,7 +236,10 @@ use stm32h7xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
+type DhtType = PA8<Output<OpenDrain>>;
+
+#[cfg(feature = "stm32h7xx")]
+fn setup() -> (DhtType, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
@@ -234,12 +248,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
-    let mut dht = dp
-        .GPIOA
-        .split(ccdr.peripheral.GPIOA)
-        .pa8
-        .into_open_drain_output();
-
+    let mut dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
@@ -252,6 +261,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     (dht, delay) //DHT data will be on A8
 }
 
+
+
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     delay::Delay,
@@ -262,17 +273,20 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
+type DhtType = PA8<Output<OpenDrain>>;
 
-    //let clocks =  p.RCC.constrain().cfgr.freeze();
+#[cfg(feature = "stm32l0xx")]
+fn setup() -> (DhtType, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+
+    //let clocks =  dp.RCC.constrain().cfgr.freeze();
     // next gives panicked at 'assertion failed: !sysclk_on_pll ||
     //                  sysclk <= sysclk_max && sysclk >= sysclk_min'
-    //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
-    let mut dht = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+    //let clocks = dp.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
 
+    let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
@@ -285,6 +299,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
 
     (dht, delay) //DHT data will be on A8
 }
+
+
 
 #[cfg(feature = "stm32l1xx")]
 use stm32l1xx_hal::{
@@ -299,14 +315,17 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
+type DhtType = PA8<Output<OpenDrain>>;
+
+#[cfg(feature = "stm32l1xx")]
+fn setup() -> (DhtType, Delay) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
-    //let clocks = p.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
-    let mut dht = p.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+    //let clocks = dp.RCC.constrain().cfgr.use_hse(8.mhz()).sysclk(168.mhz()).freeze();
 
+    let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
@@ -321,6 +340,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
     (dht, delay) //DHT data will be on A8
 }
 
+
+
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     delay::Delay,
@@ -330,7 +351,10 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
+type DhtType = PA8<Output<OpenDrain>>;
+
+#[cfg(feature = "stm32l4xx")]
+fn setup() -> (DhtType, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut flash = p.FLASH.constrain();
@@ -345,10 +369,8 @@ fn setup() -> (PA8<Output<OpenDrain>>, Delay) {
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
     let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
-
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
 
