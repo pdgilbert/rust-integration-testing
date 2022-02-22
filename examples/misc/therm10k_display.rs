@@ -1,10 +1,11 @@
-// WORK IN PROGRESS
-//! Measure temperature with 10k thermistor sensor (NTC thermistors probe ) and display on SSD1306 OLED display.
+//! Measure temperature with 10k thermistor sensor (NTC thermistors probe ) and temperature and
+//! humidity from a DHT-11 (or DHT-22) sensor. Display on SSD1306 OLED display.
+//! 
 //! One side of the thermistor is connected to GND and other side to adc pin and also through
 //! a 10k sresistor to VCC. That makes the max voltage about VCC/2, so about 2.5v when VCC is 5v.
-//! This is convenient adc for pins that are not 5v tolerant but means the voltage varies
-//! inversely to connecting throught the resistor to GND as is sometimes done. (That is,
-//! higher temperature gives lower voltage measurement.
+//! This is convenient for adc pins that are not 5v tolerant but means the voltage varies
+//! inversely compared to connecting throught the resistor to GND as is sometimes done. (That is,
+//! higher temperature gives lower voltage measurement.)
 //! See setup() functions in  src/adc_i2c_led_delay.rs, src/i2c.rs, and src/led.rs  for the 
 //! pin settings on various boards.
 //! 
@@ -47,11 +48,12 @@ use core::fmt::Write;
 //    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
 //    &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8  =  4  characters high
 //    FONT_8X13  128 pixels/ 8 per font = 16   characters wide.  32/13 = 2.5 characters high
+//    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.5 characters high
 
-const DISPLAY_LINES: usize = 3; 
+const DISPLAY_LINES: usize = 2; 
 
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder, MonoTextStyle}, 
+    mono_font::{ascii::FONT_8X13, MonoTextStyleBuilder, MonoTextStyle}, 
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
@@ -59,11 +61,20 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
+//https://github.com/michaelbeaumont/dht-sensor
+#[cfg(not(feature = "dht22"))]
+use dht_sensor::dht11::Reading;
+#[cfg(feature = "dht22")]
+use dht_sensor::dht22::Reading;
+use dht_sensor::*;
+
 use rust_integration_testing_of_examples::adc_i2c_led_delay::{setup, LED, ReadAdc};
 
 fn show_display<S>(
     mv: u32,
     temp: i64,
+    dht_temp: i8, 
+    dht_humidity: u8, 
     text_style: MonoTextStyle<BinaryColor>,
     disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
 ) -> ()
@@ -73,20 +84,22 @@ where
     let mut lines: [heapless::String<32>; DISPLAY_LINES] = [
         heapless::String::new(),
         heapless::String::new(),
-        heapless::String::new(),
     ];
 
     // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
     // it is now possible to use \n in place of separate writes, with one line rather than vector.
-    write!(lines[0], "probe {:3}mV {:5} C", mv, temp).unwrap();
-    //write!(lines[1], "temp:    {:5} C", temp).unwrap();
+    //write!(lines[0], "10k {:4}mV{:3}°C", mv, temp).unwrap();
+    write!(lines[0], "10k {:4}mV{:3}C", mv, temp).unwrap();
+    write!(lines[1], "dht{:4}%RH{:3}C", dht_humidity, dht_temp).unwrap();
 
     disp.clear();
     for i in 0..lines.len() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(
             &lines[i],
-            Point::new(0, i as i32 * 12), //using font 6x10, 12 = 10 high + 2 space
+            //using font 6x10, 10 high + 2 space = 12
+            //using font 8X13, 13 high + 2 space = 15       
+            Point::new(0, i as i32 * 15),
             text_style,
             Baseline::Top,
         )
@@ -103,7 +116,7 @@ fn main() -> ! {
     //rprintln!("therm10k_display example");
     //hprintln!("therm10k_display example").unwrap();
 
-    let (mut sens, i2c, mut led, mut delay) = setup();
+    let (mut sens, mut dht, i2c, mut led, mut delay) = setup();
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
@@ -116,7 +129,7 @@ fn main() -> ! {
     display.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT_8X13)
         .text_color(BinaryColor::On)
         .build();
 
@@ -129,14 +142,25 @@ fn main() -> ! {
         // Blink LED  to check that loop is actually running.
         led.blink(50_u16, &mut delay);
 
-        // Read adc
+        // Read 10k probe on adc
         let mv = sens.read_mv();
-        //hprintln!("values read").unwrap();
         let temp:i64  = a - (mv / b) as i64 ;
-
         //hprintln!("probe  {}mV  {}C ", mv, temp).unwrap();
 
-        show_display(mv, temp, text_style, &mut display);
+        let z = Reading::read(&mut delay, &mut dht);
+        let (dht_temp, dht_humidity) = match z {
+            Ok(Reading {temperature, relative_humidity,})
+               =>  {//hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+                    (temperature, relative_humidity)
+                   },
+            Err(e) 
+               =>  {//hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
+                    //panic!("Error reading DHT"),
+                    (25, 40)  //supply default values
+                   },
+        };
+ 
+        show_display(mv, temp, dht_temp, dht_humidity, text_style, &mut display);
 
         delay.delay_ms(5000_u16);
     }
