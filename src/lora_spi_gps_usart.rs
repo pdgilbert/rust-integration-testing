@@ -6,12 +6,13 @@ use panic_halt as _;
 
 use core::convert::Infallible;
 
+use embedded_hal::delay::blocking::DelayUs;
 //eh use e_h_1a::delay::blocking::DelayMs;
 
 // The embedded_hal_compat crate is to smooth the transition for hal crates that are
 // not yet based on embedded_hal 1.0.0-alpha while rust-radio-sx127x is.
 // When passing the older hal crate objects to the newer rust-radio-sx127x methods
-// the objects are appended with .forward().
+// the objects are appended with .
 
 //eh use embedded_hal_compat::ForwardCompat;
 
@@ -154,12 +155,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),
-        pa1.forward(),
-        pb8.forward(),
-        pb9.forward(),
-        pa0.forward(),
-        delay.forward(),
+        spi,
+        pa1,
+        pb8,
+        pb9,
+        pa0,
+        delay,
         &CONFIG_RADIO,
     )
     .unwrap(); // should handle error
@@ -257,12 +258,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                                             //Spi
-        gpioa.pa1.into_push_pull_output(&mut gpioa.crl).forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input(&mut gpiob.crh).forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input(&mut gpiob.crh).forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output(&mut gpioa.crl).forward(), //ResetPin      on PA0
-        delay.forward(),                                           //Delay
+        spi,                                             //Spi
+        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin      on PA0
+        delay,                                           //Delay
         &CONFIG_RADIO,                                             //&Config
     )
     .unwrap(); // should handle error
@@ -379,24 +380,24 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(), //Spi
+        spi, //Spi
         gpioa
             .pa1
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //CsPin   on PA1
+            , //CsPin   on PA1
         gpiob
             .pb8
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //BusyPin  DIO0 on PB8
+            , //BusyPin  DIO0 on PB8
         gpiob
             .pb9
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //ReadyPin DIO1 on PB9
+            , //ReadyPin DIO1 on PB9
         gpioa
             .pa0
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //ResetPin      on PA0
-        delay.forward(), //Delay
+            , //ResetPin      on PA0
+        delay, //Delay
         &CONFIG_RADIO, //&Config
     )
     .unwrap(); // should handle error
@@ -446,7 +447,7 @@ pub fn setup() -> (
 #[cfg(feature = "stm32f4xx")]
 // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
@@ -470,7 +471,7 @@ use stm32f4xx_hal::{
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup() -> (
-    impl DelayMs<u32>
+    impl DelayUs
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
     Tx<USART2>,
@@ -482,7 +483,7 @@ pub fn setup() -> (
     let p = Peripherals::take().unwrap();
 
     let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
 
     let gpioa = p.GPIOA.split();
     let gpiob = p.GPIOB.split();
@@ -496,11 +497,12 @@ pub fn setup() -> (
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         MODE,
-        MegaHertz(8),
+        8.MHz(),
         &clocks,
     );
 
-    let delay = Delay::new(cp.SYST, &clocks);
+    //let delay = Delay::new(cp.SYST, &clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     // Create lora radio instance
 
@@ -509,12 +511,12 @@ pub fn setup() -> (
     // however, gives trait bound  ... InputPin` is not satisfied
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DI00 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DI01 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -540,7 +542,7 @@ pub fn setup() -> (
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks);
+    let i2c = I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks);
 
     // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
@@ -606,12 +608,12 @@ pub fn setup() -> (
 
     // spi::new  partially consumes rcc which causes problem for second use of clocks
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -712,12 +714,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -803,12 +805,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -891,12 +893,12 @@ pub fn setup() -> (
 
     //  Heltec lora_node STM32L151CCU6
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa4.into_push_pull_output().forward(), //CsPin         on PA4  in board on Heltec
-        gpiob.pb11.into_floating_input().forward(),  //BusyPin  DIO0 on PB11 in board on Heltec
-        gpiob.pb10.into_floating_input().forward(),  //ReadyPin DIO1 on PB10 in board on Heltec
-        gpioa.pa3.into_push_pull_output().forward(), //ResetPin      on PA3  in board on Heltec
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa4.into_push_pull_output(), //CsPin         on PA4  in board on Heltec
+        gpiob.pb11.into_floating_input(),  //BusyPin  DIO0 on PB11 in board on Heltec
+        gpiob.pb10.into_floating_input(),  //ReadyPin DIO1 on PB10 in board on Heltec
+        gpioa.pa3.into_push_pull_output(), //ResetPin      on PA3  in board on Heltec
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -995,24 +997,24 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(), //Spi
+        spi, //Spi
         gpioa
             .pa1
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //CsPin   on PA1
+            , //CsPin   on PA1
         gpiob
             .pb8
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //BusyPin  DIO0 on PB8
+            , //BusyPin  DIO0 on PB8
         gpiob
             .pb9
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //ReadyPin DIO1 on PB9
+            , //ReadyPin DIO1 on PB9
         gpioa
             .pa0
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //ResetPin      on PA0
-        delay.forward(), //Delay
+            , //ResetPin      on PA0
+        delay, //Delay
         &CONFIG_RADIO, //&Config
     )
     .unwrap(); // should handle error

@@ -97,6 +97,8 @@ fugit = { version = "0.3.3", optional = true }
 # NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS
 # AND SEE ALSO src/lib.rs
 #rm for eh-1 radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
+radio-sx127x  = { git = "https://github.com/rust-iot/rust-radio-sx127x", branch = "e-h@1.0.0-alpha.7", default-features = false}
+radio         = { version = "0.11.0" }
 
 #  check:  diff dev-testing/Cargo.toml release-testing/Cargo.toml
 #
