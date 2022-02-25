@@ -73,6 +73,7 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  NEEDS std
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
+ina219           = {  version = "0.1.0" }
 
 cortex-m-rtic = ">=1.0" 
 #cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
@@ -441,3 +442,7 @@ path = "examples/misc-i2c-drivers/vl53lox-display.rs"
 #[[example]]
 #name = "mlx9064x"
 #path = "examples/misc-i2c-drivers/mlx9064x.rs"
+
+[[example]]
+name = "ina219-display"
+path = "examples/misc-i2c-drivers/ina219-display.rs"
