@@ -411,7 +411,7 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, &clocks: &Clocks, apb1r1: &mut A
     let mut sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let i2c = I2c::i2c1(i2c1, (scl, sda), Config::new(400.khz(), clocks), apb1r1 );
+    let i2c = I2c::i2c1(i2c1, (scl, sda), Config::new(400_u32.kHz(), clocks), apb1r1 );
 
     i2c
 }
@@ -428,7 +428,7 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks, mut apb1r1: A
     let mut sda = gpiob.pb11.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
-    let i2c = I2c::i2c2(i2c2, (scl, sda), Config::new(400.khz(), clocks),  &mut apb1r1 );
+    let i2c = I2c::i2c2(i2c2, (scl, sda), Config::new(400_u32.kHz(), clocks),  &mut apb1r1 );
 
     i2c
 }

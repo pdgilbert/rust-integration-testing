@@ -75,7 +75,7 @@ fn setup() -> (DhtType, Delay) {
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioa::PA8, OpenDrain, Output},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
@@ -95,7 +95,7 @@ fn setup() -> (DhtType, Delay) {
     let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
     // delay is used by `dht-sensor` to wait for signals
-    let mut delay = Delay::new(cp.SYST, &clocks); //SysTick: System Timer
+    let mut delay = cp.SYST.delay(&clocks) ; //SysTick: System Timer
 
     let mut gpioa = dp.GPIOA.split();
     let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
@@ -360,9 +360,9 @@ fn setup() -> (DhtType, Delay) {
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);

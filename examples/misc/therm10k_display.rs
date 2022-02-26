@@ -153,7 +153,7 @@ fn main() -> ! {
                =>  {//hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
                     (temperature, relative_humidity)
                    },
-            Err(e) 
+            Err(_e) 
                =>  {//hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
                     //panic!("Error reading DHT"),
                     (25, 40)  //supply default values

@@ -86,7 +86,7 @@ fn setup() -> (I2cType, LedType, Delay,) {
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
@@ -107,7 +107,7 @@ fn setup() -> (I2cType, LedType, Delay) {
     //afio  needed for i2c1 (PB8, PB9) but not i2c2
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut afio, &clocks);
     let led = setup_led(dp.GPIOC.split());
-    let delay = Delay::new(cp.SYST, &clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     (i2c, led, delay) // return tuple (i2c, led, delay)
 }
@@ -308,9 +308,9 @@ fn setup() -> (I2cType, LedType, Delay) {
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);

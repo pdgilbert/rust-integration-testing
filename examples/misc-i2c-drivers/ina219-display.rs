@@ -95,13 +95,18 @@ fn main() -> ! {
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
 
-        let p = match ina.power() {
+        let p = match ina.power() {  // ina indicated power
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
+        
+        // power caclulated by P=IV.  
+        //If the ina is wired with Vin- to battery and Vin+ to load sign then the
+        // display will show "+" for battery charging and "-" for discharging.
+        let pc = i as i32 * v as i32;
 
-       write!(lines[0], "V: {}mv  Vs: {}mV", v, vs).unwrap();
-       write!(lines[1], "I: {}mA  P:  {}mW", i,  p).unwrap();
+        write!(lines[0], "V: {}mv Vs: {}mV", v, vs).unwrap();
+        write!(lines[1], "I: {}mA P:{}mW [{}mW]", i,  p, pc).unwrap();
         
         display.clear();
         for (i, line) in lines.iter().enumerate() {
