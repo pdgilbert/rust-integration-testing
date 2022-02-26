@@ -285,9 +285,9 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb2);
@@ -309,7 +309,7 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
     I2c::i2c2(
         p.I2C2,
         (scl, sda),
-        Config::new(400.khz(), clocks),
+        Config::new(400.kHz(), clocks),
         &mut rcc.apb1r1,
     )
 }

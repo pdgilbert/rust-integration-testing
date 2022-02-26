@@ -94,7 +94,7 @@ fn setup() -> (impl LED, Delay) {
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
@@ -120,7 +120,7 @@ fn setup() -> (impl LED, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(&mut gpioc.crh), // led on pc13 with on/off
-        Delay::new(cp.SYST, &clocks),
+        cp.SYST.delay(&clocks),
     )
 }
 
@@ -365,9 +365,9 @@ fn setup() -> (impl LED, Delay) {
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioc = p.GPIOC.split(&mut rcc.ahb2);

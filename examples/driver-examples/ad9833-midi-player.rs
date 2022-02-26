@@ -110,7 +110,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioa::PA4, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
@@ -164,7 +164,7 @@ fn setup() -> (
         }
     }
 
-    let delay = Delay::new(cp.SYST, &clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -534,9 +534,9 @@ fn setup() -> (
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
@@ -556,7 +556,7 @@ fn setup() -> (
                 .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), // mosi  on PA7
         ),
         MODE,
-        8.mhz(),
+        8.MHz(),
         clocks,
         &mut rcc.apb2,
     );

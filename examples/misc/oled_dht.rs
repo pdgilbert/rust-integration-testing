@@ -98,7 +98,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     device::I2C2,
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
     pac::{CorePeripherals, Peripherals},
@@ -112,7 +112,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, BlockingI2c<I2C2, impl Pins<I2C2>>, impl 
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut delay = Delay::new(cp.SYST, &clocks);
+    let mut delay = cp.SYST.delay(&clocks);
 
     let mut gpioa = p.GPIOA.split();
 
@@ -382,9 +382,9 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
@@ -408,7 +408,7 @@ fn setup() -> (PA8<Output<OpenDrain>>, I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin
             .into_alternate_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh); // sda on PA10
     sda.internal_pull_up(&mut gpioa.pupdr, true);
 
-    let i2c = I2c::i2c1(p.I2C1, (scl, sda), i2cConfig::new(400.khz(), clocks), &mut rcc.apb1r1);
+    let i2c = I2c::i2c1(p.I2C1, (scl, sda), i2cConfig::new(400.kHz(), clocks), &mut rcc.apb1r1);
 
     let led = setup_led(p.GPIOC.split(&mut rcc.ahb2));
 

@@ -117,11 +117,10 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
-        gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+        Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -143,7 +142,7 @@ fn setup() -> (
     let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let mut delay = Delay::new(cp.SYST, &clocks);
+    let mut delay = cp.SYST.delay(&clocks);
 
     let mut afio = dp.AFIO.constrain();
 
@@ -596,9 +595,9 @@ fn setup() -> (
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut delay = Delay::new(cp.SYST, clocks);
@@ -633,7 +632,7 @@ fn setup() -> (
     let i2c = I2c::i2c1(
         dp.I2C1,
         (scl, sda),
-        i2cConfig::new(400.khz(), clocks),
+        i2cConfig::new(400.kHz(), clocks),
         &mut rcc.apb1r1,
     );
 

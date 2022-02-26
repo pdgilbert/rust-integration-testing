@@ -422,9 +422,9 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);

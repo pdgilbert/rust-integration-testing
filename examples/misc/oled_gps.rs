@@ -89,7 +89,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     device::I2C2,
     device::USART2,
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
@@ -144,7 +144,7 @@ fn setup() -> (
         1000,
     );
 
-    (tx, rx, i2c, Delay::new(cp.SYST, &clocks))
+    (tx, rx, i2c, cp.SYST.delay(&clocks))
 }
 
 
@@ -481,9 +481,9 @@ fn setup() -> (
     let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(80.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(80.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
@@ -525,7 +525,7 @@ fn setup() -> (
         I2c::i2c1(
             p.I2C1,
             (scl, sda),
-            i2cConfig::new(400.khz(), clocks),
+            i2cConfig::new(400.kHz(), clocks),
             &mut rcc.apb1r1,
         ),
         Delay::new(cp.SYST, clocks),

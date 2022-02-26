@@ -38,13 +38,16 @@ pub fn setup() -> ( I2c1Type, LedType, Delay) {
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     pac::{CorePeripherals, Peripherals,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (I2c1Type, LedType, Delay) {
+pub type DelayType = Delay;
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup() -> (I2c1Type, LedType, DelayType) {
     //            (BlockingI2c<I2C1, impl Pins<I2C1>>, impl LED, , Delay)  works too 
     let dp = Peripherals::take().unwrap();
 
@@ -53,7 +56,10 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
+    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
+    let cp = CorePeripherals::take().unwrap();
+    let delay = cp.SYST.delay(&clocks);
+    // or let delay = dp.TIM2.delay_us(&clocks);
 
     (i2c, led, delay)
 }
@@ -231,7 +237,7 @@ pub fn setup() -> (I2c1Type, LedType, Delay) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
-    let clocks = rcc.cfgr.sysclk(80.mhz()).pclk1(80.mhz()).pclk2(80.mhz()).freeze(&mut flash.acr, &mut pwr);
+    let clocks = rcc.cfgr.sysclk(80.MHz()).pclk1(80.MHz()).pclk2(80.MHz()).freeze(&mut flash.acr, &mut pwr);
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));

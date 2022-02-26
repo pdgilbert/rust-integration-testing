@@ -611,9 +611,9 @@ mod app {
         let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
         let clocks = rcc
             .cfgr
-            .sysclk(80.mhz())
-            .pclk1(80.mhz())
-            .pclk2(80.mhz())
+            .sysclk(80.MHz())
+            .pclk1(80.MHz())
+            .pclk2(80.MHz())
             .freeze(&mut flash.acr, &mut pwr);
 
        let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
