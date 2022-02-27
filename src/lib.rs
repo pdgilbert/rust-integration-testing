@@ -19,7 +19,7 @@ pub mod i2c;
 pub mod alt_delay;
 
 //NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS
-pub mod lora_spi_gps_usart;
+//pub mod lora_spi_gps_usart;
 
 // consider putting some real tests here
 
