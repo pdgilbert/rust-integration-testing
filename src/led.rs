@@ -101,6 +101,8 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
     led
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     delay::Delay,
@@ -128,8 +130,10 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 }
 
 
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
+    //timer::Delay,
     timer::SysDelay as Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     prelude::*,
@@ -153,6 +157,7 @@ pub fn setup_led(gpiox: Parts) -> LedType {
     
     led
 }
+
 
 
 #[cfg(feature = "stm32f7xx")]

@@ -100,10 +100,10 @@ fn main() -> ! {
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
         
-        // power caclulated by P=IV.  
+        // power caclulated by P=IV.  (mA x mV /1000 = mW)
         //If the ina is wired with Vin- to battery and Vin+ to load sign then the
         // display will show "+" for battery charging and "-" for discharging.
-        let pc = i as i32 * v as i32;
+        let pc = i as i32 * v as i32 / 1000_i32;
 
         write!(lines[0], "V: {}mv Vs: {}mV", v, vs).unwrap();
         write!(lines[1], "I: {}mA P:{}mW [{}mW]", i,  p, pc).unwrap();

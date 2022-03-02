@@ -11,6 +11,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 // pub mod lora_spi_gps_usart; 
+pub mod dht_i2c_led_delay;
 pub mod adc_i2c_led_delay;
 pub mod i2c_led_delay;
 

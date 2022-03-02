@@ -10,6 +10,7 @@
 //!  See https://blog.eldruin.com/ads1x1x-analog-to-digital-converter-driver-in-rust/
 //!    for much more detailed description.
 
+//! See examples/misc-i2c-drivers/ina219-display.rs another (better) method to monitor power usage.
 //! See examples/rtic/battery_monitor_ads1015_rtic.rs  foran rtic version..
 //! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for an rtic version using dma bufferring.
 

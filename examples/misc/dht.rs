@@ -382,13 +382,13 @@ fn setup() -> (DhtType, Delay) {
 
 #[entry]
 fn main() -> ! {
-    let (mut dht_data, mut delay) = setup(); //dht_data is usually pa8 in setup functions
+    let (mut dht, mut delay) = setup(); //dht is usually pa8 in setup functions
 
     hprintln!("Reading sensor...").unwrap();
 
     // single read before loop for debugging purposes
     //
-    //let r = Reading::read(&mut delay, &mut dht_data);
+    //let r = Reading::read(&mut delay, &mut dht);
     //match r {
     //        Ok(Reading {
     //            temperature,
@@ -398,7 +398,7 @@ fn main() -> ! {
     //}
 
     loop {
-        match Reading::read(&mut delay, &mut dht_data) {
+        match Reading::read(&mut delay, &mut dht) {
             Ok(Reading {
                 temperature,
                 relative_humidity,
