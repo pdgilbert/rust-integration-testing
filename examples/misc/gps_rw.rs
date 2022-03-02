@@ -238,7 +238,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         ), //rx pa10  for console
         clocks,
         Config {
-            baud_rate: 9600.Bps(),
+            baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
@@ -253,7 +253,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         ), //rx pa3  for GPS
         clocks,
         Config {
-            baud_rate: 9600.Bps(),
+            baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },

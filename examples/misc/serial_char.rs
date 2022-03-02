@@ -333,7 +333,7 @@ fn setup() -> (
         ), //rx pa10
         clocks,
         Config {
-            baud_rate: 9600.Bps(),
+            baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
@@ -348,7 +348,7 @@ fn setup() -> (
         ), //rx pa3
         clocks,
         Config {
-            baud_rate: 115_200.Bps(),
+            baud_rate: 115_200.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
@@ -365,7 +365,7 @@ fn setup() -> (
         ), //rx pb11
         clocks,
         Config {
-            baud_rate: 115_200.Bps(),
+            baud_rate: 115_200.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },

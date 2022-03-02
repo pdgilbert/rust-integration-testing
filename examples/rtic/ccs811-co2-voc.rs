@@ -390,7 +390,7 @@ mod app {
            ),
            clocks,
            Config {
-               baud_rate: 115200.Bps(), //should be bps. See https://github.com/stm32-rs/stm32f7xx-hal/issues/141
+               baud_rate: 115200.bps(), //should be bps. See https://github.com/stm32-rs/stm32f7xx-hal/issues/141
                oversampling: Oversampling::By16,
                character_match: None,
            },

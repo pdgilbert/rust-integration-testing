@@ -168,7 +168,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
         ), //rx pa10
         clocks,
         Config {
-            baud_rate: 115_200.Bps(),
+            baud_rate: 115_200.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
