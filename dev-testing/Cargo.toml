@@ -446,3 +446,7 @@ path = "examples/misc-i2c-drivers/vl53lox-display.rs"
 [[example]]
 name = "ina219-display"
 path = "examples/misc-i2c-drivers/ina219-display.rs"
+
+[[example]]
+name = "air_quality"
+path = "examples/misc-i2c-drivers/air_quality.rs"

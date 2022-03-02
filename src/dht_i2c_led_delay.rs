@@ -100,6 +100,7 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
+        //delay::Delay,
         gpio::{Output, OpenDrain,
                gpioa::{PA8,}, 
         },
@@ -115,6 +116,7 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f3xx")]
     pub use crate::alt_delay::{AltDelay as DelayType};
+    //pub type DelayType = Delay;
 
     #[cfg(feature = "stm32f3xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -142,6 +144,8 @@ pub use crate::led::{setup_led, LED, LedType};
        led.off();
 
        let delay = DelayType{};
+       //let delay = dp.TIM2.delayMs(&clocks);
+       //let mut delay = Delay::new(dp.TIM2, clocks);
 
        (dht, i2c, led, delay)
     }
@@ -214,6 +218,7 @@ pub use crate::led::{setup_led, LED, LedType};
 
        let led = setup_led(dp.GPIOC.split());
        let delay = DelayType{};
+       //let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
     }
