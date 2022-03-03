@@ -23,13 +23,24 @@ use core::fmt::Write;
 
 use  ina219::{INA219,}; //INA219_ADDR
 
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+
+//  note that larger font size increases memory and may require building with --release
+//  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+//  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+//  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
+
+//common display sizes are 128x64 and 128x32
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+
+const VPIX:i32 = 16;  // vertical pixels for a line, including space
+
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, };
 use embedded_hal::blocking::delay::DelayMs;
@@ -49,17 +60,12 @@ fn main() -> ! {
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-    //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
     //hprintln!("display.flush").unwrap();
 
-    //  note that larger font size increases memory and may require building with --release
-    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
@@ -112,7 +118,7 @@ fn main() -> ! {
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,
-                Point::new(0, i as i32 * 16),
+                Point::new(0, i as i32 * VPIX),
                 text_style,
                 Baseline::Top,
             )
