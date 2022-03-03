@@ -12,8 +12,8 @@ pub use crate::led::{setup_led, LED, LedType};
     #[cfg(feature = "stm32f0xx")]
     pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
 
-    pub use embedded_hal::blocking::delay::DelayUs;
-    pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
+    pub use embedded_hal::delay::blocking::DelayUs;
+   // pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
     // A delay is used in sensor (dht) initialization and read. 
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick

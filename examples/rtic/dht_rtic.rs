@@ -77,7 +77,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayUs, MONOCLOCK};
 
     #[cfg(any(feature = "stm32f3xx", feature = "stm32h7xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
@@ -140,11 +140,11 @@ mod app {
         let (mut dht, i2c, mut led, mut delay) = setup_dp(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        delay.delay_ms(1000u32).unwrap();  
         led.off();
 
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
-        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        delay.delay_ms(2000_u32).unwrap(); //  2 second delay for dhtsensor initialization
 
         let _manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 //
@@ -163,9 +163,9 @@ mod app {
         // next turn LED for a period of time that can be used to calibrate the delay timer.
         // Ensure that nothing is spawned above. This relies on delay blocking.
         led.on();
-        delay.delay_ms(10000u32);  
+        delay.delay_ms(10000u32).unwrap();  
         led.off();
-        delay.delay_ms(1000u32);  
+        delay.delay_ms(1000u32).unwrap();  
         read_and_display::spawn().unwrap();
 
         hprintln!("exit init").unwrap();
