@@ -284,7 +284,7 @@ fn setup() -> (
         ), //rx pa3  for GPS tx
         clocks,
         Config {
-            baud_rate: 9600.Bps(),
+            baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
         },
