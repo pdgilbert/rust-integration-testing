@@ -130,10 +130,8 @@ where
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let (mut dht, i2c, mut led, mut delay) = setup_dp(dp);
-    
-    led.on();
 
- //   led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
+    led.blink(1000_u16, &mut delay); 
 
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
@@ -157,19 +155,18 @@ fn main() -> ! {
     .unwrap();
 
     let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
-    //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+    //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's default INA219_ADDR prints as 65
 
     ina.calibrate(0x0100).unwrap();
 
     delay.delay_ms(1000_u32);
-    led.off();
 
- //   led.blink(3000_u16, &mut delay);
+    led.blink(2000_u16, &mut delay);
 
     loop {
         // Blink LED to check that everything is actually running.
         // Note that blink takes about a mA current and might make current measurement noisy.
-        //led.blink(10_u16, &mut delay);
+        led.blink(20_u16, &mut delay);
         
         let z = Reading::read(&mut delay, &mut dht);
         let (dht_temp, dht_humidity) = match z {
