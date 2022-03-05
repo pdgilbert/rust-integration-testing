@@ -106,7 +106,7 @@ mod app {
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
         //delay::Delay,
-        pac::{Peripherals, TIM2},
+        pac::{Peripherals,},
         prelude::*,
     };
 

@@ -50,7 +50,7 @@ use stm32f0xx_hal::{
         gpioa::{PA1, PA5, PA6, PA7},
         Alternate, Output, PushPull, AF0,
     },
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{CorePeripherals, Peripherals, TIM2, SPI1},
     prelude::*,
     spi::{EightBit, Spi},
     //spi::{EightBit, MisoPin, MosiPin, SckPin, Spi},
@@ -94,7 +94,8 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
+    timer::Delay,
+    //timer::SysDelay as Delay,
     gpio::{gpioa::PA4,Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
@@ -102,11 +103,14 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
+pub type DelayType = Delay<TIM2, 1000000_u32>;
+
+#[cfg(feature = "stm32f1xx")]
 fn setup() -> (
     Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
     PA4<Output<PushPull>>,
     impl LED,
-    Delay,
+    DelayType,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();

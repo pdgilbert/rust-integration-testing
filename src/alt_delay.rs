@@ -64,6 +64,12 @@ impl DelayMs<u8> for AltDelay {
     }
 }
 
+impl DelayMs<u16> for AltDelay {
+    fn delay_ms(&mut self, ms: u16) {
+        delay((ms as u32) * (ALTCLOCK / 1000)); 
+    }
+}
+
 impl DelayMs<u32> for AltDelay {
     fn delay_ms(&mut self, ms: u32) {
         delay((ms as u32) * (ALTCLOCK / 1000)); 

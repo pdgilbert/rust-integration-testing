@@ -117,32 +117,36 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
+    timer::Delay,
+    //timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
         Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, TIM2, I2C1},
     prelude::*,
 };
+
+#[cfg(feature = "stm32f1xx")]
+pub type DelayType = Delay<TIM2, 1000000_u32>;
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
     BlockingI2c<I2C1, impl Pins<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let mut delay = cp.SYST.delay(&clocks);
+    //let mut delay = cp.SYST.delay(&clocks);
+    let mut delay = dp.TIM2.delay_us(&clocks);
 
     let mut afio = dp.AFIO.constrain();
 

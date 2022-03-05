@@ -15,6 +15,8 @@ pub mod dht_i2c_led_delay;
 pub mod adc_i2c_led_delay;
 pub mod i2c_led_delay;
 
+pub mod dp;
+pub mod delay;
 pub mod led;
 pub mod i2c;
 pub mod alt_delay;

@@ -1,6 +1,9 @@
 //! Note that (on board) led pin settings are specific to a board used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
+
+pub use crate::delay::{DelayType};
+
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
     // implementation should deal with this difference
@@ -9,14 +12,14 @@ pub trait LED {
 
     // default methods. Note these use delay so DO NOT USE IN rtic.
 
-    fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
+    fn blink(&mut self, time: u16, delay: &mut DelayType) -> () {
         self.on();
         delay.delay_ms(time);
         self.off();
         delay.delay_ms(time); //consider delay.delay_ms(500u16);
     }
 
-    fn blink_ok(&mut self, delay: &mut Delay) -> () {
+    fn blink_ok(&mut self, delay: &mut DelayType) -> () {
         let dot: u16 = 5;
         let dash: u16 = 200;
         let spc: u16 = 500;
@@ -44,9 +47,7 @@ pub trait LED {
 // impl LED would work in function signature but does not work in rtic share
 // or implimentation of methods,  so LedType is defined in the following.
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-
 use stm32f0xx_hal::{
-    delay::Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     prelude::*,
 };
@@ -74,7 +75,6 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     prelude::*,
 };
@@ -105,7 +105,7 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{gpioe::{PE15, Parts}, Output, PushPull},
     prelude::*,
 };
@@ -133,8 +133,6 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    //timer::Delay,
-    timer::SysDelay as Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     prelude::*,
 };
@@ -186,9 +184,10 @@ pub fn setup_led(gpiox: Parts) -> LedType {
     led
 }
 
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    delay::Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
     prelude::*,
 };
@@ -218,7 +217,6 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    delay::Delay,
     gpio::{
         gpiob::{PB8, PB9},
         gpioc::{PC13, Parts},
@@ -252,9 +250,7 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
-    delay::Delay,
     gpio::{gpioc::PC9, Output, PushPull, Input, Floating},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32l1xx")]
@@ -262,6 +258,9 @@ use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
 pub type LedType = PC9<Output<PushPull>>;  //LEDs on STM32L100 Discovery kit: PC9 is green LD3,  PC8 is blue LD4, 
+
+#[cfg(feature = "stm32l1xx")]
+use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_led(pin: PC9<Input<Floating>>) -> LedType {
@@ -282,13 +281,14 @@ pub fn setup_led(pin: PC9<Input<Floating>>) -> LedType {
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    delay::Delay,
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
 pub type LedType = PC13<Output<PushPull>>;
+
+#[cfg(feature = "stm32l4xx")]
+use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
 
 #[cfg(feature = "stm32l4xx")]
 pub fn setup_led(mut gpiox: Parts) -> LedType {
