@@ -37,7 +37,8 @@ use embedded_hal::blocking::delay::DelayMs;
 
 use mcp4x;
 
-pub use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::delay::{DelayType};
 
 
 
@@ -150,7 +151,6 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    delay::Delay,
     gpio::{gpiob::PB5, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
@@ -161,8 +161,8 @@ use stm32f3xx_hal::{
 fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,
     PB5<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,   //impl LED,
+    DelayType,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -212,9 +212,8 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")]
 // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, TransferModeNormal},
 };
@@ -223,10 +222,9 @@ use stm32f4xx_hal::{
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,   //impl LED,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
@@ -251,8 +249,8 @@ fn setup() -> (
 
     let led = setup_led(dp.GPIOC.split());
 
-    //let delay = Delay::new(cp.SYST, &clocks);
-    let delay = cp.SYST.delay(&clocks);
+    //let delay = cp.SYST.delay(&clocks);
+    let delay = dp.TIM2.delay_us(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -457,7 +455,7 @@ fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>)>,
     PA1<Output<PushPull>>,
     impl LED,
-    Delay,
+    DelayType,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -498,8 +496,9 @@ fn setup() -> (
     cs.set_high();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+    let delay = dp.TIM2.delay_us(&clocks);
 
-    (spi, cs, led, Delay::new(cp.SYST, clocks))
+    (spi, cs, led, delay)
 }
 
 // End of hal/MCU specific setup. Following should be generic code.

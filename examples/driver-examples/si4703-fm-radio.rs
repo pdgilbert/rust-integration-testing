@@ -48,7 +48,8 @@ pub trait SEEK {
     //fn stcint(&mut self) -> ;
 }
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup_led, LED};
+use rust_integration_testing_of_examples::led::{setup_led, LED};
+use rust_integration_testing_of_examples::delay::{DelayType};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -269,12 +270,12 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
+    //timer::SysDelay as Delay,
     gpio::{Input, PullDown, PullUp,
            gpiob::{PB10, PB11, PB6},        
     },
     i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
 
@@ -282,17 +283,17 @@ use stm32f4xx_hal::{
 fn setup() -> (
     I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
     //let mut delay = Delay::new(cp.SYST, &clocks);
-    let mut delay = cp.SYST.delay(&clocks);
+    //let mut delay = cp.SYST.delay(&clocks);
+    let mut delay = dp.TIM2.delay_us(&clocks);
 
     let gpiob = dp.GPIOB.split(); // for i2c
 

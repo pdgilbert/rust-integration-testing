@@ -160,7 +160,6 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
     gpio::{gpioc::{PC13,  Parts}, Output, PushPull},
     prelude::*,
 };

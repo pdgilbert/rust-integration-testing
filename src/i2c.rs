@@ -204,7 +204,7 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks) -> I2c2Type {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    gpio::{AlternateOD, AF4,
+    gpio::{Alternate, OpenDrain,
            gpiob::{PB8, PB9, PB10, PB11, Parts as PartsB},
     },
     i2c::{BlockingI2c, Mode, },
@@ -214,7 +214,7 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-pub type I2c1Type = BlockingI2c<I2C1, PB8<AlternateOD<AF4>>, PB9<AlternateOD<AF4>>>;
+pub type I2c1Type = BlockingI2c<I2C1, PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>>;
 //pub type I2c1Type =  BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
 
 #[cfg(feature = "stm32f7xx")]
@@ -239,7 +239,7 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut AP
 }
 
 #[cfg(feature = "stm32f7xx")]
-pub type I2c2Type = BlockingI2c<I2C2, PB10<AlternateOD<AF4>>, PB11<AlternateOD<AF4>>>;
+pub type I2c2Type = BlockingI2c<I2C2, PB10<Alternate<4u8, OpenDrain>>, PB11<Alternate<4u8, OpenDrain>>>;
 
 #[cfg(feature = "stm32f7xx")]
 pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut APB1) -> I2c2Type {
