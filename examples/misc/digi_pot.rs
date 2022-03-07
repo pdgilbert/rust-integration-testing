@@ -35,7 +35,10 @@ use cortex_m_rt::entry;
 
 use mcp4x;
 
-pub use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::delay::{DelayType};
+// need to resolve move problem to get this to work
+//use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 
 
 
@@ -58,13 +61,12 @@ use stm32f0xx_hal::{
 fn setup() -> (
     Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate<AF0>>, EightBit>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
     //fn setup() -> (Spi<SPI1, impl SckPin<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>>) {
     //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>> ) {
     //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, EightBit>, PA1<Output<PushPull>> ) {
-    let cp = CorePeripherals::take().unwrap();
     let mut dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 
@@ -84,17 +86,19 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
+    //let cp = CorePeripherals::take().unwrap();
+    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
-    (spi, cs, led, Delay::new(cp.SYST, &rcc))
+    (spi, cs, led, delay)
 }
 
 
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
+    //timer::SysDelay as Delay,
     gpio::{gpioa::PA4,Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, Spi1NoRemap},
 };
@@ -103,10 +107,9 @@ use stm32f1xx_hal::{
 fn setup() -> (
     Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
     PA4<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
@@ -135,7 +138,8 @@ fn setup() -> (
     );
 
     let led = setup_led(dp.GPIOC.split());
-    let delay = cp.SYST.delay(&clocks);
+    //let delay = cp.SYST.delay(&clocks);
+    let delay = dp.TIM2.delay_us(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -144,9 +148,8 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    delay::Delay,
     gpio::{gpiob::PB5, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{MisoPin, MosiPin, SckPin, Spi},
 };
@@ -155,10 +158,9 @@ use stm32f3xx_hal::{
 fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,
     PB5<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,   //impl LED,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.constrain();
@@ -196,7 +198,7 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = DelayType{};
 
     (spi, cs, led, delay)
 }
@@ -206,9 +208,8 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")]
 // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, TransferModeNormal},
 };
@@ -217,10 +218,9 @@ use stm32f4xx_hal::{
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,   //impl LED,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
@@ -228,6 +228,9 @@ fn setup() -> (
 
     let gpioa = dp.GPIOA.split();
 
+    // There is a problem with this because gpioa is move and then needed for cs below.
+    //let spi = setup_spi(dp.SPI1, gpioa,  &clocks);
+    
     let spi = Spi::new(
         dp.SPI1,
         (
@@ -245,8 +248,8 @@ fn setup() -> (
 
     let led = setup_led(dp.GPIOC.split());
 
-    //let delay = Delay::new(cp.SYST, &clocks);
-    let delay = cp.SYST.delay(&clocks);
+    //let delay = cp.SYST.delay(&clocks);
+    let delay = dp.TIM2.delay_us(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -255,9 +258,8 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{ClockDivider, Enabled, Pins, Spi},
 };
@@ -266,13 +268,12 @@ use stm32f7xx_hal::{
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>, Enabled<u8>>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
+    //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
 
@@ -292,17 +293,17 @@ fn setup() -> (
     cs.set_high();
 
     let led = setup_led(dp.GPIOC.split());
+    let delay = DelayType{};
 
-    (spi, cs, led, Delay::new(cp.SYST, clocks))
+    (spi, cs, led, delay)
 }
 
 
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    delay::Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Enabled, Spi},
 };
@@ -311,8 +312,7 @@ use stm32h7xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, impl LED, Delay) {
-    let cp = CorePeripherals::take().unwrap();
+fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
@@ -338,17 +338,17 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, impl LED, Delay) {
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+    let delay = DelayType{};
 
-    (spi, cs, led, Delay::new(cp.SYST, ccdr.clocks))
+    (spi, cs, led, delay)
 }
 
 
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    delay::Delay,
     gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     spi::{Pins, Spi},
@@ -358,10 +358,9 @@ use stm32l0xx_hal::{
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
 
@@ -382,22 +381,22 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let delay = dp.TIM2.delay_us(&clocks);
 
-    (spi, cs, led, Delay::new(cp.SYST, rcc.clocks))
+    (spi, cs, led, delay)
 }
 
 
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery kit stm32l100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
-    delay::Delay,
     gpio::{Output, PushPull,
            gpioa::PA4, 
     },
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     spi::{Pins, Spi},
-    stm32::{CorePeripherals, Peripherals, SPI1},
+    stm32::{Peripherals, SPI1},
 };
 
 #[cfg(feature = "stm32l1xx")]
@@ -407,10 +406,9 @@ use embedded_hal::digital::v2::OutputPin;
 fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA4<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
@@ -432,16 +430,17 @@ fn setup() -> (
     let mut cs = gpioa.pa4.into_push_pull_output();
     cs.set_high().unwrap();
 
-    (spi, cs, led, cp.SYST.delay(rcc.clocks))
+    let delay = DelayType{};
+
+    (spi, cs, led, delay)
 }
 
 
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    delay::Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{MisoPin, MosiPin, SckPin, Spi},
 };
@@ -450,10 +449,9 @@ use stm32l4xx_hal::{
 fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>)>,
     PA1<Output<PushPull>>,
-    impl LED,
-    Delay,
+    LedType,
+    DelayType,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
@@ -492,8 +490,10 @@ fn setup() -> (
     cs.set_high();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+    let delay = DelayType{};
+    //let delay = dp.TIM2.delay_us(&clocks);
 
-    (spi, cs, led, Delay::new(cp.SYST, clocks))
+    (spi, cs, led, delay)
 }
 
 // End of hal/MCU specific setup. Following should be generic code.

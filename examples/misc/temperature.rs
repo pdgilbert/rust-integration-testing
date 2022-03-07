@@ -325,7 +325,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    adc::{Adc, ClockMode},
+    adc::{Adc, CommonAdc, config::Config},
     gpio::{gpiob::PB1, Analog},
     pac::Peripherals,
     pac::{ADC1, ADC3},
@@ -344,7 +344,7 @@ fn setup() -> (
     // THIS BUILDS WITH CRITICAL SECTIONS COMMENTED OUT,  BUT DOES NOT YET BUILDING PROPERLY
     // see https://github.com/stm32-rs/stm32f3xx-hal/issues/163 for some suggestions
 
-    let mut p = Peripherals::take().unwrap();
+    let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
 
     // Configure ADC clocks. See Notes of Interest above.
@@ -352,21 +352,12 @@ fn setup() -> (
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
 
+    let adc_common1_2 = CommonAdc::new(p.ADC1_2, &clocks, &mut rcc.ahb);
+    let adc_common3_4 = CommonAdc::new(p.ADC3_4, &clocks, &mut rcc.ahb);
+
     let adcs: Adcs<Adc<ADC1>, Adc<ADC3>> = Adcs {
-        ad_1st: Adc::adc1(
-            p.ADC1,
-            &mut p.ADC1_2,
-            &mut rcc.ahb,
-            ClockMode::default(),
-            clocks,
-        ),
-        ad_2nd: Adc::adc3(
-            p.ADC3,
-            &mut p.ADC3_4,
-            &mut rcc.ahb,
-            ClockMode::default(),
-            clocks,
-        ),
+        ad_1st: Adc::new(p.ADC1, Config::default(), &clocks, &adc_common1_2,),
+        ad_2nd: Adc::new(p.ADC3, Config::default(), &clocks, &adc_common3_4,),
     };
     // adc3 can use pb1, but not adc2
 

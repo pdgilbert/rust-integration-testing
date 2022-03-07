@@ -68,6 +68,7 @@ impl DelayUs for AltDelay {
    }
 }
 
+
 // newer (circa Feb 2022)  usage has  delay_ms in trait  DelayUs but
 // dht needs DelayMs trait 
 
@@ -81,6 +82,17 @@ impl<T: core::ops::Mul<Output = u32> + core::convert::From<u32>>  DelayMs<T> for
        //ms.checked_mul(ALTCLOCK / 1000)
        delay(ms2); 
    }
+
+//impl DelayMs<u16> for AltDelay {
+//    fn delay_ms(&mut self, ms: u16) {
+//        delay((ms as u32) * (ALTCLOCK / 1000)); 
+//    }
+//}
+//
+//impl DelayMs<u32> for AltDelay {
+//    fn delay_ms(&mut self, ms: u32) {
+//        delay((ms as u32) * (ALTCLOCK / 1000)); 
+//    }
 }
 
 //impl Instance for DelayMs<u32> { }

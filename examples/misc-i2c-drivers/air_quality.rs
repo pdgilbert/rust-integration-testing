@@ -21,19 +21,29 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 //use cortex_m_semihosting::{debug, hprintln};
-use cortex_m_semihosting::{hprintln};
+//use cortex_m_semihosting::{hprintln};
 //use rtt_target::{rprintln, rtt_init_print};
 
 use core::fmt::Write;
 
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
+//  note that larger font size increases memory and may require building with --release
+//  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+//  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+//  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
+
+//common display sizes are 128x64 and 128x32
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+
+const VPIX:i32 = 12; // vertical pixels for a line, including space
+
 use embedded_graphics::{
-    mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10  FONT_8X13
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyle, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
-
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
@@ -44,10 +54,7 @@ use dht_sensor::*;
 
 use  ina219::{INA219,};
 
-
-use rust_integration_testing_of_examples::dht_i2c_led_delay::{ setup_dp, DelayMs, };
-
-// setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
+use rust_integration_testing_of_examples::dht_i2c_led_delay::{ setup_dp, DelayMs, LED, };
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::pac::Peripherals;
@@ -87,7 +94,7 @@ fn display<S>(
     power: i16,
     power_calc: i32,
     text_style: MonoTextStyle<BinaryColor>,
-    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    display: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
 ) -> ()
 where
     S: DisplaySize,
@@ -100,21 +107,21 @@ where
 
         write!(lines[0], "V: {}mv Vs: {}mV", voltage, voltage_shunt).unwrap();
         write!(lines[1], "I: {}mA P:{}mW [{}mW]", current, power, power_calc).unwrap();
-        write!(lines[2], "temperature{:3} C RH {:3}", dht_temp, dht_humidity).unwrap();
+        write!(lines[2], "{:3} C   RH {:3}%", dht_temp, dht_humidity).unwrap();
 
-    disp.clear();
-    for i in 0..lines.len() {
+    display.clear();
+    for (i, line) in lines.iter().enumerate() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(
-            &lines[i],
-            Point::new(0, i as i32 * 16),
+            line,
+            Point::new(0, i as i32 * VPIX),
             text_style,
             Baseline::Top,
         )
-        .draw(&mut *disp)
+        .draw(&mut *display)
         .unwrap();
     }
-    disp.flush().unwrap();
+    display.flush().unwrap();
     ()
 }
 
@@ -122,19 +129,19 @@ where
 #[entry]
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, _led, mut delay) = setup_dp(dp);
+    let (mut dht, i2c, mut led, mut delay) = setup_dp(dp);
 
- //   led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
+    led.blink(1000_u16, &mut delay); 
 
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-    let mut disp = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let mut disp = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     disp.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_8X13) //.&FONT_6X10  &FONT_8X13
+        .font(&FONT) 
         .text_color(BinaryColor::On)
         .build();
 
@@ -148,29 +155,28 @@ fn main() -> ! {
     .unwrap();
 
     let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
-    //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+    //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's default INA219_ADDR prints as 65
 
     ina.calibrate(0x0100).unwrap();
 
     delay.delay_ms(1000_u32);
 
- //   led.blink(3000_u16, &mut delay);
+    led.blink(2000_u16, &mut delay);
 
     loop {
         // Blink LED to check that everything is actually running.
-        // Note that blink takes about a mA current and makes measurement below noisy.
-        // Comment out blinking to calibrate scale.
- //       led.blink(10_u16, &mut delay);
+        // Note that blink takes about a mA current and might make current measurement noisy.
+        led.blink(20_u16, &mut delay);
         
         let z = Reading::read(&mut delay, &mut dht);
         let (dht_temp, dht_humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
-               =>  {hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
+               =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
                     //show_display(temperature, relative_humidity, text_style, &mut display)
                     (temperature, relative_humidity)
                    },
-            Err(e) 
-               =>  {hprintln!("dht Error {:?}", e).unwrap(); 
+            Err(_e) 
+               =>  {//hprintln!("dht Error {:?}", e).unwrap(); 
                     //panic!("Error reading DHT")
                     (25, 40)  //supply default values
                    },

@@ -5,6 +5,8 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
+pub use crate::dp::{Peripherals};
+pub use crate::delay::{DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(not(feature = "stm32f0xx"))]
@@ -21,11 +23,20 @@ pub use crate::led::{setup_led, LED, LedType};
     //  number of indicated clock cycles.
 
 
+pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {    
+   let dp = Peripherals::take().unwrap();
+   let (dht, i2c, led,delay) = setup_dp(dp);
+
+   (dht, i2c, led, delay)
+}
+
+
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{
+        delay::Delay,
         gpio::{gpioa::PA8, OpenDrain, Output},
-        pac::Peripherals,
+        pac::{CorePeripherals},
         prelude::*,
     };
  
@@ -34,9 +45,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f0xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32f0xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f0xx")]
     pub fn setup_dp(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {    
@@ -49,8 +57,12 @@ pub use crate::led::{setup_led, LED, LedType};
 
        let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
        led.off();
-
-       let delay = DelayType{};
+       
+       //let delay = DelayType{};
+       let cp = CorePeripherals::take().unwrap();
+       let delay = Delay::new(cp.SYST, &rcc);
+       //let delay = cp.SYST.delay(&rcc);
+       //let delay = dp.TIM3.delay_us(&rcc);
 
        (dht, i2c, led, delay)
     }
@@ -59,9 +71,7 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f1xx")]
     use stm32f1xx_hal::{
-        timer::Delay,
         gpio::{Output, gpioa::PA8, OpenDrain},   //, gpioc::PC13, PushPull, State},
-        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -72,9 +82,6 @@ pub use crate::led::{setup_led, LED, LedType};
     pub type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f1xx")]
-    pub type DelayType = Delay<TIM2, 1000000_u32>;
-
-    #[cfg(feature = "stm32f1xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut gpioa = dp.GPIOA.split();
        let dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
@@ -82,6 +89,16 @@ pub use crate::led::{setup_led, LED, LedType};
        let rcc = dp.RCC.constrain();
        let mut afio = dp.AFIO.constrain();
        let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+
+        //hprintln!("hclk {:?}",   clocks.hclk()).unwrap();
+        //hprintln!("sysclk {:?}", clocks.sysclk()).unwrap();
+        //hprintln!("pclk1 {:?}",  clocks.pclk1()).unwrap();
+        //hprintln!("pclk2 {:?}",  clocks.pclk2()).unwrap();
+        //hprintln!("pclk1_tim {:?}", clocks.pclk1_tim()).unwrap();
+        //hprintln!("pclk2_tim {:?}", clocks.pclk2_tim()).unwrap();
+        //hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
+        //hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
+
 
        //afio  needed for i2c1 (PB8, PB9) but not i2c2
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut afio, &clocks);
@@ -100,11 +117,9 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
     use stm32f3xx_hal::{
-        //delay::Delay,
         gpio::{Output, OpenDrain,
                gpioa::{PA8,}, 
         },
-        pac::Peripherals,
         prelude::*,
     };
 
@@ -113,10 +128,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f3xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32f3xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
-    //pub type DelayType = Delay;
 
     #[cfg(feature = "stm32f3xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -144,7 +155,7 @@ pub use crate::led::{setup_led, LED, LedType};
        led.off();
 
        let delay = DelayType{};
-       //let delay = dp.TIM2.delayMs(&clocks);
+       //let delay = dp.TIM2.delay_us(&clocks);
        //let mut delay = Delay::new(dp.TIM2, clocks);
 
        (dht, i2c, led, delay)
@@ -154,9 +165,7 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
-        timer::Delay,
         gpio::{Output, gpioa::PA8, OpenDrain}, 
-        pac::{Peripherals, TIM2},
         prelude::*,
     };
 
@@ -165,9 +174,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f4xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32f4xx")]
-    pub type DelayType = Delay<TIM2, 1000000_u32>;
 
     #[cfg(feature = "stm32f4xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -193,7 +199,6 @@ pub use crate::led::{setup_led, LED, LedType};
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::{
         gpio::{gpioa::PA8, Output, OpenDrain},
-        pac::Peripherals,
         prelude::*,
     };
 
@@ -202,9 +207,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32f7xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32f7xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32f7xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -227,11 +229,10 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::{
-          gpio::{Output, OpenDrain, 
-                 gpioa::PA8,
-          },
-          pac::Peripherals,
-          prelude::*,
+        gpio::{Output, OpenDrain, 
+               gpioa::PA8,
+        },
+        prelude::*,
     };
 
     #[cfg(feature = "stm32h7xx")]
@@ -239,9 +240,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32h7xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32h7xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32h7xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -259,6 +257,7 @@ pub use crate::led::{setup_led, LED, LedType};
        let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
        let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
        let delay = DelayType{};
+       //let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
     }
@@ -268,7 +267,6 @@ pub use crate::led::{setup_led, LED, LedType};
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
         gpio::{gpioc::PC13, Output, PushPull},
-        pac::Peripherals,
         prelude::*,
         rcc, // for ::Config but note name conflict with serial
     };
@@ -278,9 +276,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32l0xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32l0xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l0xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -292,7 +287,8 @@ pub use crate::led::{setup_led, LED, LedType};
  
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
        let led = setup_led(dp.GPIOC.split(&mut rcc));
-       let delay = DelayType{};
+       //let delay = DelayType{};
+       let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
     }
@@ -304,7 +300,6 @@ pub use crate::led::{setup_led, LED, LedType};
         gpio::{OpenDrain, Output,
                gpioa::PA8,
         },
-        stm32::Peripherals,
         rcc, // for ::Config but note name conflict with serial
         prelude::*,
     };
@@ -316,9 +311,6 @@ pub use crate::led::{setup_led, LED, LedType};
     pub type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32l1xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
-
-    #[cfg(feature = "stm32l1xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
@@ -327,6 +319,7 @@ pub use crate::led::{setup_led, LED, LedType};
        let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
        let delay = DelayType{};
+       //let delay = dp.TIM2.delay_us(&rcc.clocks);
 
        (dht, i2c, led, delay)
     }
@@ -338,7 +331,6 @@ pub use crate::led::{setup_led, LED, LedType};
         gpio::{Output, OpenDrain,
                gpioa::PA8,
         },
-        pac::Peripherals,
         prelude::*,
     };
 
@@ -347,9 +339,6 @@ pub use crate::led::{setup_led, LED, LedType};
 
     #[cfg(feature = "stm32l4xx")]
     pub type DhtPin = PA8<Output<OpenDrain>>;
-
-    #[cfg(feature = "stm32l4xx")]
-    pub use crate::alt_delay::{AltDelay as DelayType};
 
     #[cfg(feature = "stm32l4xx")]
     pub fn setup_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, DelayType) {
@@ -364,10 +353,9 @@ pub use crate::led::{setup_led, LED, LedType};
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
        let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
        let delay = DelayType{};
+       //let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
     }
-
-    // End of hal/MCU specific setup. Following should be generic code.
 
 

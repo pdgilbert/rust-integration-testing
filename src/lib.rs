@@ -15,8 +15,11 @@ pub mod dht_i2c_led_delay;
 pub mod adc_i2c_led_delay;
 pub mod i2c_led_delay;
 
+pub mod dp;
+pub mod delay;
 pub mod led;
 pub mod i2c;
+//pub mod spi; move problems need to be figured out for this
 pub mod alt_delay;
 
 //NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS

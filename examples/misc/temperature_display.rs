@@ -65,7 +65,12 @@ use embedded_graphics::{
     prelude::*,
     text::{Baseline, Text},
 };
+
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+
+use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+
+
 
 fn show_display<S>(
     thermistor: i16,
@@ -106,7 +111,6 @@ where
     ()
 }
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 
 #[entry]
 fn main() -> ! {
