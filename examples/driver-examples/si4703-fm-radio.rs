@@ -48,7 +48,9 @@ pub trait SEEK {
     //fn stcint(&mut self) -> ;
 }
 
+//use rust_integration_testing_of_examples::i2c_led_delay::{setup_i2c, setup_led, LED, DelayType};
 use rust_integration_testing_of_examples::led::{setup_led, LED};
+//use rust_integration_testing_of_examples::i2c::{setup_i2c1};
 use rust_integration_testing_of_examples::delay::{DelayType};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -68,7 +70,7 @@ use stm32f0xx_hal::{
 fn setup() -> (
     I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {

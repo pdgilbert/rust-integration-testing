@@ -1,7 +1,7 @@
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     delay::Delay,
-    pac::TIM3,
+    //pac::TIM3,
 };
 
 #[cfg(feature = "stm32f0xx")]

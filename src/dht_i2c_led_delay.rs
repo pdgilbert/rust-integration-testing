@@ -34,7 +34,9 @@ pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{
+        delay::Delay,
         gpio::{gpioa::PA8, OpenDrain, Output},
+        pac::{CorePeripherals},
         prelude::*,
     };
  
@@ -55,9 +57,12 @@ pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {
 
        let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
        led.off();
-
+       
        //let delay = DelayType{};
-       let delay = dp.TIM3.delay_us(&rcc);
+       let cp = CorePeripherals::take().unwrap();
+       let delay = Delay::new(cp.SYST, &rcc);
+       //let delay = cp.SYST.delay(&rcc);
+       //let delay = dp.TIM3.delay_us(&rcc);
 
        (dht, i2c, led, delay)
     }
