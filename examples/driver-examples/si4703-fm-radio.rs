@@ -120,19 +120,16 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::Delay,
+    //timer::Delay,
     //timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
         Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::{Peripherals, TIM2, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
-
-#[cfg(feature = "stm32f1xx")]
-pub type DelayType = Delay<TIM2, 1000000_u32>;
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
@@ -201,12 +198,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    delay::Delay,
     gpio::{Input,
         gpiob::{PB10, PB11, PB6},
     },
     i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
 
@@ -214,17 +210,18 @@ use stm32f3xx_hal::{
 fn setup() -> (
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
+    //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    let mut delay = Delay::new(cp.SYST, clocks);
+    //let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = DelayType{};
 
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
 
@@ -332,12 +329,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
     gpio::{Input, PullDown, PullUp,
            gpiob::{PB10, PB11, PB6},
     },
     i2c::{BlockingI2c, Mode, PinScl, PinSda},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
 
@@ -345,15 +341,15 @@ use stm32f7xx_hal::{
 fn setup() -> (
     BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let mut delay = Delay::new(cp.SYST, clocks);
+    //let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = DelayType{};
 
     let led = setup_led(dp.GPIOC.split());
 
@@ -398,12 +394,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    delay::Delay,
     gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
     },
     i2c::I2c,
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
 
@@ -411,15 +406,15 @@ use stm32h7xx_hal::{
 use embedded_hal::digital::v2::{InputPin,};
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
-    let cp = CorePeripherals::take().unwrap();
+fn setup() -> (I2c<I2C1>, impl LED, DelayType, impl SEEK, PB6<Input<PullUp>>) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
     let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
-    let mut delay = Delay::new(cp.SYST, clocks);
+    //let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = DelayType{};
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 
@@ -520,14 +515,13 @@ fn setup() -> (
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
-    delay::Delay,
     gpio::{Input, PullDown, PullUp,
            gpiob::{ PB10, PB11, PB6},
     },
     i2c::{I2c, Pins},
     prelude::*,
     rcc, // for ::Config but avoid name conflict with serial
-    stm32::{CorePeripherals, Peripherals, I2C1},
+    stm32::{Peripherals, I2C1},
 };
 
 #[cfg(feature = "stm32l1xx")]
@@ -537,16 +531,16 @@ use embedded_hal::digital::v2::{InputPin};
 fn setup() -> (
     I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-    let clocks = rcc.clocks;
+    //let clocks = rcc.clocks;
 
-    let mut delay = Delay::new(cp.SYST, clocks);
+    //let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = DelayType{};
 
     let gpiob = dp.GPIOB.split(&mut rcc);
     let mut sda = gpiob.pb9.into_push_pull_output();
@@ -578,12 +572,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    delay::Delay,
     gpio::{Input, PullDown, PullUp,
            gpiob::{PB10, PB11, PB6},
     },
     i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, Peripherals, I2C1},
+    pac::{Peripherals, I2C1},
     prelude::*,
 };
 
@@ -591,11 +584,10 @@ use stm32l4xx_hal::{
 fn setup() -> (
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
@@ -607,7 +599,8 @@ fn setup() -> (
         .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
-    let mut delay = Delay::new(cp.SYST, clocks);
+    //let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = DelayType{};
 
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
 

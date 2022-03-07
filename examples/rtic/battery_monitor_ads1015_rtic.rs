@@ -53,7 +53,7 @@ mod app {
     // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
     // asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
     //  number of indicated clock cycles.
-    //use rust_integration_testing_of_examples::alt_delay::{AltDelay};
+    use rust_integration_testing_of_examples::alt_delay::{AltDelay};
 
     // set up for shared bus
    // use shared_bus_rtic::SharedBus;

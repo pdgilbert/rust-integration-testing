@@ -122,7 +122,7 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    adc::{Adc, ClockMode},
+    adc::{Adc, CommonAdc, config::Config},
     gpio::{Analog, Output, OpenDrain,
            gpioa::{PA1, PA8},
     },
@@ -146,10 +146,12 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-    let mut adc1_2 = dp.ADC1_2;
+
+    let adc_common = CommonAdc::new(dp.ADC1_2, &clocks, &mut rcc.ahb);
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.moder, &mut gpioa.pupdr), //channel
-        adc: Adc::adc1(dp.ADC1, &mut adc1_2, &mut rcc.ahb, ClockMode::default(), clocks, ),
+        adc: Adc::new(dp.ADC1, Config::default(), &clocks, &adc_common, ),
     }; 
     impl ReadAdc for SensorType {
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
