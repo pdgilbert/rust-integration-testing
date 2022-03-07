@@ -49,7 +49,7 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup, LED, DelayMs};
+use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup, LED, DelayUs};
 
 
 fn show_display<S>(
@@ -134,6 +134,6 @@ fn main() -> ! {
         }
 
         // (Delay at least 500ms before re-polling DHT, 1 second or more advised)
-        delay.delay_ms(2000_u16); // Delay 2 seconds
+        delay.delay_ms(2000_u32).unwrap(); // Delay 2 seconds
     }
 }

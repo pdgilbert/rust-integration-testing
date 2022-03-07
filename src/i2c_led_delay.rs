@@ -5,7 +5,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use crate::dht_i2c_led_delay::{setup_dp, I2cType, LED, LedType, DelayType, DelayMs, Peripherals};
+pub use crate::dht_i2c_led_delay::{setup_dp, I2cType, LED, LedType, DelayType, DelayUs, Peripherals};
 
 pub fn setup() ->  (I2cType, LedType, DelayType) {    
    let dp = Peripherals::take().unwrap();
