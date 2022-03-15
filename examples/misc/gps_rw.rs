@@ -86,7 +86,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
     let mut gpioa = p.GPIOA.split();
 
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9   for console
@@ -96,12 +96,12 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
         Config::default()
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1), //.parity_odd()
-        clocks,
+        &clocks,
     )
     .split();
 
     let mut gpiob = p.GPIOB.split();
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //tx pb10  for GPS rx
@@ -109,7 +109,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
         ), //rx pb11  for GPS tx
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
-        clocks,
+        &clocks,
     )
     .split();
 

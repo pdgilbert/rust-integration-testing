@@ -114,7 +114,7 @@ fn setup() -> (
     let mut afio = p.AFIO.constrain();
     let mut gpioa = p.GPIOA.split();
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
@@ -122,10 +122,10 @@ fn setup() -> (
         ), //rx pa10
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
-        clocks,
+        &clocks,
     )
     .split();
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2
@@ -136,13 +136,13 @@ fn setup() -> (
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     )
     .split();
 
     let mut gpiob = p.GPIOB.split();
 
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //rx pb10
@@ -153,7 +153,7 @@ fn setup() -> (
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     )
     .split();
 

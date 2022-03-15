@@ -198,7 +198,7 @@ mod app {
         // (There can also a move problem with afio if setup_i2c1() takes afio rather than &mut afio,
         // but that can be resolved by just doing serial() before setup_i2c1().)
 
-        let (tx, _rx) = Serial::usart1(
+        let (tx, _rx) = Serial::new(
            dp.USART1,
            // (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
            //  gpiob.pb7,
@@ -207,7 +207,7 @@ mod app {
            ),
            &mut afio.mapr,
            Config::default().baudrate(115200.bps()), 
-           clocks,
+           &clocks,
         ).split();
    
         (dht, i2c, led, tx, delay)

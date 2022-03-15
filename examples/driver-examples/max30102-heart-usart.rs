@@ -196,12 +196,12 @@ fn setup() -> (
 
     let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
     let rx = gpiob.pb7;
-    let serial = Serial::usart1(
+    let serial = Serial::new(
         dp.USART1,
         (tx, rx),
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     );
     let (tx, rx) = serial.split();
 

@@ -114,7 +114,7 @@ fn setup() -> (
     let mut gpioa = p.GPIOA.split();
     let mut gpiob = p.GPIOB.split();
 
-    let (tx, rx) = Serial::usart2(
+    let (tx, rx) = Serial::new(
         p.USART2,
         (
             gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2  for GPS
@@ -122,7 +122,7 @@ fn setup() -> (
         ),
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
-        clocks,
+        &clocks,
     )
     .split();
 
