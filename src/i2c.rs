@@ -230,7 +230,7 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut AP
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
-        clocks,
+        &clocks,
         &mut apb1,
         1000,
     );
@@ -253,7 +253,7 @@ pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut A
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
-        clocks,
+        &clocks,
         &mut apb1,
         1000,
     );

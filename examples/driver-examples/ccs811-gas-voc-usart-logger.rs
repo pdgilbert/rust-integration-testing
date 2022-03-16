@@ -312,11 +312,12 @@ mod app {
                gpioa.pa2.into_alternate(),
                gpioa.pa3.into_alternate(),
            ),
-           clocks,
+           &clocks,
            Config {
                baud_rate: 9600.bps(),
                oversampling: Oversampling::By16,
                character_match: None,
+               sysclock: false,
            },
        )
        .split();

@@ -194,7 +194,7 @@ fn setup() -> (DhtType, Delay) {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioa::PA8, OpenDrain, Output},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
@@ -214,7 +214,7 @@ fn setup() -> (DhtType, Delay) {
     dht.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
-    let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer
+    let mut delay = cp.SYST.delay(&clocks); 
 
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);

@@ -209,7 +209,7 @@ fn setup() -> (impl LED, Delay) {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
@@ -236,7 +236,7 @@ fn setup() -> (impl LED, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        Delay::new(cp.SYST, clocks),
+        cp.SYST.delay(&clocks),
     )
 }
 

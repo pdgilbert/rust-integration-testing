@@ -263,7 +263,8 @@ use stm32f7xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{ClockDivider, Enabled, Pins, Spi},
+    spi,
+    spi::{Enabled, Pins, Spi},
 };
 
 #[cfg(feature = "stm32f7xx")]
@@ -275,7 +276,7 @@ fn setup() -> (
 ) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
-    //let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
+    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
 
@@ -283,12 +284,14 @@ fn setup() -> (
     let miso = gpioa.pa6.into_alternate(); // miso  on PA6
     let mosi = gpioa.pa7.into_alternate(); // mosi  on PA7
 
-    //   somewhere 8.mhz needs to be set in spi
-
     let spi = Spi::new(dp.SPI1, (sck, miso, mosi)).enable::<u8>(
+        spi::Mode {
+            polarity: spi::Polarity::IdleHigh,
+            phase: spi::Phase::CaptureOnSecondTransition,
+        },
+        250.kHz(),
+        &clocks,
         &mut rcc.apb2,
-        ClockDivider::DIV32,
-        mcp4x::MODE,
     );
 
     let mut cs = gpioa.pa1.into_push_pull_output();

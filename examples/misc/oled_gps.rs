@@ -255,7 +255,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     i2c::{BlockingI2c, Mode, PinScl, PinSda},
     pac::{CorePeripherals, Peripherals, I2C1, USART2},
     prelude::*,
@@ -282,11 +282,12 @@ fn setup() -> (
             gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
             gpioa.pa3.into_alternate(),
         ), //rx pa3  for GPS tx
-        clocks,
+        &clocks,
         Config {
             baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();
@@ -303,11 +304,11 @@ fn setup() -> (
             p.I2C1,
             (scl, sda),
             Mode::standard(400_000.Hz()),
-            clocks,
+            &clocks,
             &mut rcc.apb1,
             1000,
         ), // i2c
-        Delay::new(cp.SYST, clocks),
+        cp.SYST.delay(&clocks),
     )
 }
 

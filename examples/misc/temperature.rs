@@ -519,8 +519,8 @@ fn setup() -> (
     let gpiob = p.GPIOB.split();
 
     let adcs: Adcs<Adc<ADC1>, Adc<ADC2>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, clocks, 4, true), // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
-        ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, clocks, 4, true),
+        ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, &clocks, 4, true), // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
+        ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, &clocks, 4, true),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel

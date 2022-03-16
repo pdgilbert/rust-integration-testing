@@ -388,11 +388,12 @@ mod app {
                gpioa.pa2.into_alternate(),
                gpioa.pa3.into_alternate(),
            ),
-           clocks,
+           &clocks,
            Config {
-               baud_rate: 115200.bps(), //should be bps. See https://github.com/stm32-rs/stm32f7xx-hal/issues/141
+               baud_rate: 115200.bps(),
                oversampling: Oversampling::By16,
                character_match: None,
+               sysclock: false,
            },
        ).split();
 

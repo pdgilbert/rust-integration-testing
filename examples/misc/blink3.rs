@@ -277,7 +277,7 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay,
     gpio::{
         gpiob::{PB13, PB14, PB15},
         Output, PushPull,
@@ -287,7 +287,7 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (impl LED, impl LED, impl LED, Delay) {
+fn setup() -> (impl LED, impl LED, impl LED, SysDelay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
@@ -327,8 +327,8 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
         gpiob.pb13.into_push_pull_output(), // led on pb13
         gpiob.pb14.into_push_pull_output(), // led on pb14
         gpiob.pb15.into_push_pull_output(), // led on pb15
-        Delay::new(cp.SYST, clocks),
-    )
+        cp.SYST.delay(&clocks),
+     )
 }
 
 #[cfg(feature = "stm32h7xx")]

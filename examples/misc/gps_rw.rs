@@ -236,11 +236,12 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
             gpioa.pa9.into_alternate(), //tx pa9   for console
             gpioa.pa10.into_alternate(),
         ), //rx pa10  for console
-        clocks,
+        &clocks,
         Config {
             baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();
@@ -251,11 +252,12 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
             gpioa.pa2.into_alternate(), //tx pa2  for GPS
             gpioa.pa3.into_alternate(),
         ), //rx pa3  for GPS
-        clocks,
+        &clocks,
         Config {
             baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();

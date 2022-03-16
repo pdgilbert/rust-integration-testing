@@ -297,11 +297,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
-    spi::{ClockDivider, Enabled, Pins, Spi},
+    spi::{Enabled, Pins, Spi},
 };
 
 #[cfg(feature = "stm32f7xx")]
@@ -313,8 +313,10 @@ fn setup() -> (
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-
     let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
+    //let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
+
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split();
 
@@ -322,10 +324,16 @@ fn setup() -> (
     let miso = gpioa.pa6.into_alternate(); // miso  on PA6
     let mosi = gpioa.pa7.into_alternate(); // mosi  on PA7
 
-    //   somewhere 8.mhz needs to be set in spi
-
-    let spi =
-        Spi::new(dp.SPI1, (sck, miso, mosi)).enable::<u8>(&mut rcc.apb2, ClockDivider::DIV32, MODE);
+    let spi = Spi::new(dp.SPI1, (sck, miso, mosi)).enable::<u8>(
+        MODE,
+        //spi::Mode {
+        //    polarity: spi::Polarity::IdleHigh,
+        //    phase: spi::Phase::CaptureOnSecondTransition,
+        //},
+        250.kHz(),
+        &clocks,
+        &mut rcc.apb2,
+    );
 
     let cs = gpioa.pa1.into_push_pull_output();
 
@@ -340,10 +348,8 @@ fn setup() -> (
         }
     }
 
-    let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
-    //let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     (spi, cs, led, delay)
 }
