@@ -195,14 +195,14 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
+    timer::SysDelay,
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (PC13<Output<PushPull>>, Delay) {
+fn setup() -> (PC13<Output<PushPull>>, SysDelay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
@@ -221,7 +221,7 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        Delay::new(cp.SYST, clocks),
+        cp.SYST.delay(&clocks),
     )
 }
 

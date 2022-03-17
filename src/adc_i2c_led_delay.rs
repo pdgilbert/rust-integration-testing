@@ -236,7 +236,7 @@ use stm32f7xx_hal::{
     gpio::{Analog, Output, OpenDrain,
            gpioa::{PA1, PA8},
     },
-    delay::Delay,
+    timer::SysDelay,
     pac::{CorePeripherals, Peripherals, ADC1, },
     prelude::*,
 };
@@ -248,7 +248,10 @@ type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 type DhtType = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
+pub type DelayType = SysDelay;
+
+#[cfg(feature = "stm32f7xx")]
+pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
@@ -256,7 +259,7 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
     let gpioa = dp.GPIOA.split();
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
-        adc: Adc::adc1(dp.ADC1, &mut rcc.apb2, clocks, 4, true),
+        adc: Adc::adc1(dp.ADC1, &mut rcc.apb2, &clocks, 4, true),
     }; 
     impl ReadAdc for SensorType {
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap()}
@@ -268,7 +271,9 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
     let led = setup_led(dp.GPIOC.split());
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let cp = CorePeripherals::take().unwrap();
+    let mut delay = cp.SYST.delay(&clocks);
 
     delay.delay_ms(1000_u16);
 

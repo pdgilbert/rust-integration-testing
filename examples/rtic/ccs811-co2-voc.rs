@@ -198,7 +198,7 @@ mod app {
         // (There can also a move problem with afio if setup_i2c1() takes afio rather than &mut afio,
         // but that can be resolved by just doing serial() before setup_i2c1().)
 
-        let (tx, _rx) = Serial::usart1(
+        let (tx, _rx) = Serial::new(
            dp.USART1,
            // (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
            //  gpiob.pb7,
@@ -207,7 +207,7 @@ mod app {
            ),
            &mut afio.mapr,
            Config::default().baudrate(115200.bps()), 
-           clocks,
+           &clocks,
         ).split();
    
         (dht, i2c, led, tx, delay)
@@ -388,11 +388,12 @@ mod app {
                gpioa.pa2.into_alternate(),
                gpioa.pa3.into_alternate(),
            ),
-           clocks,
+           &clocks,
            Config {
-               baud_rate: 115200.bps(), //should be bps. See https://github.com/stm32-rs/stm32f7xx-hal/issues/141
+               baud_rate: 115200.bps(),
                oversampling: Oversampling::By16,
                character_match: None,
+               sysclock: false,
            },
        ).split();
 

@@ -72,7 +72,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let mut afio = p.AFIO.constrain();
     let mut gpioa = p.GPIOA.split();
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
-    Serial::usart1(
+    Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
@@ -80,7 +80,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
         ), //rx pa10
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     )
     .split()
 }
@@ -166,11 +166,12 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
             gpioa.pa9.into_alternate(), //tx pa9
             gpioa.pa10.into_alternate(),
         ), //rx pa10
-        clocks,
+        &clocks,
         Config {
             baud_rate: 115_200.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     );
     serial1.split()

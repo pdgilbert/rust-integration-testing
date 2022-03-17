@@ -413,7 +413,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
@@ -436,7 +436,7 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let mut delay = cp.SYST.delay(&clocks);
 
     let gpiob = dp.GPIOB.split();
     let gpioc = dp.GPIOC.split();
@@ -469,7 +469,7 @@ fn setup() -> (
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
-        clocks,
+        &clocks,
         &mut rcc.apb1,
         1000,
     );

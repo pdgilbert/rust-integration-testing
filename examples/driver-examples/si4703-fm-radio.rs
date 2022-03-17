@@ -370,7 +370,7 @@ fn setup() -> (
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
-        clocks,
+        &clocks,
         &mut rcc.apb1,
         1000,
     );

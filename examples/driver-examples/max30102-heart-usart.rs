@@ -196,12 +196,12 @@ fn setup() -> (
 
     let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
     let rx = gpiob.pb7;
-    let serial = Serial::usart1(
+    let serial = Serial::new(
         dp.USART1,
         (tx, rx),
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()),
-        clocks,
+        &clocks,
     );
     let (tx, rx) = serial.split();
 
@@ -361,7 +361,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    delay::Delay,
+    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{BlockingI2c, Mode, PinScl, PinSda},
     pac::{CorePeripherals, Peripherals, I2C1, USART1},
@@ -394,12 +394,12 @@ fn setup() -> (
         Mode::Fast {
             frequency: 400_000.Hz(),
         },
-        clocks,
+        &clocks,
         &mut rcc.apb1,
         1000,
     );
 
-    let delay = Delay::new(cp.SYST, clocks);
+    let delay = cp.SYST.delay(&clocks);
 
     // led
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13
@@ -421,11 +421,12 @@ fn setup() -> (
             gpioa.pa9.into_alternate(),
             gpioa.pa10.into_alternate(),
         ),
-        clocks,
+        &clocks,
         Config {
             baud_rate: 9600.bps(),
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();

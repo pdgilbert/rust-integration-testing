@@ -167,7 +167,7 @@ mod app {
         // but that can be resolved by just doing serial() before setup_i2c1().)
 
         let mut gpioa = dp.GPIOA.split();
-        let (tx, _rx) = Serial::usart1(
+        let (tx, _rx) = Serial::new(
            dp.USART1,
            // (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
            //  gpiob.pb7,
@@ -176,7 +176,7 @@ mod app {
            ),
            &mut afio.mapr,
            Config::default().baudrate(115200.bps()), 
-           clocks,
+           &clocks,
         ).split();
    
 
@@ -312,11 +312,12 @@ mod app {
                gpioa.pa2.into_alternate(),
                gpioa.pa3.into_alternate(),
            ),
-           clocks,
+           &clocks,
            Config {
                baud_rate: 9600.bps(),
                oversampling: Oversampling::By16,
                character_match: None,
+               sysclock: false,
            },
        )
        .split();
