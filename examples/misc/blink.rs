@@ -235,9 +235,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 fn setup() -> (PC13<Output<PushPull>>, Delay) {
     // see https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/blinky.rs
     let cp = CorePeripherals::take().unwrap();
@@ -250,10 +247,10 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 

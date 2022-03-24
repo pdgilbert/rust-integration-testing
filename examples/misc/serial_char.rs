@@ -408,8 +408,8 @@ fn setup() -> (
         .USART1
         .serial(
             (
-                gpioa.pa9.into_alternate_af7(), //tx pa9
-                gpioa.pa10.into_alternate_af7(),
+                gpioa.pa9.into_alternate(), //tx pa9
+                gpioa.pa10.into_alternate(),
             ), //rx pa10
             9600.bps(),
             ccdr.peripheral.USART1,
@@ -422,8 +422,8 @@ fn setup() -> (
         .USART2
         .serial(
             (
-                gpioa.pa2.into_alternate_af7(), //tx pa2
-                gpioa.pa3.into_alternate_af7(),
+                gpioa.pa2.into_alternate(), //tx pa2
+                gpioa.pa3.into_alternate(),
             ), //rx pa3
             115_200.bps(),
             ccdr.peripheral.USART2,
@@ -438,8 +438,8 @@ fn setup() -> (
         .USART3
         .serial(
             (
-                gpiob.pb10.into_alternate_af7(), //tx pb10
-                gpiob.pb11.into_alternate_af7(),
+                gpiob.pb10.into_alternate(), //tx pb10
+                gpiob.pb11.into_alternate(),
             ), //rx pb11
             115_200.bps(),
             ccdr.peripheral.USART3,

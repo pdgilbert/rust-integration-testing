@@ -345,8 +345,8 @@ mod app {
            .USART2
            .serial(
                (
-                   gpioa.pa2.into_alternate_af7(),
-                   gpioa.pa3.into_alternate_af7(),
+                   gpioa.pa2.into_alternate(),
+                   gpioa.pa3.into_alternate(),
                ),
                9600.bps(),
                ccdr.peripheral.USART2,

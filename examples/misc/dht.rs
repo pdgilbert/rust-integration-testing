@@ -233,9 +233,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 type DhtType = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32h7xx")]
@@ -250,7 +247,7 @@ fn setup() -> (DhtType, Delay) {
 
     let mut dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    dht.set_high().ok();
+    dht.set_high();
 
     // delay is used by `dht-sensor` to wait for signals
     let mut delay = Delay::new(cp.SYST, clocks); //SysTick: System Timer

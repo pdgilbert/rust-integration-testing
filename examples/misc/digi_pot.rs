@@ -314,9 +314,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
@@ -329,9 +326,9 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
 
     let spi = dp.SPI1.spi(
         (
-            gpioa.pa5.into_alternate_af5(), // sck   on PA5
-            gpioa.pa6.into_alternate_af5(), // miso  on PA6
-            gpioa.pa7.into_alternate_af5(), // mosi  on PA7
+            gpioa.pa5.into_alternate(), // sck   on PA5
+            gpioa.pa6.into_alternate(), // miso  on PA6
+            gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         mcp4x::MODE,
         8.mhz(),
@@ -340,7 +337,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
     );
 
     let mut cs = gpioa.pa1.into_push_pull_output();
-    cs.set_high().unwrap();
+    cs.set_high();
 
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
     let delay = DelayType{};

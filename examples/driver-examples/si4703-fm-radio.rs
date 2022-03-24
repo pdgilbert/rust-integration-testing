@@ -403,9 +403,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::{InputPin,};
-
-#[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, DelayType, impl SEEK, PB6<Input<PullUp>>) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
@@ -424,10 +421,10 @@ fn setup() -> (I2c<I2C1>, impl LED, DelayType, impl SEEK, PB6<Input<PullUp>>) {
     let mut rst = gpiob.pb7.into_push_pull_output();
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_alternate_af4().set_open_drain();
+    let sda = sda.into_alternate().set_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
+    let scl = gpiob.pb8.into_alternate().set_open_drain(); // scl on PB8
 
     let i2c = dp
         .I2C1
@@ -440,10 +437,10 @@ fn setup() -> (I2c<I2C1>, impl LED, DelayType, impl SEEK, PB6<Input<PullUp>>) {
 
     impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
         fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
+            self.p_seekup.is_high()
         }
         fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
+            self.p_seekdown.is_high()
         }
     }
 

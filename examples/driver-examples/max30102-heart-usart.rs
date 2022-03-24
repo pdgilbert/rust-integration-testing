@@ -445,9 +445,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -460,8 +457,8 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
+    let scl = gpiob.pb8.into_alternate().set_open_drain(); // scl on PB8
+    let sda = gpiob.pb9.into_alternate().set_open_drain(); // sda on PB9
 
     let i2c = dp
         .I2C1
@@ -474,10 +471,10 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
 
@@ -487,8 +484,8 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
         .USART1
         .serial(
             (
-                gpioa.pa9.into_alternate_af7(),
-                gpioa.pa10.into_alternate_af7(),
+                gpioa.pa9.into_alternate(),
+                gpioa.pa10.into_alternate(),
             ),
             9600.bps(),
             ccdr.peripheral.USART1,

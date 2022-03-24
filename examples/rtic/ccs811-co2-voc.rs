@@ -413,9 +413,6 @@ mod app {
     };
 
     #[cfg(feature = "stm32h7xx")]
-    use embedded_hal::digital::v2::OutputPin;
-
-    #[cfg(feature = "stm32h7xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
     #[cfg(feature = "stm32h7xx")]
@@ -455,8 +452,8 @@ mod app {
            .USART2
            .serial(
                (
-                   gpioa.pa2.into_alternate_af7(),
-                   gpioa.pa3.into_alternate_af7(),
+                   gpioa.pa2.into_alternate(),
+                   gpioa.pa3.into_alternate(),
                ),
                115200.bps(),
                ccdr.peripheral.USART2,

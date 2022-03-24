@@ -79,7 +79,7 @@ mod app {
     use rust_integration_testing_of_examples::dht_i2c_led_delay::{
         setup_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
-    #[cfg(any(feature = "stm32f3xx", feature = "stm32h7xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
+    #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
 
 //  THIS NEEDS TYPES FIGURED OUT FOR SHARE. SEE DISPLAY_STUFF_RTIC FOR SIMPLER EXAMPLE
