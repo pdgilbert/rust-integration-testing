@@ -206,8 +206,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     p.USART1
         .serial(
             (
-                gpioa.pa9.into_alternate_af7(), //tx pa9
-                gpioa.pa10.into_alternate_af7(),
+                gpioa.pa9.into_alternate(), //tx pa9
+                gpioa.pa10.into_alternate(),
             ), //rx pa10
             9600.bps(),
             ccdr.peripheral.USART1,

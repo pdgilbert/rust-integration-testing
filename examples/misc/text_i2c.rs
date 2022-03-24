@@ -208,8 +208,8 @@ fn setup() -> I2c<I2C1> {
 
     let gpiob = p.GPIOB.split(ccdr.peripheral.GPIOB);
 
-    let scl = gpiob.pb8.into_alternate_af4().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate_af4().set_open_drain(); // sda on PB9
+    let scl = gpiob.pb8.into_alternate().set_open_drain(); // scl on PB8
+    let sda = gpiob.pb9.into_alternate().set_open_drain(); // sda on PB9
 
     // return i2c
     // I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), clocks)

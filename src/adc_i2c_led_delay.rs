@@ -301,9 +301,6 @@ type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Enabled>>;
 type DhtType = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
                 //(SensorType, I2c<I2C1>, LedType, Delay) {
     let dp = Peripherals::take().unwrap();
@@ -330,7 +327,7 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
     let mut dht = gpioa.pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
-    dht.set_high().ok();
+    dht.set_high();
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let i2cx = ccdr.peripheral.I2C1;

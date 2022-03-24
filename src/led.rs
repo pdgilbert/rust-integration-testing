@@ -192,9 +192,6 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32h7xx")]
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32h7xx")]
@@ -203,10 +200,10 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
     impl LED for LedType {
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
     }
     
