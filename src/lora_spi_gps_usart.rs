@@ -448,32 +448,42 @@ pub fn setup() -> (
 // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
     timer::SysDelay as Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+//    blocking::{InputPin, OutputPin},
+    gpio::{Input, Output, PushPull, Alternate, Pin,
+           gpioa::{PA0, PA1, PA5, PA6, PA7},
+           gpiob::{PB8, PB9},
+           gpioc::PC13,
+    },
     i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    pac::{CorePeripherals, Peripherals, SPI1, I2C2, USART2},
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
-    spi::{Error, Spi},
+    spi::{Error, Spi, TransferModeNormal},
     time::MegaHertz,
 };
 
-// If the type for the lora object is needed somewhere other than just in the setup() return type then it
-// may be better to explicitly define it as follows.
-//
-//    use embedded_spi::wrapper::Wrapper;
-//
-//    type LoraType = Sx127x<Wrapper<Spi<SPI1,
-//                           (PA5<Alternate<AF5>>,    PA6<Alternate<AF5>>,   PA7<Alternate<AF5>>)>,  Error,
-//                   PA1<Output<PushPull>>,  PB8<Input<Floating>>,  PB9<Input<Floating>>,  PA0<Output<PushPull>>,
-//                   Infallible,  Delay>,  Error, Infallible, Infallible>;
-// then
-//    pub fn setup() ->  LoraType {
+#[cfg(feature = "stm32f4xxx")]
+use embedded_hal::digital::v2::{InputPin, OutputPin};
+
+// If the type for the lora object is needed elsewhere it is better to explicitly define it.
+
+use radio_sx127x::base::Base;
+//use embedded_spi::wrapper::Wrapper;
+//use embedded_hal::Wrapper;
+
+type LoraType = Sx127x<Base<Spi<SPI1,
+               (PA5<Alternate<5_u8>>,    PA6<Alternate<5_u8>>,   PA7<Alternate<5_u8>>), TransferModeNormal>,  
+               Error, PA1<Output<PushPull>>,  PB8<Input>,  PB9<Input>,  PA0<Output>>>;
+
+//Sx127x<Base<Spi<SPI1, (Pin<'A', 5_u8, Alternate<5_u8>>, Pin<'A', 6_u8, Alternate<5_u8>>, Pin<'A', 7_u8, Alternate<5_u8>>), 
+//   TransferModeNormal>, 
+//   Pin<'A', 1_u8, Output>, Pin<'B', 8_u8>, Pin<'B', 9_u8>, Pin<'A', 0_u8, Output>, SysDelay>>
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (
-    impl DelayUs
-        + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
-        + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
+pub fn setup() -> (LoraType, 
+            //    impl DelayUs
+            //        + Transmit<Error = sx127xError<Error>>
+            //        + Receive<Info = PacketInfo, Error = sx127xError<Error>>,
     Tx<USART2>,
     Rx<USART2>,
     I2c<I2C2, impl Pins<I2C2>>,
@@ -521,6 +531,7 @@ pub fn setup() -> (
     )
     .unwrap(); // should handle error
 
+let () = lora;
     //DIO0  triggers RxDone/TxDone status.
     //DIO1  triggers RxTimeout and other errors status.
     //D02, D03 ?

@@ -10,7 +10,6 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-// pub mod lora_spi_gps_usart; 
 pub mod dht_i2c_led_delay;
 pub mod adc_i2c_led_delay;
 pub mod i2c_led_delay;
@@ -22,7 +21,7 @@ pub mod i2c;
 //pub mod spi; move problems need to be figured out for this
 pub mod alt_delay;
 
-//NOTE NEXT HAS TO BE COMMENTED OUT TO BUILD OTHER EXAMPLES, OTHERWISE radio-0.9.1 GETS PULLED IN AND FAILS
+// this should not be commented out but if compiling it fails then other tests do not run.
 //pub mod lora_spi_gps_usart;
 
 // consider putting some real tests here

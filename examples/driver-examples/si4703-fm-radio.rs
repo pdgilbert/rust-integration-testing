@@ -270,7 +270,7 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     //timer::SysDelay as Delay,
-    gpio::{Input, PullDown, PullUp,
+    gpio::{Input,
            gpiob::{PB10, PB11, PB6},        
     },
     i2c::{I2c, Pins},
@@ -284,7 +284,7 @@ fn setup() -> (
     impl LED,
     DelayType,
     impl SEEK,
-    PB6<Input<PullUp>>,
+    PB6<Input>,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -310,12 +310,12 @@ fn setup() -> (
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
     let led = setup_led(dp.GPIOC.split());
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
+    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
         fn seekup(&mut self) -> bool {
             self.p_seekup.is_high()
         }
