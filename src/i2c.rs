@@ -279,7 +279,7 @@ pub type I2c1Type =  I2c<I2C1>;
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx: I2c1, &clocks: &CoreClocks) -> I2c1Type {
     let scl = gpiob.pb8.into_alternate().set_open_drain(); // scl on PB8
     let sda = gpiob.pb9.into_alternate().set_open_drain(); // sda on PB9
-    let i2c = i2c1.i2c((scl, sda), 400.khz(), i2cx, &clocks);
+    let i2c = i2c1.i2c((scl, sda), 400.kHz(), i2cx, &clocks);
 
     i2c
 }
@@ -291,7 +291,7 @@ pub type I2c2Type =I2c<I2C4> ;   // there does not seem to be any I2c2. Using na
 pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, i2c: I2c4, &clocks: &CoreClocks) -> I2c2Type {
     let scl = gpiob.pb8.into_alternate().set_open_drain(); 
     let sda = gpiob.pb9.into_alternate().set_open_drain(); 
-    let i2c = i2c4.i2c((scl, sda), 400.khz(), i2c, &clocks);
+    let i2c = i2c4.i2c((scl, sda), 400.kHz(), i2c, &clocks);
 
     i2c
 }

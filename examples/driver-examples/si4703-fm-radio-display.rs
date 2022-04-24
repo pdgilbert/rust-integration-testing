@@ -341,7 +341,7 @@ use stm32f4xx_hal::{
     gpio::{
         gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+        Input, Output, PushPull,
     },
     i2c::{I2c, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -354,7 +354,7 @@ fn setup() -> (
     impl LED,
     Delay,
     impl SEEK,
-    PB6<Input<PullUp>>,
+    PB6<Input>,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
@@ -392,12 +392,12 @@ fn setup() -> (
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
+    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
         fn seekup(&mut self) -> bool {
             self.p_seekup.is_high()
         }
@@ -497,7 +497,7 @@ use stm32h7xx_hal::{
     gpio::{
         gpiob::{PB10, PB11, PB6},
         gpioc::PC13,
-        Input, Output, PullDown, PullUp, PushPull,
+        Input, Output, PushPull,
     },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -505,13 +505,13 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
+fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input>) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
     let mut delay = Delay::new(cp.SYST, clocks);
 
@@ -541,14 +541,14 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, impl SEEK, PB6<Input<PullUp>>) {
 
     let i2c = dp
         .I2C1
-        .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
+        .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
+    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
         fn seekup(&mut self) -> bool {
             self.p_seekup.is_high()
         }

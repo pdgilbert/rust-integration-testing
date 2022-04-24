@@ -242,7 +242,7 @@ fn setup() -> (DhtType, Delay) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
     let mut dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();

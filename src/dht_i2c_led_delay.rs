@@ -246,7 +246,7 @@ pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
-       let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
        let clocks = ccdr.clocks;
 
        let dht = dp.GPIOA.split(ccdr.peripheral.GPIOA).pa8.into_open_drain_output();

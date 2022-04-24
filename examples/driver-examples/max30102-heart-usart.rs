@@ -451,7 +451,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
@@ -462,7 +462,7 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
 
     let i2c = dp
         .I2C1
-        .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks);
+        .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
 
     let delay = Delay::new(cp.SYST, clocks);
 

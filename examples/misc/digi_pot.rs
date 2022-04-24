@@ -319,7 +319,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &dp.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
@@ -331,7 +331,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
         mcp4x::MODE,
-        8.mhz(),
+        8.MHz(),
         ccdr.peripheral.SPI1,
         &clocks,
     );

@@ -203,7 +203,7 @@ fn setup() -> I2c<I2C1> {
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &p.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &p.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpiob = p.GPIOB.split(ccdr.peripheral.GPIOB);
@@ -214,7 +214,7 @@ fn setup() -> I2c<I2C1> {
     // return i2c
     // I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), clocks)
     p.I2C1
-        .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks)
+        .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks)
 }
 
 #[cfg(feature = "stm32l0xx")]

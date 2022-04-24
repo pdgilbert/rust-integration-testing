@@ -351,7 +351,7 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &p.SYSCFG);
+    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &p.SYSCFG);
     let gpiob = p.GPIOB.split(ccdr.peripheral.GPIOB);
 
     // all leds wire with pin as source, cathode connect to ground though a resistor.

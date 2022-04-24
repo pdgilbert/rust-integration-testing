@@ -257,7 +257,7 @@ fn setup() -> (impl LED, Delay) {
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &p.SYSCFG); // calibrate for correct blink rate
+    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &p.SYSCFG); // calibrate for correct blink rate
     let gpioc = p.GPIOC.split(ccdr.peripheral.GPIOC);
 
     impl LED for PC13<Output<PushPull>> {

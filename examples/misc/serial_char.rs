@@ -399,7 +399,7 @@ fn setup() -> (
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &p.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &p.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpioa = p.GPIOA.split(ccdr.peripheral.GPIOA);

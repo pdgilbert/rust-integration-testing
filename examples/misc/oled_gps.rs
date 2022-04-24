@@ -328,7 +328,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C1>, Delay) {
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &p.SYSCFG);
+    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &p.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpioa = p.GPIOA.split(ccdr.peripheral.GPIOA);
@@ -356,7 +356,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C1>, Delay) {
         tx2,
         rx2,
         p.I2C1
-            .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C1, &clocks), // i2c
+            .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks), // i2c
         Delay::new(cp.SYST, clocks),
     )
 }
