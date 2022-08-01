@@ -338,40 +338,48 @@ mod app {
 
     // End of hal/MCU specific setup. Following should be generic code.
 
-type Text_Style: MonoTextStyle<'static, BinaryColor> = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+type TextStyle = MonoTextStyle<'static, BinaryColor>;
+// = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+//const TEXTSTYLE: TextStyle = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
-//fn show_display<S>(
-//    text_style: MonoTextStyle<'static, BinaryColor>,
-//    //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-//    disp: DisplayType,
-//) -> ()
-//where
-//    S: DisplaySize,
-//{
-//   let mut lines: [heapless::String<32>; 1] = [
-//       heapless::String::new(),
-//   ];
+//type DisplayType = Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>;
 
-//   // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
-//   // It is possible to use \n in place of separate writes, with one line rather than vector.
-//  
-//   write!(lines[0], "stuff").unwrap();
-//
-//   disp.clear();
-//   for i in 0..lines.len() {
-//       // start from 0 requires that the top is used for font baseline
-//       Text::with_baseline(
-//           &lines[i],
-//           Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-//           text_style,
-//           Baseline::Top,
-//       )
-//       .draw(&mut *disp)
-//       .unwrap();
-//   }
-//   disp.flush().unwrap();
-//   ()
-//}
+fn show_display<S>(
+    text: &[heapless::String<32>; 1],
+    //text_style: TextStyle,
+    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    //disp: DisplayType,
+) -> ()
+where
+    S: DisplaySize,
+{
+   let mut lines: [heapless::String<32>; 1] = [
+       heapless::String::new(),
+   ];
+
+   // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+   // It is possible to use \n in place of separate writes, with one line rather than vector.
+  
+   //write!(lines[0], "stuff").unwrap();
+   
+   // should not be necessary to do this every call but have not yet managed to pass it as an arg
+   let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+
+   disp.clear();
+   for i in 0..lines.len() {
+       // start from 0 requires that the top is used for font baseline
+       Text::with_baseline(
+           &lines[i],
+           Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+           text_style,
+           Baseline::Top,
+       )
+       .draw(&mut *disp)
+       .unwrap();
+   }
+   disp.flush().unwrap();
+   ()
+}
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -423,6 +431,7 @@ type Text_Style: MonoTextStyle<'static, BinaryColor> = MonoTextStyleBuilder::new
         display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
+        //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
     }
 
@@ -432,17 +441,16 @@ type Text_Style: MonoTextStyle<'static, BinaryColor> = MonoTextStyleBuilder::new
         // blink and re-spawn process to repeat
         blink::spawn(BLINK_DURATION.millis()).ok();
 
-        //show_display(*cx.local.text_style, &mut cx.local.display);
 
-         let mut lines: [heapless::String<32>; 1] = [
-            heapless::String::new(),
-        ];
+        let mut lines: [heapless::String<32>; 1] = [heapless::String::new(),];
+        //show_display(*cx.local.text_style, &mut cx.local.display);
+        show_display(&lines, cx.local.display);
 
         // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
         // It is possible to use \n in place of separate writes, with one line rather than vector.
        
-        write!(lines[0], "stuff").unwrap();
-     
+       // write!(&lines[0], "stuff").unwrap();
+    
 //       cx.local.display.clear();
 //       for i in 0..lines.len() {
 //           // start from 0 requires that the top is used for font baseline
