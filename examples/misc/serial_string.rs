@@ -350,7 +350,7 @@ use stm32f7xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2, USART3},
     prelude::*,
-    serial::{Config, Oversampling, Rx, Serial, Tx},
+    serial::{Config, Oversampling, Rx, Serial, Tx, DataBits, Parity},
 };
 
 #[cfg(feature = "stm32f7xx")]
@@ -373,11 +373,14 @@ fn setup() -> (
             gpioa.pa9.into_alternate(), //tx pa9
             gpioa.pa10.into_alternate(),
         ), //rx pa10
-        clocks,
+        &clocks,
         Config {
             baud_rate: 9600.bps(),
+            data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+            parity: Parity::ParityEven,
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();
@@ -388,11 +391,14 @@ fn setup() -> (
             gpioa.pa2.into_alternate(), //tx pa2
             gpioa.pa3.into_alternate(),
         ), //rx pa3
-        clocks,
+        &clocks,
         Config {
             baud_rate: 115_200.bps(),
+            data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+            parity: Parity::ParityEven,
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();
@@ -405,11 +411,14 @@ fn setup() -> (
             gpiob.pb10.into_alternate(), //tx pb10
             gpiob.pb11.into_alternate(),
         ), //rx pb11
-        clocks,
+        &clocks,
         Config {
             baud_rate: 115_200.bps(),
+            data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+            parity: Parity::ParityEven,
             oversampling: Oversampling::By16,
             character_match: None,
+            sysclock: false,
         },
     )
     .split();

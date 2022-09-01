@@ -310,7 +310,7 @@ use stm32f7xx_hal::{
     pac::Peripherals,
     pac::USART1,
     prelude::*,
-    serial::{Config, Rx, Serial, Tx},
+    serial::{Config, Rx, Serial, Tx, DataBits, Parity},
 };
 
 #[cfg(feature = "stm32f7xx")]
@@ -332,7 +332,7 @@ fn setup() -> (
             gpioa.pa9.into_alternate(),
             gpioa.pa10.into_alternate(),
         ),
-        Config::default().baudrate(9600.Bps()),
+        Config::default().baud_rate(9600.bps()),
         clocks,
     );
 

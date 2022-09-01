@@ -313,7 +313,7 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
     let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
     
     let mut adc1 = Adc::adc1(dp.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
-    adc1.set_resolution(adc::Resolution::SIXTEENBIT);
+    adc1.set_resolution(adc::Resolution::SixteenBit);
     let adc1 = adc1.enable();
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
@@ -344,23 +344,24 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    adc::Adc,
+    adc::{Adc, Ready},
     gpio::{Analog, Output, OpenDrain,
            gpioa::{PA1, PA8},
     },
     delay::Delay,
-    gpio::{OpenDrain, Output, PushPull,
-           gpiob::{PB8, PB9, Parts as PartsB},
-           gpioc::{PC13, Parts as PartsC},
-    },
+//    gpio::{OpenDrain, Output, PushPull,
+//           gpiob::{PB8, PB9, Parts as PartsB},
+//           gpioc::{PC13, Parts as PartsC},
+//    },
     i2c::I2c,
-    pac::{CorePeripherals, Peripherals, ADC1, I2C1},
+    pac::{CorePeripherals, Peripherals, ADC, I2C1},  //ADC1 ?
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
 };
 
 #[cfg(feature = "stm32l0xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = Sensor<PA1<Analog>, Adc<Ready>>;
+//type SensorType = Sensor<PA1<Analog>, Adc<ADC>>;
 
 #[cfg(feature = "stm32l0xx")]
 type DhtType = PA8<Output<OpenDrain>>;
@@ -371,20 +372,24 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
     let clocks = rcc.clocks;
 
-    let mut gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
     let sens: SensorType = Sensor {
-        ch:  gpioa.pa1.into_analog(&mut gpioa.crl), //channel
-        adc: Adc::adc1(dp.ADC1, clocks),
+        ch:  gpioa.pa1.into_analog(), //channel
+        adc: dp.ADC.constrain(&mut rcc),
+        //adc: Adc::adc(dp.ADC, clocks),
     }; 
     impl ReadAdc for SensorType {
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
+        //fn read_mv(&mut self)    -> u32 { self.adc.read_available().unwrap() }
      }
 
     let mut dht = gpioa.pa8.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc, &clocks);
+
+    let gpiob =dp.GPIOB.split(&mut rcc);
+    let i2c = setup_i2c1(dp.I2C1, gpiob, rcc, &clocks);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
@@ -449,17 +454,17 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    adc::ADC,
+    adc::{Adc, AdcCommon},
     gpio::{Analog, Output, OpenDrain,
            gpioa::{PA1, PA8},
     },
     delay::Delay,
-    pac::{CorePeripherals, Peripherals},
+    pac::{CorePeripherals, Peripherals, ADC1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
-type SensorType = Sensor<PA1<Analog>, ADC>;
+type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32l4xx")]
 type DhtType = PA8<Output<OpenDrain>>;
@@ -474,7 +479,8 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
     let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
-    let adc = ADC::new(dp.ADC1, dp.ADC_COMMON, &mut rcc.ahb2, &mut rcc.ccipr, &mut delay );
+    let adc_common = AdcCommon::new(dp.ADC_COMMON, &mut rcc.ahb2);
+    let adc = Adc::adc1(dp.ADC1, adc_common, &mut rcc.ccipr, &mut delay );
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.moder, &mut gpioa.pupdr), //channel

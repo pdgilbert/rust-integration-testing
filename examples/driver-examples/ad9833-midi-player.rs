@@ -1,3 +1,7 @@
+
+//! Deactivate testing Ad983x until a new release is made 
+//! see https://github.com/eldruin/driver-examples/commit/f0997765a9aaae02287940012060d29548fcb9df
+
 //! This example is modified from one at https://github.com/eldruin/driver-examples.
 //! The example plays the final part of Beethoven's ninth symphony given by
 //! its MIDI tones using an AD9833 waveform generator / direct digital synthesizer.

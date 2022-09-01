@@ -66,7 +66,7 @@ pub trait ReadTempC {
     #[cfg(feature = "stm32l1xx")]
     fn read_tempC(&mut self, adcs: &mut Adcs<Adc>) -> i32;
     #[cfg(feature = "stm32l4xx")]
-    fn read_tempC(&mut self, adcs: &mut Adcs<ADC>) -> i32;
+    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1>>) -> i32;
 }
 
 pub trait ReadMV {
@@ -92,7 +92,7 @@ pub trait ReadMV {
     #[cfg(feature = "stm32l1xx")]
     fn read_mv(&mut self, adcs: &mut Adcs<Adc>) -> u32;
     #[cfg(feature = "stm32l4xx")]
-    fn read_mv(&mut self, adcs: &mut Adcs<ADC>) -> u32;
+    fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1>>) -> u32;
 }
 
 pub struct Sensor<U> {
@@ -621,7 +621,7 @@ fn setup() -> (
     // but this example uses adc1 and adc3.
 
     let mut adc1 = Adc::adc1(p.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
-    adc1.set_resolution(adc::Resolution::SIXTEENBIT);
+    adc1.set_resolution(adc::Resolution::SixteenBit);
     let adc1 = adc1.enable();
 
     let ch_tmp36 = gpiob.pb1.into_analog();
@@ -632,7 +632,7 @@ fn setup() -> (
     //   also  regarding  voltage = reading * (vref/resolution)
 
     let mut adc3 = Adc::adc3(p.ADC3, &mut delay, ccdr.peripheral.ADC3, &ccdr.clocks);
-    adc3.set_resolution(adc::Resolution::SIXTEENBIT);
+    adc3.set_resolution(adc::Resolution::SixteenBit);
 
     let mut ch_mcu = Temperature::new();
     ch_mcu.enable(&adc3);
@@ -840,15 +840,15 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    adc::{Temperature, ADC},
+    adc::{Temperature, Adc, AdcCommon},
     delay::Delay,
     gpio::{gpiob::PB1, Analog},
-    pac::{CorePeripherals, Peripherals},
+    pac::{CorePeripherals, Peripherals, ADC1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<ADC>) {
+fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     // On stm32L4X2 a temperature sensor is internally connected to the single adc.
     // No channel is specified for the mcutemp because it uses an internal channel ADC1_IN17.
 
@@ -865,11 +865,11 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<ADC>) {
 
     // unclear why Delay is needed in this hal. (Thus needs cp.)
     let mut delay = Delay::new(cp.SYST, clocks);
-    let adcs: Adcs<ADC> = Adcs {
-        ad_1st: ADC::new(
+    let adc_common = AdcCommon::new(p.ADC_COMMON, &mut rcc.ahb2);
+    let adcs: Adcs<Adc<ADC1>> = Adcs {
+        ad_1st: Adc::adc1(
             p.ADC1,
-            p.ADC_COMMON,
-            &mut rcc.ahb2,
+            adc_common,
             &mut rcc.ccipr,
             &mut delay,
         ),
@@ -885,7 +885,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<ADC>) {
     };
 
     impl ReadTempC for Sensor<Option<PB1<Analog>>> {
-        fn read_tempC(&mut self, a: &mut Adcs<ADC>) -> i32 {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>>) -> i32 {
             match &mut self.ch {
                 Some(ch) => {
                     let v: f32 = a.ad_1st.read(ch).unwrap().into();
@@ -905,7 +905,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<ADC>) {
 
     impl ReadMV for Sensor<Option<PB1<Analog>>> {
         // TMP36 on PB1 using ADC
-        fn read_mv(&mut self, a: &mut Adcs<ADC>) -> u32 {
+        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>>) -> u32 {
             match &mut self.ch {
                 Some(ch) => a.ad_1st.read(ch).unwrap().into(),
                 None => panic!(),

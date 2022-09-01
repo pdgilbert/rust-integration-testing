@@ -264,7 +264,7 @@ mod app {
         pac,
         pac::{Peripherals, },
         prelude::*,
-        serial::{Config, Oversampling, Serial, Tx},
+        serial::{Config, Oversampling, Serial, Tx, DataBits, Parity},
     };
 
     #[cfg(feature = "stm32f7xx")]
@@ -298,6 +298,8 @@ mod app {
            &clocks,
            Config {
                baud_rate: 9600.bps(),
+               data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+               parity: Parity::ParityEven,
                oversampling: Oversampling::By16,
                character_match: None,
                sysclock: false,

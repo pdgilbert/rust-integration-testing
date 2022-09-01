@@ -18,7 +18,7 @@ stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = 
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
-#stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
+stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
 stm32l1xx-hal = { git = "https://github.com/TheCallSign/stm32l1xx-hal", optional = true, default-features = false}
 stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
@@ -152,7 +152,7 @@ stm32f3xx = ["stm32f3xx-hal/rt", "systick-monotonic"]
 stm32f4xx = ["stm32f4xx-hal/rt", "systick-monotonic", "dwt-systick-monotonic"]
 stm32f7xx = ["stm32f7xx-hal/rt", "systick-monotonic"]
 stm32h7xx = ["stm32h7xx-hal/rt", "systick-monotonic"]
-#stm32l0xx =["stm32l0xx-hal/rt", "systick-monotonic"]
+stm32l0xx =["stm32l0xx-hal/rt", "systick-monotonic"]
 stm32l1xx = ["stm32l1xx-hal/rt", "systick-monotonic"]
 stm32l4xx = ["stm32l4xx-hal/rt", "systick-monotonic"]
 
@@ -170,7 +170,9 @@ stm32f769     = ["stm32f7xx-hal/stm32f769"  ] # this has adc support but no acce
 stm32h742     = ["stm32h7xx-hal/stm32h742"  ]
 # see https://www.st.com/resource/en/datasheet/stm32l072v8.pdf  p12 for some MCU variants
 #stm32l0x2     =    ["stm32l0xx-hal/stm32l0x2",  "stm32l0xx-hal/mcu-STM32L072KZTx"]
+stm32l0x2kztx     = ["stm32l0xx-hal/stm32l0x2",     "stm32l0xx-hal/mcu-STM32L072KZTx"]
 #stm32l072kztx = ["stm32l0xx-hal/stm32l0x2",     "stm32l0xx-hal/mcu-STM32L072KZTx"]
+#stm32l072kztx = ["stm32l0xx-hal/stm32l0x2",     "stm32l0xx-hal/mcu-STM32L053R8Tx"]
 #stm32l0x1     = ["stm32l0xx-hal/stm32l0x1",     "stm32l0xx-hal/mcu-STM32L071KBTx"]
 stm32l100     = ["stm32l1xx-hal/stm32l100"  ]
 stm32l151     = ["stm32l1xx-hal/stm32l151"  ]

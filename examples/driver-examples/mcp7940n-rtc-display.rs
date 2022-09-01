@@ -21,7 +21,7 @@
 #![no_std]
 #![no_main]
 
-use mcp794xx::{Datelike, Mcp794xx, NaiveDate, Rtcc, Timelike};
+use mcp794xx::{Datelike, Mcp794xx, NaiveDate, Timelike, DateTimeAccess};
 
 use core::fmt::Write;
 use cortex_m_rt::entry;
@@ -66,7 +66,7 @@ fn main() -> ! {
         // If the LED 0 is off, something went wrong.
         led.blink(50_u16, &mut delay);
 
-        let now = rtc.get_datetime().unwrap();
+        let now = rtc.datetime().unwrap();
 
         let mut buffer: heapless::String<32> = heapless::String::new();
         write!(

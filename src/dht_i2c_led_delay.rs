@@ -266,8 +266,10 @@ pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {
 
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
-        prelude::*,
+       gpio::{gpioc::PC13, Output, PushPull, OpenDrain,
+              gpioa::{PA1, PA8},
+              },
+       prelude::*,
         rcc, // for ::Config but note name conflict with serial
     };
 
@@ -283,12 +285,13 @@ pub fn setup() ->  (DhtPin, I2cType, LedType, DelayType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
        let clocks = rcc.clocks;
 
-       let mut dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+       let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
  
-       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+       //let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc, &clocks);
        let led = setup_led(dp.GPIOC.split(&mut rcc));
-       //let delay = DelayType{};
-       let delay = dp.TIM2.delay_us(&clocks);
+       let delay = DelayType{};
+       //let delay = dp.TIM2.delay_us(&clocks);
 
        (dht, i2c, led, delay)
     }

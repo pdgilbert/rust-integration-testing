@@ -302,7 +302,7 @@ pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, i2c: I2c4, &clocks: &CoreClocks) ->
 use stm32l0xx_hal::{
     delay::Delay,
     gpio::{
-        gpiob::{PB8, PB9, Parts as PartsB},
+        gpiob::{PB8, PB9, PB10, PB11, Parts as PartsB},
         gpioc::{PC13, Parts as PartsC},
         OpenDrain, Output, PushPull,
     },
@@ -330,15 +330,15 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: PartsB, mut rcc: Rcc, &clocks: &Clocks)
 }
 
 #[cfg(feature = "stm32l0xx")]
-pub type I2c2Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;   
+pub type I2c2Type = I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>;
 
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: PartsB, mut rcc: Rcc, &clocks: &Clocks) -> I2c2Type {
 
     // could also have scl on PB6, sda on PB7
     //BlockingI2c::i2c1(
-    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
+    let scl = gpiob.pb10.into_open_drain_output(); 
+    let sda = gpiob.pb11.into_open_drain_output();
     let i2c = i2c2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     i2c

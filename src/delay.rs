@@ -77,7 +77,8 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub type DelayType = Delay<TIM2, 1000000_u32>;
+pub use crate::alt_delay::{AltDelay as DelayType};
+//pub type DelayType = Delay<>;
 
 
 
