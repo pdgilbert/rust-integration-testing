@@ -19,13 +19,19 @@ use panic_halt as _;
 use cortex_m_semihosting::hprintln;
 
 use cortex_m_rt::entry;
+
+//use embedded_hal::serial::nb::Write;
 //use core::fmt::Write;  // for writeln, but not supported by stm32f3xx_hal
+//use embedded_hal::blocking::serial::{Write};  // for write trait
+//use embedded_hal::blocking::serial::{Write, Read}; 
+//use embedded_hal::serial::{Write, Read};
+//use embedded_hal::serial::{Write};
+
+
 use core::str::from_utf8;
 use nb::block;
 
 //use embedded_hal::serial;
-//use embedded_hal::blocking::serial::{Write, Read};
-//use embedded_hal::serial::{Write, Read};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 

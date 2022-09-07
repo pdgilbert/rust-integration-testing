@@ -866,17 +866,16 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     // unclear why Delay is needed in this hal. (Thus needs cp.)
     let mut delay = Delay::new(cp.SYST, clocks);
     let adc_common = AdcCommon::new(p.ADC_COMMON, &mut rcc.ahb2);
+    let mut adcx = Adc::adc1( p.ADC1, adc_common, &mut rcc.ccipr, &mut delay, );
+
     let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::adc1(
-            p.ADC1,
-            adc_common,
-            &mut rcc.ccipr,
-            &mut delay,
-        ),
+        ad_1st: adcx,
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel
     // so no channel needs to be specified here.
+    //FIX THIS
+    let mut temp_pin = adcs.ad_1st.enable_temperature(&mut delay).unwrap();
 
     let mcutemp: Sensor<Option<PB1<Analog>>> = Sensor { ch: None }; // no channel
 
