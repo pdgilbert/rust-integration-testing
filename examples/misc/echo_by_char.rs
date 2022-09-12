@@ -140,7 +140,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
     let gpioa = p.GPIOA.split();
-    p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    //p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     Serial::new(
         p.USART1,
         (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
