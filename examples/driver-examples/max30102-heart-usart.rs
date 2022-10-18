@@ -31,7 +31,7 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write;  // for writeln!
+use core::fmt::Write as Writeln;  // for writeln!
 use cortex_m_rt::entry;
 use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 #[cfg(debug_assertions)]
@@ -299,8 +299,8 @@ use stm32f4xx_hal::{
     serial::{config::Config, Rx, Serial, Tx},
 };
 
-#[cfg(feature = "stm32f4xx")]
-use embedded_hal::serial::blocking::Write;
+//#[cfg(feature = "stm32f4xx")]
+//use embedded_hal::blocking::serial::Write;
 //use embedded_hal::serial::nb::Write;
 
 #[cfg(feature = "stm32f4xx")]

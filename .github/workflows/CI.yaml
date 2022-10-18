@@ -181,7 +181,7 @@ jobs:
              hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32l0x2"
-             mcu:  stm32l072kztx
+             mcu:  stm32l0x2kztx
              hal: "stm32l0xx"
              trg: "thumbv6m-none-eabi"
            - brd: "discovery-stm32l100"
