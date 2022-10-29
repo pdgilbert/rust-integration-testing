@@ -6,6 +6,12 @@
 //! This is convenient for adc pins that are not 5v tolerant but means the voltage varies
 //! inversely compared to connecting throught the resistor to GND as is sometimes done. (That is,
 //! higher temperature gives lower voltage measurement.)
+//!
+//! If 3.3v is supplied through BluePill regulator from 5v USB probe BEWARE of regulator current limit.
+//! Some places it is claimed that when the limit is exceeded then 5v is supplied but mine failed 
+//! by dropping voltage to 2.8v when the SSD1306, 10k thermistor and DHT-11 were on the 3.3v using 
+//! USB power rather than battery. It ran but 10K temperature accuracy is questionable.
+//!
 //! See setup() functions in  src/adc_i2c_led_delay.rs, src/i2c.rs, and src/led.rs  for the 
 //! pin settings on various boards.
 //! 
@@ -13,13 +19,11 @@
 //! the internal mcu temperature measurement.
 //! 
 //! Note that the DisplaySize setting needs to be adjusted for 128x64 or 128x32 display.
-//!
-//! If 3.3v is supplied through BluePill from 5v BEWARE of regulator limit.
 //! 
 //! The SSD1306 OLED display connects to the I2C bus: VCC  (or VDD) to 3.3v, and also to GND, SDA, and SCL. 
 //! 
 //! Voltage at the thermistor to fixed resistor connection is measured on the ADC pin.
-//! Te choice of 10k series resistor in the voltage divider ...
+//! The choice of 10k series resistor in the voltage divider ...
 //! Values in the temperature calculation below are very rough based on my extremely crude calibration
 //! effort, but see for example 
 //!     https://www.mathscinotes.com/2014/05/yet-another-thermistor-discussion/

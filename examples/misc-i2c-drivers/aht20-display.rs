@@ -9,7 +9,7 @@
 #![no_std]
 #![no_main]
 
-use aht10::AHT10;
+use aht20::Aht20;
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -56,16 +56,14 @@ fn main() -> ! {
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
-
+    
     // Blink LED to indicate initializing.
     led.blink(2000_u16, &mut delay);
 
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
-    // See https://www.electroschematics.com/temperature-sensor re address 0x38  vs 0x39
-    //   and "No  other devices on the I2C bus".
-    //let mut device = AHT10::new(i2c, delay).unwrap();
-    let mut device = AHT10::new(manager.acquire_i2c(), delay).unwrap();  //.expect("device failed")
+    let mut device = Aht20::new(manager.acquire_i2c(), delay).unwrap();  //.expect("device failed")
+    //let mut device = Aht20::new(i2c, delay).unwrap();
 
     loop {
         //rprintln!("loop i");

@@ -83,7 +83,7 @@ fn show_display<S>(
 where
     S: DisplaySize,
 {
-    let mut lines: [heapless::String<32>; 3] = [
+    let mut lines: [heapless::String<32>; DISPLAY_LINES] = [
         heapless::String::new(),
         heapless::String::new(),
         heapless::String::new(),
@@ -150,14 +150,14 @@ fn main() -> ! {
 
         // Read adc
         let thermistor = block!(adc.read(&mut AdcChannel::SingleA0)).unwrap_or(8091) * 5;  //FIX
-        let A1 = block!(adc.read(&mut AdcChannel::SingleA1)).unwrap_or(8091);
-        let A2 = block!(adc.read(&mut AdcChannel::SingleA2)).unwrap_or(8091);
-        let A3 = block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091);
+        let a1 = block!(adc.read(&mut AdcChannel::SingleA1)).unwrap_or(8091);
+        let a2 = block!(adc.read(&mut AdcChannel::SingleA2)).unwrap_or(8091);
+        let a3 = block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091);
 
     hprintln!("values read").unwrap();
-    hprintln!("values  {} {} {} {}", thermistor, A1, A2, A3).unwrap();
+    hprintln!("values  {} {} {} {}", thermistor, a1, a2, a3).unwrap();
 
-        show_display(thermistor, A1, A2, A3, text_style, &mut display);
+        show_display(thermistor, a1, a2, a3, text_style, &mut display);
 
         delay.delay_ms(5000_u16);
     }
