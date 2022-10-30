@@ -77,7 +77,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_dht_i2c_led_delay_using_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
     #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
@@ -137,7 +137,7 @@ mod app {
         hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (mut dht, i2c, mut led, mut delay) = setup_dp(cx.device);
+        let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  

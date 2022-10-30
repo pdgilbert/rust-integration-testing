@@ -54,36 +54,8 @@ use dht_sensor::*;
 
 use  ina219::{INA219,};
 
-use rust_integration_testing_of_examples::dht_i2c_led_delay::{ setup_dp, DelayMs, LED, };
-
-#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-use stm32f0xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
-use stm32f1xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
-use stm32f3xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
-use stm32f4xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32f7xx")]
-use stm32f7xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32l0xx")]
-use stm32l0xx_hal::pac::Peripherals;
-
-#[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
-use stm32l1xx_hal::stm32::Peripherals;
-
-#[cfg(feature = "stm32l4xx")]
-use stm32l4xx_hal::pac::Peripherals;
-
-
+use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup_dht_i2c_led_delay_using_dp, DelayMs, LED, };
+use rust_integration_testing_of_examples::dp::{Peripherals};
 
 fn display<S>(
     dht_temp: i8,
@@ -129,7 +101,7 @@ where
 #[entry]
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, mut delay) = setup_dp(dp);
+    let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(dp);
 
     led.blink(1000_u16, &mut delay); 
 

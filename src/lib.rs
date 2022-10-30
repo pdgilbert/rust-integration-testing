@@ -19,6 +19,7 @@ pub mod dp;
 pub mod delay;
 pub mod led;
 pub mod i2c;
+pub mod dht;
 //pub mod spi; move problems need to be figured out for this
 pub mod alt_delay;
 

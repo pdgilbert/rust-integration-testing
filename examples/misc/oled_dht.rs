@@ -49,7 +49,8 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup, LED, DelayMs};
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup_dht_i2c_led_delay_using_dp, LED, DelayMs};
 
 
 fn show_display<S>(
@@ -101,7 +102,8 @@ fn main() -> ! {
     //rprintln!("oled_dht example");
     //hprintln!("oled_dht example").unwrap();
 
-    let (mut dht, i2c, mut led, mut delay) = setup();
+    let dp = Peripherals::take().unwrap();
+    let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(dp);
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

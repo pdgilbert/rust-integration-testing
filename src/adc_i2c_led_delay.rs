@@ -17,9 +17,17 @@ pub trait ReadAdc {
     fn read_mv(&mut self)    -> u32;
 }
 
-pub use crate::led::{setup_led, LED, LedType};
-pub use crate::i2c::{setup_i2c1, I2c1Type};
+use crate::dp::{Peripherals};
 pub use crate::delay::{DelayType};
+pub use crate::led::{setup_led, LED, LedType};
+pub use crate::dht::{DhtType};
+
+
+#[cfg(not(feature = "stm32f0xx"))]
+pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
+
+#[cfg(feature = "stm32f0xx")]
+pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
 
 
 
@@ -38,11 +46,7 @@ use stm32f0xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32f0xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f0xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
-    let mut dp = Peripherals::take().unwrap();
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -84,12 +88,8 @@ use stm32f1xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f1xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     //            (..., BlockingI2c<I2C1, impl Pins<I2C1>>, ...) 
-    let dp = Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
@@ -124,21 +124,16 @@ use stm32f3xx_hal::{
     gpio::{Analog, Output, OpenDrain,
            gpioa::{PA1, PA8},
     },
-    delay::Delay,
-    pac::{CorePeripherals, Peripherals, ADC1,},
+    pac::{Peripherals, ADC1,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
-#[cfg(feature = "stm32f3xx")]
-type DhtType = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
-    let dp = Peripherals::take().unwrap();
-
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
@@ -161,7 +156,8 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb), clocks, rcc.apb1);
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let mut delay = DelayType{};
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     //  1 second delay (for DHT11 setup?) Wait on  sensor initialization?
     delay.delay_ms(1000_u16);
@@ -174,28 +170,17 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     adc::{config::AdcConfig, Adc}, //SampleTime
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
-    timer::SysDelay,
-    pac::{CorePeripherals, Peripherals, ADC1,},
+    gpio::{Analog, gpioa::{PA1}, },
+    pac::{ADC1,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
-#[cfg(feature = "stm32f4xx")] // Use HSE oscillator
-type DhtType = PA8<Output<OpenDrain>>;
-
 #[cfg(feature = "stm32f4xx")]
-pub type DelayType = SysDelay;
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
                 //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
-    let dp = Peripherals::take().unwrap();
-
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
 
@@ -218,9 +203,11 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 
     let led = setup_led(dp.GPIOC.split());
     //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
-    let cp = CorePeripherals::take().unwrap();
-    let mut delay = cp.SYST.delay(&clocks);
-    
+    //let cp = CorePeripherals::take().unwrap();
+    //let mut delay = cp.SYST.delay(&clocks);
+    //let mut delay = DelayType{};
+    let mut delay = dp.TIM2.delay_us(&clocks);
+
     delay.delay_ms(1000_u16);
 
     (sens, dht, i2c, led, delay)
@@ -231,26 +218,16 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     adc::Adc,
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
-    timer::SysDelay,
-    pac::{CorePeripherals, Peripherals, ADC1, },
+    gpio::{Analog, gpioa::{PA1},},
+    pac::{ADC1, },
     prelude::*,
 };
 
 #[cfg(feature = "stm32f7xx")]
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
-#[cfg(feature = "stm32f7xx")] // Use HSE oscillator
-type DhtType = PA8<Output<OpenDrain>>;
-
 #[cfg(feature = "stm32f7xx")]
-pub type DelayType = SysDelay;
-
-#[cfg(feature = "stm32f7xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
-    let dp = Peripherals::take().unwrap();
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
 
@@ -269,9 +246,11 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
     let led = setup_led(dp.GPIOC.split());
+    let mut delay = DelayType{};
+    //let delay = dp.TIM2.delay_us(&clocks);
     //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
-    let cp = CorePeripherals::take().unwrap();
-    let mut delay = cp.SYST.delay(&clocks);
+    //let cp = CorePeripherals::take().unwrap();
+    //let mut delay = cp.SYST.delay(&clocks);
 
     delay.delay_ms(1000_u16);
 
@@ -284,11 +263,9 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 use stm32h7xx_hal::{
     adc,
     adc::{Adc, Enabled, },
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
+    gpio::{Analog, gpioa::{PA1,}, },
     delay::Delay,
-    pac::{CorePeripherals, Peripherals, ADC1,},
+    pac::{CorePeripherals, ADC1,},
     prelude::*,
 };
 
@@ -296,12 +273,8 @@ use stm32h7xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Enabled>>;
 
 #[cfg(feature = "stm32h7xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32h7xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
                 //(SensorType, I2c<I2C1>, LedType, Delay) {
-    let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -343,9 +316,7 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, Delay) {
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     adc::{Adc, Ready},
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
+    gpio::{Analog,  gpioa::{PA1}, },
     delay::Delay,
 //    gpio::{OpenDrain, Output, PushPull,
 //           gpiob::{PB8, PB9, Parts as PartsB},
@@ -362,11 +333,7 @@ type SensorType = Sensor<PA1<Analog>, Adc<Ready>>;
 //type SensorType = Sensor<PA1<Analog>, Adc<ADC>>;
 
 #[cfg(feature = "stm32l0xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l0xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
-    let dp = Peripherals::take().unwrap();
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
     let clocks = rcc.clocks;
 
@@ -401,27 +368,21 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     adc::{Adc, Precision},
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
+    gpio::{Analog, 
+           gpioa::{PA1},
     },
-    delay::Delay,
     prelude::*,
     rcc, // for ::Config but avoid name conflict with serial
-    stm32::{CorePeripherals, Peripherals,},
 };
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 type SensorType = Sensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32l1xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l1xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
                 //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
-    let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-    let clocks = rcc.clocks;
+    //let clocks = rcc.clocks;
 
     let mut adc = dp.ADC.adc(&mut rcc);
     adc.set_precision(Precision::B_12);
@@ -441,7 +402,8 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 
     let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let mut delay = DelayType{};
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     delay.delay_ms(1000_u16);
 
@@ -453,10 +415,8 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
     adc::{Adc, AdcCommon},
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
-    pac::{CorePeripherals, Peripherals, ADC1},
+    gpio::{Analog, gpioa::{PA1}},
+    pac::{ADC1},
     prelude::*,
 };
 
@@ -464,17 +424,14 @@ use stm32l4xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32l4xx")]
-type DhtType = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l4xx")]
-pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
-    let dp = Peripherals::take().unwrap();
+pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc.cfgr.sysclk(80.MHz()).pclk1(80.MHz()).pclk2(80.MHz()).freeze(&mut flash.acr, &mut pwr);
 
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let mut delay = DelayType{};
 
     let adc_common = AdcCommon::new(dp.ADC_COMMON, &mut rcc.ahb2);
     let adc = Adc::adc1(dp.ADC1, adc_common, &mut rcc.ccipr, &mut delay );
@@ -500,3 +457,10 @@ pub fn setup() -> (SensorType, DhtType, I2c1Type, LedType, DelayType) {
 }
 
 // End of HAL/MCU specific setup.
+
+pub fn setup() ->  (SensorType, DhtType, I2cType, LedType, DelayType) {    
+   let dp = Peripherals::take().unwrap();
+   let (sens, dht, i2c, led, delay) = setup_sens_dht_i2c_led_delay_using_dp(dp);
+
+   (sens, dht, i2c, led, delay)
+}
