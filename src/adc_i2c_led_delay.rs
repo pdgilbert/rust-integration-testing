@@ -77,10 +77,9 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     adc::Adc,
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
+    gpio::{Analog, gpioa::{PA1},
     },
-    pac::{Peripherals, ADC1,},
+    pac::{ADC1},
     prelude::*,
 };
 
@@ -121,10 +120,8 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     adc::{Adc, CommonAdc, config::Config},
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
-    pac::{Peripherals, ADC1,},
+    gpio::{Analog, gpioa::{PA1},},
+    pac::{ADC1,},
     prelude::*,
 };
 
@@ -264,8 +261,7 @@ use stm32h7xx_hal::{
     adc,
     adc::{Adc, Enabled, },
     gpio::{Analog, gpioa::{PA1,}, },
-    delay::Delay,
-    pac::{CorePeripherals, ADC1,},
+    pac::{ADC1,},
     prelude::*,
 };
 
@@ -281,7 +277,8 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
     let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let delay = DelayType{};
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
     
     let mut adc1 = Adc::adc1(dp.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
     adc1.set_resolution(adc::Resolution::SixteenBit);

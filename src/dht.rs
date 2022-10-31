@@ -1,11 +1,11 @@
-#[cfg(feature = "stm32f0xx")]
+#[cfg(feature = "stm32zzxx")]
 use stm32f0xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::gpio::{gpioa::PA8, Output, OpenDrain}; 
 
 #[cfg(feature = "stm32f3xx")]
-use stm32f3xx_hal::gpio::{gpioa::{PA8,Output, OpenDrain},};
+use stm32f3xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};

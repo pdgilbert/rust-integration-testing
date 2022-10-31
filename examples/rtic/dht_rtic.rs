@@ -77,7 +77,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dht_i2c_led_delay_using_dp, DhtPin, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_dht_i2c_led_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
     #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
@@ -181,7 +181,7 @@ mod app {
 
     #[local]
     struct Local {
-        dht:   DhtPin,
+        dht:   DhtType,
         delay: DelayType,
 //        text_style: MonoTextStyle<BinaryColor>,
 //        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
