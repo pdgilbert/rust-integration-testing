@@ -277,10 +277,10 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
     let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
-    let delay = DelayType{};
+    let mut delay = DelayType{};
     //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
     
-    let mut adc1 = Adc::adc1(dp.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
+    let mut adc1 = Adc::adc1(dp.ADC1, 4.MHz(), &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
     adc1.set_resolution(adc::Resolution::SixteenBit);
     let adc1 = adc1.enable();
 

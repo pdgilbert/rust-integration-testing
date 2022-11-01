@@ -46,6 +46,8 @@ mod app {
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
     
+    use core::fmt::Write;
+
     use systick_monotonic::*;
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -61,16 +63,16 @@ mod app {
     //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
-//    use embedded_graphics::{
-//        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-//        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-//        pixelcolor::BinaryColor,
-//        prelude::*,
-//        text::{Baseline, Text},
-//    };
+    use embedded_graphics::{
+        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        pixelcolor::BinaryColor,
+        prelude::*,
+        text::{Baseline, Text},
+    };
 
-//    use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
-    
+    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
     const MONOTICK:  u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
 
@@ -79,52 +81,58 @@ mod app {
     use rust_integration_testing_of_examples::dht_i2c_led_delay::{
         setup_dht_i2c_led_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
+
     #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
 
-//  THIS NEEDS TYPES FIGURED OUT FOR SHARE. SEE DISPLAY_STUFF_RTIC FOR SIMPLER EXAMPLE
-//
-//fn show_display<S>(
-//    temperature: i8,
-//    relative_humidity: u8,
-//    text_style: MonoTextStyle<BinaryColor>,
-//    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-//) -> ()
-//where
-//    S: DisplaySize,
-//{
-//   let mut lines: [heapless::String<32>; 1] = [
-//       heapless::String::new(),
-//   ];
-//
-//   // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
-//   // It is possible to use \n in place of separate writes, with one line rather than vector.
-//
-//   // UTF-8 text is 2 bytes (2 ascii characters) in strings like the next. Cutting an odd number of character from
-//   // the next test_text can result in a build error message  `stream did not contain valid UTF-8` even with
-//   // the line commented out!! The test_txt is taken from 
-//   //      https://github.com/embedded-graphics/examples/blob/main/eg-0.7/examples/text-extended-characters.rs
-//   
-//   //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
-//   //   degree symbol "°" is about                  ^^ here 
-//   
-//   write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
-//
-//   disp.clear();
-//   for i in 0..lines.len() {
-//       // start from 0 requires that the top is used for font baseline
-//       Text::with_baseline(
-//           &lines[i],
-//           Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-//           text_style,
-//           Baseline::Top,
-//       )
-//       .draw(&mut *disp)
-//       .unwrap();
-//   }
-//   disp.flush().unwrap();
-//   ()
-//}
+    fn show_display<S>(
+        temperature: i8,
+        relative_humidity: u8,
+        //text_style: MonoTextStyle<BinaryColor>,
+        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    ) -> ()
+    where
+        S: DisplaySize,
+    {
+       
+       // workaround. build here because text_style cannot be shared
+       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+    
+       let mut lines: [heapless::String<32>; 1] = [
+           heapless::String::new(),
+       ];
+    
+       // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+       // It is possible to use \n in place of separate writes, with one line rather than vector.
+    
+       // UTF-8 text is 2 bytes (2 ascii characters) in strings like the next. Cutting an odd number of character from
+       // the next test_text can result in a build error message  `stream did not contain valid UTF-8` even with
+       // the line commented out!! The test_txt is taken from 
+       //      https://github.com/embedded-graphics/examples/blob/main/eg-0.7/examples/text-extended-characters.rs
+       
+       //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
+       //   degree symbol "°" is about                  ^^ here 
+       
+       write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
+
+       disp.clear();
+       for i in 0..lines.len() {
+           // start from 0 requires that the top is used for font baseline
+           Text::with_baseline(
+               &lines[i],
+               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+               text_style,
+               Baseline::Top,
+               )
+               .draw(&mut *disp)
+               .unwrap();
+       }
+       disp.flush().unwrap();
+       ()
+    }
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -146,17 +154,19 @@ mod app {
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
-        let _manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
-//
-//        //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-//        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
-//            .into_buffered_graphics_mode();
-//        display.init().unwrap();
-//
-//        let text_style = MonoTextStyleBuilder::new()
-//            .font(&FONT_10X20)
-//            .text_color(BinaryColor::On)
-//            .build();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
+
+        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+
+        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+
+        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+            .into_buffered_graphics_mode();
+
+        display.init().unwrap();
+
+        Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+          .draw(&mut display).unwrap();
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
@@ -170,7 +180,7 @@ mod app {
 
         hprintln!("exit init").unwrap();
         //(Shared {dht,  led, delay, text_style, display }, Local {}, init::Monotonics(mono))
-        (Shared { led, }, Local {dht, delay, }, init::Monotonics(mono))
+        (Shared { led, }, Local {dht, delay, display }, init::Monotonics(mono))
     }
 
     #[shared]
@@ -179,16 +189,22 @@ mod app {
         //manager??? ,  uses i2c:   I2c2Type, or text_style, display ??
     }
 
+// see disply_stuff_rtic and  https://github.com/jamwaffles/ssd1306/issues/164 regarding
+// problem Shared local text_style. Workaroound by building in the task (may not be very efficient).
+
     #[local]
     struct Local {
         dht:   DhtType,
         delay: DelayType,
+        //display: Ssd1306<impl WriteOnlyDataCommand, DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+                          ssd1306::prelude::DisplaySize128x64, 
+                          BufferedGraphicsMode<DisplaySize128x64>>,
 //        text_style: MonoTextStyle<BinaryColor>,
-//        display: &mut Ssd1306<impl WriteOnlyDataCommand, DisplaySize, BufferedGraphicsMode<DisplaySize>>,
     }
 
     //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
-    #[task(shared = [led, ], local = [dht, delay,], capacity=2)]
+    #[task(shared = [led, ], local = [dht, delay, display ], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
         //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
@@ -200,8 +216,9 @@ mod app {
         let z = Reading::read(delay, dht);
         let (_temperature, _humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
-               =>  {hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
+               =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
                     //show_display(temperature, relative_humidity, text_style, &mut display)
+                    show_display(temperature, relative_humidity, cx.local.display);
                     (temperature, relative_humidity)
                    },
             Err(e) 

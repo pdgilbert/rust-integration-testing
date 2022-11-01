@@ -620,7 +620,7 @@ fn setup() -> (
     //let (adc1, adc2) = adc12(p.ADC1, p.ADC2, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
     // but this example uses adc1 and adc3.
 
-    let mut adc1 = Adc::adc1(p.ADC1, &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
+    let mut adc1 = Adc::adc1(p.ADC1, 4.MHz(), &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
     adc1.set_resolution(adc::Resolution::SixteenBit);
     let adc1 = adc1.enable();
 
@@ -631,7 +631,7 @@ fn setup() -> (
     //     and  https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/adc.rs
     //   also  regarding  voltage = reading * (vref/resolution)
 
-    let mut adc3 = Adc::adc3(p.ADC3, &mut delay, ccdr.peripheral.ADC3, &ccdr.clocks);
+    let mut adc3 = Adc::adc3(p.ADC3, 4.MHz(), &mut delay, ccdr.peripheral.ADC3, &ccdr.clocks);
     adc3.set_resolution(adc::Resolution::SixteenBit);
 
     let mut ch_mcu = Temperature::new();
@@ -866,9 +866,9 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     // unclear why Delay is needed in this hal. (Thus needs cp.)
     let mut delay = Delay::new(cp.SYST, clocks);
     let adc_common = AdcCommon::new(p.ADC_COMMON, &mut rcc.ahb2);
-    let mut adcx = Adc::adc1( p.ADC1, adc_common, &mut rcc.ccipr, &mut delay, );
+    let adcx = Adc::adc1( p.ADC1, adc_common, &mut rcc.ccipr, &mut delay, );
 
-    let adcs: Adcs<Adc<ADC1>> = Adcs {
+    let mut adcs: Adcs<Adc<ADC1>> = Adcs {
         ad_1st: adcx,
     };
 
@@ -893,8 +893,9 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 
                 None => {
                     let z = &mut a.ad_1st;
+                    let mut tmp = Temperature{_0:()};
                     let v = z
-                        .read(&mut Temperature)
+                        .read(&mut tmp)
                         .expect("MCU temperature read failed.");
                     (v as f32 / 12.412122) as i32 - 50 as i32 // CHECK SCALE
                 }

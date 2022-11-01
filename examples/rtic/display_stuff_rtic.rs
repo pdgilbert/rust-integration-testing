@@ -30,7 +30,7 @@ mod app {
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
 
-    use core::fmt::Write;
+    //use core::fmt::Write;
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -43,7 +43,8 @@ mod app {
 
     use embedded_graphics::{
         //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle},  //FONT_6X10  FONT_8X13
+        //mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle},  //FONT_6X10  FONT_8X13
+        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder},  //FONT_6X10  FONT_8X13
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -229,7 +230,7 @@ mod app {
        let pwr = dp.PWR.constrain();
        let vos = pwr.freeze();
        let rcc = dp.RCC.constrain();
-       let ccdr = rcc.sys_ck(100.mhz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+       let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
        let clocks = ccdr.clocks;
 
        let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
@@ -323,9 +324,9 @@ mod app {
        let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
        let clocks = rcc
            .cfgr
-           .sysclk(80.mhz())
-           .pclk1(80.mhz())
-           .pclk2(80.mhz())
+           .sysclk(80.MHz())
+           .pclk1(80.MHz())
+           .pclk2(80.MHz())
            .freeze(&mut flash.acr, &mut pwr);
 
        let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
@@ -338,48 +339,48 @@ mod app {
 
     // End of hal/MCU specific setup. Following should be generic code.
 
-type TextStyle = MonoTextStyle<'static, BinaryColor>;
-// = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
-//const TEXTSTYLE: TextStyle = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+    //type TextStyle = MonoTextStyle<'static, BinaryColor>;
+    // = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+    //const TEXTSTYLE: TextStyle = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+    
+    //type DisplayType = Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>;
 
-//type DisplayType = Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>;
-
-fn show_display<S>(
-    text: &[heapless::String<32>; 1],
-    //text_style: TextStyle,
-    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-    //disp: DisplayType,
-) -> ()
-where
-    S: DisplaySize,
-{
-   let mut lines: [heapless::String<32>; 1] = [
-       heapless::String::new(),
-   ];
-
-   // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
-   // It is possible to use \n in place of separate writes, with one line rather than vector.
-  
-   //write!(lines[0], "stuff").unwrap();
-   
-   // should not be necessary to do this every call but have not yet managed to pass it as an arg
-   let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
-
-   disp.clear();
-   for i in 0..lines.len() {
-       // start from 0 requires that the top is used for font baseline
-       Text::with_baseline(
-           &lines[i],
-           Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-           text_style,
-           Baseline::Top,
-       )
-       .draw(&mut *disp)
-       .unwrap();
-   }
-   disp.flush().unwrap();
-   ()
-}
+    fn show_display<S>(
+        //text: &[heapless::String<32>; 1],
+        //text_style: TextStyle,
+        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        //disp: DisplayType,
+    ) -> ()
+    where
+        S: DisplaySize,
+    {
+       let lines: [heapless::String<32>; 1] = [
+           heapless::String::new(),
+       ];
+    
+       // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+       // It is possible to use \n in place of separate writes, with one line rather than vector.
+      
+       //write!(lines[0], "stuff").unwrap();
+       
+       // should not be necessary to do this every call but have not yet managed to pass it as an arg
+       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+    
+       disp.clear();
+       for i in 0..lines.len() {
+           // start from 0 requires that the top is used for font baseline
+           Text::with_baseline(
+               &lines[i],
+               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+               text_style,
+               Baseline::Top,
+           )
+           .draw(&mut *disp)
+           .unwrap();
+       }
+       disp.flush().unwrap();
+       ()
+    }
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -434,6 +435,16 @@ where
         //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
     }
+// see https://github.com/jamwaffles/ssd1306/issues/164
+//text_style cannot be in shared Local:
+//(dyn GlyphMapping + 'static)` cannot be shared between threads safely
+//    |
+//    = help: within `MonoFont<'static>`, the trait `core::marker::Sync` is not implemented for `(dyn GlyphMapping + 'static)`
+//    = note: required because it appears within the type `&'static (dyn GlyphMapping + 'static)`
+//    = note: required because it appears within the type `MonoFont<'static>`
+//    = note: required because of the requirements on the impl of `Send` for `&'static MonoFont<'static>`
+//    = note: required because it appears within the type `embedded_graphics::mono_font::MonoTextStyle<'static, embedded_graphics::pixelcolor::BinaryColor>`
+//note: required by a bound in `assert_send`
 
     //#[task(shared = [led, ], local = [display, text_style,], capacity=2)]
     #[task(shared = [ led, ], local = [ display, ], capacity=2)]
@@ -441,28 +452,32 @@ where
         // blink and re-spawn process to repeat
         blink::spawn(BLINK_DURATION.millis()).ok();
 
+        // workaround. build here because text_style cannot be shared
+        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
-        let mut lines: [heapless::String<32>; 1] = [heapless::String::new(),];
+        let lines: [heapless::String<32>; 1] = [heapless::String::new(),];
         //show_display(*cx.local.text_style, &mut cx.local.display);
-        show_display(&lines, cx.local.display);
+        //show_display(&lines, cx.local.display);
+        show_display(cx.local.display);
 
         // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
         // It is possible to use \n in place of separate writes, with one line rather than vector.
        
        // write!(&lines[0], "stuff").unwrap();
     
-//       cx.local.display.clear();
-//       for i in 0..lines.len() {
-//           // start from 0 requires that the top is used for font baseline
-//           Text::with_baseline(
-//               &lines[i],
-//               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-//               cx.local.text_style,
-//               Baseline::Top,
-//           ).draw(&mut cx.local.display).unwrap();
-//       }
-//       cx.local.display.flush().unwrap();
-//          
+       cx.local.display.clear();
+       for i in 0..lines.len() {
+           // start from 0 requires that the top is used for font baseline
+           Text::with_baseline(
+               &lines[i],
+               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+               //cx.local.text_style,
+               text_style,
+               Baseline::Top,
+           ).draw(cx.local.display).unwrap();
+       }
+     cx.local.display.flush().unwrap();
+          
         display_stuff::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
