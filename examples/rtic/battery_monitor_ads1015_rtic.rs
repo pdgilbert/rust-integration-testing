@@ -1,5 +1,4 @@
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
-// CONSIDER DOING THIS WITH DMA FOLLOWING stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma.rs
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
 //! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for version using dma.
 
@@ -26,18 +25,17 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-
-    //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
-    //use rtt_target::{rprintln, rtt_init_print};
-
     use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
                   ChannelSelection,
                   ic::{Ads1015, Resolution12Bit},
                   interface::I2cInterface};
     
-    use core::fmt::Write;
 
+    //use cortex_m_semihosting::{debug, hprintln};
+    use cortex_m_semihosting::{hprintln};
+    //use rtt_target::{rprintln, rtt_init_print};
+
+    use core::fmt::Write;
     use systick_monotonic::*;
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
@@ -74,9 +72,6 @@ mod app {
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
-
-    #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
-    use embedded_hal::digital::v2::OutputPin;
 
     use nb::block;
 
