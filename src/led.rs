@@ -214,21 +214,17 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     gpio::{
-        gpiob::{PB8, PB9},
         gpioc::{PC13, Parts},
-        OpenDrain, Output, PushPull,
+        Output, PushPull,
     },
-    i2c::I2c,
-    pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
-    rcc, // for ::Config but note name conflict with serial
 };
 
 #[cfg(feature = "stm32l0xx")]
 pub type LedType = PC13<Output<PushPull>>;
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_led(mut gpiox: Parts) -> LedType {
+pub fn setup_led(gpiox: Parts) -> LedType {
     let led = gpiox.pc13.into_push_pull_output(); 
 
     impl LED for LedType {

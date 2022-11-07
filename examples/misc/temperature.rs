@@ -170,9 +170,10 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc>) -> i32 {
            let z = &mut a.ad_1st;
-           z.read_temp() as i32
+           let v: i32 = z.read(&mut VTemp).unwrap();
+           v as i32
         }
     }
 
@@ -688,8 +689,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
-           let z = &mut a.ad_1st;
+        fn read_tempC(&mut self, a: &mut Adcs<Adc<Ready>>) -> i32 {
            let v: f32 = a.ad_1st.read(&mut VTemp).unwrap();
            (v / 12.412122) as i32 - 50 as i32 //CHECK THIS
         }
@@ -701,14 +701,14 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
 
     impl ReadTempC for Sensor<PB1<Analog>> {
         fn read_tempC(&mut self, a: &mut Adcs<Adc<Ready>>) -> i32 {
-            let v: f32 = a.ad_1st.read(ch).unwrap();
+            let v: f32 = a.ad_1st.read(&mut self.ch).unwrap();
             (v / 12.412122) as i32 - 50 as i32
         }
     }
 
     impl ReadMV for Sensor<PB1<Analog>> {
         fn read_mv(&mut self, a: &mut Adcs<Adc<Ready>>) -> u32 {
-            a.ad_1st.read(ch).unwrap()
+            a.ad_1st.read(&mut self.ch).unwrap()
         }
     }
 

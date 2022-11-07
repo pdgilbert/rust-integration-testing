@@ -222,11 +222,10 @@ pub fn setup_dht_i2c_led_delay_using_dp(dp: Peripherals) ->  (DhtType, I2cType, 
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-   gpio::{gpioc::PC13,PushPull,
-          gpioa::{PA1},
-          },
+   delay::Delay,
+   pac::{CorePeripherals},
    prelude::*,
-    rcc, // for ::Config but note name conflict with serial
+    rcc::Config, // for ::Config but note name conflict with serial
 };
 
 #[cfg(feature = "stm32l0xx")]
@@ -235,16 +234,17 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_dht_i2c_led_delay_using_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, DelayType) {
    // UNTESTED
-   let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-   let clocks = rcc.clocks;
+   let mut rcc = dp.RCC.freeze(Config::hsi16());
 
    let dht = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
+   let clocks = rcc.clocks;
 
    //let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
-   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc, &clocks);
    let led = setup_led(dp.GPIOC.split(&mut rcc));
-   let delay = DelayType{};
+   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
+   //let delay = DelayType{};
    //let delay = dp.TIM2.delay_us(&clocks);
+   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
    (dht, i2c, led, delay)
 }

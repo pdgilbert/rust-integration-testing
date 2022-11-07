@@ -34,11 +34,9 @@ pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
     adc::Adc,
-    gpio::{Analog, Output, OpenDrain,
-           gpioa::{PA1, PA8},
-    },
+    gpio::{Analog, gpioa::{PA1}},
     delay::Delay,
-    pac::{CorePeripherals, Peripherals},
+    pac::{CorePeripherals},
     prelude::*,
 };
 
@@ -46,8 +44,9 @@ use stm32f0xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
-    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+pub fn setup_sens_dht_i2c_led_delay_using_dp(mut dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
+    let rcc = dp.RCC.configure();
+    let mut rcc = rcc.freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -65,7 +64,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
      }
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
+    let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc), &mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
@@ -319,10 +318,9 @@ use stm32l0xx_hal::{
 //           gpiob::{PB8, PB9, Parts as PartsB},
 //           gpioc::{PC13, Parts as PartsC},
 //    },
-    i2c::I2c,
-    pac::{CorePeripherals, Peripherals, ADC, I2C1},  //ADC1 ?
+    pac::CorePeripherals,
     prelude::*,
-    rcc, // for ::Config but note name conflict with serial
+    rcc::Config, 
 };
 
 #[cfg(feature = "stm32l0xx")]
@@ -331,7 +329,7 @@ type SensorType = Sensor<PA1<Analog>, Adc<Ready>>;
 
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
-    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+    let mut rcc = dp.RCC.freeze(Config::hsi16());
     let clocks = rcc.clocks;
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -351,8 +349,8 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 
 
     let gpiob =dp.GPIOB.split(&mut rcc);
-    let i2c = setup_i2c1(dp.I2C1, gpiob, rcc, &clocks);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
     let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     delay.delay_ms(1000_u16);
