@@ -1,11 +1,13 @@
-//! Measure temperature with 10k thermistor sensor (NTC thermistors probe ) and temperature and
+//! Measure temperature with 10k thermistor sensor (NTC 3950 10k thermistors probe) and temperature and
 //! humidity from a DHT-11 (or DHT-22) sensor. Display on SSD1306 OLED display.
 //! 
 //! One side of the thermistor is connected to GND and other side to adc pin and also through
 //! a 10k sresistor to VCC. That makes the max voltage about VCC/2, so about 2.5v when VCC is 5v.
-//! This is convenient for adc pins that are not 5v tolerant but means the voltage varies
-//! inversely compared to connecting throught the resistor to GND as is sometimes done. (That is,
-//! higher temperature gives lower voltage measurement.)
+//! and 1.6v when vcc is 3.2v. This is convenient for adc pins that are not 5v tolerant.
+//! This means the voltage varies inversely compared to connecting throught the resistor to GND 
+//! as is sometimes done. (Since NTC resistance goes down as temperature goes up, this means
+//! higher temperature gives higher voltage measurement.) Regarding NTC thermistors see, 
+//! for example, https://eepower.com/resistor-guide/resistor-types/ntc-thermistor/#
 //!
 //! If 3.3v is supplied through BluePill regulator from 5v USB probe BEWARE of regulator current limit.
 //! Some places it is claimed that when the limit is exceeded then 5v is supplied but mine failed 
