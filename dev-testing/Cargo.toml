@@ -41,6 +41,12 @@ ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_m
 #  ...
 # >>> INCLUDE memory.x
 
+#onewire         = { git = "https://github.com/kellerkindt/onewire" }
+#onewire         = { git = "https://github.com/asdfuser/onewire" }
+one-wire-bus     = ">=0.1.1" 
+#one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
+ds18b20         = { git = "https://github.com/fuchsnj/ds18b20" }
+
 # examples//driver-examples/
 mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
 ad983x          = { git = "https://github.com/eldruin/ad983x-rs" }
@@ -391,6 +397,14 @@ path = "examples/misc/spi.rs"
 [[example]]
 name = "battery_monitor_ads1015"
 path = "examples/misc/battery_monitor_ads1015.rs"
+
+[[example]]
+name = "onewire"
+path = "examples/misc/onewire.rs"
+
+[[example]]
+name = "ds18b20"
+path = "examples/misc/ds18b20.rs"
 
 
 # examples/rtic
