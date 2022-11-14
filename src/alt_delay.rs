@@ -52,6 +52,12 @@ impl DelayUs<u8> for AltDelay {
     }
 }
 
+impl DelayUs<u16> for AltDelay {
+    fn delay_us(&mut self, t:u16) {
+        delay((t as u32) * (ALTCLOCK / 1_000_000)); 
+    }
+}
+
 impl DelayUs<u32> for AltDelay {
     fn delay_us(&mut self, t:u32) {
         delay((t as u32) * (ALTCLOCK / 1_000_000)); 
