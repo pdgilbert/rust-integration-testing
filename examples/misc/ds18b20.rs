@@ -1,6 +1,12 @@
 // DS18B20 digital temperature sensor needs 4.7k pull-up resistor on data.
+// The ds18b20 date wire is conncecte tp PA8 (specified in src/onewire.rs).
+// The i2c for ssd1306 display is on pins as specifiied in function setup_i2c1
+//  in src/i2c.rs (scl on PB8 and sda on PB9 for blackpill stm32f401 1nd stm32f411).
+// The LED is on a pin as spcified in src/led.rs.
+// 
 // ERROR HANDLING NEEDS IMPROVEMENT
-// Using hints from README example at https://github.com/fuchsnj/ds18b20
+// 
+// Following is using hints from README example at https://github.com/fuchsnj/ds18b20
 //https://github.com/fuchsnj/one-wire-bus
 
 #![deny(unsafe_code)]
@@ -18,12 +24,13 @@ use cortex_m_rt::entry;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use embedded_hal::blocking::delay::DelayUs;
 use embedded_hal::digital::v2::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire, OneWireResult};
+
 
 use ds18b20;
 use ds18b20::{Ds18b20, Resolution};
@@ -48,7 +55,7 @@ use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_
 
 fn get_sensor<P, E>(
     delay: &mut (impl DelayMs<u16> + DelayUs<u16>),
-    one_wire_bus: &mut OneWire<P>,
+    one_wire_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where
         P: OutputPin<Error=E> + InputPin<Error=E>,
@@ -61,6 +68,8 @@ fn get_sensor<P, E>(
     // can obtain it from reading the sensor data,
     // or just wait the longest time, which is the 12-bit resolution (750ms)
     Resolution::Bits12.delay_for_measurement_time(delay);
+    // or
+    delay.delay_ms(2000_u16); // Delay 2 seconds
 
     // iterate over all devices
     //according to  one_wire_bus  device_search:
@@ -70,17 +79,24 @@ fn get_sensor<P, E>(
 
     let mut search_state = None;
     let mut sensor = None;
+    hprintln!("entering loop").unwrap();
     loop {
+        let z = one_wire_bus.device_search(search_state.as_ref(), false, delay);
+        hprintln!("Device at {:?}", z).unwrap();
+       
         if let Some((device_address, state)) = one_wire_bus.device_search(search_state.as_ref(), false, delay)? {
             search_state = Some(state);
+            hprintln!("first if").unwrap();
             if device_address.family_code() != ds18b20::FAMILY_CODE {
                 // skip other devices
+                hprintln!("second if").unwrap();
                 continue;
             }
             sensor = Some(Ds18b20::new(device_address)?); // contains temperature and config info: resolution...
 
-           //hprintln!("Device at {:?} is {}°C", device_address, sensor_data.temperature).unwrap();
+           hprintln!("Device at {:?} is °C", device_address).unwrap();
         } else {
+            hprintln!("will now panic.").unwrap();
             break;
         }
     }
@@ -141,10 +157,12 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
+    show_display(-300.0, text_style, &mut display);  //just to show display is working
+
     // get sensor address    
     let sensor = get_sensor(&mut delay, &mut one_wire_bus).unwrap();
       
-    //hprintln!("endless empty loop. ^c to kill ...").unwrap();
+    //hprintln!("endless loop. ^c to kill ...").unwrap();
 
     loop {
         // Blink LED to check that everything is actually running.

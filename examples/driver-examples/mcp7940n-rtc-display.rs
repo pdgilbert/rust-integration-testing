@@ -58,7 +58,7 @@ fn main() -> ! {
         .build();
 
     let mut rtc = Mcp794xx::new_mcp7940n(manager.acquire_i2c());
-    let begin = NaiveDate::from_ymd(2019, 1, 2).and_hms(4, 5, 6);
+    let begin = NaiveDate::from_ymd_opt(2019, 1, 2).expect("from_ymd failed").and_hms_opt(4, 5, 6).expect("hms failed");
     rtc.set_datetime(&begin).unwrap();
     rtc.enable().unwrap();
     loop {

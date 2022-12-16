@@ -42,7 +42,7 @@ fn main() -> ! {
     hprintln!("rtc").unwrap();
     let mut rtc = Ds1307::new(i2c);
     hprintln!("begin").unwrap();
-    let begin = NaiveDate::from_ymd(2020, 5, 2).and_hms(10, 21, 34);
+    let begin = NaiveDate::from_ymd_opt(2020, 5, 2).expect("from_ymd failed").and_hms_opt(10, 21, 34).expect("hms failed");
     hprintln!("rtc.set_datetime").unwrap();
     rtc.set_datetime(&begin).unwrap();
     hprintln!("loop").unwrap();

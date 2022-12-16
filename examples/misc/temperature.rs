@@ -382,7 +382,7 @@ fn setup() -> (
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> i32 {
            let z = &mut a.ad_1st;
            //z.read_temp() as i32;  //NEEDS TO CONNECT USING INTERNAL CHANNEL 16
            // see https://github.com/stm32-rs/stm32f3xx-hal/issues/163

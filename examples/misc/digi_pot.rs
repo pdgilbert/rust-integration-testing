@@ -383,7 +383,7 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
-    let delay = dp.TIM2.delay_us(&clocks);
+    let delay = DelayType{};  //dp.TIM2.delay_us(&rcc.clocks);
 
     (spi, cs, led, delay)
 }
