@@ -333,6 +333,20 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example oled_dht
           use-cross: true
 
+#      - name: Example onewire
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example onewire
+#          use-cross: true
+
+      - name: Example one_wire_bus_find_devices
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example one_wire_bus_find_devices
+          use-cross: true
+
       - name: Example ds18b20
         uses: actions-rs/cargo@v1
         with:
