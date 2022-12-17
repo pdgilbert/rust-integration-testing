@@ -15,7 +15,8 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac  ))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32))] //fails: trait `core::marker::Copy` is not implemented for `Interrupt
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac  ))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac  ))]
 
 //#[rtic::app(device = lm3s6965)]
@@ -52,6 +53,9 @@ mod app {
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::interrupt;
+
+    #[cfg(feature = "stm32l0xx")]
+    use stm32l0xx_hal::pac::Interrupt as interrupt;
 
     #[cfg(feature = "stm32l1xx")]
     use stm32l1xx_hal::interrupt;

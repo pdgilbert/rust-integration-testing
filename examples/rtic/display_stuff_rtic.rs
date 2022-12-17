@@ -23,6 +23,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
@@ -75,16 +76,12 @@ mod app {
 
     #[cfg(feature = "stm32f0xx")]
     use stm32f0xx_hal::{
-        gpio::{gpioa::PA8, OpenDrain, Output},
         pac::Peripherals,
         prelude::*,
     };
  
     #[cfg(feature = "stm32f0xx")]
     const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f0xx")]
-    type DhtPin = PA8<Output<OpenDrain>>;
 
     #[cfg(feature = "stm32f0xx")]
     use rust_integration_testing_of_examples::i2c::{setup_i2c2, I2c2Type as I2cType,};
@@ -247,10 +244,9 @@ mod app {
 
     #[cfg(feature = "stm32l0xx")]
     use stm32l0xx_hal::{
-        gpio::{gpioc::PC13, Output, PushPull},
         pac::Peripherals,
         prelude::*,
-        rcc, // for ::Config but note name conflict with serial
+        rcc, 
     };
 
     #[cfg(feature = "stm32l0xx")]
@@ -262,11 +258,10 @@ mod app {
     #[cfg(feature = "stm32l0xx")]
     fn setup(dp: Peripherals) -> (I2cType, LedType) {
        let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-       let clocks = rcc.clocks;
 
-       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
        let mut led = setup_led(dp.GPIOC.split(&mut rcc));
        led.off();
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
        (i2c, led)
     }
@@ -297,7 +292,7 @@ mod app {
        let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 //       let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
 
-       let mut led = setup_led(gpiob.pb6);
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
        led.off();
 
        (i2c, led)

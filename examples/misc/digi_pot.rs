@@ -349,8 +349,9 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    gpio::{gpioa::PA1, gpioc::PC13, Output, PushPull},
-    pac::{Peripherals, SPI1},
+    delay::Delay,
+    gpio::{gpioa::PA1, Output, PushPull},
+    pac::{CorePeripherals, Peripherals, SPI1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     spi::{Pins, Spi},
@@ -383,7 +384,8 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
-    let delay = DelayType{};  //dp.TIM2.delay_us(&rcc.clocks);
+    //let delay = dp.TIM2.delay_us(&rcc.clocks); //DelayType{};  
+    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, rcc.clocks);
 
     (spi, cs, led, delay)
 }

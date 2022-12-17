@@ -453,8 +453,7 @@ use stm32l0xx_hal::{
     gpio::{
         gpiob::{PB10, PB11, PB6},
         gpiob::{PB8, PB9},
-        gpioc::PC13,
-        Input, OpenDrain, Output, PullDown, PullUp, PushPull,
+        Input, OpenDrain, Output, PullDown, PullUp,
     },
     i2c::I2c,
     pac::{CorePeripherals, Peripherals, I2C1},
@@ -467,7 +466,7 @@ fn setup() -> (
     I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>,
     //I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
-    Delay,
+    DelayType,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -480,7 +479,7 @@ fn setup() -> (
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let led = setup_led(p.GPIOC.split(&mut rcc));
+    let led = setup_led(gpioc);
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();

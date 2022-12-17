@@ -32,6 +32,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
@@ -85,7 +86,7 @@ mod app {
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    #[cfg(any(feature = "stm32f3xx", feature = "stm32l1xx", feature = "stm32f0xx"))]
+    #[cfg(any(feature = "stm32f3xx",feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
 
     fn show_display<S>(
@@ -151,6 +152,8 @@ mod app {
         delay.delay_ms(1000u32);  
         led.off();
 
+        // NOTE some hals Result in next and give warning `Result` may be an `Err` variant
+        //      but other hals fail if it is handled properly
         dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 

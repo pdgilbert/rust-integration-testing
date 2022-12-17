@@ -557,10 +557,10 @@ jobs:
 #         use-cross: true
 
 
-      #####  rtic examples  don't work on thumbv6m-none-eabi (stmf0xx and stm32l0xx) #####
+      #####  rtic examples   #####
 
       - name: Example iaq-core-c-gas-voc-usart-logger
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -568,7 +568,7 @@ jobs:
           use-cross: true
 
       - name: Example ccs811-gas-voc-usart-logger
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -576,7 +576,7 @@ jobs:
           use-cross: true
 
       - name: Example schedule
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -586,28 +586,28 @@ jobs:
 #      made to work on stm32f3xx  and fail on all others.
 #      See https://github.com/stm32-rs/stm32f3xx-hal/issues/290
 #      - name: Example resource-user-struct
-#        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+#        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
 #        uses: actions-rs/cargo@v1
 #        with:
 #          command: build
 #          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example resource-user-struct
 
       - name: Example blink_rtic
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example blink_rtic
 
       - name: Example dht_rtic
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht_rtic
 
       - name: Example ccs811-co2-voc
-        if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         uses: actions-rs/cargo@v1
         with:
           command: build
@@ -619,6 +619,13 @@ jobs:
           command: build
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example battery_monitor_ads1015_rtic
           use-cross: true
+
+#      - name: Example adc_dma
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example adc_dma
+#          use-cross: true
 
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####

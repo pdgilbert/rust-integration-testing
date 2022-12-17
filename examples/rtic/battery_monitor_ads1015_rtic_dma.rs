@@ -1,4 +1,5 @@
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???  SO FAR WORKING ONLY WITH STM32F4XX
+//!   CONVERT TO COMMON SETUP AS IN rtic/battery_monitor_ads1015_rtic.rs
 // Following stm32f4xx examples adc_dma_rtic and i2s-audio-out-dma regarding dma use.
 //! See examples/rtic/battery_monitor_ads1015_rtic.rs  for non-dma version..
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
@@ -21,6 +22,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [ TIM3 ]))]
 
