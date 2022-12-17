@@ -45,10 +45,11 @@ ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_m
 onewire         = { git = "https://github.com/asdfuser/onewire" }
 #one-wire-bus     = ">=0.1.1" 
 #one-wire-bus    = { git = "https://github.com/pdgilbert/one-wire-bus" }
-one-wire-bus    = { path = "/home/paul/githubClones/one-wire-bus" }
-#one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
+#one-wire-bus    = { path = "/home/paul/githubClones/one-wire-bus" }
+one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
 #ds18b20         = { git = "https://github.com/fuchsnj/ds18b20" }
-ds18b20         = { path = "/home/paul/githubClones/ds18b20" }
+ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
+#ds18b20         = { path = "/home/paul/githubClones/ds18b20" }
 
 # examples//driver-examples/
 mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
