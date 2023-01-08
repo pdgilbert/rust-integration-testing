@@ -81,6 +81,7 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 aht10           = { git = "https://github.com/heyitsanthony/aht10" }
 #aht20           = { git = "https://github.com/mythmon/aht20" }
 aht20           = { git = "https://github.com/nim65s/aht20" } 
+#aht20    = { git = "https://github.com/nim65s/aht20", default-features = false } # to use aht20::Aht20NoDelay
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  NEEDS std
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
@@ -460,6 +461,10 @@ path = "examples/misc-i2c-drivers/aht10-display.rs"
 name = "aht20-display"
 path = "examples/misc-i2c-drivers/aht20-display.rs"
 
+[[example]]
+name = "aht20-display-nodelay"
+path = "examples/misc-i2c-drivers/aht20-display-nodelay.rs"
+
 #[[example]]
 #name = "hdc1080-display"
 #path = "examples/misc-i2c-drivers/hdc1080-display.rs"
@@ -468,9 +473,9 @@ path = "examples/misc-i2c-drivers/aht20-display.rs"
 name = "vl53lox-display"
 path = "examples/misc-i2c-drivers/vl53lox-display.rs"
 
-#[[example]]
-#name = "mlx9064x"
-#path = "examples/misc-i2c-drivers/mlx9064x.rs"
+[[example]]
+name = "mlx9064x"
+path = "examples/misc-i2c-drivers/mlx9064x.rs"
 
 [[example]]
 name = "ina219-display"

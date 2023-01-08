@@ -533,6 +533,65 @@ jobs:
           args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-display
           use-cross: true
 
+
+     ##### misc-i2c-driver-examples  #####
+
+      - name: Example aht10-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10-display
+          use-cross: true
+
+      - name: Example aht20-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display
+          use-cross: true
+
+#      - name: Example aht20-display-nodelay
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
+#          use-cross: true
+
+      - name: Example air_quality
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example air_quality
+          use-cross: true
+
+      - name: Example ina219-display
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219-display
+          use-cross: true
+
+#      - name: Example vl53lox-display
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example vl53lox-display
+#          use-cross: true
+
+#      - name: Example hdc1080-display
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example hdc1080-display
+#          use-cross: true
+
+#      - name: Example mlx9064x
+#        uses: actions-rs/cargo@v1
+#        with:
+#          command: build
+#          args:  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx9064x
+#          use-cross: true
+
      #####  sx127x examples  #####
 
 #     - name: sx127x lora_spi_send
