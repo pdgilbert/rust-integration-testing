@@ -9,7 +9,7 @@
 #![no_std]
 #![no_main]
 
-use hdc1080::{ Hdc1080, SlaveAddr };   LOOKS LIKE THIS NEEDS STD
+use hdc1080::{ Hdc1080, SlaveAddr };   //LOOKS LIKE THIS NEEDS STD
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -74,7 +74,7 @@ fn main() -> ! {
 
         lines[0].clear();
         lines[1].clear();
-        write!(lines[0], "temperature: {}ºC", temperature()).unwrap();
+        write!(lines[0], "temperature: {} C", temperature()).unwrap();
         //write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
         
         display.clear();

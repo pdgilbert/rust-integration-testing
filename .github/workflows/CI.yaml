@@ -59,8 +59,12 @@ jobs:
               blink_rtic,              schedule,                         resource-user-struct,
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
               display_stuff_rtic,      ds18b20,
+              aht10-display,           aht20-display,        air_quality,    ina219-display,
+              vl53lox-display, 
              ]
-             #ad9833-midi-player,      
+
+        #   hdc1080-display,  mlx9064x,  aht20-display-nodelay,
+        #ad9833-midi-player,      
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         # (somewhat trivial here because there is only bluepill)

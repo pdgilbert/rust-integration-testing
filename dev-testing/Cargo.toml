@@ -5,7 +5,7 @@ description = "hal integration testing of examples"
 keywords = ["driver", "i2c", "spi", "example"]
 license = "MIT OR Apache-2.0"
 name = "rust-integration-testing-of-examples"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 
 [dependencies]
@@ -465,9 +465,9 @@ path = "examples/misc-i2c-drivers/aht20-display.rs"
 name = "aht20-display-nodelay"
 path = "examples/misc-i2c-drivers/aht20-display-nodelay.rs"
 
-#[[example]]
-#name = "hdc1080-display"
-#path = "examples/misc-i2c-drivers/hdc1080-display.rs"
+[[example]]
+name = "hdc1080-display"
+path = "examples/misc-i2c-drivers/hdc1080-display.rs"
 
 [[example]]
 name = "vl53lox-display"
