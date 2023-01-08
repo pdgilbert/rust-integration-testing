@@ -96,10 +96,7 @@ jobs:
 
       - name: tree
         #--manifest-path to find Caro.toml.      
-        uses: actions-rs/cargo@v1 
-        with:
-          command: tree
-          args:  --manifest-path dev-testing/Cargo.toml 
+        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
 
       - name: Build
         uses: actions-rs/cargo@v1 
