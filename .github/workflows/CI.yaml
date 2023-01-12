@@ -8,7 +8,7 @@ on:
   schedule:
     - cron: 0 1 * * 1
 
-name: Build
+name: eg/CI build
 
 env:
   CARGO_TERM_COLOR: always
@@ -18,15 +18,16 @@ jobs:
 # are all attempted. The job does not stop at the first example to fail. This is nice for 
 # identifying problems in the examples, but is slow because of rebuild for each example.
 # (It would be faster if I could get caching to work.)
-# The 2nd job runs a matrix of 2 (previously 4) stratagies x 14 boards. 
+# The 2nd job runs a matrix of stratagies x 14 boards.
 # For each matrix point all examples are run with a single build. This is faster but
 # terminates on the first example failure so examples that are known to fail are omitted.
 
-# The strategies are release-testing, driver-testing, hal-testing, and dev-testing.
-# The differnce is set in the Cargo.toml file in the manifest directories.
+# Currently only strategy dev-testing is being run. (There is too much change for the other to work.)
+# The 4 strategies are release-testing, driver-testing, hal-testing, and dev-testing.
+# The differnce is set in the Cargo.toml file in the strategy directories.
 # The release-testing uses release versions of both the driver crate and the HAL crate.
-# disabled: The driver-testing  uses the git versions of the driver crate and the release version of the HAL crate.
-# disabled: The   hal-testing   uses the release versions of the driver crate and the git version of the HAL crate.
+# The driver-testing  uses the git versions of the driver crate and the release version of the HAL crate.
+# The   hal-testing   uses the release versions of the driver crate and the git version of the HAL crate.
 # The   dev-testing   uses git versions of both the driver crate and the HAL crate.
 
 #################################################################################################
@@ -67,7 +68,6 @@ jobs:
         #ad9833-midi-player,      
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
-        # (somewhat trivial here because there is only bluepill)
         include:
            - brd: "bluepill"
              mcu:  stm32f103
@@ -80,7 +80,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable  #previously  uses: actions-rs/toolchain@v1
+      #previously  uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
         with:
           profile: minimal
           toolchain: stable

@@ -21,7 +21,7 @@ use cortex_m_rt::entry;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
@@ -45,10 +45,10 @@ fn main() -> ! {
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
-        .into_buffered_graphics_mode();
-    display.init().unwrap();
-    display.flush().unwrap();
+//    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+//        .into_buffered_graphics_mode();
+//    display.init().unwrap();
+//    display.flush().unwrap();
     //  note that larger font size increases memory and may require building with --release
     //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
     //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
@@ -62,10 +62,13 @@ fn main() -> ! {
 
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
-    // See https://www.electroschematics.com/temperature-sensor re address 0x38  vs 0x39
+    // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
     //   and "No  other devices on the I2C bus".
-    //let mut device = AHT10::new(i2c, delay).unwrap();
-    let mut device = AHT10::new(manager.acquire_i2c(), delay).unwrap();  //.expect("device failed")
+    let mut device = AHT10::new(manager.acquire_i2c(), delay).expect("device failed");
+    //let mut device = AHT10::new(i2c, delay).expect("device failed");
+
+//    let z = device.reset();
+//    hprintln!("reset()  {:?}", z).unwrap();
 
     loop {
         //rprintln!("loop i");
@@ -74,24 +77,32 @@ fn main() -> ! {
         //led.blink(20_u16, &mut delay);
 
         // Read humidity and temperature.
-        let (h, t) = device.read().unwrap();
+        // let (h, t) = device.read().unwrap();
+        let z = device.read();
+        match z {
+            Ok((h,t)) => hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap(),
+            Err(e) => {hprintln!("Error {:?}", e).unwrap();
+                       device.reset();}
+        }
+        //hprintln!("h.rh(): {}", h.rh()).unwrap();
+        //hprintln!("t.celsius(): {}", t.celsius()).unwrap();
 
         lines[0].clear();
         lines[1].clear();
-        write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
-        write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
+//        write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
+//        write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
         
-        display.clear();
-        for (i, line) in lines.iter().enumerate() {
-            Text::with_baseline(
-                line,
-                Point::new(0, i as i32 * 16),
-                text_style,
-                Baseline::Top,
-            )
-            .draw(&mut display)
-            .unwrap();
-        }
-        display.flush().unwrap();
+//        display.clear();
+//        for (i, line) in lines.iter().enumerate() {
+//            Text::with_baseline(
+//                line,
+//                Point::new(0, i as i32 * 16),
+//                text_style,
+//                Baseline::Top,
+//            )
+//            .draw(&mut display)
+//            .unwrap();
+//        }
+//        display.flush().unwrap();
     }
 }

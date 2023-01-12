@@ -78,7 +78,8 @@ veml6070        = { git = "https://github.com/eldruin/veml6070-rs" }
 veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 
 # examples/misc-i2c-drivers/
-aht10           = { git = "https://github.com/heyitsanthony/aht10" }
+#aht10           = { git = "https://github.com/heyitsanthony/aht10" }
+aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
 #aht20           = { git = "https://github.com/mythmon/aht20" }
 aht20           = { git = "https://github.com/nim65s/aht20" } 
 #aht20    = { git = "https://github.com/nim65s/aht20", default-features = false } # to use aht20::Aht20NoDelay
