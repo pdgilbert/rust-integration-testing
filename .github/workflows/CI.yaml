@@ -3,7 +3,7 @@
 
 on:
   push:
-    branches: [ main, old-cortex-m-rt_0.6]
+    branches: [ main, dev]
   pull_request:
   schedule:
     - cron: 0 1 * * 1

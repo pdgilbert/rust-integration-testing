@@ -1,9 +1,12 @@
 //! Continuously read temperature from AHT10 and display on SSD1306 OLED.
+//! The AHT10 does not work with other devices on the i2c bus 
+//! (see https://www.electroschematics.com/temperature-sensor) so this example
+//! requires two i2c buses. Note also using
+//! "https://github.com/andy31415/aht10", branch = "fix_status_check"
 //!
-//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
+//!  The setup() functions make the application code common. They are in src/.
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
-//!  (On "BluePill" (stm32f1xx_hal) scl is on PB8 and SDA is on PB9 using I2C1.  Using VCC  3.3v.)
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -21,7 +24,7 @@ use cortex_m_rt::entry;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
-use cortex_m_semihosting::hprintln;
+//use cortex_m_semihosting::hprintln;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
@@ -31,24 +34,29 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{setup_i2c1_i2c2_led_delay_using_dp, LED};
+use rust_integration_testing_of_examples::dp::{Peripherals};
 
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
     //hprintln!("AHT10 example").unwrap();
+    //let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
+    led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
+
+    let manager = shared_bus::BusManagerSimple::new(i2c1);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
-//    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
-//        .into_buffered_graphics_mode();
-//    display.init().unwrap();
-//    display.flush().unwrap();
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
+    display.init().unwrap();
+    display.flush().unwrap();
     //  note that larger font size increases memory and may require building with --release
     //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
     //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
@@ -57,15 +65,18 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
-    // Blink LED to indicate initializing.
-    led.blink(2000_u16, &mut delay);
+    led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
 
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
     // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
     //   and "No  other devices on the I2C bus".
-    let mut device = AHT10::new(manager.acquire_i2c(), delay).expect("device failed");
+    // so use i2c2 bus
+    //let mut device = AHT10::new(manager.acquire_i2c(), delay).expect("device failed");
     //let mut device = AHT10::new(i2c, delay).expect("device failed");
+    // NEED SEPARATE DELAY TO USE BLINK AFTER THIS
+    let manager2 = shared_bus::BusManagerSimple::new(i2c2);
+    let mut device = AHT10::new(manager2.acquire_i2c(), delay).expect("device failed");
 
 //    let z = device.reset();
 //    hprintln!("reset()  {:?}", z).unwrap();
@@ -79,30 +90,35 @@ fn main() -> ! {
         // Read humidity and temperature.
         // let (h, t) = device.read().unwrap();
         let z = device.read();
+        lines[0].clear();
+        lines[1].clear();
+        // next recovers from sda disconnect/reconnect but not scl disconnect/reconnect
         match z {
-            Ok((h,t)) => hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap(),
-            Err(e) => {hprintln!("Error {:?}", e).unwrap();
-                       device.reset();}
+            Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                          write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
+                          write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
+                         },
+            Err(e)    => {//hprintln!("Error {:?}", e).unwrap();
+                          write!(lines[0], "device read error. Resetting.").unwrap();
+                          write!(lines[1], "code {:?}", e).unwrap();
+                          device.reset().unwrap();
+                         }
         }
         //hprintln!("h.rh(): {}", h.rh()).unwrap();
         //hprintln!("t.celsius(): {}", t.celsius()).unwrap();
 
-        lines[0].clear();
-        lines[1].clear();
-//        write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
-//        write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
-        
-//        display.clear();
-//        for (i, line) in lines.iter().enumerate() {
-//            Text::with_baseline(
-//                line,
-//                Point::new(0, i as i32 * 16),
-//                text_style,
-//                Baseline::Top,
-//            )
-//            .draw(&mut display)
-//            .unwrap();
-//        }
-//        display.flush().unwrap();
+      
+        display.clear();
+        for (i, line) in lines.iter().enumerate() {
+            Text::with_baseline(
+                line,
+                Point::new(0, i as i32 * 16),
+                text_style,
+                Baseline::Top,
+            )
+            .draw(&mut display)
+            .unwrap();
+        }
+        display.flush().unwrap();
     }
 }
