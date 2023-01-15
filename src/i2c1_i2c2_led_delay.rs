@@ -17,6 +17,7 @@ pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
 pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};  // NEED TO RESOLVE stm32f0xx CONFLICT
 
 pub use crate::i2c::{setup_i2c2, I2c2Type};
+pub use crate::i2c::{setup_i2c1_i2c2};
 
 pub use embedded_hal::blocking::delay::DelayUs;
 pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
@@ -64,10 +65,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(mut dp: Peripherals) ->  (I2cType, I2c
 
 
 #[cfg(feature = "stm32f1xx")]
-use stm32f1xx_hal::{prelude::*,
-    i2c::{BlockingI2c, DutyCycle, Mode},
-    gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
-    };
+use stm32f1xx_hal::{prelude::*};
 
 #[cfg(feature = "stm32f1xx")]
 pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
@@ -78,59 +76,24 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let mut afio = dp.AFIO.constrain();
    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-   let mut gpiob = dp.GPIOB.split();
+   let gpiob = dp.GPIOB.split();
 
    //afio  needed for i2c1 (PB8, PB9) but not i2c2
    // Next does not work because of value move problems. Using &mut argument and * deref only gets to
    // cannot move out of `gpiob.pb8` which is behind a mutable reference.
-   // A better solution to this is need - maybe a config or into method for i2c1 and i2c2?
+   // A better solution to this is need - maybe a config or into method for i2c1 and i2c2 ?
    //let i2c1 = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
    //let i2c2 = setup_i2c2(dp.I2C2, gpiob, &clocks);
-   // As temp fix put setup_i2c1 code here.
+   // As work-around combine in setup_i2c1_i2c2.
+
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &mut afio, &clocks);
    
-   let scl1 = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
-   let sda1 = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
-   let scl2 = gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh);
-   let sda2 = gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh);
-
-   let i2c1 = dp.I2C1;
-   let i2c1 = BlockingI2c::i2c1(
-        i2c1,
-        (scl1, sda1),
-        &mut afio.mapr,
-        Mode::Fast {
-            frequency: 100_000_u32.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
-
-   let i2c2 = dp.I2C2;
-   let i2c2 = BlockingI2c::i2c2(
-        i2c2,
-        (scl2, sda2),
-        //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
-        Mode::Fast {
-            frequency: 400_000_u32.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
-
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
    let delay = dp.TIM2.delay_us(&clocks);
 
-    (i2c1, i2c2, led, delay)
+   (i2c1, i2c2, led, delay)
    }
 
 

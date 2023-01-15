@@ -110,6 +110,50 @@ pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
     i2c
 }
 
+// It would be less code duplication if setup_i2c1 and then setup_i2c2 could be called, then
+// setup_i2c1_i2c2 could be removed, but there is a problem with partial move of dp or of gpiob.
+// A method like dp.I2C1.config() or .into()  might help?
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2 , mut gpiob: Parts, afio: &mut afioParts, &clocks: &Clocks) -> (I2c1Type, I2c2Type) {
+    let i2c1 = BlockingI2c::i2c1(
+        i2c1,
+        (gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh), 
+         gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)
+        ),
+        &mut afio.mapr,
+        Mode::Fast {
+            frequency: 100_000_u32.Hz(),
+            duty_cycle: DutyCycle::Ratio2to1,
+        },
+        clocks,
+        1000,
+        10,
+        1000,
+        1000,
+    );
+
+    let i2c2 = BlockingI2c::i2c2(
+        i2c2,
+        (
+            gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
+            gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
+        ),
+        //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
+        Mode::Fast {
+            frequency: 400_000_u32.Hz(),
+            duty_cycle: DutyCycle::Ratio2to1,
+        },
+        clocks,
+        1000,
+        10,
+        1000,
+        1000,
+    );
+
+    (i2c1, i2c2)
+}
+
 
 
 #[cfg(feature = "stm32f3xx")]
