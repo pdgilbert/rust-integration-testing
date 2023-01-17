@@ -16,8 +16,7 @@ pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
 #[cfg(feature = "stm32f0xx")]
 pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};  // NEED TO RESOLVE stm32f0xx CONFLICT
 
-pub use crate::i2c::{setup_i2c2, I2c2Type};
-pub use crate::i2c::{setup_i2c1_i2c2};
+pub use crate::i2c::{setup_i2c1_i2c2, setup_i2c2, I2c1Type, I2c2Type};
 
 pub use embedded_hal::blocking::delay::DelayUs;
 pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;

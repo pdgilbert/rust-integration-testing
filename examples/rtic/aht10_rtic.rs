@@ -4,12 +4,11 @@
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 //! 
-//! Measure the temperature and humidity from a DHT11 or DHT22 on data pin (A8) and display on OLED with i2c.
-//! (Specify feature "dht22"for DHT22).
-//! Compare examples aht10_rtic, oled_dht, and blink_rtic.
+//! Measure the temperature and humidity from an AHT10 on data pin i2c2 and display on OLED with i2c1.
+//! Compare examples dht_rtic, aht10_displau.
 //! Blink (onboard) LED with short pulse evry read.
-//! On startup the LED is set on for about (at least) 5 seconds in the init process.
-//! One main processe is scheduled. It reads the dht and spawns itself to run after a delay.
+//! On startup the LED is set on for a second in the init process.
+//! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
 //! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
 //!
 //!  A good reference on performance of humidity sensors is
@@ -38,12 +37,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //https://github.com/michaelbeaumont/dht-sensor
-    #[cfg(not(feature = "dht22"))]
-    use dht_sensor::dht11::Reading;
-    #[cfg(feature = "dht22")]
-    use dht_sensor::dht22::Reading;
-    use dht_sensor::*;
+    use aht10::AHT10;
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
@@ -77,22 +71,23 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
     const MONOTICK:  u32 = 100;
-    const READ_INTERVAL: u64 = 10;  // used as seconds
+    const READ_INTERVAL: u64 = 2;  // used as seconds
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dht_i2c_led_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
+        //setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+//    use shared_bus::{I2cProxy};
+//    use core::cell::RefCell;
+//    use cortex_m::interrupt::Mutex;
 
     #[cfg(any(feature = "stm32f3xx",feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
     use embedded_hal::digital::v2::OutputPin;
 
     fn show_display<S>(
-        temperature: i8,
+        temperature: i32,   // 10 * deg C to give one decimal place
         relative_humidity: u8,
         //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
@@ -119,7 +114,7 @@ mod app {
        //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
        //   degree symbol "°" is about                  ^^ here 
        
-       write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
+       write!(lines[0], "{:3}.{:1}°C {:3}% RH", temperature/10, temperature%10, relative_humidity).unwrap();
 
        disp.clear();
        for i in 0..lines.len() {
@@ -148,24 +143,20 @@ mod app {
         //hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
         led.off();
 
-        // NOTE some hals Result in next and give warning `Result` may be an `Err` variant
-        //      but other hals fail if it is handled properly
-        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
-        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
-
-        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
-
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        //let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+        //let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        let interface = I2CDisplayInterface::new(i2c1);  //without shared bus
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
-        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        //common display sizes are 128x64 and 128x32
+        let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
 
         display.init().unwrap();
@@ -173,19 +164,19 @@ mod app {
         Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
           .draw(&mut display).unwrap();
 
+        // aht10 hardware does not allow sharing the bus, so second bus is used.
+        //  See example aht10_display for more details
+        //let manager2 = shared_bus::BusManagerSimple::new(i2c2);
+        //let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
+        let sensor = AHT10::new(i2c2, delay).expect("sensor failed");
+
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
-        // next turn LED for a period of time that can be used to calibrate the delay timer.
-        // Ensure that nothing is spawned above. This relies on delay blocking.
-        led.on();
-        delay.delay_ms(10000u32);  
-        led.off();
-        delay.delay_ms(1000u32);  
         read_and_display::spawn().unwrap();
 
         //hprintln!("exit init").unwrap();
         //(Shared {dht,  led, delay, text_style, display }, Local {}, init::Monotonics(mono))
-        (Shared { led, }, Local {dht, delay, display }, init::Monotonics(mono))
+        (Shared { led, },   Local {display, sensor }, init::Monotonics(mono))
     }
 
     #[shared]
@@ -199,40 +190,42 @@ mod app {
 
     #[local]
     struct Local {
-        dht:   DhtType,
-        delay: DelayType,
-        //display: Ssd1306<impl WriteOnlyDataCommand, DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+        //delay: DelayType,
+        //display: Ssd1306<impl WriteOnlyDataCommand, DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>,
+        display:  Ssd1306<I2CInterface<I2c1Type>, 
+                          ssd1306::prelude::DisplaySize128x32, 
+                          BufferedGraphicsMode<DisplaySize128x32>>,
+//        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, 
+//                          ssd1306::prelude::DisplaySize128x32, 
+//                          BufferedGraphicsMode<DisplaySize128x32>>,
 //        text_style: MonoTextStyle<BinaryColor>,
+//        sensor:  AHT10<shared_bus::I2cProxy<'static, NullMutex<I2c2Type>>, 
+//               stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
+        sensor:  AHT10<I2c2Type, stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
     }
 
     //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
-    #[task(shared = [led, ], local = [dht, delay, display ], capacity=2)]
+    #[task(shared = [led, ], local = [sensor, display ], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
         //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
 
-        let delay = cx.local.delay;
-        let dht = cx.local.dht;
-        //let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });  WHY DID THIS NOT NEED mut delay ?
-        //let z = (delay).lock(|delay| { Reading::read(delay, dht) });             whereas this does need mut
-        let z = Reading::read(delay, dht);
-        let (_temperature, _humidity) = match z {
-            Ok(Reading {temperature, relative_humidity,})
-               =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
-                    //show_display(temperature, relative_humidity, text_style, &mut display)
-                    show_display(temperature, relative_humidity, cx.local.display);
-                    (temperature, relative_humidity)
-                   },
+        //let delay = cx.local.delay;
+        let sensor = cx.local.sensor;
+        let z = sensor.read();
+        // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
+        // 10 * deg C to give one decimal place.
+        let (h, t) = match z {
+            Ok((h, t))
+               =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32),
             Err(_e) 
-               =>  {//hprintln!("dht Error {:?}", e).unwrap(); 
-                    //panic!("Error reading DHT")
-                    (25, 40)  //supply default values
+               =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                    //panic!("Error reading sensor")
+                    (127, 127)  //supply default values that should be clearly bad
                    },
         };
-
+        show_display(t, h, cx.local.display);
+        //hprintln!("shown").unwrap();
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 

@@ -436,6 +436,10 @@ name = "dht_rtic"
 path = "examples/rtic/dht_rtic.rs"
 
 [[example]]
+name = "aht10_rtic"
+path = "examples/rtic/aht10_rtic.rs"
+
+[[example]]
 name = "display_stuff_rtic"
 path = "examples/rtic/display_stuff_rtic.rs"
 

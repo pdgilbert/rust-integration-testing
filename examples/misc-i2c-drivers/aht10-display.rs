@@ -8,6 +8,8 @@
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 
+//! Compare examples aht10_rtic, dht_rtic, oled_dht, and blink_rtic.
+
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
@@ -72,13 +74,13 @@ fn main() -> ! {
     // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
     //   and "No  other devices on the I2C bus".
     // so use i2c2 bus
-    //let mut device = AHT10::new(manager.acquire_i2c(), delay).expect("device failed");
-    //let mut device = AHT10::new(i2c, delay).expect("device failed");
+    //let mut sensor = AHT10::new(manager.acquire_i2c(), delay).expect("sensor failed");
+    //let mut sensor = AHT10::new(i2c, delay).expect("sensor failed");
     // NEED SEPARATE DELAY TO USE BLINK AFTER THIS
     let manager2 = shared_bus::BusManagerSimple::new(i2c2);
-    let mut device = AHT10::new(manager2.acquire_i2c(), delay).expect("device failed");
+    let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
 
-//    let z = device.reset();
+//    let z = sensor.reset();
 //    hprintln!("reset()  {:?}", z).unwrap();
 
     loop {
@@ -88,8 +90,8 @@ fn main() -> ! {
         //led.blink(20_u16, &mut delay);
 
         // Read humidity and temperature.
-        // let (h, t) = device.read().unwrap();
-        let z = device.read();
+        // let (h, t) = sensor.read().unwrap();
+        let z = sensor.read();
         lines[0].clear();
         lines[1].clear();
         // next recovers from sda disconnect/reconnect but not scl disconnect/reconnect
@@ -99,9 +101,9 @@ fn main() -> ! {
                           write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
                          },
             Err(e)    => {//hprintln!("Error {:?}", e).unwrap();
-                          write!(lines[0], "device read error. Resetting.").unwrap();
+                          write!(lines[0], "sensor read error. Resetting.").unwrap();
                           write!(lines[1], "code {:?}", e).unwrap();
-                          device.reset().unwrap();
+                          sensor.reset().unwrap();
                          }
         }
         //hprintln!("h.rh(): {}", h.rh()).unwrap();
