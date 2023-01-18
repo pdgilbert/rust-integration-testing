@@ -76,15 +76,11 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
-        //setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
 //    use shared_bus::{I2cProxy};
 //    use core::cell::RefCell;
 //    use cortex_m::interrupt::Mutex;
-
-    #[cfg(any(feature = "stm32f3xx",feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
-    use embedded_hal::digital::v2::OutputPin;
 
     fn show_display<S>(
         temperature: i32,   // 10 * deg C to give one decimal place
@@ -201,7 +197,7 @@ mod app {
 //        text_style: MonoTextStyle<BinaryColor>,
 //        sensor:  AHT10<shared_bus::I2cProxy<'static, NullMutex<I2c2Type>>, 
 //               stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
-        sensor:  AHT10<I2c2Type, stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
+        sensor:  AHT10<I2c2Type, DelayType>,
     }
 
     //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]

@@ -10,12 +10,13 @@ use crate::dp::{Peripherals};
 pub use crate::delay::{DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 
-#[cfg(not(feature = "stm32f0xx"))]
+//#[cfg(not(feature = "stm32f0xx"))]
+//pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
+//
+//#[cfg(feature = "stm32f0xx")]
+//pub use crate::i2c::{I2c2Type as I2cType};  // TO RESOLVE stm32f0xx CONFLICT
+
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
-
-#[cfg(feature = "stm32f0xx")]
-pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};  // NEED TO RESOLVE stm32f0xx CONFLICT
-
 pub use crate::i2c::{setup_i2c1_i2c2, setup_i2c2, I2c1Type, I2c2Type};
 
 pub use embedded_hal::blocking::delay::DelayUs;
@@ -49,8 +50,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(mut dp: Peripherals) ->  (I2cType, I2c
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpiob = dp.GPIOB.split(&mut rcc);
 
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob,  &mut rcc);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob,  &mut rcc);
+   let (i2c1, i2c2)  = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob,  &mut rcc);
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
@@ -108,7 +108,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
-   let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+   let gpioa = dp.GPIOA.split(&mut rcc.ahb);
 
    // setup_i2c2 does not work. There is a "value used here after partial move" problem with I2C2 on gpioa
    //    because gpioa is used above. And the only option for I2C2 seems to be gpioa.
@@ -122,8 +122,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    // let i2c1 = I2c::new(dp.I2C2, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
 
    let gpiob = dp.GPIOB.split(&mut rcc.ahb);
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
-   let i2c2 = setup_i2c2(dp.I2C2, gpioa, clocks, rcc.apb1);
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpioa, gpiob, clocks, rcc.apb1);
 
    let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
    led.off();
@@ -143,14 +142,12 @@ pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Type, LedType, DelayType) {
-   let gpioa = dp.GPIOA.split();
    let gpiob = dp.GPIOB.split();
 
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
 
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, &clocks);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, &clocks);
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &clocks);
 
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
@@ -175,8 +172,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let clocks = rcc.cfgr.freeze();
    let gpiob = dp.GPIOB.split();
 
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, &clocks, &mut rcc.apb1);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, &clocks, &mut rcc.apb1);
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &clocks, &mut rcc.apb1);
 
    let led = setup_led(dp.GPIOC.split());
    let delay = DelayType{};
@@ -194,18 +190,12 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Type, LedType, DelayType) {
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp);
+
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
-   let clocks = ccdr.clocks;
-
-   let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-   let i2cx = ccdr.peripheral.I2C1;
-
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, i2cx, &clocks);
-
    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
    let delay = DelayType{};
 
@@ -233,8 +223,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let gpiob = dp.GPIOB.split(&mut rcc);
 
    let led = setup_led(dp.GPIOC.split(&mut rcc));
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, rcc);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, rcc);
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, rcc);
 
    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
@@ -259,9 +248,8 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
 
    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
 
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, rcc);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, rcc);
-
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, rcc);
+ 
    let delay = DelayType{};
  
     (i2c1, i2c2, led, delay)
@@ -282,11 +270,9 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
    let clocks = rcc.cfgr.sysclk(80.MHz()).pclk1(80.MHz()).pclk2(80.MHz()).freeze(&mut flash.acr, &mut pwr);
 
-   let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
-   let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
+   let gpiob = dp.GPIOB.split(&mut rcc.ahb2);
 
-   let i2c1 = setup_i2c1(dp.I2C1, gpiob, &clocks, &mut rcc.apb1r1);
-   let i2c2 = setup_i2c2(dp.I2C2, gpiob, &clocks, &mut rcc.apb1r1);
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2,  gpiob, &clocks, &mut rcc.apb1r1);
 
    let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
    let delay = DelayType{};
