@@ -190,12 +190,20 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Type, LedType, DelayType) {
-   let (i2c1, i2c2) = setup_i2c1_i2c2(dp);
-
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+   let clocks = ccdr.clocks;
+
+   let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+   let i2cx1 = ccdr.peripheral.I2C1;
+
+   let gpiof = dp.GPIOF.split(ccdr.peripheral.GPIOF);
+   let i2cx2 = ccdr.peripheral.I2C2;
+
+   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx1,  dp.I2C2, gpiof, i2cx2, &clocks);
+
    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
    let delay = DelayType{};
 

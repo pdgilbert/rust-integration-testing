@@ -396,10 +396,11 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, &clocks: &Clocks, 
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    gpio::gpiob::Parts as PartsB,
+    gpio::{gpiob::Parts as PartsB,
+           gpiof::Parts as PartsF},
     i2c::I2c,
-    pac::{I2C1, I2C4,},
-    rcc::{CoreClocks, rec::I2c1, rec::I2c4},
+    pac::{I2C1, I2C2,},
+    rcc::{CoreClocks, rec::I2c1, rec::I2c2},
     prelude::*, 
 };
 
@@ -407,48 +408,40 @@ use stm32h7xx_hal::{
 pub type I2c1Type =  I2c<I2C1>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx: I2c1, &clocks: &CoreClocks) -> I2c1Type {
-    let scl = gpiob.pb8.into_alternate().set_open_drain(); // scl on PB8
-    let sda = gpiob.pb9.into_alternate().set_open_drain(); // sda on PB9
-    let i2c = I2C1::i2c((scl, sda), 400.kHz(), i2cx, &clocks);
-
-    i2c
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx1: I2c1, 
+                  &clocks: &CoreClocks) -> I2c1Type {
+    
+    i2c1.i2c((gpiob.pb8.into_alternate().set_open_drain(), // scl  
+              gpiob.pb9.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx1, &clocks)
 }
 
 #[cfg(feature = "stm32h7xx")]
-pub type I2c2Type =I2c<I2C4> ;   // there does not seem to be any I2c2. Using name I2c2 for I2c4
+pub type I2c2Type =I2c<I2C2> ; 
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c2(i2c4: I2C4, gpiob: PartsB, i2c: I2c4, &clocks: &CoreClocks) -> I2c2Type {
-    let scl = gpiob.pb8.into_alternate().set_open_drain(); 
-    let sda = gpiob.pb9.into_alternate().set_open_drain(); 
-    let i2c = I2C4::i2c((scl, sda), 400.kHz(), i2c, &clocks);
+pub fn setup_i2c2(i2c2: I2C2, gpiof: PartsF, i2cx2: I2c2, 
+                  &clocks: &CoreClocks) -> I2c2Type {
 
-    i2c
+    i2c2.i2c((gpiof.pf1.into_alternate().set_open_drain(), // scl
+              gpiof.pf0.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx2, &clocks)
 }
 
-//#[cfg(feature = "stm32h7xx")]
-//use crate::dp::{Peripherals};   // TEMP HERE FOR TESTING
-
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c1_i2c2(dp: Peripherals) -> (I2c1Type, I2c2Type) {
-    let pwr = dp.PWR.constrain();
-    let vos = pwr.freeze();
-    let rcc = dp.RCC.constrain();
-    let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
-    let clocks = ccdr.clocks;
+pub fn setup_i2c1_i2c2(i2c1: I2C1, gpiob: PartsB, i2cx1: I2c1,
+                       i2c2: I2C2, gpiof: PartsF, i2cx2: I2c2, 
+                       &clocks: &CoreClocks) ->  (I2c1Type, I2c2Type) {
 
-    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+   (
+    i2c1.i2c((gpiob.pb8.into_alternate().set_open_drain(), // scl  
+              gpiob.pb9.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx1, &clocks),
 
-    let scl = gpiob.pb8.into_alternate().set_open_drain();
-    let sda = gpiob.pb9.into_alternate().set_open_drain();
-    let i2c1 = I2C1::i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
-
-    let scl = gpiob.pb8.into_alternate().set_open_drain(); 
-    let sda = gpiob.pb9.into_alternate().set_open_drain(); 
-    let i2c2 = I2C4::i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C4, &clocks);
-
-    (i2c1, i2c2)
+    i2c2.i2c((gpiof.pf1.into_alternate().set_open_drain(), // scl
+              gpiof.pf0.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx2, &clocks)
+   )
 }
 
 
