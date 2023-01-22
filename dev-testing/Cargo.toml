@@ -87,6 +87,7 @@ aht20           = { git = "https://github.com/nim65s/aht20" }
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
 ina219           = {  version = "0.1.0" }
+htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
 
 cortex-m-rtic = ">=1.0" 
 #cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
@@ -457,6 +458,10 @@ path = "examples/rtic/battery_monitor_ads1015_rtic_dma.rs"
 
 
 # examples/misc-i2c-drivers
+
+[[example]]
+name = "htu2xd-display"
+path = "examples/misc-i2c-drivers/htu2xd-display.rs"
 
 [[example]]
 name = "aht10-display"
