@@ -430,6 +430,14 @@ jobs:
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht_rtic
 
+      - name: Example aht10_rtic
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10_rtic
+
+      - name: Example htu2xd_rtic
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd_rtic
+
       - name: Example ccs811-co2-voc
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-co2-voc
