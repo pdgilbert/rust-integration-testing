@@ -61,6 +61,7 @@ jobs:
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
               display_stuff_rtic,      ds18b20,
               aht10-display,           aht20-display,        air_quality,    ina219-display,
+              htu2xd-display
               vl53lox-display, 
              ]
 
@@ -359,6 +360,9 @@ jobs:
 
 
      ##### misc-i2c-driver-examples  #####
+
+      - name: Example htu2xd-display
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd-display
 
       - name: Example aht10-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10-display

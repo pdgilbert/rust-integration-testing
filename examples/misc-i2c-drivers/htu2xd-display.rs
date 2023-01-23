@@ -1,4 +1,5 @@
 //! Continuously read temperature from htu21D sensor and display on SSD1306 OLED.
+//! Compiles but is too large to load on bluepill.
 //!
 //!  The setup() functions make the application code common. They are in src/.
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
@@ -103,8 +104,8 @@ fn main() -> ! {
             Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low").unwrap();
                                   write!(lines[0], "Error or off-scale low").unwrap(); },
 
-            Ok(Reading::ErrorHigh) => {//hprintln!("Error or off-scale low").unwrap();
-                                  write!(lines[0], "Error or off-scale low").unwrap(); },
+            Ok(Reading::ErrorHigh) => {//hprintln!("Error or off-scale high").unwrap();
+                                  write!(lines[0], "Error or off-scale high").unwrap(); },
 
             Err(_)                 => {//hprintln!("Error reading temperature").unwrap();
                                   write!(lines[0], "Error reading temperature").unwrap(); },
@@ -119,8 +120,8 @@ fn main() -> ! {
             Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low").unwrap();
                                   write!(lines[1], "humidity off-scale low").unwrap(); },
 
-            Ok(Reading::ErrorHigh) => {//hprintln!("Error or humidity off-scale low").unwrap();
-                                  write!(lines[1], "humidity off-scale low").unwrap(); },
+            Ok(Reading::ErrorHigh) => {//hprintln!("Error or humidity off-scale high").unwrap();
+                                  write!(lines[1], "humidity off-scale high").unwrap(); },
 
             Err(_)                 => {//hprintln!("Error reading humidity").unwrap();
                                   write!(lines[1], "Error reading humidity").unwrap(); },
