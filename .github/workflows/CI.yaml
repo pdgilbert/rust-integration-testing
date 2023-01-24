@@ -60,9 +60,9 @@ jobs:
               blink_rtic,              schedule,                         resource-user-struct,
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
               display_stuff_rtic,      ds18b20,
-              aht10-display,           aht20-display,        air_quality,    ina219-display,
-              htu2xd-display
-              vl53lox-display, 
+              aht10-display,           aht10_rtic,                       aht20-display,       
+              htu2xd-display,          htu2xd_rtic,
+              vl53lox-display,         air_quality,    ina219-display,
              ]
 
         #   hdc1080-display,  mlx9064x,  aht20-display-nodelay,
