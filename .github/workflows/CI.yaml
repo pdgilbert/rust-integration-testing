@@ -38,8 +38,6 @@ jobs:
     continue-on-error: true
     strategy:
       matrix:
-        brd: [bluepill, discovery-stm32f303]  
-
 
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
               echo_by_char,            echo_string,                      gps_rw,        
@@ -65,8 +63,9 @@ jobs:
               vl53lox-display,         air_quality,    ina219-display,
              ]
 
-        #   hdc1080-display,  mlx9064x,  aht20-display-nodelay,
-        #ad9833-midi-player,      
+             #   hdc1080-display,  mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
+
+        brd: [bluepill, discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
