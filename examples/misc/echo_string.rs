@@ -1,3 +1,7 @@
+//! As of Jan 2023, dma syntax is not yet standardized across HALs. 
+//! See example file serial_string.rs for more details and status. 
+
+
 //! Serial DMA RX transfer. Read 15 chars input from console on USART1, echo back to console,
 //!  and output to semihost. Repeat.
 //!

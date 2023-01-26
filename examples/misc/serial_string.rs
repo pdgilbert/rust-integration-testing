@@ -1,3 +1,12 @@
+//! As of Jan 2023, dma syntax is not yet standardized across HALs. 
+
+//! Example echo_string is using stm32f3xx_hal syntax. It compiles for discovery-stm32f303 
+//!  but is not yet run tested. It does not compile for other HALs.
+
+//! Example serial_string at the moment is using stm32f1xx_hal syntax. It compiles for bluepill
+//!  but is transmition is garbled in run testing. It does not compile for other HALs.
+//!  This example will shortly change to attempting stm32f4xx_hal syntax. 
+
 //! Serial interface test writing a buffer of bytes between two usarts and
 //! echo to the computer console connected by usb-ttl dongle on another usart.
 //! This example differs from example serial_char in that it attempts to send
@@ -61,11 +70,11 @@ fn setup() -> (
         )
     });
 
-    let (tx1, rx1) = Serial::usart1(p.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
+    let (tx1, rx1) = Serial::new(p.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
 
-    let (tx2, rx2) = Serial::usart2(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
+    let (tx2, rx2) = Serial::new(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
 
-    let (tx3, rx3) = Serial::usart3(p.USART3, (tx3, rx3), 9600.bps(), &mut rcc).split();
+    let (tx3, rx3) = Serial::new(p.USART3, (tx3, rx3), 9600.bps(), &mut rcc).split();
 
     let channels = p.DMA1.split(&mut rcc.ahb);
 
@@ -85,33 +94,23 @@ fn setup() -> (
 use stm32f1xx_hal::{
     device::{USART1, USART2, USART3},
     dma::dma1,
-    //dma::{TxDma, RxDma, dma1::{C2, C3, C4, C5, C6, C7}},
+    dma::{TxDma, RxDma, dma1::{C2, C3, C4, C5, C6, C7}},
     pac::Peripherals,
     prelude::*,
     serial::{Config, Rx, Serial, StopBits, Tx},
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (
-    Tx<USART1>,
-    dma1::C4,
-    Rx<USART1>,
-    dma1::C5,
-    Tx<USART2>,
-    dma1::C7,
-    Rx<USART2>,
-    dma1::C6,
-    Tx<USART3>,
-    dma1::C2,
-    Rx<USART3>,
-    dma1::C3,
-) {
-    //fn setup() ->  (TxDma<Tx<USART1>, C4>, RxDma<Rx<USART1>, C5>,
-    //                TxDma<Tx<USART2>, C7>, RxDma<Rx<USART2>, C6>,
-    //                TxDma<Tx<USART3>, C2>, RxDma<Rx<USART3>, C3> )  {
+fn setup() ->  (TxDma<Tx<USART1>, C4>, RxDma<Rx<USART1>, C5>,
+                TxDma<Tx<USART2>, C7>, RxDma<Rx<USART2>, C6>,
+                TxDma<Tx<USART3>, C2>, RxDma<Rx<USART3>, C3> )  {
+    //fn setup() -> (
+    //    Tx<USART1>, dma1::C4,  Rx<USART1>, dma1::C5,
+    //    Tx<USART2>, dma1::C7,  Rx<USART2>, dma1::C6,
+    //    Tx<USART3>, dma1::C2,  Rx<USART3>, dma1::C3,  ) {
 
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     let mut afio = p.AFIO.constrain();
 
@@ -119,7 +118,7 @@ fn setup() -> (
 
     let mut gpioa = p.GPIOA.split();
 
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
@@ -127,28 +126,28 @@ fn setup() -> (
         ), //rx pa10
         &mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
-        clocks,
+        &clocks,
     )
     .split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
-            gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2
+            gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl),
             gpioa.pa3,
-        ), //rx pa3
+        ),
         &mut afio.mapr,
         Config::default()
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     )
     .split();
 
     let mut gpiob = p.GPIOB.split();
 
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //rx pb10
@@ -159,25 +158,24 @@ fn setup() -> (
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     )
     .split();
 
-    //let tx1  = tx1.with_dma(channels.4);                // console
-    //let rx1  = rx1.with_dma(channels.5);
-    //let tx2  = tx2.with_dma(channels.7);
-    //let rx2  = rx2.with_dma(channels.6);
-    //let tx3  = tx3.with_dma(channels.2);
-    //let rx3  = rx3.with_dma(channels.3);
+    let tx1  = tx1.with_dma(channels.4);                // console
+    let rx1  = rx1.with_dma(channels.5);
+    let tx2  = tx2.with_dma(channels.7);
+    let rx2  = rx2.with_dma(channels.6);
+    let tx3  = tx3.with_dma(channels.2);
+    let rx3  = rx3.with_dma(channels.3);
 
-    let dma1 = p.DMA1.split();
-    let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
-    let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
-    let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);
+    //let dma1 = p.DMA1.split();
+    //let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
+    //let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
+    //let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);
 
-    (
-        tx1, tx1_ch, rx1, rx1_ch, tx2, tx2_ch, rx2, rx2_ch, tx3, tx3_ch, rx3, rx3_ch,
-    )
+    //(tx1, tx1_ch, rx1, rx1_ch, tx2, tx2_ch, rx2, rx2_ch, tx3, tx3_ch, rx3, rx3_ch)
+    (tx1, rx1,   tx2, rx2,   tx3, rx3)
 }
 
 //#[cfg(any(feature = "stm32f1xx", feature = "stm32l1xx"))]
@@ -269,9 +267,7 @@ fn setup() -> (
     let (tx2_ch, rx2_ch) = (dma1.ch7, dma1.ch6);
     let (tx3_ch, rx3_ch) = (dma1.ch2, dma1.ch3);
 
-    (
-        tx1, tx1_ch, rx1, rx1_ch, tx2, tx2_ch, rx2, rx2_ch, tx3, tx3_ch, rx3, rx3_ch,
-    )
+    ( tx1, rx1,  tx2, rx2,  tx3, rx3 )
 }
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
@@ -335,14 +331,18 @@ fn setup() -> (
     .unwrap()
     .split();
 
-    let dma1 = p.DMA1.split();
-    let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
-    let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
-    let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);
+    let channels = p.DMA1.split();
+    let tx1  = tx1.with_dma(channels.4);                // console
+    let rx1  = rx1.with_dma(channels.5);
+    let tx2  = tx2.with_dma(channels.7);
+    let rx2  = rx2.with_dma(channels.6);
+    let tx3  = tx3.with_dma(channels.2);
+    let rx3  = rx3.with_dma(channels.3);
+    //let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
+    //let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
+    //let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);
 
-    (
-        tx1, tx1_ch, rx1, rx1_ch, tx2, tx2_ch, rx2, rx2_ch, tx3, tx3_ch, rx3, rx3_ch,
-    )
+    ( tx1, rx1,  tx2, rx2,  tx3, rx3 )
 }
 
 #[cfg(feature = "stm32f7xx")]
@@ -521,7 +521,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.freeze();
     let gpioa = p.GPIOA.split();
     p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_af7(), //tx pa9
@@ -534,7 +534,7 @@ fn setup() -> (
     .split();
 
     p.USART2.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa.pa2.into_alternate_af7(), //tx pa2
@@ -664,7 +664,7 @@ fn setup() -> (
 
     let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
 
-    let (tx1, rx1) = Serial::usart1(
+    let (tx1, rx1) = Serial::new(
         p.USART1,
         (
             gpioa
@@ -680,7 +680,7 @@ fn setup() -> (
     )
     .split();
 
-    let (tx2, rx2) = Serial::usart2(
+    let (tx2, rx2) = Serial::new(
         p.USART2,
         (
             gpioa
@@ -698,7 +698,7 @@ fn setup() -> (
 
     let mut gpiob = p.GPIOB.split(&mut rcc.ahb2);
 
-    let (tx3, rx3) = Serial::usart3(
+    let (tx3, rx3) = Serial::new(
         p.USART3,
         (
             gpiob
@@ -725,35 +725,34 @@ const BUF_SIZE: usize = 20;
 fn main() -> ! {
     // See echo_string.rs for additional comments.
 
-    let (tx1, tx1_ch, _rx1, _rx1_ch, tx2, tx2_ch, _rx2, _rx2_ch, _tx3, _tx3_ch, rx3, rx3_ch) =
-        setup();
+    // let (tx1, tx1_ch, _rx1, _rx1_ch, tx2, tx2_ch, _rx2, _rx2_ch, _tx3, _tx3_ch, rx3, rx3_ch) = setup();
+    let (tx1, _rx1,   tx2, _rx2,   _tx3, rx3 ) = setup();
 
-    // The first use of read_exact() and write_all() create send1, recv3, and send2 structures that can be
-    // modified (even inside a loop). Those structures are then used for additional  read_exact() and write_all().
+    // The first use of read() and write() create 2-tuple structures (buf1, send1), (buf3, recv3), and (buf2, send2).
+    // These allow the buf to be modified (even inside a loop). They are then used for additional  read() and write().
 
     hprintln!("testing write to console").unwrap();
 
-    //this is 3-tuple send structure (buf1, tx1_ch, tx1)
+    //send1 is 2-tuple structure (buf1, tx1)
     let buf1 = singleton!(: [u8; BUF_SIZE] = *b"\r\ncheck console...\r\n").unwrap();
-    let mut send1 = tx1.write_all(buf1, tx1_ch).wait();
+    let mut send1 = tx1.write(buf1).wait();
 
-    *send1.0 = *b"Display on console\r\n"; // BUF_SIZE characters
-    send1 = send1.2.write_all(send1.0, send1.1).wait();
+    *send1.0 = *b"Display on console\r\n";    // modify buf with BUF_SIZE characters
+    send1 = send1.1.write(send1.0).wait();    // write to console
 
     hprintln!("testing  tx2 to rx3").unwrap();
 
     // rx process should be started before tx, or rx misses the transmition and stalls waiting.
+    let buf3 = singleton!(: [u8; BUF_SIZE] = [0; BUF_SIZE]).unwrap();
+    let mut rx = rx3.read(buf3);
 
     //send1 using recv3 requires buf3 has same size as buf1
-    let buf3 = singleton!(: [u8; BUF_SIZE] = [0; BUF_SIZE]).unwrap();
-    let mut rx = rx3.read_exact(buf3, rx3_ch);
-
     //CHECK IF buf2 REALLY NEED TO BE SAME SIZE?
     let buf2 = singleton!(: [u8; BUF_SIZE] = [b' '; BUF_SIZE]).unwrap();
-    let tx = tx2.write_all(buf2, tx2_ch);
+    let tx = tx2.write(buf2);
 
-    let mut send2 = tx.wait(); //when tx is complete return 3-tuple send structure (buf2, tx2_ch, tx2)
-    let mut recv3 = rx.wait(); //when rx is complete return 3-tuple recv structure (buf3, rx3_ch, rx3)
+    let mut send2 = tx.wait(); //when tx is complete return 2-tuple send structure (buf2, tx2)
+    let mut recv3 = rx.wait(); //when rx is complete return 2-tuple recv structure (buf3, rx3)
 
     //hprintln!("  check received = sent,  '{}' = '{}' ", from_utf8(recv3.0), from_utf8(send2.0)).unwrap();
     assert_eq!(recv3.0, send2.0);
@@ -767,23 +766,24 @@ fn main() -> ! {
         *b"in for iter 3     \r\n",
     ];
 
-    //hprintln!(" buf4 {:?}", &buf4).unwrap();
+    hprintln!(" buf4 {:?}", &buf4).unwrap();
 
     for i in buf4.iter() {
         hprintln!(" i is '{:?}'", i).unwrap();
         //hprintln!(" i is '{:?}'", from_utf8(i)).unwrap();
 
-        rx = recv3.2.read_exact(send1.0, recv3.1); // rx ready to receive into send1 buf
-                                                   // This requires buf3 has same size as buf1.
+        rx = recv3.1.read(send1.0); // rx ready to receive into send1 buf
+                                    // This requires buf's have the same size
 
         *send2.0 = *i; // BUF_SIZE characters
-        send2 = send2.2.write_all(send2.0, send2.1).wait(); // tx and return
+        send2 = send2.1.write(send2.0).wait(); // tx and return
 
         recv3 = rx.wait(); // rx returns
+    hprintln!(" recv3.0 {:?}", recv3.0).unwrap();
 
-        assert_eq!(recv3.0, send2.0); // check received  = sent
-
-        send1 = send1.2.write_all(recv3.0, send1.1).wait(); // send received to console
+        //assert_eq!(recv3.0, send2.0); // check received  = sent
+        
+        send1 = send1.1.write(recv3.0).wait(); // send received to console
     }
 
     hprintln!("entering empty loop. ^C to exit.").unwrap();
