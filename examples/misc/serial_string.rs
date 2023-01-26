@@ -4,7 +4,7 @@
 //!  but is not yet run tested. It does not compile for other HALs.
 
 //! Example serial_string at the moment is using stm32f1xx_hal syntax. It compiles for bluepill
-//!  but is transmition is garbled in run testing. It does not compile for other HALs.
+//!  but transmition is garbled in run testing. It does not compile for other HALs.
 //!  This example will shortly change to attempting stm32f4xx_hal syntax. 
 
 //! Serial interface test writing a buffer of bytes between two usarts and
