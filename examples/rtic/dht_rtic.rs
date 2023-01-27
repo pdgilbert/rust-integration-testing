@@ -170,8 +170,10 @@ mod app {
 
         display.init().unwrap();
 
-        Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+        Text::with_baseline("dht_rtic", Point::zero(), text_style, Baseline::Top, )
           .draw(&mut display).unwrap();
+        display.flush().unwrap();
+        delay.delay_ms(2000u32);    
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 

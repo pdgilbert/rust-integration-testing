@@ -41,6 +41,9 @@ fn main() -> ! {
 
     let (i2c, mut led, mut delay) = setup();
 
+    // Blink LED to indicate initializing.
+    led.blink(1000_u16, &mut delay);
+
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
@@ -57,11 +60,13 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
     
-    // Blink LED to indicate initializing.
-    led.blink(2000_u16, &mut delay);
+    Text::with_baseline(   "aht20-display", Point::zero(), text_style, Baseline::Top )
+          .draw(&mut display).unwrap();
+    display.flush().unwrap();
+    //delay.delay(2000u32);    
 
     // Start the sensor.
-    // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
+    // hardware may not allow sharing the bus 
     let mut device = Aht20::new(manager.acquire_i2c(), delay).unwrap();  //.expect("device failed")
     //let mut device = Aht20::new(i2c, delay).unwrap();
 

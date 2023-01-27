@@ -160,13 +160,12 @@ mod app {
 
         let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
-
-        delay.delay_ms(2000u32);
-
         display.init().unwrap();
 
-        Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+        Text::with_baseline("battery_monitor_ads1015_rtic", Point::zero(), text_style, Baseline::Top, )
            .draw(&mut display).unwrap();
+        display.flush().unwrap();
+        delay.delay_ms(2000u32);    
 
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
         let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V

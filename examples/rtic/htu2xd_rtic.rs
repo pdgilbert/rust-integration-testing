@@ -76,7 +76,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, LED, LedType, DelayMs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -156,8 +156,10 @@ mod app {
 
         display.init().unwrap();
 
-        Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
+        Text::with_baseline(   "HTU2XD-rtic", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
+        display.flush().unwrap();
+        delay.delay_ms(2000u32);    
 
         // Start the sensor.
         let mut sensor    = Htu2xd::new();

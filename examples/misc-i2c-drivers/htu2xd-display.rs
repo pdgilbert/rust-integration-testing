@@ -67,6 +67,11 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
+    Text::with_baseline(    "HTU2XD-display",Point::zero(), text_style, Baseline::Top )
+        .draw(&mut display).unwrap();
+    display.flush().unwrap();
+    delay.delay_ms(2000u32);
+
     led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
 
     // Start the sensor.

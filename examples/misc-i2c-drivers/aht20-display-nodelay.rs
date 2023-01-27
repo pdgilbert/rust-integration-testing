@@ -56,7 +56,12 @@ fn main() -> ! {
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
-    
+     
+    Text::with_baseline(   "aht20-display-nodelay", Point::zero(), text_style, Baseline::Top )
+          .draw(&mut display).unwrap();
+    display.flush().unwrap();
+    //delay.delay(2000u32);    
+   
     // Blink LED to indicate initializing.
     led.blink(2000_u16, &mut delay);
 
