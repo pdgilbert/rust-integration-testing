@@ -1,5 +1,5 @@
-//! NOT Jan, 2023 - This is working with USB probe and with battery. Run tested on bluepill. 
-//! NOT            It has a  workaround for SSD1306  text_style.
+//! Jan, 2023 - This is working with USB probe and with battery. Run tested on blackpill.
+//!            It has a  workaround for SSD1306  text_style.
 //! 
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
