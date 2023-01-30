@@ -62,6 +62,7 @@ jobs:
               htu2xd-display,          htu2xd_rtic,
               vl53lox-display,         air_quality,    
               ina219-display,          ina219_rtic,
+              temp-humidity-display,
              ]
 
              #   hdc1080-display,  mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
@@ -452,6 +453,13 @@ jobs:
 
 #      - name: Example adc_dma
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example adc_dma
+
+
+      #####  project examples   #####
+
+      - name: Example temp-humidity-display
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temp-humidity-display
+
 
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####

@@ -502,3 +502,10 @@ path = "examples/misc-i2c-drivers/ina219-display.rs"
 [[example]]
 name = "air_quality"
 path = "examples/misc-i2c-drivers/air_quality.rs"
+
+
+# examples/projects
+
+[[example]]
+name = "temp-humidity-display"
+path = "examples/projects/temp-humidity-display.rs"
