@@ -51,7 +51,8 @@ mod app {
     use  ina219::{INA219,}; //INA219_ADDR
     use htu2xd::{Htu2xd, Reading};   //, Resolution
 
-    // Note that hprintln is for debugging with usb probe and semihosting. It CAUSES BATTERY OPERATION TO STALL.
+    // Note that hprintln is for debugging with usb probe and semihosting. 
+    // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
     //use cortex_m_semihosting::{debug, hprintln};
     //use cortex_m_semihosting::{hprintln};
     
@@ -161,8 +162,8 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         delay.delay_ms(1000u32);  
         led.off();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+        let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
@@ -178,17 +179,18 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         delay.delay_ms(2000u32);    
 
         // Start the battery sensor.
-        let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
+        let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
         delay.delay_ms(15u32);     // Wait for sensor
 
-        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+        let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
         // Start the temp-humidity sensor.
-        let sensor    = Htu2xd::new();
-        let htu_ch = manager2.acquire_i2c();
-        // on i2c2 this reset does not retur. Seems to work without it.
+        let mut sensor    = Htu2xd::new();
+        let mut htu_ch = manager1.acquire_i2c();
+        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
+        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
         //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
         delay.delay_ms(15u32);     // Wait for the reset to finish
 
@@ -212,12 +214,12 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, 
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
                              DisplayType, BufferedGraphicsMode<DisplayType>>,
-        ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>,
+        ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
-        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c2Type>>>,
+        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>,
+        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
     }
 
     #[task(shared = [led, ], local = [sensor, htu_ch, ina, display ], capacity=2)]

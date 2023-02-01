@@ -16,6 +16,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
+use embedded_hal::blocking::delay::DelayMs;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
@@ -42,8 +43,10 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, };
-use embedded_hal::blocking::delay::DelayMs;
+//use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, };
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
+        setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, };
+use rust_integration_testing_of_examples::dp::{Peripherals};
 
 #[entry]
 fn main() -> ! {
@@ -51,14 +54,16 @@ fn main() -> ! {
     //rprintln!("INA219 example");
     //hprintln!("INA219 example").unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
-    
+    //let (i2c, mut led, mut delay) = setup();
+    let dp = Peripherals::take().unwrap();
+    let (_i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
+
     led.off();
     delay.delay_ms(2000_u16);
     led.blink(1000_u16, &mut delay);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let manager2 = shared_bus::BusManagerSimple::new(i2c2);
+    let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
 
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
@@ -70,7 +75,7 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
-    let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
+    let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
     //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
 
     ina.calibrate(0x0100).unwrap();

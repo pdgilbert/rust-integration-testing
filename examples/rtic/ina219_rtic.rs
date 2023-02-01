@@ -17,6 +17,7 @@
 //! ina219 together on one bus is for future considerations.)
 
 //! Compare examples ina219-display, htu2xd_rtic, temp-humidity-display. 
+//! See data sheet at https://www.ti.com/product/INA219
 //! Blink (onboard) LED with short pulse evry read.
 //! On startup the LED is set on for a second in the init process.
 //! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
@@ -171,7 +172,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         // Start the battery sensor.
         let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
-        ina.calibrate(0x0100).unwrap();
+        ina.calibrate(0x0100).unwrap(); // possible change. See the data sheet.
         delay.delay_ms(15u32);     // Wait for sensor
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
