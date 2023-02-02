@@ -1,4 +1,12 @@
-//! NOT Jan, 2023 - This is working with USB probe and with battery. Run tested on blackpill.
+//! Feb 2, 2023 - This IS COMPILING but NOT WORKING (neither with USB probe or with battery).
+//! The display and battery monitor do seem to be working with shared bus on i2c2.
+//! The problem is reading the sensor on i2c1 with shared bus. It returns very slowly with 409.2 error
+//! for t and does not return for h.
+//! The call to sensor.soft_reset() is commented out because it too does not return.
+//!  Example htu2xd_rtic  is working CONFIRM  with a single shared bus on i2c1 for display and htu2xd.
+//!  An htu21d sensor is being used. NEXT STEPS are to try and determine if the problem has to do with
+//!  two shared buses or with the sensor crate and two shared buses.
+//!  Run tested on blackpill.
 //!       Note that battery current will only be non-zero when running on battery.
 //!       It is zero when running on the probe.             
 //! 
@@ -9,10 +17,10 @@
 //! This example monitors the current to/from the battery. Using something like a TP5000 module,
 //! configured for battery chemistry, a solar panel or usb charger can be attached to the
 //! 
-//! The SSD1306 display and the ina219 battery monitoring are the same 12cbus.
-//! (Temp/humidity sensor htu21d's  humidity reading seems to conflict with ina219 (error reading 
-//! humidity) and AHT10 does not work with anything else on the same i2c bus so having display and
-//! ina219 together on one bus is for future considerations.)
+//! The SSD1306 display and the ina219 (https://www.ti.com/product/INA219) battery monitoring are the
+//! same 12cbus. (Temp/humidity sensor htu21d's  humidity reading seems to conflict with ina219 (error 
+//! reading humidity) and AHT10 does not work with anything else on the same i2c bus so having display
+//! and ina219 together on one bus is for future considerations.)
 
 //! Compare examples ina219-display, htu2xd_rtic, temp-humidity-display. 
 //! Blink (onboard) LED with short pulse evry read.
@@ -21,8 +29,8 @@
 //! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
 
 //!  Blackpill stm32f401 test wiring:
-//!     SSD1306 and ina219 on  i2c1   sda on B8   scl on B9 
-//!          htu2xd        on  i2c2   sda on B3   scl on B10 
+//!     SSD1306 and ina219 on   shared bus  i2c2   sda on B3   scl on B10
+//!          htu2xd        on   shared bus  i2c1   sda on B8   scl on B9 
 //!
 
 #![deny(unsafe_code)]
@@ -54,7 +62,7 @@ mod app {
     // Note that hprintln is for debugging with usb probe and semihosting. 
     // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
     //use cortex_m_semihosting::{debug, hprintln};
-    //use cortex_m_semihosting::{hprintln};
+    use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
 
@@ -183,6 +191,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
         delay.delay_ms(15u32);     // Wait for sensor
+        hprintln!("ina done").unwrap();
 
         let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
@@ -193,6 +202,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
         //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
         delay.delay_ms(15u32);     // Wait for the reset to finish
+        hprintln!("sensor done").unwrap();
 
         //    Htu2xd sensor.read_user_register() does not return and changes something that requires sensot power off/on.
         //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
@@ -202,7 +212,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
         read_and_display::spawn().unwrap();
-        //hprintln!("init done").unwrap();
+        hprintln!("init done").unwrap();
 
         (Shared { led, },   Local {display, ina, sensor, htu_ch }, init::Monotonics(mono))
     }
@@ -225,6 +235,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     #[task(shared = [led, ], local = [sensor, htu_ch, ina, display ], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
+        hprintln!("read_and_display").unwrap();
 
         let ina = cx.local.ina;
 
@@ -232,46 +243,55 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
+        hprintln!("{}",  v).unwrap();
 
         let vs = match ina.shunt_voltage() {
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
+        hprintln!("vs {} ", vs).unwrap();
 
         let i = match ina.current() {
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
+        hprintln!("i {}",  i).unwrap();
 
         let p = match ina.power() {  // ina indicated power
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
         
+        hprintln!("p {} ",  p).unwrap();
 
         //let delay = cx.local.delay;
         let sensor = cx.local.sensor;
         let htu_ch = cx.local.htu_ch;
 
-        let z = sensor.read_temperature_blocking(htu_ch);
+        hprintln!("sensor.read_temperature").unwrap();
+        let z = sensor.read_temperature_blocking(htu_ch);    // VERY SLOW RETURNING 409
+        hprintln!("sensor match").unwrap();
         let t = match z {
             Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
             Ok(Reading::ErrorLow)  => 409.0,
             Ok(Reading::ErrorHigh) => 409.1,
             Err(_)                 => 409.2,
         };
+        hprintln!("t {}", t).unwrap();
 
         let z = sensor.read_humidity_blocking(htu_ch);
         let h = match z {
             Ok(Reading::Ok(t))     => t.as_percent_relative(),
             Ok(Reading::ErrorLow)  => 409.0,
             Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.,
+            Err(_)                 => 409.2,
         };
+        hprintln!("h {}", h).unwrap();
 
+        hprintln!("show_display").unwrap();
         show_display(t, h,  v, vs, i, p,  cx.local.display);
 
-        //hprintln!("read_and_display done").unwrap();
+        hprintln!("read_and_display done").unwrap();
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
