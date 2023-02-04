@@ -1,36 +1,40 @@
-//! Feb 2, 2023 - This IS COMPILING but NOT WORKING (neither with USB probe or with battery).
-//! The display and battery monitor do seem to be working with shared bus on i2c2.
-//! The problem is reading the sensor on i2c1 with shared bus. It returns very slowly with 409.2 error
+//! Compile with feature hdc1080, or aht10, or htu2xd.
+
+
+//! Feb 4, 2023 - This compiles and works on blackpill stm32f401  with sensor hdc1080 on i2c1
+//!                and ina with sdd1306 on shared bus i2c2. Tested with probe and with battery.
+//!                The power usage  RESULTS NEED CALIBRATION.
+//! 
+//! Some other sensors are COMPILING but NOT WORKING.
+//! AHT10 is reading the sensor on i2c1 with shared bus. It returns very slowly with 409.2 error
 //! for t and does not return for h.
-//! The call to sensor.soft_reset() is commented out because it too does not return.
-//!  Example htu2xd_rtic  is working CONFIRM  with a single shared bus on i2c1 for display and htu2xd.
-//!  An htu21d sensor is being used. NEXT STEPS are to try and determine if the problem has to do with
-//!  two shared buses or with the sensor crate and two shared buses.
-//!  Run tested on blackpill.
+//!
 //!       Note that battery current will only be non-zero when running on battery.
 //!       It is zero when running on the probe.             
 //! 
-//!       This example has a  workaround for SSD1306  text_style.
-//! 
-//! FIX
-//! Measure battery current and display on OLED with shared bus i2c1.
-//! This example monitors the current to/from the battery. Using something like a TP5000 module,
-//! configured for battery chemistry, a solar panel or usb charger can be attached to the
+//! This example reads temperature and humidity from a sensor and display on an OLED SSD1306 display.
+//! The current to/from the battery is also measured and displayed on SSD1306 with shared bus i2c2.
+//! A TP5000 module or similar can receive power from a solar panel or usb charger. Its output
+//! attachs to the MCU and other modules, and to the battery through the ina218 measurement.
+//! The TP5000 module should be configured for the battery chemistry.
 //! 
 //! The SSD1306 display and the ina219 (https://www.ti.com/product/INA219) battery monitoring are the
 //! same 12cbus. (Temp/humidity sensor htu21d's  humidity reading seems to conflict with ina219 (error 
 //! reading humidity) and AHT10 does not work with anything else on the same i2c bus so having display
 //! and ina219 together on one bus is for future considerations.)
 
-//! Compare examples ina219-display, htu2xd_rtic, temp-humidity-display. 
-//! Blink (onboard) LED with short pulse evry read.
+//! Compare examples ina219-display, hdc1080-display, htu2xd_rtic. 
+//! Blink (onboard) LED with short pulse every read.
 //! On startup the LED is set on for a second in the init process.
 //! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
 //! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
 
 //!  Blackpill stm32f401 test wiring:
 //!     SSD1306 and ina219 on   shared bus  i2c2   sda on B3   scl on B10
+//!          hdc1080       on   shared bus  i2c1   sda on B8   scl on B9 
 //!          htu2xd        on   shared bus  i2c1   sda on B8   scl on B9 
+//! 
+//!       This example has a  workaround for SSD1306  text_style.
 //!
 
 #![deny(unsafe_code)]
@@ -57,12 +61,21 @@ use rtic::app;
 
 mod app {
     use  ina219::{INA219,}; //INA219_ADDR
+    
+    #[cfg(feature = "htu2xd")]
     use htu2xd::{Htu2xd, Reading};   //, Resolution
+
+    #[cfg(feature = "hdc1080")]
+    use embedded_hdc1080_rs::{Hdc1080}; 
+
+    #[cfg(feature = "aht10")]
+    use aht10::AHT10;
+
 
     // Note that hprintln is for debugging with usb probe and semihosting. 
     // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
     //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
+    //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
 
@@ -81,12 +94,12 @@ mod app {
     //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
-type  DisplayType = ssd1306::prelude::DisplaySize128x32;
+    type  DisplayType = ssd1306::prelude::DisplaySize128x32;
 
-//common display sizes are 128x64 and 128x32
-const DISPLAYSIZE: DisplayType = DisplaySize128x32;
+    //common display sizes are 128x64 and 128x32
+    const DISPLAYSIZE: DisplayType = DisplaySize128x32;
 
-const VPIX:i32 = 16;  // vertical pixels for a line, including space
+    const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     use embedded_graphics::{
         mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
@@ -105,11 +118,31 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, DelayType, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
+
+    fn show_message<S>(
+        text: &str,   //text_style: MonoTextStyle<BinaryColor>,
+        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    ) -> ()
+    where
+        S: DisplaySize,
+    {
+       
+       // workaround. build here because text_style cannot be shared
+       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
+    
+       disp.clear();
+       Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
+               .draw(&mut *disp)
+               .unwrap();
+
+       disp.flush().unwrap();
+       ()
+    }
 
     fn show_display<S>(
         temperature: f32,   // 10 * deg C to give one decimal place
@@ -131,11 +164,9 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
        //If the ina is wired with Vin- to battery and Vin+ to load sign then the
        // display will show "+" for battery charging and "-" for discharging.
        let pc = i as i32 * v as i32 / 1000_i32;
-
-       //   degree symbol "°" is about                  ^^ here 
        
        write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
-       write!(lines[1], "{}mv {}mA {}mW [{}mW]", v, i,  p, pc).unwrap();
+       write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
 
        disp.clear();
        for i in 0..lines.len() {
@@ -173,7 +204,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
         let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
 
-        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
+        //let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
         //common display sizes are 128x64 and 128x32
         let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -181,9 +212,16 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
         display.init().unwrap();
 
-        Text::with_baseline(   "temp-humidity", Point::zero(), text_style, Baseline::Top )
-          .draw(&mut display).unwrap();
-        display.flush().unwrap();
+        #[cfg(feature = "hdc1080")]
+        show_message("temp-humidity\nHDC1080", &mut display);
+
+        #[cfg(feature = "htu2xd")]
+        show_message("temp-humidity \nHTU2XD", &mut display);
+
+        #[cfg(feature = "aht10")]
+        show_message("temp-humidity \nAHT10", &mut display);
+
+
         delay.delay_ms(2000u32);    
 
         // Start the battery sensor.
@@ -191,19 +229,25 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
         delay.delay_ms(15u32);     // Wait for sensor
-        hprintln!("ina done").unwrap();
-
-        let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
         // Start the temp-humidity sensor.
-        let mut sensor    = Htu2xd::new();
-        let mut htu_ch = manager1.acquire_i2c();
-        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
-        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
-        //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
-        delay.delay_ms(15u32);     // Wait for the reset to finish
-        hprintln!("sensor done").unwrap();
 
+        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+
+        #[cfg(feature = "hdc1080")]
+        let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
+        //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
+
+        #[cfg(feature = "hdc1080")]
+        sensor.init().unwrap();
+
+        #[cfg(feature = "htu2xd")]
+        let mut sensor    = Htu2xd::new();
+//        let mut htu_ch = manager1.acquire_i2c();
+//        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
+//        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
+//        //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
+//        delay.delay_ms(15u32);     // Wait for the reset to finish
         //    Htu2xd sensor.read_user_register() does not return and changes something that requires sensot power off/on.
         //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
         //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
@@ -212,9 +256,13 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
         read_and_display::spawn().unwrap();
-        hprintln!("init done").unwrap();
+        //hprintln!("init done").unwrap();
 
-        (Shared { led, },   Local {display, ina, sensor, htu_ch }, init::Monotonics(mono))
+        #[cfg(feature = "htu2xd")]
+        return(Shared { led, },   Local {display, ina, sensor, htu_ch }, init::Monotonics(mono));
+
+        #[cfg(feature = "hdc1080")]
+        return(Shared { led, },   Local {display, ina, sensor }, init::Monotonics(mono));
     }
 
     #[shared]
@@ -228,14 +276,20 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
                              DisplayType, BufferedGraphicsMode<DisplayType>>,
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>,
+       #[cfg(feature = "hdc1080")]
+        sensor:  embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>,
+        //sensor:  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>,
+
+//        #[cfg(feature = "htu2xd")]
+//        sensor:  htu2xd::Htu2xd<I2c1Type>,
+        #[cfg(feature = "htu2xd")]
         htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
     }
 
-    #[task(shared = [led, ], local = [sensor, htu_ch, ina, display ], capacity=2)]
+    #[task(shared = [led, ], local = [sensor, ina, display ], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
-        hprintln!("read_and_display").unwrap();
+        //hprintln!("read_and_display").unwrap();
 
         let ina = cx.local.ina;
 
@@ -243,55 +297,52 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
-        hprintln!("{}",  v).unwrap();
 
         let vs = match ina.shunt_voltage() {
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
-        hprintln!("vs {} ", vs).unwrap();
 
         let i = match ina.current() {
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
-        hprintln!("i {}",  i).unwrap();
 
         let p = match ina.power() {  // ina indicated power
             Ok(v) => v,
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
         
-        hprintln!("p {} ",  p).unwrap();
-
         //let delay = cx.local.delay;
         let sensor = cx.local.sensor;
-        let htu_ch = cx.local.htu_ch;
+        //let htu_ch = cx.local.htu_ch;
 
-        hprintln!("sensor.read_temperature").unwrap();
-        let z = sensor.read_temperature_blocking(htu_ch);    // VERY SLOW RETURNING 409
-        hprintln!("sensor match").unwrap();
-        let t = match z {
-            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.2,
+       #[cfg(feature = "hdc1080")]
+       let (t, h) = match sensor.read() {
+            Ok((t, h))     =>(t, h),
+            Err(_e)        => {show_message("sensor read error", cx.local.display);
+                               (409.1, 409.2)
+                              }
         };
-        hprintln!("t {}", t).unwrap();
+ 
+//        let z = sensor.read_temperature_blocking(htu_ch);    // VERY SLOW RETURNING 409
+//        let t = match z {
+//            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
+//            Ok(Reading::ErrorLow)  => 409.0,
+//            Ok(Reading::ErrorHigh) => 409.1,
+//            Err(_)                 => 409.2,
+//        };
+// 
+//        let z = sensor.read_humidity_blocking(htu_ch);
+//        let h = match z {
+//            Ok(Reading::Ok(t))     => t.as_percent_relative(),
+//            Ok(Reading::ErrorLow)  => 409.0,
+//            Ok(Reading::ErrorHigh) => 409.1,
+//            Err(_)                 => 409.2,
+//        };
 
-        let z = sensor.read_humidity_blocking(htu_ch);
-        let h = match z {
-            Ok(Reading::Ok(t))     => t.as_percent_relative(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.2,
-        };
-        hprintln!("h {}", h).unwrap();
-
-        hprintln!("show_display").unwrap();
         show_display(t, h,  v, vs, i, p,  cx.local.display);
 
-        hprintln!("read_and_display done").unwrap();
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
