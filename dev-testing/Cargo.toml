@@ -83,7 +83,8 @@ aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_st
 #aht20           = { git = "https://github.com/mythmon/aht20" }
 aht20           = { git = "https://github.com/nim65s/aht20" } 
 #aht20    = { git = "https://github.com/nim65s/aht20", default-features = false } # to use aht20::Aht20NoDelay
-#hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  NEEDS std
+#hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  This one needs std
+embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } 
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
 ina219           = {  version = "0.1.0" }

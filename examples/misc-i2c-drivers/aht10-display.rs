@@ -26,7 +26,7 @@ use cortex_m_rt::entry;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
@@ -51,7 +51,7 @@ fn main() -> ! {
 
     led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
 
-    let manager = shared_bus::BusManagerSimple::new(i2c1);
+    let manager = shared_bus::BusManagerSimple::new(i2c2);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
     //common display sizes are 128x64 and 128x32
@@ -73,6 +73,7 @@ fn main() -> ! {
     //delay.delay(2000u32);    
 
     led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
+    hprintln!("Text::with_baseline").unwrap();
 
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
@@ -80,17 +81,18 @@ fn main() -> ! {
     //   and "No  other devices on the I2C bus".
     // so use i2c2 bus
     //let mut sensor = AHT10::new(manager.acquire_i2c(), delay).expect("sensor failed");
-    //let mut sensor = AHT10::new(i2c, delay).expect("sensor failed");
+    let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+    hprintln!("mut sensor").unwrap();
     // NEED SEPARATE DELAY TO USE BLINK AFTER THIS
-    let manager2 = shared_bus::BusManagerSimple::new(i2c2);
-    let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
+    //let manager2 = shared_bus::BusManagerSimple::new(i2c2);
+    //let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
 
-//    let z = sensor.reset();
-//    hprintln!("reset()  {:?}", z).unwrap();
+    //let z = sensor.reset();
+    //hprintln!("reset()  {:?}", z).unwrap();
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        hprintln!("loop i").unwrap();
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 
@@ -99,21 +101,21 @@ fn main() -> ! {
         let z = sensor.read();
         lines[0].clear();
         lines[1].clear();
+        hprintln!("match z").unwrap();
         // next recovers from sda disconnect/reconnect but not scl disconnect/reconnect
         match z {
-            Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+            Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
                           write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
                           write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
                          },
-            Err(e)    => {//hprintln!("Error {:?}", e).unwrap();
+            Err(e)    => {hprintln!("Error {:?}", e).unwrap();
                           write!(lines[0], "sensor read error. Resetting.").unwrap();
                           write!(lines[1], "code {:?}", e).unwrap();
                           sensor.reset().unwrap();
                          }
         }
-        //hprintln!("h.rh(): {}", h.rh()).unwrap();
-        //hprintln!("t.celsius(): {}", t.celsius()).unwrap();
 
+        hprintln!(" matched").unwrap();
       
         display.clear();
         for (i, line) in lines.iter().enumerate() {

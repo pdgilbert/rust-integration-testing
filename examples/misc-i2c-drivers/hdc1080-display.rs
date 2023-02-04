@@ -1,3 +1,11 @@
+//! Feb 2023. tested to work on both bluepill and blackpill stm32f401
+//!                         with display on i2c1 and sensor on i2c2
+//!                         and with display on i2c2 and sensor on i21
+//!                         and with shared bus on i2c1 or i2c2
+//!                         using both probe and battery power.
+//!       on blackpil with battery power the NRST button needs to be pressed
+//!                      after power up if the bootloader has not been bypassed.
+//! 
 //! Continuously read temperature from HDC1080 and display on SSD1306 OLED.
 //!
 //!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
@@ -9,7 +17,8 @@
 #![no_std]
 #![no_main]
 
-use hdc1080::{ Hdc1080, SlaveAddr };   //LOOKS LIKE THIS NEEDS STD
+use embedded_hdc1080_rs::{Hdc1080}; 
+//use hdc1080::{ Hdc1080, SlaveAddr };   //this one needs std
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -31,51 +40,53 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{setup_i2c1_i2c2_led_delay_using_dp, DelayMs};
+use rust_integration_testing_of_examples::dp::{Peripherals};
 
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
-    //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    let dp = Peripherals::take().unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let (i2c1, i2c2, _led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    //let manager = shared_bus::BusManagerSimple::new(i2c1); 
+    //let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c2);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
-    display.flush().unwrap();
-    //  note that larger font size increases memory and may require building with --release
-    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
-    // Start the sensor.
-    let mut sensor = Hdc1080::new(manager.acquire_i2c());
+    Text::with_baseline(   "hdc1080-display", Point::zero(), text_style, Baseline::Top )
+          .draw(&mut display).unwrap();
+    display.flush().unwrap();
+    delay.delay_ms(2000_u16);
 
-    sensor.read_temperature_start().unwrap();
-    delay.delay_ms(500_u16);
+    // Start the sensor.
+    //let mut sensor = Hdc1080::new(manager.acquire_i2c(), delay).unwrap();
+    let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
+
+    sensor.init().unwrap();
+    //delay.delay_ms(500_u16);
 
     loop {
         //rprintln!("loop i");
         //hprintln!("loop i").unwrap();
         // Blink LED to indicate looping.
-        led.blink(20_u16, &mut delay);
+        //led.blink(20_u16, &mut delay); //need another delay
 
         // Read humidity and temperature.
-        let temperature = sensor.read_temperature_finish().unwrap();
+        let (temperature, h) = sensor.read().unwrap();
 
         lines[0].clear();
         lines[1].clear();
-        write!(lines[0], "temperature: {} C", temperature()).unwrap();
-        //write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
+        write!(lines[0], "temperature: {} C", temperature).unwrap();
+        write!(lines[1], "relative humidity: {0}%", h).unwrap();
         
         display.clear();
         for (i, line) in lines.iter().enumerate() {
