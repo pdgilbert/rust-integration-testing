@@ -62,21 +62,27 @@ use rtic::app;
 mod app {
     use  ina219::{INA219,}; //INA219_ADDR
 
+
     #[cfg(feature = "hdc1080")]
     use embedded_hdc1080_rs::{Hdc1080}; 
 
     #[cfg(feature = "hdc1080")]
     type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>;
     //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
-    
+
+ 
     #[cfg(feature = "htu2xd")]
     use htu2xd::{Htu2xd, Reading};   //, Resolution
 
     #[cfg(feature = "htu2xd")]
     type SensorType =  htu2xd::Htu2xd<I2c1Type>;
 
+
     #[cfg(feature = "aht10")]
     use aht10::AHT10;
+
+    #[cfg(feature = "aht10")]
+    type SensorType = AHT10<I2c1Type, DelayType>;
 
 
     // Note that hprintln is for debugging with usb probe and semihosting. 
@@ -265,6 +271,11 @@ mod app {
         //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
 
+
+        #[cfg(feature = "aht10")]
+        let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+
+
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
         read_and_display::spawn().unwrap();
@@ -357,6 +368,19 @@ mod app {
             Ok(Reading::ErrorLow)  => 409.0,
             Ok(Reading::ErrorHigh) => 409.1,
             Err(_)                 => 409.2,
+        };
+
+        // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
+        // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
+        #[cfg(feature = "aht10")]
+        let (h, t) = match sensor.read() {
+            Ok((h, t))
+               =>  (h.rh() as f32,  t.celsius()),
+            Err(_e) 
+               =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                    //panic!("Error reading sensor")
+                    (409.1, 409.2)  //supply default values that should be clearly bad
+                   },
         };
 
         show_display(t, h,  v, vs, i, p,  cx.local.display);
