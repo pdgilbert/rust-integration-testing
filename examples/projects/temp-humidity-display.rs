@@ -61,12 +61,19 @@ use rtic::app;
 
 mod app {
     use  ina219::{INA219,}; //INA219_ADDR
+
+    #[cfg(feature = "hdc1080")]
+    use embedded_hdc1080_rs::{Hdc1080}; 
+
+    #[cfg(feature = "hdc1080")]
+    type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>;
+    //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
     
     #[cfg(feature = "htu2xd")]
     use htu2xd::{Htu2xd, Reading};   //, Resolution
 
-    #[cfg(feature = "hdc1080")]
-    use embedded_hdc1080_rs::{Hdc1080}; 
+    #[cfg(feature = "htu2xd")]
+    type SensorType =  htu2xd::Htu2xd<I2c1Type>;
 
     #[cfg(feature = "aht10")]
     use aht10::AHT10;
@@ -117,6 +124,7 @@ mod app {
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
+    // DelayType is only needed for some sensors. It gives a warningfor others.
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
         setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, DelayType, MONOCLOCK};
 
@@ -242,10 +250,14 @@ mod app {
         sensor.init().unwrap();
 
         #[cfg(feature = "htu2xd")]
-        let mut sensor    = Htu2xd::new();
+        let sensor    = Htu2xd::new();
+
+        #[cfg(feature = "htu2xd")]
+        let htu_ch = i2c1;
 //        let mut htu_ch = manager1.acquire_i2c();
 //        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
 //        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
+//        #[cfg(feature = "htu2xd")]
 //        //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
 //        delay.delay_ms(15u32);     // Wait for the reset to finish
         //    Htu2xd sensor.read_user_register() does not return and changes something that requires sensot power off/on.
@@ -258,10 +270,13 @@ mod app {
         read_and_display::spawn().unwrap();
         //hprintln!("init done").unwrap();
 
+        #[cfg(feature = "hdc1080")]
+        return(Shared { led, },   Local {display, ina, sensor }, init::Monotonics(mono));
+
         #[cfg(feature = "htu2xd")]
         return(Shared { led, },   Local {display, ina, sensor, htu_ch }, init::Monotonics(mono));
 
-        #[cfg(feature = "hdc1080")]
+        #[cfg(feature = "aht10")]
         return(Shared { led, },   Local {display, ina, sensor }, init::Monotonics(mono));
     }
 
@@ -276,17 +291,14 @@ mod app {
                              DisplayType, BufferedGraphicsMode<DisplayType>>,
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-       #[cfg(feature = "hdc1080")]
-        sensor:  embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>,
-        //sensor:  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>,
+        sensor:  SensorType,
 
-//        #[cfg(feature = "htu2xd")]
-//        sensor:  htu2xd::Htu2xd<I2c1Type>,
         #[cfg(feature = "htu2xd")]
-        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
+        htu_ch:  I2c1Type,
+        //htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
     }
 
-    #[task(shared = [led, ], local = [sensor, ina, display ], capacity=2)]
+    #[task(shared = [led, ], local = [sensor, htu_ch, ina, display ], capacity=2)]   //htu_ch, 
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
         //hprintln!("read_and_display").unwrap();
@@ -315,31 +327,37 @@ mod app {
         
         //let delay = cx.local.delay;
         let sensor = cx.local.sensor;
-        //let htu_ch = cx.local.htu_ch;
 
-       #[cfg(feature = "hdc1080")]
-       let (t, h) = match sensor.read() {
+        #[cfg(feature = "hdc1080")]
+        let (t, h) = match sensor.read() {
             Ok((t, h))     =>(t, h),
-            Err(_e)        => {show_message("sensor read error", cx.local.display);
+            Err(_e)        => {show_message("sensor read error ", cx.local.display);
                                (409.1, 409.2)
                               }
         };
  
-//        let z = sensor.read_temperature_blocking(htu_ch);    // VERY SLOW RETURNING 409
-//        let t = match z {
-//            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
-//            Ok(Reading::ErrorLow)  => 409.0,
-//            Ok(Reading::ErrorHigh) => 409.1,
-//            Err(_)                 => 409.2,
-//        };
-// 
-//        let z = sensor.read_humidity_blocking(htu_ch);
-//        let h = match z {
-//            Ok(Reading::Ok(t))     => t.as_percent_relative(),
-//            Ok(Reading::ErrorLow)  => 409.0,
-//            Ok(Reading::ErrorHigh) => 409.1,
-//            Err(_)                 => 409.2,
-//        };
+
+        #[cfg(feature = "htu2xd")]
+        let z = sensor.read_temperature_blocking(cx.local.htu_ch);    // VERY SLOW RETURNING 409
+
+        #[cfg(feature = "htu2xd")]
+        let t = match z {
+            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
+            Ok(Reading::ErrorLow)  => 409.0,
+            Ok(Reading::ErrorHigh) => 409.1,
+            Err(_)                 => 409.2,
+        };
+ 
+        #[cfg(feature = "htu2xd")]
+        let z = sensor.read_humidity_blocking(cx.local.htu_ch);
+
+        #[cfg(feature = "htu2xd")]
+        let h = match z {
+            Ok(Reading::Ok(t))     => t.as_percent_relative(),
+            Ok(Reading::ErrorLow)  => 409.0,
+            Ok(Reading::ErrorHigh) => 409.1,
+            Err(_)                 => 409.2,
+        };
 
         show_display(t, h,  v, vs, i, p,  cx.local.display);
 
@@ -350,7 +368,6 @@ mod app {
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
         crate::app::led_off::spawn_after(duration).unwrap();
     }
