@@ -474,6 +474,10 @@ path = "examples/rtic/battery_monitor_ads1015_rtic_dma.rs"
 name = "ina219_rtic"
 path = "examples/rtic/ina219_rtic.rs"
 
+[[example]]
+name = "displayX2_rtic"
+path = "examples/rtic/displayX2_rtic.rs"
+
 
 # examples/misc-i2c-drivers
 

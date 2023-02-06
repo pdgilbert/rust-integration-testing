@@ -1,5 +1,18 @@
-//! Jan, 2023 - This is working with USB probe and with battery. Run tested on blackpill.
-//!            It has a  workaround for SSD1306  text_style.
+//! Feb 5, 2023 - This is too large to load on bluepill. It is working with USB probe and with battery
+//!        on blackpill stm32f401  with SSD1306 and HTU2XD on shared bus i2c1,
+//!                                with SSD1306 and HTU2XD on shared bus i2c2,
+//! 
+//!             with USB probe freezes after display of example name
+//!           with SSD1306 on shared bus i2c2 and HTU2XD on shared bus i2c1,  
+//!           with SSD1306 on shared bus i2c1 and HTU2XD on shared bus i2c2,  
+//! 
+//!           with SSD1306 on shared bus i2c1 and HTU2XD on i2c2,  
+//!           with SSD1306 on i2c1 and HTU2XD on i2c2,  
+//!           with SSD1306 on i2c2 and HTU2XD on i2c1,  
+//! 
+//!             (sometimes giving panicked at 'sensor reset failed: ArbitrationLoss')
+//! 
+//!          This example has a  workaround for SSD1306  text_style.
 //! 
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
@@ -61,8 +74,7 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     use embedded_graphics::{
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder},   // shows degree symbol
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -76,7 +88,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, LED, LedType, DelayMs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp,I2c1Type,  I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -139,14 +151,15 @@ mod app {
         //hprintln!("htu2xd_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (i2c1, _i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
         led.off();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); // CHANGE x2 for i2c
         let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        //let interface = I2CDisplayInterface::new(i2c2);
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -163,11 +176,14 @@ mod app {
 
         // Start the sensor.
         let mut sensor    = Htu2xd::new();
+        //let managerx: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); // CHANGE x2 for i2c
         let mut htu_ch = manager.acquire_i2c();
+        //let mut htu_ch = i2c1;                                                           // CHANGE for i2c
+
         sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
         delay.delay_ms(15u32);     // Wait for the reset to finish
 
-        //    .read_user_register() dos not return and changes something that requires sensot power off/on.
+        //    .read_user_register() does not return and changes something that requires sensot power off/on.
         //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
         //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
@@ -186,14 +202,14 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, 
+        //display:  Ssd1306<I2CInterface<I2c2Type>,                                          // CHANGE for i2c
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>,         // CHANGE for i2c
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
-//        text_style: MonoTextStyle<BinaryColor>,
-//        sensor:  AHT10<shared_bus::I2cProxy<'static, NullMutex<I2c1Type>>, 
-//               stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
-        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>,
-        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
+        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>, // CHANGE for i2c
+        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,                              // CHANGE for i2c
+        //sensor:  htu2xd::Htu2xd<I2c1Type>,                                                   // CHANGE for i2c
+        //htu_ch:  I2c1Type,                                                                   // CHANGE for i2c
     }
 
     //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]

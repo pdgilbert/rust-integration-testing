@@ -86,9 +86,9 @@ mod app {
         let mut line: heapless::String<32> = heapless::String::new();
         write!(line, "{} {}",  text, i).unwrap();
         show_message(&line, disp);
-
        ()
     }
+
     fn show_message<S>(
        text: &str, 
        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,

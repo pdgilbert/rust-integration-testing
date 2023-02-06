@@ -1,4 +1,12 @@
-//! Jan, 2023 - This is working with USB probe and with battery. Run tested on bluepill. 
+//! Feb 6, 2023 - This is working with USB probe and with battery. 
+//!              Run tested on bluepill  (scl,sda) i2c1 on (PB8,PB9) and i2c2 on (PB10,PB11).
+//!                    with aht10 on i2c1 and ssd1306 on i2c2.
+//!                    with aht10 on i2c1 and ssd1306 on shared bus i2c2.
+//! 
+//!              Run tested on blackpill stm32f401 i2c1 on (PB8,PB9) and i2c2 on (PB10,PB3).
+//!                    with aht10 on i2c1 and ssd1306 on i2c2.
+//!                    with aht10 on i2c1 and ssd1306 on shared bus i2c2.
+//! 
 //!             It has a  workaround for SSD1306  text_style.
 //! 
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
@@ -61,8 +69,7 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     use embedded_graphics::{
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -78,9 +85,9 @@ mod app {
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
         setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
-//    use shared_bus::{I2cProxy};
-//    use core::cell::RefCell;
-//    use cortex_m::interrupt::Mutex;
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
 
     fn show_display<S>(
         temperature: i32,   // 10 * deg C to give one decimal place
@@ -90,14 +97,8 @@ mod app {
     ) -> ()
     where
         S: DisplaySize,
-    {
-       
-       // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
-    
-       let mut lines: [heapless::String<32>; 1] = [
-           heapless::String::new(),
-       ];
+    {    
+       let mut line: heapless::String<32> = heapless::String::new();
     
        // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
        // It is possible to use \n in place of separate writes, with one line rather than vector.
@@ -110,20 +111,26 @@ mod app {
        //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
        //   degree symbol "°" is about                  ^^ here 
        
-       write!(lines[0], "{:3}.{:1}°C {:3}% RH", temperature/10, temperature%10, relative_humidity).unwrap();
+       write!(line, "{:3}.{:1}°C {:3}% RH", temperature/10, temperature%10, relative_humidity).unwrap();
+       show_message(&line, disp);
+      ()
+    }
 
+    fn show_message<S>(
+       text: &str, 
+       disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    ) -> ()
+    where
+        S: DisplaySize,
+    {         
+       // workaround. build here because text_style cannot be shared
+       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
+    
        disp.clear();
-       for i in 0..lines.len() {
-           // start from 0 requires that the top is used for font baseline
-           Text::with_baseline(
-               &lines[i],
-               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-               text_style,
-               Baseline::Top,
-               )
+       Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
                .draw(&mut *disp)
                .unwrap();
-       }
+
        disp.flush().unwrap();
        ()
     }
@@ -134,72 +141,50 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        //rtt_init_print!();
-        //rprintln!("blink_rtic example");
-        //hprintln!("dht_rtic example").unwrap();
 
-        //let mut led = setup(cx.device);
         let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
         led.off();
 
-        //let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-        //let interface = I2CDisplayInterface::new(manager.acquire_i2c());
-        let interface = I2CDisplayInterface::new(i2c1);  //without shared bus
-
-        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        //let interface = I2CDisplayInterface::new(i2c2);  //without shared bus
 
         //common display sizes are 128x64 and 128x32
         let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
-
         display.init().unwrap();
 
-        Text::with_baseline("aht10_rtic", Point::zero(), text_style, Baseline::Top, )
-          .draw(&mut display).unwrap();
-        display.flush().unwrap();
-        delay.delay_ms(2000u32);    
+        show_message("AHT10_rtic", &mut display);   // Example name
+        delay.delay_ms(2000u32);  
 
         // aht10 hardware does not allow sharing the bus, so second bus is used.
         //  See example aht10_display for more details
-        //let manager2 = shared_bus::BusManagerSimple::new(i2c2);
-        //let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
-        let sensor = AHT10::new(i2c2, delay).expect("sensor failed");
+        let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+        show_message("sensor initialized", &mut display); 
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
 
         read_and_display::spawn().unwrap();
 
-        //hprintln!("exit init").unwrap();
-        //(Shared {dht,  led, delay, text_style, display }, Local {}, init::Monotonics(mono))
         (Shared { led, },   Local {display, sensor }, init::Monotonics(mono))
     }
 
     #[shared]
-    struct Shared {
-        led:   LedType,      //impl LED, would be nice
-        //manager??? ,  uses i2c:   I2c2Type, or text_style, display ??
-    }
+    struct Shared { led:   LedType, }
 
 // see disply_stuff_rtic and  https://github.com/jamwaffles/ssd1306/issues/164 regarding
 // problem Shared local text_style. Workaroound by building in the task (may not be very efficient).
 
     #[local]
     struct Local {
-        //delay: DelayType,
-        //display: Ssd1306<impl WriteOnlyDataCommand, DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>,
-        display:  Ssd1306<I2CInterface<I2c1Type>, 
+        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
+//        display:  Ssd1306<I2CInterface<I2c2Type>, 
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
-//        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, 
-//                          ssd1306::prelude::DisplaySize128x32, 
-//                          BufferedGraphicsMode<DisplaySize128x32>>,
-//        text_style: MonoTextStyle<BinaryColor>,
-//        sensor:  AHT10<shared_bus::I2cProxy<'static, NullMutex<I2c2Type>>, 
-//               stm32f1xx_hal::timer::Delay<stm32f1xx_hal::pac::TIM2, 1000000_u32>>,
-        sensor:  AHT10<I2c2Type, DelayType>,
+        sensor:  AHT10<I2c1Type, DelayType>,
     }
 
     //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
