@@ -2,10 +2,12 @@
 //!              Run tested on bluepill  (scl,sda) i2c1 on (PB8,PB9) and i2c2 on (PB10,PB11).
 //!                    with aht10 on i2c1 and ssd1306 on i2c2.
 //!                    with aht10 on i2c1 and ssd1306 on shared bus i2c2.
+//!                    with aht10 on i2c1 and ssd1306 and ina on shared bus i2c2.
 //! 
 //!              Run tested on blackpill stm32f401 i2c1 on (PB8,PB9) and i2c2 on (PB10,PB3).
 //!                    with aht10 on i2c1 and ssd1306 on i2c2.
 //!                    with aht10 on i2c1 and ssd1306 on shared bus i2c2.
+//!                    with aht10 on i2c1 and ssd1306 and ina on shared bus i2c2.
 //! 
 //!             It has a  workaround for SSD1306  text_style.
 //! 
@@ -46,6 +48,7 @@ use rtic::app;
 
 mod app {
     use aht10::AHT10;
+    use ina219::{INA219,}; //INA219_ADDR
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
@@ -69,7 +72,7 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     use embedded_graphics::{
-        mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
+        mono_font::{iso_8859_1::FONT_8X13 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -92,13 +95,14 @@ mod app {
     fn show_display<S>(
         temperature: i32,   // 10 * deg C to give one decimal place
         relative_humidity: u8,
+        v: u16,  _vs: i16,  i: i16,  p: i16, 
         //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
         S: DisplaySize,
     {    
-       let mut line: heapless::String<32> = heapless::String::new();
+       let mut line: heapless::String<64> = heapless::String::new();
     
        // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
        // It is possible to use \n in place of separate writes, with one line rather than vector.
@@ -110,8 +114,14 @@ mod app {
        
        //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
        //   degree symbol "°" is about                  ^^ here 
+
+       let pc = i as i32 * v as i32 / 1000_i32;
        
-       write!(line, "{:3}.{:1}°C {:3}% RH", temperature/10, temperature%10, relative_humidity).unwrap();
+       // Consider handling error in next. If line is too short then attempt to write it crashes
+       write!(line, "{:3}.{:1}°C {:3}% RH\n{:2}.{:1}V {}mA {}mW [{}mW]", 
+            temperature/10, temperature%10, relative_humidity, v/1000, (10*(v%1000))/1000, i,  p, pc).unwrap();
+            //temperature/10, temperature%10, relative_humidity, v as f32/1000.0, i,  p, pc).unwrap();
+
        show_message(&line, disp);
       ()
     }
@@ -135,6 +145,33 @@ mod app {
        ()
     }
 
+
+    fn read_ina(ina: &mut INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>
+          ) -> (u16, i16, i16, i16)
+       {
+
+        let v = match ina.voltage() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let vs = match ina.shunt_voltage() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let i = match ina.current() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let p = match ina.power() {  // ina indicated power
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+                 
+        (v, vs, i, p)
+       }
 
     #[monotonic(binds = SysTick, default = true)]
     type MyMono = Systick<MONOTICK>;
@@ -160,6 +197,14 @@ mod app {
         show_message("AHT10_rtic", &mut display);   // Example name
         delay.delay_ms(2000u32);  
 
+        // Start the battery sensor.
+        let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
+        //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+        ina.calibrate(0x0100).unwrap();
+        delay.delay_ms(15u32);     // Wait for sensor
+        show_message("battery sensor init", &mut display);   // Example name
+        delay.delay_ms(2000u32);  
+
         // aht10 hardware does not allow sharing the bus, so second bus is used.
         //  See example aht10_display for more details
         let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
@@ -169,7 +214,7 @@ mod app {
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display, sensor }, init::Monotonics(mono))
+        (Shared { led, },   Local {display, ina,  sensor }, init::Monotonics(mono))
     }
 
     #[shared]
@@ -184,11 +229,13 @@ mod app {
 //        display:  Ssd1306<I2CInterface<I2c2Type>, 
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
+
+        ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
+
         sensor:  AHT10<I2c1Type, DelayType>,
     }
 
-    //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
-    #[task(shared = [led, ], local = [sensor, display ], capacity=2)]
+    #[task(shared = [led, ], local = [sensor, display, ina], capacity=2)]
     fn read_and_display(cx: read_and_display::Context) {
         //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
@@ -207,7 +254,10 @@ mod app {
                     (127, 127)  //supply default values that should be clearly bad
                    },
         };
-        show_display(t, h, cx.local.display);
+
+        let (v, vs, i, p) = read_ina(cx.local.ina);
+
+        show_display(t, h, v, vs, i, p, cx.local.display);
         //hprintln!("shown").unwrap();
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
