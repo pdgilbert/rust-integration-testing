@@ -60,6 +60,13 @@ mod app {
     use  ina219::{INA219,}; //INA219_ADDR
 
 
+    pub trait TempHumSensor {
+        fn read_th(&mut self) -> (i32, u8);  
+          // temp in tenths of deg C, relative humidity
+          //(so int rather than float is used for one decimal place in degrees)
+        fn init_message(&mut self, disp: &mut DisplayType) -> ();  
+    }
+
     #[cfg(feature = "hdc1080")]
     use embedded_hdc1080_rs::{Hdc1080}; 
 
@@ -67,12 +74,68 @@ mod app {
     type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>;
     //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
 
- 
+    #[cfg(feature = "hdc1080")]
+    impl TempHumSensor for SensorType {
+        fn read_th(&mut self) -> (i32, u8) {
+        let (t, rh) = match self.read() {
+            Ok((t, rh))     =>((10.0 * t) as i32, rh as u8),
+            Err(_e)        => ( -4090, 255)  //supply default values that should be clearly bad
+        };
+         (t, rh)
+        }
+
+        fn init_message(&mut self, display: & mut DisplayType) -> () {
+        show_message("temp-humidity \nhdc1080", display)
+        } 
+    }
+
+
+
     #[cfg(feature = "htu2xd")]
     use htu2xd::{Htu2xd, Reading};   //, Resolution
 
     #[cfg(feature = "htu2xd")]
-    type SensorType =  htu2xd::Htu2xd<I2c1Type>;
+    type SensorDev =  htu2xd::Htu2xd<I2c1Type>;
+    
+    //Workaround. This needs a new struct because channel is not part of the Htu2xd structure
+
+    #[cfg(feature = "htu2xd")]
+    pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: DelayType}
+
+    #[cfg(feature = "htu2xd")]
+    impl TempHumSensor for SensorType {
+        fn read_th(&mut self) -> (i32, u8) {
+            let t = match self.dev.read_temperature_blocking(&mut self.ch){
+                Ok(Reading::Ok(t))     =>  (10.0 * t.as_degrees_celsius()) as i32,
+                Ok(Reading::ErrorLow)  => -4090,
+                Ok(Reading::ErrorHigh) => -4090,
+                Err(_)                 => -4090,
+            };
+            self.delay.delay_ms(15u32);  // not sure if delay is needed
+
+            let rh = match self.dev.read_humidity_blocking(&mut self.ch) {
+               Ok(Reading::Ok(rh))    => rh.as_percent_relative() as u8,
+               Ok(Reading::ErrorLow)  => 255,
+               Ok(Reading::ErrorHigh) => 255,
+               Err(_)                 => 255,
+            };
+            self.delay.delay_ms(15u32);  // not sure if delay is needed
+        (t, rh)
+        }
+
+        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
+        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
+        //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
+        //  delay.delay_ms(15u32);     // Wait for the reset to finish
+        //    Htu2xd sensor.read_user_register() does not return and changes something that requires sensot power off/on.
+        //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
+        //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
+        //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
+
+        fn init_message(&mut self, display: & mut DisplayType) -> () {
+        show_message("temp-humidity \nhtu2xd", display)
+        } 
+    }
 
 
     #[cfg(feature = "aht10")]
@@ -80,6 +143,26 @@ mod app {
 
     #[cfg(feature = "aht10")]
     type SensorType = AHT10<I2c1Type, DelayType>;
+
+    #[cfg(feature = "aht10")]
+    impl TempHumSensor for SensorType {
+        fn read_th(&mut self) -> (i32, u8) {
+            // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
+            // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
+            let (rh, t) = match self.read() { //return order must be re-arranged
+                Ok((rh, t))  =>  (rh.rh() as u8,  (10.0 * t.celsius()) as i32), 
+                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                                  //panic!("Error reading sensor")
+                                  (255, -4090)  //supply default values that should be clearly bad
+                                 },
+            };
+            (t, rh)
+        }
+
+        fn init_message(&mut self, display: & mut DisplayType) -> () {
+        show_message("temp-humidity \nAHT10", display)
+        } 
+    }
 
 
     // Note that hprintln is for debugging with usb probe and semihosting. 
@@ -104,10 +187,12 @@ mod app {
     //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
-    type  DisplayType = ssd1306::prelude::DisplaySize128x32;
+    type  DisplaySize = ssd1306::prelude::DisplaySize128x32;
+    type  DisplayType = ssd1306::Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
+                             DisplaySize, BufferedGraphicsMode<DisplaySize>>;
 
     //common display sizes are 128x64 and 128x32
-    const DISPLAYSIZE: DisplayType = DisplaySize128x32;
+    const DISPLAYSIZE: DisplaySize = DisplaySize128x32;
 
     use embedded_graphics::{
         mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
@@ -141,7 +226,7 @@ mod app {
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
-        S: DisplaySize,
+        S: ssd1306::size::DisplaySize,  //trait
     {
        let mut line: heapless::String<64> = heapless::String::new();
              
@@ -167,7 +252,7 @@ mod app {
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
-        S: DisplaySize,
+        S: ssd1306::size::DisplaySize,  //trait
     {
        
        // workaround. build here because text_style cannot be shared
@@ -237,22 +322,11 @@ mod app {
 
         display.init().unwrap();
 
-        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10")))]
-        sensor; // sensor must be specified. crash
-
-        #[cfg(feature = "hdc1080")]
-        show_message("temp-humidity\nHDC1080", &mut display);
-
-        #[cfg(feature = "htu2xd")]
-        show_message("temp-humidity \nHTU2XD", &mut display);
-
-        #[cfg(feature = "aht10")]
-        show_message("temp-humidity \nAHT10", &mut display);
-
-
+        show_message("temp-humidity", &mut display);
         delay.delay_ms(2000u32);    
 
         // Start the battery sensor.
+
         let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
@@ -262,6 +336,9 @@ mod app {
 
 
         // Start the temp-humidity sensor.
+
+        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10")))]
+        sensor; // sensor must be specified. crash
 
         //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
@@ -273,24 +350,12 @@ mod app {
         sensor.init().unwrap();
 
         #[cfg(feature = "htu2xd")]
-        let sensor    = Htu2xd::new();
-
-        #[cfg(feature = "htu2xd")]
-        let htu_ch = i2c1;
-//        let mut htu_ch = manager1.acquire_i2c();
-//        // on i2c2 this reset does not return. Temperature reading but not humidity seems to work without it.
-//        // on i2c1 it gives 'sensor reset failed: ArbitrationLoss'
-//        #[cfg(feature = "htu2xd")]
-//        //sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
-//        delay.delay_ms(15u32);     // Wait for the reset to finish
-        //    Htu2xd sensor.read_user_register() does not return and changes something that requires sensot power off/on.
-        //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
-        //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
-        //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
-
+        let mut sensor  = SensorType {dev: Htu2xd::new(), ch: i2c1, delay};
 
         #[cfg(feature = "aht10")]
-        let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+        let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+
+        sensor.init_message(&mut display);
 
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
@@ -298,13 +363,6 @@ mod app {
         read_and_display::spawn().unwrap();
         //hprintln!("init done").unwrap();
 
-        #[cfg(feature = "hdc1080")]
-        return(Shared { led, },   Local {display, ina, sensor }, init::Monotonics(mono));
-
-        #[cfg(feature = "htu2xd")]
-        return(Shared { led, },   Local {display, ina, sensor, htu_ch }, init::Monotonics(mono));
-
-        #[cfg(feature = "aht10")]
         return(Shared { led, },   Local {display, ina, sensor }, init::Monotonics(mono));
     }
 
@@ -315,18 +373,14 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
-                             DisplayType, BufferedGraphicsMode<DisplayType>>,
+        display:  DisplayType,
+
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
         sensor:  SensorType,
-
-        #[cfg(feature = "htu2xd")]
-        htu_ch:  I2c1Type,
-        //htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,
     }
 
-    #[task(shared = [led, ], local = [sensor, htu_ch, ina, display ], capacity=2)]   //htu_ch, 
+    #[task(shared = [led, ], local = [sensor, ina, display ], capacity=2)]   //htu_ch, 
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
         //hprintln!("read_and_display").unwrap();
@@ -334,49 +388,7 @@ mod app {
         //let delay = cx.local.delay;
         let sensor = cx.local.sensor;
 
-        #[cfg(feature = "hdc1080")]
-        let (t, h) = match sensor.read() {
-            Ok((t, h))     =>(t, h),
-            Err(_e)        => {show_message("sensor read error ", cx.local.display);
-                               (409.1, 409.2)
-                              }
-        };
- 
-
-        #[cfg(feature = "htu2xd")]
-        let z = sensor.read_temperature_blocking(cx.local.htu_ch);    // VERY SLOW RETURNING 409
-
-        #[cfg(feature = "htu2xd")]
-        let t = match z {
-            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.2,
-        };
- 
-        #[cfg(feature = "htu2xd")]
-        let z = sensor.read_humidity_blocking(cx.local.htu_ch);
-
-        #[cfg(feature = "htu2xd")]
-        let h = match z {
-            Ok(Reading::Ok(t))     => t.as_percent_relative(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.2,
-        };
-
-        // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
-        // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
-        #[cfg(feature = "aht10")]
-        let (h, t) = match sensor.read() {
-            Ok((h, t))
-               =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32), //integer in deci-degrees to show 1 decimal place
-            Err(_e) 
-               =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
-                    //panic!("Error reading sensor")
-                    (255, -4090)  //supply default values that should be clearly bad
-                   },
-        };
+        let (t, h) = sensor.read_th();
 
         let (v, vs, i, p) = read_ina(cx.local.ina);
 
