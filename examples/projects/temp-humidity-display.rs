@@ -2,12 +2,10 @@
 
 
 //! Feb 4, 2023 - This compiles and works on blackpill stm32f401  with sensor hdc1080 on i2c1
-//!                and ina with sdd1306 on shared bus i2c2. Tested with probe and with battery.
+//!                and with ina219 and sdd1306 on shared bus i2c2. Tested with probe and with battery.
 //!                The power usage  RESULTS NEED CALIBRATION.
 //! 
-//! Some other sensors are COMPILING but NOT WORKING.
-//! AHT10 is reading the sensor on i2c1 with shared bus. It returns very slowly with 409.2 error
-//! for t and does not return for h.
+//!  Feb 8, 2023 - AHT10 is working. Also on bluepill
 //!
 //!       Note that battery current will only be non-zero when running on battery.
 //!       It is zero when running on the probe.             
@@ -15,7 +13,7 @@
 //! This example reads temperature and humidity from a sensor and display on an OLED SSD1306 display.
 //! The current to/from the battery is also measured and displayed on SSD1306 with shared bus i2c2.
 //! A TP5000 module or similar can receive power from a solar panel or usb charger. Its output
-//! attachs to the MCU and other modules, and to the battery through the ina218 measurement.
+//! attaches to the MCU and other modules, and to the battery through the ina219 measurement.
 //! The TP5000 module should be configured for the battery chemistry.
 //! 
 //! The SSD1306 display and the ina219 (https://www.ti.com/product/INA219) battery monitoring are the
@@ -23,7 +21,7 @@
 //! reading humidity) and AHT10 does not work with anything else on the same i2c bus so having display
 //! and ina219 together on one bus is for future considerations.)
 
-//! Compare examples ina219-display, hdc1080-display, htu2xd_rtic. 
+//! Compare examples aht10_rtic, ina219-display, hdc1080-display, htu2xd_rtic. 
 //! Blink (onboard) LED with short pulse every read.
 //! On startup the LED is set on for a second in the init process.
 //! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
@@ -31,8 +29,7 @@
 
 //!  Blackpill stm32f401 test wiring:
 //!     SSD1306 and ina219 on   shared bus  i2c2   sda on B3   scl on B10
-//!          hdc1080       on   shared bus  i2c1   sda on B8   scl on B9 
-//!          htu2xd        on   shared bus  i2c1   sda on B8   scl on B9 
+//!             sensor     on   shared bus  i2c1   sda on B8   scl on B9 
 //! 
 //!       This example has a  workaround for SSD1306  text_style.
 //!
@@ -112,8 +109,6 @@ mod app {
     //common display sizes are 128x64 and 128x32
     const DISPLAYSIZE: DisplayType = DisplaySize128x32;
 
-    const VPIX:i32 = 16;  // vertical pixels for a line, including space
-
     use embedded_graphics::{
         mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
         //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
@@ -138,6 +133,35 @@ mod app {
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
+    fn show_display<S>(
+        temperature: i32,   // deci-degrees = 10 * deg C so integer gives one decimal place
+        relative_humidity: u8,
+        v: u16,  _vs: i16,  i: i16,  p: i16, 
+        //text_style: MonoTextStyle<BinaryColor>,
+        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+    ) -> ()
+    where
+        S: DisplaySize,
+    {
+       let mut line: heapless::String<64> = heapless::String::new();
+             
+       // power calculated by P=IV.  (mA x mV /1000 = mW)
+       //If the ina is wired with Vin- to battery and Vin+ to load sign then the
+       // display will show "+" for battery charging and "-" for discharging.
+       let pc = i as i32 * v as i32 / 1000_i32;
+       
+       //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
+      // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
+      
+       // Consider handling error in next. If line is too short then attempt to write it crashes
+       write!(line, "{:3}.{:1}°C {:3}% RH\n{:2}.{:1}V {}mA {}mW [{}mW]", 
+            temperature/10, temperature%10, relative_humidity, v/1000, (10*(v%1000))/1000, i,  p, pc).unwrap();
+            //temperature/10, temperature%10, relative_humidity, v as f32/1000.0, i,  p, pc).unwrap();
+
+       show_message(&line, disp);
+        ()
+    }
+
     fn show_message<S>(
         text: &str,   //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
@@ -158,45 +182,32 @@ mod app {
        ()
     }
 
-    fn show_display<S>(
-        temperature: f32,   // 10 * deg C to give one decimal place
-        relative_humidity: f32,
-        v: u16,  _vs: i16,  i: i16,  p: i16, 
-        //text_style: MonoTextStyle<BinaryColor>,
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-    ) -> ()
-    where
-        S: DisplaySize,
-    {
-       
-       // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
-    
-       let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
-  
-       // power calculated by P=IV.  (mA x mV /1000 = mW)
-       //If the ina is wired with Vin- to battery and Vin+ to load sign then the
-       // display will show "+" for battery charging and "-" for discharging.
-       let pc = i as i32 * v as i32 / 1000_i32;
-       
-       write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
-       write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
+    fn read_ina(ina: &mut INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>
+          ) -> (u16, i16, i16, i16)
+       {
 
-       disp.clear();
-       for i in 0..lines.len() {
-           // start from 0 requires that the top is used for font baseline
-           Text::with_baseline(
-               &lines[i],
-               Point::new(0, i as i32 * VPIX), 
-               text_style,
-               Baseline::Top,
-               )
-               .draw(&mut *disp)
-               .unwrap();
+        let v = match ina.voltage() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let vs = match ina.shunt_voltage() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let i = match ina.current() {
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+
+        let p = match ina.power() {  // ina indicated power
+            Ok(v) => v,
+            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+        };
+                 
+        (v, vs, i, p)
        }
-       disp.flush().unwrap();
-       ()
-    }
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -226,6 +237,9 @@ mod app {
 
         display.init().unwrap();
 
+        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10")))]
+        sensor; // sensor must be specified. crash
+
         #[cfg(feature = "hdc1080")]
         show_message("temp-humidity\nHDC1080", &mut display);
 
@@ -243,6 +257,9 @@ mod app {
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
         delay.delay_ms(15u32);     // Wait for sensor
+        show_message("battery sensor init", &mut display);   // Example name
+        delay.delay_ms(2000u32);  
+
 
         // Start the temp-humidity sensor.
 
@@ -273,7 +290,7 @@ mod app {
 
 
         #[cfg(feature = "aht10")]
-        let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+        let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
 
 
         let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
@@ -313,28 +330,6 @@ mod app {
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
         //hprintln!("read_and_display").unwrap();
-
-        let ina = cx.local.ina;
-
-        let v = match ina.voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
-
-        let vs = match ina.shunt_voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
-
-        let i = match ina.current() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
-
-        let p = match ina.power() {  // ina indicated power
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
         
         //let delay = cx.local.delay;
         let sensor = cx.local.sensor;
@@ -375,13 +370,15 @@ mod app {
         #[cfg(feature = "aht10")]
         let (h, t) = match sensor.read() {
             Ok((h, t))
-               =>  (h.rh() as f32,  t.celsius()),
+               =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32), //integer in deci-degrees to show 1 decimal place
             Err(_e) 
                =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
                     //panic!("Error reading sensor")
-                    (409.1, 409.2)  //supply default values that should be clearly bad
+                    (255, -4090)  //supply default values that should be clearly bad
                    },
         };
+
+        let (v, vs, i, p) = read_ina(cx.local.ina);
 
         show_display(t, h,  v, vs, i, p,  cx.local.display);
 
