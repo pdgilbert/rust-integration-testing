@@ -1,11 +1,29 @@
 //! Compile with feature hdc1080, or aht10, or htu2xd.
 
-
-//! Feb 4, 2023 - This compiles and works on blackpill stm32f401  with sensor hdc1080 on i2c1
-//!                and with ina219 and sdd1306 on shared bus i2c2. Tested with probe and with battery.
-//!                The power usage  RESULTS NEED CALIBRATION.
+//! Feb 11, 2023 - This compiles and loads (--release) on bluepill and blackpill stm32f401 
+//!                    for sensors hdc1080, aht10, and htu2xd.
+//!                    with sensor on i2c1 and ssd1306 and ina219 on shared bus i2c2.
+//!                    Note: some testing with font ascii::FONT_6X10 and some with iso_8859_1::FONT_9X15
+//!              Run testing on bluepill  (scl,sda) i2c1 on (PB8,PB9) and i2c2 on (PB10,PB11).
+//!                    with aht10:   works on probe and battery
+//!                    with htu2xd:  fails initializing the sensor.
+//!                    with hdc1080: works with probe. Unstable and RH reading bad with battery.
 //! 
-//!  Feb 8, 2023 - AHT10 is working. Also on bluepill
+//!              Run testing on blackpill stm32f401 i2c1 on (PB8,PB9) and i2c2 on (PB10,PB3).
+//!                    with aht10: works on probe, battery
+//!                    with htu2xd:  fails initializing the sensor. (previously have noticed this sensor can
+//!                        get in state where power down is needed, but that no longer seems to help.
+//!                        Consider software reset of writing registers? Possible htu2xd crate bug.)
+//!                    with hdc1080: works with probe and with battery. (and wwith battery charging)
+//!
+//! 
+//! TO DO
+//!  -Need error handling for init (and reset for htu2dx?).
+//!  -Need better error handling when sensor signal is missed. (ie recover rather than crash)
+//!  -test on power through usb plug.
+//!  -The ina219 power usage NEEDS CALIBRATION.
+//!  -Need to test more with solar power and adjust rtic sleep to check run time possibilities.
+//! 
 //!
 //!       Note that battery current will only be non-zero when running on battery.
 //!       It is zero when running on the probe.             
@@ -91,7 +109,8 @@ mod app {
          (t, rh)
         }
         fn init(&mut self) -> Result<(),()> {
-           self.init().unwrap();
+           self.init().unwrap();              // CONSIDER HANDLING OR RETURN ERROR HERE
+           Ok(())
         } 
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
@@ -205,9 +224,9 @@ mod app {
     const DISPLAYSIZE: DisplaySize = DisplaySize128x32;
 
     use embedded_graphics::{
-        mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
+        //mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
         //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        //mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -249,7 +268,7 @@ mod app {
       // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
       
        // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "{:3}.{:1}°C {:3}% RH\n{:2}.{:1}V {}mA {}mW [{}mW]", 
+       write!(line, "{:3}.{:1}°C {:3}%RH\n{:2}.{:1}V {}mA {}mW [{}mW]", 
             temperature/10, temperature%10, relative_humidity, v/1000, (10*(v%1000))/1000, i,  p, pc).unwrap();
             //temperature/10, temperature%10, relative_humidity, v as f32/1000.0, i,  p, pc).unwrap();
 
@@ -347,16 +366,15 @@ mod app {
 
         // Start the temp-humidity sensor.
 
+        // shared bus would be like this, but does not work for ath10.
+        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+        //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
+
         #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10")))]
         sensor; // sensor must be specified. crash
 
-        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-
         #[cfg(feature = "hdc1080")]
         let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
-        //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
-
-        sensor.init().unwrap();
 
         #[cfg(feature = "htu2xd")]
         let mut sensor  = SensorType {dev: Htu2xd::new(), ch: i2c1, delay};
