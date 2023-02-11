@@ -59,11 +59,18 @@ use rtic::app;
 mod app {
     use  ina219::{INA219,}; //INA219_ADDR
 
+    // The TempHumSensor trait and methods provide a wrapper so different sensors can be used 
+    //  with the same application code.
 
     pub trait TempHumSensor {
         fn read_th(&mut self) -> (i32, u8);  
           // temp in tenths of deg C, relative humidity
           //(so int rather than float is used for one decimal place in degrees)
+
+        fn init(&mut self) -> Result<(),()> {  // for sensors that need it, otherwise default Ok
+           Ok(())
+        } 
+
         fn init_message(&mut self, disp: &mut DisplayType) -> ();  
     }
 
@@ -83,9 +90,12 @@ mod app {
         };
          (t, rh)
         }
+        fn init(&mut self) -> Result<(),()> {
+           self.init().unwrap();
+        } 
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
-        show_message("temp-humidity \nhdc1080", display)
+           show_message("temp-humidity \nhdc1080", display)
         } 
     }
 
@@ -133,7 +143,7 @@ mod app {
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
-        show_message("temp-humidity \nhtu2xd", display)
+           show_message("temp-humidity \nhtu2xd", display)
         } 
     }
 
@@ -160,7 +170,7 @@ mod app {
         }
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
-        show_message("temp-humidity \nAHT10", display)
+           show_message("temp-humidity \nAHT10", display)
         } 
     }
 
@@ -346,7 +356,6 @@ mod app {
         let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
         //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
 
-        #[cfg(feature = "hdc1080")]
         sensor.init().unwrap();
 
         #[cfg(feature = "htu2xd")]
@@ -355,6 +364,7 @@ mod app {
         #[cfg(feature = "aht10")]
         let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
 
+        sensor.init().unwrap();
         sensor.init_message(&mut display);
 
 

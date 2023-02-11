@@ -63,9 +63,10 @@ jobs:
               htu2xd-display,          htu2xd_rtic,
               vl53lox-display,         air_quality,    
               ina219-display,          ina219_rtic,
-              temp-humidity-display,
              ]
 
+             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
+             # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
         brd: [bluepill, discovery-stm32f303]  
