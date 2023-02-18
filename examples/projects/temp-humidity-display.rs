@@ -85,6 +85,8 @@ mod app {
           // temp in tenths of deg C, relative humidity
           //(so int rather than float is used for one decimal place in degrees)
 
+        //fn new(i: I2c1Type, d: DelayType) -> Self;   HAVE NOT GOT GENERIC new() TO WORK YET
+
         fn init(&mut self) -> Result<(),()> {  // for sensors that need it, otherwise default Ok
            Ok(())
         } 
@@ -190,6 +192,36 @@ mod app {
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
            show_message("temp-humidity \nAHT10", display)
+        } 
+    }
+
+
+    #[cfg(feature = "aht20")]
+    use aht20::Aht20;
+
+    #[cfg(feature = "aht20")]
+    type SensorType = Aht20<I2c1Type, DelayType>;
+
+    #[cfg(feature = "aht20")]
+    impl TempHumSensor for SensorType {
+        fn read_th(&mut self) -> (i32, u8) {
+            // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
+            // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
+            let (rh, t) = match self.read() { //return order must be re-arranged
+                Ok((rh, t))  =>  (rh.rh() as u8,  (10.0 * t.celsius()) as i32), 
+                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                                  //panic!("Error reading sensor")
+                                  (255, -4090)  //supply default values that should be clearly bad
+                                 },
+            };
+            (t, rh)
+        }
+        //fn new(i: I2c1Type, d: DelayType) -> Self {
+        //    Aht20::new(i, d).expect("sensor failed")
+        //}
+
+        fn init_message(&mut self, display: & mut DisplayType) -> () {
+           show_message("temp-humidity \nAHT20", display)
         } 
     }
 
@@ -370,7 +402,7 @@ mod app {
         //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
         //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
 
-        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10")))]
+        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10", feature = "aht20")))]
         sensor; // sensor must be specified. crash
 
         #[cfg(feature = "hdc1080")]
@@ -381,6 +413,10 @@ mod app {
 
         #[cfg(feature = "aht10")]
         let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+
+        #[cfg(feature = "aht20")]
+        let mut sensor = Aht20::new(i2c1, delay).expect("sensor failed");
+        //let mut sensor = TempHumSensor::<SensorType>::new(i2c1, delay).expect("sensor failed");
 
         sensor.init().unwrap();
         sensor.init_message(&mut display);
