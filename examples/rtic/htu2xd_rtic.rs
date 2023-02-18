@@ -88,7 +88,7 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp,I2c1Type,  I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp,I2c1Type,  LED, LedType, DelayMs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -151,7 +151,7 @@ mod app {
         //hprintln!("htu2xd_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
+        let (i2c1, _i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  

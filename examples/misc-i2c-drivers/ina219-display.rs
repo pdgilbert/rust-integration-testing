@@ -45,7 +45,7 @@ use embedded_graphics::{
 
 //use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, };
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, };
+        setup_i2c1_i2c2_led_delay_using_dp, LED, };
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 #[entry]
