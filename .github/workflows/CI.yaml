@@ -459,9 +459,17 @@ jobs:
 
       #####  project examples   #####
 
-        #temp-humidity-display with sensor hdc1080
-      - name: Example temp-humidity-display
+      - name: Example temp-humidity-display with sensor aht10
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},aht10 --example temp-humidity-display
+
+      - name: Example temp-humidity-display with sensor aht20
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},aht20 --example temp-humidity-display
+
+      - name: Example temp-humidity-display with sensor hdc1080
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},hdc1080 --example temp-humidity-display
+
+      - name: Example temp-humidity-display with sensor htu2xd
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},htu2xd --example temp-humidity-display
 
 
 #################################################################################################

@@ -1,4 +1,4 @@
-//! Compile with feature hdc1080, or aht10, or htu2xd.
+//! Compile with feature hdc1080, or aht10, or aht20, or htu2xd.
 
 //! Feb 11, 2023 - This compiles and loads (--release) on bluepill and blackpill stm32f401 
 //!                    for sensors hdc1080, aht10, and htu2xd.
