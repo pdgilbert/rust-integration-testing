@@ -185,6 +185,60 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
 
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g0xx")]
+pub type LedType = PC13<Output<PushPull>>;  //NOT SURE WHAT PIN THIS SHOULD BE
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_led(gpiox: Parts) -> LedType {
+    let led = gpiox.pc13.into_push_pull_output();
+
+    impl LED for LedType {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    
+    led
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    gpio::{gpioc::{PC13, Parts}, Output, PushPull},
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g4xx")]
+pub type LedType = PC13<Output<PushPull>>;  //NOT SURE WHAT THIS SHOULD BE
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_led(gpiox: Parts) -> LedType {
+    let led = gpiox.pc13.into_push_pull_output();
+
+    impl LED for LedType {
+        fn on(&mut self) -> () {
+            self.set_low()                          //AND CHECK THIS
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+    }
+    
+    led
+}
+
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     gpio::{gpioc::{PC13, Parts}, Output, PushPull},

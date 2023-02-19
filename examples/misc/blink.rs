@@ -225,6 +225,38 @@ fn setup() -> (PC13<Output<PushPull>>, SysDelay) {
     )
 }
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    prelude::*,
+    timer::delay::Delay,
+    pac::{TIM2, Peripherals},
+};
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup() -> (PC13<Output<PushPull>>, Delay<TIM2>) {//NOT SURE WHAT PIN THIS SHOULD BE
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    
+    let delay = dp.TIM2.delay(&mut rcc);
+    
+    (led, delay)
+}
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

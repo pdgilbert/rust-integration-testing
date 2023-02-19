@@ -58,6 +58,29 @@ pub use crate::alt_delay::{AltDelay as DelayType};
 
 
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    timer::delay::Delay,
+    pac::TIM2,
+};
+
+#[cfg(feature = "stm32g0xx")]
+pub type DelayType = Delay<TIM2>;
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::Delay,
+    //timer::SysDelay as Delay,
+    pac::TIM2,
+};
+
+#[cfg(feature = "stm32g4xx")]
+pub type DelayType = Delay<TIM2, 1000000_u32>;
+
+
+
 //#[cfg(feature = "stm32h7xx")]
 //use stm32h7xx_hal::{
 //    delay::Delay,

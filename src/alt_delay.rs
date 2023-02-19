@@ -32,6 +32,12 @@ pub const  ALTCLOCK: u32 = 16_000_000;
 #[cfg(feature = "stm32f7xx")]
 pub const  ALTCLOCK: u32 = 8_000_000;
 
+#[cfg(feature = "stm32g0xx")]
+pub const  ALTCLOCK: u32 = 16_000_000;
+
+#[cfg(feature = "stm32g4xx")]
+pub const  ALTCLOCK: u32 = 16_000_000;
+
 #[cfg(feature = "stm32h7xx")]
 pub const  ALTCLOCK: u32 = 8_000_000;
 

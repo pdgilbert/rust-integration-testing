@@ -394,6 +394,112 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, &clocks: &Clocks, 
 }
 
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    i2c::{I2c, Config as i2cConfig,},
+    gpio::{Output, OpenDrain, gpiob::{PB8, PB9,  PB10, PB11, Parts as PartsB}
+    },
+    rcc::Rcc,
+    pac::{I2C1, I2C2},
+    prelude::*,
+};
+
+
+#[cfg(feature = "stm32g0xx")]
+pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
+    let scl = gpiob.pb8.into_open_drain_output_in_state(PinState::High);
+    let sda = gpiob.pb9.into_open_drain_output_in_state(PinState::High); 
+    
+    let i2c = I2c::i2c1(i2c1,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
+    i2c
+}
+
+#[cfg(feature = "stm32g0xx")]
+pub type I2c2Type = I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>;
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, rcc: &mut Rcc) -> I2c2Type {
+    let scl = gpiob.pb10.into_open_drain_output_in_state(PinState::High);
+    let sda = gpiob.pb11.into_open_drain_output_in_state(PinState::High);
+
+    let i2c = I2c::i2c2(i2c2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
+
+    i2c
+}
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, rcc: &mut Rcc) -> (I2c1Type, I2c2Type) {
+    let scl = gpiob.pb8.into_open_drain_output_in_state(PinState::High); 
+    let sda = gpiob.pb9.into_open_drain_output_in_state(PinState::High); 
+    let i2c1 = I2c::i2c1(i2c1,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
+
+    let scl = gpiob.pb10.into_open_drain_output_in_state(PinState::High);
+    let sda = gpiob.pb11.into_open_drain_output_in_state(PinState::High); 
+    let i2c2 = I2c::i2c2(i2c2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
+
+    (i2c1, i2c2)
+}
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    i2c::{I2c,},
+    gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}
+    },
+    rcc::Clocks,
+    pac::{I2C1, I2C2},
+    prelude::*,
+};
+
+
+#[cfg(feature = "stm32g4xx")]
+pub type I2c1Type = I2c<I2C1, (PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>)>;
+//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
+//pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks) -> I2c1Type {
+    // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
+    let scl = gpiob.pb8.into_alternate_open_drain(); 
+    let sda = gpiob.pb9.into_alternate_open_drain(); 
+
+    let i2c = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
+    i2c
+}
+
+#[cfg(feature = "stm32g4xx")]
+pub type I2c2Type = I2c<I2C2, (PB10<Alternate<4u8, OpenDrain>>, PB3<Alternate<9u8, OpenDrain>>)>;
+//pub type I2c2Type =   I2c<I2C2, impl Pins<I2C2>>;   
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks) -> I2c2Type {
+    //  (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
+    let scl = gpiob.pb10.into_alternate_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate_open_drain(); // sda on PB3
+
+    let i2c = I2c::new(i2c2, (scl, sda), 400.kHz(), &clocks);
+
+    i2c
+}
+
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, &clocks: &Clocks ) -> (I2c1Type, I2c2Type) {
+    let scl = gpiob.pb8.into_alternate_open_drain(); 
+    let sda = gpiob.pb9.into_alternate_open_drain(); 
+    let i2c1 = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
+
+    let scl = gpiob.pb10.into_alternate_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate_open_drain(); // sda on PB3
+    let i2c2 = I2c::new(i2c2, (scl, sda), 400.kHz(), &clocks);
+
+    (i2c1, i2c2)
+}
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     gpio::{gpiob::Parts as PartsB,

@@ -13,6 +13,12 @@ use stm32f4xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::gpio::{gpioa::PA8, Output, OpenDrain};
 

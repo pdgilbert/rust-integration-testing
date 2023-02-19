@@ -17,6 +17,8 @@ stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = 
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
+stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
+stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
 stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
@@ -170,6 +172,8 @@ stm32f1xx = ["stm32f1xx-hal/rt", "systick-monotonic"]
 stm32f3xx = ["stm32f3xx-hal/rt", "systick-monotonic"]
 stm32f4xx = ["stm32f4xx-hal/rt", "systick-monotonic", "dwt-systick-monotonic"]
 stm32f7xx = ["stm32f7xx-hal/rt", "systick-monotonic"]
+stm32g0xx = ["stm32g0xx-hal/rt", "systick-monotonic"]
+stm32g4xx = ["stm32g4xx-hal/rt", "systick-monotonic"]
 stm32h7xx = ["stm32h7xx-hal/rt", "systick-monotonic"]
 stm32l0xx =["stm32l0xx-hal/rt", "systick-monotonic"]
 stm32l1xx = ["stm32l1xx-hal/rt", "systick-monotonic"]
@@ -186,6 +190,8 @@ stm32f405     = ["stm32f4xx-hal/stm32f405"  ]
 stm32f411     = ["stm32f4xx-hal/stm32f411"  ] 
 stm32f722     = ["stm32f7xx-hal/stm32f722"  ] # no adc in hall yet
 stm32f769     = ["stm32f7xx-hal/stm32f769"  ] # this has adc support but no access to internal channel for mcu temperature
+stm32g081     = ["stm32g0xx-hal/stm32g081"  ]
+stm32g473     = ["stm32g4xx-hal/stm32g473"  ]
 stm32h742     = ["stm32h7xx-hal/stm32h742"  ]
 # see https://www.st.com/resource/en/datasheet/stm32l072v8.pdf  p12 for some MCU variants
 #stm32l0x2     =    ["stm32l0xx-hal/stm32l0x2",  "stm32l0xx-hal/mcu-STM32L072KZTx"]

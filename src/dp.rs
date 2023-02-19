@@ -13,7 +13,13 @@
     
     #[cfg(feature = "stm32f7xx")]
     pub use stm32f7xx_hal::pac::{Peripherals};
-    
+     
+    #[cfg(feature = "stm32g4xx")]
+    pub use stm32g4xx_hal::pac::{Peripherals};
+      
+    #[cfg(feature = "stm32g0xx")]
+    pub use stm32g0xx_hal::pac::{Peripherals};
+  
     #[cfg(feature = "stm32h7xx")]
     pub use stm32h7xx_hal::pac::{Peripherals};
     
