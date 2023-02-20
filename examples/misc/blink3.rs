@@ -331,6 +331,131 @@ fn setup() -> (impl LED, impl LED, impl LED, SysDelay) {
      )
 }
 
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    timer::delay::Delay,
+    gpio::{
+        gpiob::{PB13, PB14, PB15},
+        Output, PushPull,
+    },
+    pac::{Peripherals, TIM2, },
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (impl LED, impl LED, impl LED, Delay<TIM2>) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    // all leds wire with pin as source, cathode connect to ground though a resistor.
+    impl LED for PB13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
+
+    impl LED for PB14<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
+
+    impl LED for PB15<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
+
+    // return (led1, led2, led3, delay)
+    (
+        gpiob.pb13.into_push_pull_output(), // led on pb13
+        gpiob.pb14.into_push_pull_output(), // led on pb14
+        gpiob.pb15.into_push_pull_output(), // led on pb15
+        dp.TIM2.delay(&mut rcc)
+    )
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::SysDelay as Delay,
+    gpio::{
+        gpiob::{PB13, PB14, PB15},
+        Output, PushPull,
+    },
+    pac::{CorePeripherals, Peripherals},
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (impl LED, impl LED, impl LED, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+
+    let gpiob = p.GPIOB.split();
+
+    let clocks = rcc
+        .cfgr
+        .hclk(48.MHz())
+        .sysclk(48.MHz())
+        .pclk1(24.MHz())
+        .pclk2(24.MHz())
+        .freeze();
+
+    // all leds wire with pin as source, cathode connect to ground though a resistor.
+    impl LED for PB13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high()
+        }
+        fn off(&mut self) -> () {
+            self.set_low()
+        }
+    }
+
+    impl LED for PB14<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high()
+        }
+        fn off(&mut self) -> () {
+            self.set_low()
+        }
+    }
+
+    impl LED for PB15<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high()
+        }
+        fn off(&mut self) -> () {
+            self.set_low()
+        }
+    }
+
+    // return (led1, led2, led3, delay)
+    (
+        gpiob.pb13.into_push_pull_output(), // led on pb13
+        gpiob.pb14.into_push_pull_output(), // led on pb14
+        gpiob.pb15.into_push_pull_output(), // led on pb15
+        cp.SYST.delay(&clocks),
+    )
+}
+
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

@@ -38,6 +38,8 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
@@ -403,6 +405,114 @@ mod app {
       (dht, i2c, led, tx, delay)
     }
 
+
+
+    #[cfg(feature = "stm32g0xx")]
+    use stm32g0xx_hal::{
+        timer::delay::Delay,
+        gpio::{OpenDrain, Output,
+               gpioa::PA8,
+        },
+        pac::{Peripherals, USART1, TIM2},
+        prelude::*,
+        serial::{FullConfig, Tx},
+    };
+
+    #[cfg(feature = "stm32g0xx")]
+    const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32g0xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32g0xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32g0xx")]
+    type TxType = Tx<USART1, FullConfig>;
+
+    #[cfg(feature = "stm32g0xx")]
+    pub type DelayType = Delay<TIM2>;
+
+    #[cfg(feature = "stm32g0xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
+       let mut rcc = dp.RCC.constrain();
+       
+       let gpioa = dp.GPIOA.split(&mut rcc);
+       let dht = gpioa.pa8.into_open_drain_output();
+
+       let gpiob = dp.GPIOB.split(&mut rcc);
+
+       let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
+
+       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+       led.off();
+
+       let tx = gpioa.pa9;  //.into_alternate();
+       let rx = gpioa.pa10; //.into_alternate();
+       let (tx, _rx) = dp.USART1.usart((tx, rx), FullConfig::default(), &mut rcc).unwrap().split();
+
+       let delay = dp.TIM2.delay(&mut rcc);
+
+       (dht, i2c, led, tx, delay)
+    }
+
+
+
+    #[cfg(feature = "stm32g4xx")]
+    use stm32g4xx_hal::{
+        timer::Delay,
+        gpio::{OpenDrain, Output,
+               gpioa::PA8,
+        },
+        pac::{Peripherals, USART1, TIM2}, //I2C1
+        prelude::*,
+        serial::{config::Config, Serial, Tx},
+    };
+
+    #[cfg(feature = "stm32g4xx")]
+    const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+
+    #[cfg(feature = "stm32g4xx")]
+    type DhtPin = PA8<Output<OpenDrain>>;
+   
+    #[cfg(feature = "stm32g4xx")]
+    use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+    #[cfg(feature = "stm32g4xx")]
+    type TxType = Tx<USART1>;
+
+    #[cfg(feature = "stm32g4xx")]
+    pub type DelayType = Delay<TIM2, 1000000_u32>;
+
+    #[cfg(feature = "stm32g4xx")]
+    fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
+       let gpioa = dp.GPIOA.split();
+       let dht = gpioa.pa8.into_open_drain_output();
+
+       let rcc = dp.RCC.constrain();
+       let clocks = rcc.cfgr.freeze();
+
+       let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+
+       let mut led = setup_led(dp.GPIOC.split()); 
+       led.off();
+
+       //let delay = DelayType{};
+       let delay = dp.TIM2.delay_us(&clocks);
+
+       let tx = gpioa.pa9.into_alternate();
+       let rx = gpioa.pa10.into_alternate();
+       let (tx, _rx) = Serial::new(
+           dp.USART1,
+           (tx, rx),
+           Config::default().baudrate(115200.bps()),
+           &clocks,
+       )
+       .unwrap()
+       .split();
+
+       (dht, i2c, led, tx, delay)
+    }
 
 
     #[cfg(feature = "stm32h7xx")]

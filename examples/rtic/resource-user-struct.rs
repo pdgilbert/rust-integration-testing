@@ -14,6 +14,8 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac  ))] //fails:  USART1 variant or associated item not found in `stm32f3xx_hal::interrupt
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac  ))]
+#[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac  ))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac  ))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32))]
@@ -50,6 +52,12 @@ mod app {
 
     #[cfg(feature = "stm32f7xx")]
     use stm32f7xx_hal::interrupt;
+
+    #[cfg(feature = "stm32g0xx")]
+    use stm32g0xx_hal::interrupt;
+
+    #[cfg(feature = "stm32g4xx")]
+    use stm32g4xx_hal::interrupt;
 
     #[cfg(feature = "stm32h7xx")]
     use stm32h7xx_hal::interrupt;

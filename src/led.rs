@@ -355,160 +355,195 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
 //  following are wrapper to do setup_led_using_dp(dp: Peripherals) -> LedType
 
-    #[cfg(feature = "stm32f0xx")]
-    use stm32f0xx_hal::{
-        pac::Peripherals,
-    };
- 
-    #[cfg(feature = "stm32f0xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+// Note that  MONOCLOCK really should be set for the board not for the HAL
 
-    #[cfg(feature = "stm32f0xx")]
-    pub fn setup_led_using_dp(mut dp: Peripherals) -> LedType {    
-       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+#[cfg(feature = "stm32f0xx")]
+use stm32f0xx_hal::{
+    pac::Peripherals,
+};
 
-       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
-       led.off();
+#[cfg(feature = "stm32f0xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-       led
-    }
+#[cfg(feature = "stm32f0xx")]
+pub fn setup_led_using_dp(mut dp: Peripherals) -> LedType {    
+   let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+
+   let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+   led.off();
+
+   led
+}
 
 
-    #[cfg(feature = "stm32f1xx")]
-    use stm32f1xx_hal::{
-        pac::Peripherals,
-    };
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32f1xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32f1xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-    #[cfg(feature = "stm32f1xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let mut led = setup_led(dp.GPIOC.split()); 
-       led.off();
+#[cfg(feature = "stm32f1xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut led = setup_led(dp.GPIOC.split()); 
+   led.off();
 
-       led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
-    use stm32f3xx_hal::{
-        pac::Peripherals,
-    };
+#[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
+use stm32f3xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32f3xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32f3xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-    #[cfg(feature = "stm32f3xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.constrain();
+#[cfg(feature = "stm32f3xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut rcc = dp.RCC.constrain();
 
-       let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-       led.off();
+   let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+   led.off();
 
-       led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::{
-        pac::Peripherals,
-    };
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32f4xx")]
-    pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32f4xx")]
+pub const MONOCLOCK: u32 = 16_000_000; 
 
-    #[cfg(feature = "stm32f4xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let mut led = setup_led(dp.GPIOC.split()); 
-       led.off();
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut led = setup_led(dp.GPIOC.split()); 
+   led.off();
 
-       led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32f7xx")]
-    use stm32f7xx_hal::{
-        pac::Peripherals,
-    };
+#[cfg(feature = "stm32f7xx")]
+use stm32f7xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32f7xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32f7xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-    #[cfg(feature = "stm32f7xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let led = setup_led(dp.GPIOC.split());
-       
-       led
-    }
+#[cfg(feature = "stm32f7xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let led = setup_led(dp.GPIOC.split());
+   
+   led
+}
 
-    #[cfg(feature = "stm32h7xx")]
-    use stm32h7xx_hal::{
-       pac::Peripherals,
-    };
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32h7xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32g0xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-    #[cfg(feature = "stm32h7xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let pwr = dp.PWR.constrain();
-       let vos = pwr.freeze();
-       let rcc = dp.RCC.constrain();
-       let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
-       let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut rcc = dp.RCC.constrain();
+   let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+   led.off();
 
-       led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32l0xx")]
-    use stm32l0xx_hal::{
-        pac::Peripherals,
-        rcc, // for ::Config but note name conflict with serial
-    };
+#[cfg(feature = "stm32g4xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32l0xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32g4xx")]
+pub const MONOCLOCK: u32 = 16_000_000; 
 
-    #[cfg(feature = "stm32l0xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-      let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-      let led = setup_led(dp.GPIOC.split(&mut rcc));
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut led = setup_led(dp.GPIOC.split()); 
+   led.off();
 
-      led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
-    use stm32l1xx_hal::{
-        prelude::*,
-        stm32::Peripherals,
-        rcc, // for ::Config but note name conflict with serial
-    };
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   pac::Peripherals,
+};
 
-    #[cfg(feature = "stm32l1xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32h7xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-    #[cfg(feature = "stm32l1xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-       let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+#[cfg(feature = "stm32h7xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let pwr = dp.PWR.constrain();
+   let vos = pwr.freeze();
+   let rcc = dp.RCC.constrain();
+   let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
+   let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
 
-       led
-    }
+   led
+}
 
-    #[cfg(feature = "stm32l4xx")]
-    use stm32l4xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
+#[cfg(feature = "stm32l0xx")]
+use stm32l0xx_hal::{
+    pac::Peripherals,
+    rcc, // for ::Config but note name conflict with serial
+};
 
-    #[cfg(feature = "stm32l4xx")]
-    pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+#[cfg(feature = "stm32l0xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
 
-   #[cfg(feature = "stm32l4xx")]
-    pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.constrain();
-       let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+#[cfg(feature = "stm32l0xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+  let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+  let led = setup_led(dp.GPIOC.split(&mut rcc));
 
-       led
-    }
+  led
+}
+
+#[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
+use stm32l1xx_hal::{
+    prelude::*,
+    stm32::Peripherals,
+    rcc, // for ::Config but note name conflict with serial
+};
+
+#[cfg(feature = "stm32l1xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
+
+#[cfg(feature = "stm32l1xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
+   let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+
+   led
+}
+
+#[cfg(feature = "stm32l4xx")]
+use stm32l4xx_hal::{
+    pac::Peripherals,
+    prelude::*,
+};
+
+#[cfg(feature = "stm32l4xx")]
+pub const MONOCLOCK: u32 = 8_000_000; 
+
+#[cfg(feature = "stm32l4xx")]
+pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+   let mut rcc = dp.RCC.constrain();
+   let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+
+   led
+}
 
 
 
