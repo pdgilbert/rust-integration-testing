@@ -45,174 +45,9 @@ mod app {
     const ONE_DURATION: u64 = 20;  // used as milliseconds
     const TEN_DURATION: u64 = 500;
 
-    use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-
-
-
-    #[cfg(feature = "stm32f0xx")]
-    use stm32f0xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
- 
-    #[cfg(feature = "stm32f0xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f0xx")]
-    fn setup(mut dp: Peripherals) -> LedType {    
-       let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
-
-       let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
-       led.off();
-
-       led
-    }
-
-
-    #[cfg(feature = "stm32f1xx")]
-    use stm32f1xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32f1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f1xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let mut led = setup_led(dp.GPIOC.split()); 
-       led.off();
-
-       led
-    }
-
-    #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
-    use stm32f3xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32f3xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f3xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.constrain();
-
-       let mut led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-       led.off();
-
-       led
-    }
-
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32f4xx")]
-    const CLOCK: u32 = 16_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f4xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let mut led = setup_led(dp.GPIOC.split()); 
-       led.off();
-
-       led
-    }
-
-    #[cfg(feature = "stm32f7xx")]
-    use stm32f7xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32f7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32f7xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let led = setup_led(dp.GPIOC.split());
-       
-       led
-    }
-
-    #[cfg(feature = "stm32h7xx")]
-    use stm32h7xx_hal::{
-       pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32h7xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32h7xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let pwr = dp.PWR.constrain();
-       let vos = pwr.freeze();
-       let rcc = dp.RCC.constrain();
-       let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); // calibrate for correct blink rate
-       let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
-
-       led
-    }
-
-    #[cfg(feature = "stm32l0xx")]
-    use stm32l0xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-        rcc, // for ::Config but note name conflict with serial
-    };
-
-    #[cfg(feature = "stm32l0xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32l0xx")]
-    fn setup(dp: Peripherals) -> LedType {
-      let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-      let led = setup_led(dp.GPIOC.split(&mut rcc));
-
-      led
-    }
-
-    #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
-    use stm32l1xx_hal::{
-        prelude::*,
-        stm32::Peripherals,
-        rcc, // for ::Config but note name conflict with serial
-    };
-
-    #[cfg(feature = "stm32l1xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-    #[cfg(feature = "stm32l1xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
-       let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
-
-       led
-    }
-
-    #[cfg(feature = "stm32l4xx")]
-    use stm32l4xx_hal::{
-        pac::Peripherals,
-        prelude::*,
-    };
-
-    #[cfg(feature = "stm32l4xx")]
-    const CLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-   #[cfg(feature = "stm32l4xx")]
-    fn setup(dp: Peripherals) -> LedType {
-       let mut rcc = dp.RCC.constrain();
-       let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
-
-       led
-    }
-
-    // End of hal/MCU specific setup. Following should be generic code.
-
+    use rust_integration_testing_of_examples::led::{setup_led_using_dp, LED, LedType, MONOCLOCK};
+    //use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
+    //    setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
 
 
     #[monotonic(binds = SysTick, default = true)]
@@ -224,7 +59,9 @@ mod app {
         //rprintln!("blink_rtic example");
         hprintln!("blink_rtic example").unwrap();
 
-        let mut led = setup(cx.device);
+        let mut led = setup_led_using_dp(cx.device);
+        // Note: the following also woorks but result is a bit larger and bluepill need --release
+        //let (_i2c1, _i2c2, mut led, _delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
 
@@ -233,12 +70,12 @@ mod app {
         //   although spawn has not yet happened so there may be a way?)
         //   delay_ms() would need to use a timer other than default Systick
 
-        asm::delay(5 * CLOCK); // (5 * CLOCK cycles gives aprox 5+ second delay
+        asm::delay(5 * MONOCLOCK); // (5 * MONOCLOCK cycles gives aprox 5+ second delay
                                //delay::delay_ms(5_000_u16);
 
         led.off();
 
-        let mono = Systick::new(cx.core.SYST, CLOCK);
+        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         ten::spawn().unwrap();
         one::spawn().unwrap();

@@ -122,7 +122,7 @@ jobs:
     strategy:
       matrix:        
         brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
-              none-stm32f769, none-stm32h742,      
+              none-stm32f769, none-stm32g081,      none-stm32g473, none-stm32h742, 
               none-stm32l0x2,      discovery-stm32l100, heltec-lora-node151,  none-stm32l422,
               none-stm32f100, none-stm32f101,      none-stm32f030,      ]
         #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
@@ -173,6 +173,14 @@ jobs:
            - brd: "none-stm32f769"
              mcu:  stm32f769
              hal: "stm32f7xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32g081"
+             mcu:  stm32g081
+             hal: "stm32g0xx"
+             trg: "thumbv6m-none-eabi"
+           - brd: "none-stm32g473"
+             mcu:  stm32g473
+             hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32h742"
              mcu:  stm32h742             
