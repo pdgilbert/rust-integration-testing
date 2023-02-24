@@ -69,8 +69,8 @@ mod app {
     const READ_INTERVAL:  u64 =  2;  // used as seconds
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dht_i2c_led_delay_using_dp, I2cType, LED, LedType, DelayMs, MONOCLOCK};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
+        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayMs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -148,7 +148,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(cx.device);
+        let (_dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
 
         led.on(); 
         delay.delay_ms(1000u32);

@@ -14,6 +14,7 @@ pub use crate::alt_delay::{AltDelay as DelayType};
 #[cfg(any(feature="stm32g0xx", feature="stm32f4xx" ))]
 pub use crate::delay::{DelayType};
 
+pub use crate::dht::{DhtType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 

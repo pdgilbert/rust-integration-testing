@@ -83,15 +83,15 @@ mod app {
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dht_i2c_led_delay::{
-        setup_dht_i2c_led_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
+        setup_dht_i2c_led_usart_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    #[cfg(any(feature = "stm32f3xx", feature = "stm32g0xx", feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
-    use embedded_hal::digital::v2::OutputPin;
+    //#[cfg(any(feature = "stm32f3xx", feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
+    //use embedded_hal::digital::v2::OutputPin;
 
     fn show_display<S>(
         temperature: i8,
@@ -150,15 +150,12 @@ mod app {
         //hprintln!("dht_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(cx.device);
+        let (dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  
         led.off();
 
-        // NOTE some hals Result in next and give warning `Result` may be an `Err` variant
-        //      but other hals fail if it is handled properly
-        dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();

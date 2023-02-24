@@ -54,7 +54,7 @@ use dht_sensor::*;
 
 use  ina219::{INA219,};
 
-use rust_integration_testing_of_examples::dht_i2c_led_delay::{setup_dht_i2c_led_delay_using_dp, DelayMs, LED, };
+use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{setup_dht_i2c_led_usart_delay_using_dp, DelayMs, LED, };
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 fn display<S>(
@@ -101,7 +101,7 @@ where
 #[entry]
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, mut delay) = setup_dht_i2c_led_delay_using_dp(dp);
+    let (mut dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(dp);
 
     led.blink(1000_u16, &mut delay); 
 

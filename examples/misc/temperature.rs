@@ -51,6 +51,7 @@ pub trait ReadTempC {
     #![allow(non_snake_case)]
     #[cfg(any(
         feature = "stm32f0xx",
+        feature = "stm32g0xx",
         feature = "stm32l1xx"
     ))]
     fn read_tempC(&mut self, adcs: &mut Adcs<Adc>) -> i32;
@@ -83,6 +84,7 @@ pub trait ReadMV {
     // for reading channel millivolts on channel (self.ch)
     #[cfg(any(
         feature = "stm32f0xx",
+        feature = "stm32g0xx",
         feature = "stm32l1xx"
     ))]
     fn read_mv(&mut self, adcs: &mut Adcs<Adc>) -> u32;
@@ -132,6 +134,7 @@ pub struct Adcs<T, U> {
     feature = "stm32f100",
     feature = "stm32f101",
     feature = "stm32f4xx",
+    feature = "stm32g0xx",
     feature = "stm32l0xx",
     feature = "stm32l1xx",
     feature = "stm32l4xx"
@@ -548,6 +551,123 @@ fn setup() -> (
     impl ReadMV for Sensor<PB1<Analog>> {
         fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> u32 {
             a.ad_2nd.read(&mut self.ch).unwrap()
+        }
+    }
+
+    (mcutemp, tmp36, adcs)
+}
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    analog::adc::{Adc,},  // OversamplingRatio, Precision, SampleTime, VBat},
+    gpio::{gpiob::PB1, Analog},
+    pac::{Peripherals, ADC},     
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
+
+    type McuTemperatureType = ();
+
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let mut adc_pin = gpioa.pa0.into_analog();
+
+    let adcs: Adcs<Adc> = Adcs {
+        ad_1st: Adc::new(dp.ADC, &mut rcc ),           //  NEEDS PROPER CONFIGURATION
+    };
+
+    let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // internal
+
+    impl ReadTempC for Sensor<McuTemperatureType> {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc>) -> i32 {
+           let z = &mut a.ad_1st;
+           //z.read(&mut Temperature).unwrap() as i32
+           //z.read_temperature(&mut adc_pin).expect("adc_temperature read failed");
+           z.read_temperature().unwrap() as i32
+        }
+    }
+
+    let tmp36: Sensor<PB1<Analog>> = Sensor {
+        ch: gpiob.pb1.into_analog(),
+    };
+
+    impl ReadTempC for Sensor<PB1<Analog>> {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc>) -> i32 {
+            let v: f32 = a.ad_1st_voltage(&mut self.ch).unwrap() as f32; //into converts u16 to f32
+            (v / 12.412122) as i32 - 50 as i32
+        }
+    }
+
+    impl ReadMV for Sensor<PB1<Analog>> {
+        fn read_mv(&mut self, a: &mut Adcs<Adc>) -> u32 {
+            a.ad_1st.read_mvvoltage(&mut self.ch).unwrap() as u32 //into converts u16 to u32
+        }
+    }
+
+    (mcutemp, tmp36, adcs)
+}
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    adc::{config::AdcConfig, Adc, Temperature}, //SampleTime
+    gpio::{gpiob::PB1, Analog},
+    pac::{Peripherals, ADC1}, //ADC2}, 
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
+
+    type McuTemperatureType = ();
+
+    let p = Peripherals::take().unwrap();
+    let rcc = p.RCC.constrain();
+
+    let _clocks = rcc
+        .cfgr
+        .hclk(48.MHz())
+        .sysclk(48.MHz())
+        .pclk1(24.MHz())
+        .pclk2(24.MHz())
+        .freeze();
+
+    let gpiob = p.GPIOB.split();
+
+    let adcs: Adcs<Adc<ADC1>> = Adcs {
+        ad_1st: Adc::adc1(p.ADC1, true, AdcConfig::default()),
+    };
+
+    let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // internal
+
+    impl ReadTempC for Sensor<McuTemperatureType> {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>>) -> i32 {
+           let z = &mut a.ad_1st;
+           z.read(&mut Temperature).unwrap() as i32
+        }
+    }
+
+    let tmp36: Sensor<PB1<Analog>> = Sensor {
+        ch: gpiob.pb1.into_analog(),
+    };
+
+    impl ReadTempC for Sensor<PB1<Analog>> {
+        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>>) -> i32 {
+            let v: f32 = a.ad_1st.read(&mut self.ch).unwrap().into(); //into converts u16 to f32
+            (v / 12.412122) as i32 - 50 as i32
+        }
+    }
+
+    impl ReadMV for Sensor<PB1<Analog>> {
+        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>>) -> u32 {
+            a.ad_1st.read(&mut self.ch).unwrap().into() //into converts u16 to u32
         }
     }
 

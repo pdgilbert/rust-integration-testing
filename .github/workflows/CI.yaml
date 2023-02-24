@@ -69,7 +69,7 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [bluepill, discovery-stm32f303]  
+        brd: [bluepill, discovery-stm32f303, none-stm32g081]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
@@ -81,6 +81,10 @@ jobs:
              mcu:  stm32f303xc
              hal: "stm32f3xx"
              trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32g081"
+             mcu:  stm32g081
+             hal: "stm32g0xx"
+             trg: "thumbv6m-none-eabi"
 
     steps:
       - uses: actions/checkout@v3
