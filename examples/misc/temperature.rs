@@ -562,7 +562,7 @@ fn setup() -> (
 use stm32g0xx_hal::{
     analog::adc::{Adc,},  // OversamplingRatio, Precision, SampleTime, VBat},
     gpio::{gpiob::PB1, Analog},
-    pac::{Peripherals, ADC},     
+    pac::{Peripherals},     
     prelude::*,
 };
 
@@ -575,9 +575,6 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
     let mut rcc = dp.RCC.constrain();
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-
-    let gpioa = dp.GPIOA.split(&mut rcc);
-    let mut adc_pin = gpioa.pa0.into_analog();
 
     let adcs: Adcs<Adc> = Adcs {
         ad_1st: Adc::new(dp.ADC, &mut rcc ),           //  NEEDS PROPER CONFIGURATION
@@ -600,14 +597,14 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 
     impl ReadTempC for Sensor<PB1<Analog>> {
         fn read_tempC(&mut self, a: &mut Adcs<Adc>) -> i32 {
-            let v: f32 = a.ad_1st_voltage(&mut self.ch).unwrap() as f32; //into converts u16 to f32
+            let v: f32 = a.ad_1st.read_voltage(&mut self.ch).unwrap() as f32; //into converts u16 to f32
             (v / 12.412122) as i32 - 50 as i32
         }
     }
 
     impl ReadMV for Sensor<PB1<Analog>> {
         fn read_mv(&mut self, a: &mut Adcs<Adc>) -> u32 {
-            a.ad_1st.read_mvvoltage(&mut self.ch).unwrap() as u32 //into converts u16 to u32
+            a.ad_1st.read_voltage(&mut self.ch).unwrap() as u32 //into converts u16 to u32
         }
     }
 

@@ -7,11 +7,11 @@ use panic_halt as _;
 
 use crate::dp::{Peripherals};
 
-#[cfg(any(feature="stm32f0xx", feature="stm32f1xx", feature="stm32f3xx", feature="stm32f7xx",
-          feature="stm32h7xx", feature="stm32l0xx", feature="stm32l1xx", feature="stm32l4xx"))]
-pub use crate::alt_delay::{AltDelay as DelayType};
-
-#[cfg(any(feature="stm32g0xx", feature="stm32f4xx" ))]
+//#[cfg(any(feature="stm32f0xx", feature="stm32f1xx", feature="stm32f3xx", feature="stm32f7xx",
+//          feature="stm32h7xx", feature="stm32l0xx", feature="stm32l1xx", feature="stm32l4xx"))]
+//pub use crate::alt_delay::{AltDelay as DelayType};
+//
+//#[cfg(any(feature="stm32g0xx", feature="stm32f4xx" ))]
 pub use crate::delay::{DelayType};
 
 pub use crate::dht::{DhtType};
@@ -23,8 +23,9 @@ pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
+    delay::Delay,
     gpio::{gpioa::PA8, OpenDrain, Output},
-    pac::{USART1},
+    pac::{CorePeripherals, USART1},
     prelude::*,
     serial::{Serial, Tx},
 };
@@ -51,7 +52,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
-   let delay = DelayType{};
+   //let delay = DelayType{};
+   let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
    let (tx, rx) = cortex_m::interrupt::free(move |cs| {
        (
@@ -121,7 +123,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
     let mut led = setup_led(dp.GPIOC.split()); 
     led.off();
 
-    let delay = DelayType{};
+    //let delay = DelayType{};
+    let delay = dp.TIM2.delay_us(&clocks);
 
     // NOTE, try to figure out the proper way to deal with this:
     // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.
@@ -477,7 +480,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     gpio::{Output, OpenDrain, gpioa::PA8},
-    pac::{USART1},
+    delay::Delay,
+    pac::{CorePeripherals, USART1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     serial::{Config, Serial1Ext, Tx},
@@ -495,6 +499,7 @@ pub type TxType = Tx<USART1>;
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
+   let clocks = rcc.clocks;
 
    let gpioa = dp.GPIOA.split(&mut rcc);
    let (tx, _rx) = dp.USART1.usart(
@@ -513,7 +518,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
    led.off();
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
-   let delay = DelayType{};
+   //let delay = DelayType{};
+   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
    (dht, i2c, led, tx, delay)
 }
