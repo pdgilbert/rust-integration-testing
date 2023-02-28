@@ -116,6 +116,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
     (tx1, rx1, tx3, rx3)
 }
 
+
+
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     pac::Peripherals,
@@ -173,6 +175,8 @@ fn setup() -> (
     (tx1, rx1, tx2, rx2)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     pac::Peripherals,
@@ -214,6 +218,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
 
     (tx1, rx1, tx2, rx2)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -268,6 +274,80 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
 
     (tx1, rx1, tx2, rx2)
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+    pac::{USART1, USART2},
+    prelude::*,
+    serial::{FullConfig, Tx, Rx},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>, Tx<USART2, FullConfig>, Rx<USART2, FullConfig>) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    //console
+    let (tx1, rx1) = dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    //GPS
+    let (tx2, rx2) = dp.USART2.usart((gpioa.pa2, gpioa.pa3),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    (tx1, rx1, tx2, rx2)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    pac::Peripherals,
+    pac::{USART1, USART2},
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let dp = Peripherals::take().unwrap();
+    let clocks = dp.RCC.constrain().cfgr.freeze();
+    let gpioa = dp.GPIOA.split();
+    let (tx1, rx1) = Serial::new(
+        p.USART1,
+        (
+            gpioa.pa9.into_alternate(),  //tx pa9   for console
+            gpioa.pa10.into_alternate(), //rx pa10  for console
+        ),
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    // this probably needs fix here. rx2.read() stalls and does not return.
+    //p.USART2.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
+    let (tx2, rx2) = Serial::new(
+        dp.USART2,
+        (
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS
+            gpioa.pa3.into_alternate(), //rx pa3  for GPS
+        ),
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    (tx1, rx1, tx2, rx2)
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{

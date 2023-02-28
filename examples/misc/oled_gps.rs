@@ -314,6 +314,90 @@ fn setup() -> (
     )
 }
 
+
+
+#[cfg(feature = "stm32g0xx")] 
+use stm32g0xx_hal::{
+    timer::delay::Delay,
+    i2c::{I2c, Config as i2cConfig,},
+    gpio::{Output, OpenDrain, 
+           gpiob::{PB10, PB11}},
+    pac::{Peripherals, I2C2, USART2, TIM2},
+    prelude::*,
+    serial::{FullConfig, Tx, Rx},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+             Tx<USART2, FullConfig>, 
+             Rx<USART2, FullConfig>, 
+             I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
+             Delay<TIM2>) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    let (tx2, rx2) = dp.USART2.usart((gpioa.pa2, gpioa.pa3),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let scl = gpiob.pb10.into_open_drain_output();
+    let sda = gpiob.pb11.into_open_drain_output();
+ 
+    let i2c = I2c::i2c2(dp.I2C2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
+
+    let delay = dp.TIM2.delay(&mut rcc);
+
+    (tx2, rx2, i2c, delay )
+}
+
+
+
+#[cfg(feature = "stm32g4xx")] 
+use stm32g4xx_hal::{
+    timer::SysDelay as Delay,
+    i2c::{I2c, Pins},
+    pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let clocks = dp.RCC.constrain().cfgr.freeze();
+    let gpioa = dp.GPIOA.split();
+
+    let (tx2, rx2) = Serial::new(
+        dp.USART2,
+        (
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
+            gpioa.pa3.into_alternate(),
+        ), //rx pa3  for GPS tx
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    let gpiob = dp.GPIOB.split();
+
+    let scl = gpiob.pb10.into_alternate().set_open_drain();
+    let sda = gpiob.pb3.into_alternate().set_open_drain();
+
+    (
+        tx2,
+        rx2,
+        I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks), // i2c
+        cp.SYST.delay(&clocks),
+    )
+}
+
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

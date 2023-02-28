@@ -126,6 +126,8 @@ fn setup() -> (
     .split()
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     pac::Peripherals,
@@ -150,6 +152,8 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     .unwrap()
     .split()
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -184,6 +188,56 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     );
     serial1.split()
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+    pac::USART1,
+    prelude::*,
+    serial::{FullConfig, Tx, Rx},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa =dp.GPIOA.split(&mut rcc);
+
+    dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split()
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    pac::Peripherals,
+    pac::USART1,
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (Tx<USART1>, Rx<USART1>) {
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze();
+    let gpioa = dp.GPIOA.split();
+
+    Serial::new(
+        dp.USART1,
+        (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split()
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{

@@ -23,6 +23,7 @@ pub mod dp;
 pub mod delay;
 pub mod led;
 pub mod i2c;
+//pub mod usart; separating this does not simplify much
 pub mod dht;
 pub mod onewire;
 //pub mod spi; move problems need to be figured out for this

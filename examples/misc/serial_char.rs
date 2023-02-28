@@ -235,6 +235,8 @@ fn setup() -> (
     (tx1, rx1, tx2, rx2, tx3, rx3)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     pac::Peripherals,
@@ -302,6 +304,8 @@ fn setup() -> (
 
     (tx1, rx1, tx2, rx2, tx3, rx3)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -383,6 +387,110 @@ fn setup() -> (
 
     (tx1, rx1, tx2, rx2, tx3, rx3)
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+    pac::{USART1, USART2, USART3},
+    prelude::*,
+    serial::{FullConfig, Tx, Rx, BasicConfig},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+    Tx<USART1, FullConfig>,
+    Rx<USART1, FullConfig>,
+    Tx<USART2, FullConfig>,
+    Rx<USART2, FullConfig>,
+    Tx<USART3, BasicConfig>,
+    Rx<USART3, BasicConfig>,
+) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let (tx1, rx1) = dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let (tx2, rx2) = dp.USART2.usart((gpioa.pa2, gpioa.pa3),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let (tx3, rx3) = dp.USART3.usart((gpiob.pb8, gpiob.pb9),
+                        BasicConfig::default(), &mut rcc).unwrap().split();
+
+
+    (tx1, rx1, tx2, rx2, tx3, rx3)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    pac::Peripherals,
+    pac::{USART1, USART2, USART3},
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (
+    Tx<USART1>,
+    Rx<USART1>,
+    Tx<USART2>,
+    Rx<USART2>,
+    Tx<USART3>,
+    Rx<USART3>,
+) {
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze();
+
+    let gpioa = dp.GPIOA.split();
+
+    let (tx1, rx1) = Serial::new(
+        dp.USART1,
+        (
+            gpioa.pa9.into_alternate(), //tx pa9
+            gpioa.pa10.into_alternate(),
+        ), //rx pa10
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+   let (tx2, rx2) = Serial::new(
+        dp.USART2,
+        (
+            gpioa.pa2.into_alternate(), //tx pa2
+            gpioa.pa3.into_alternate(),
+        ), //rx pa3
+        Config::default().baudrate(115_200.bps()), //.parity_odd() .stopbits(StopBits::STOP1)
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    let (tx3, rx3) = Serial::new(
+         dp.USART3,
+        (
+            gpioa.pa11.into_alternate(), //tx pa11
+            gpioa.pa12.into_alternate(),
+        ), //rx pa12
+        Config::default().baudrate(115_200.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    (tx1, rx1, tx2, rx2, tx3, rx3)
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{

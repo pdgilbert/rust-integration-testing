@@ -53,7 +53,7 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, 
    led.off();
 
    //let delay = DelayType{};
-   let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
    let (tx, rx) = cortex_m::interrupt::free(move |cs| {
        (
@@ -354,8 +354,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
-   let tx = gpioa.pa9;  //.into_alternate();
-   let rx = gpioa.pa10; //.into_alternate();
+   let tx = gpioa.pa9; 
+   let rx = gpioa.pa10;
    let (tx, _rx) = dp.USART1.usart((tx, rx), FullConfig::default(), &mut rcc).unwrap().split();
 
    let delay = dp.TIM2.delay(&mut rcc);

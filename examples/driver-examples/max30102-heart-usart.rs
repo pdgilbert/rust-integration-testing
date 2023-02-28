@@ -440,6 +440,141 @@ fn setup() -> (
     (i2c, led, delay, tx, rx)
 }
 
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    timer::delay::Delay,
+    gpio::{Output, OpenDrain, PushPull, 
+           gpiob::{PB10, PB11},
+           gpioc::PC13,
+    },
+    i2c::{I2c, Config as i2cConfig},
+    pac::{CorePeripherals, Peripherals, I2C2, USART1, TIM2},
+    prelude::*,
+    serial::{FullConfig, Tx, Rx},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+    I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
+    impl LED,
+    Delay<TIM2>,
+    Tx<USART1, FullConfig>,
+    Rx<USART1, FullConfig>,
+) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
+
+    //  i2c
+    let gpiob = dp.GPIOB.split(&mut rcc); // for i2c
+    let scl = gpiob.pb10.into_open_drain_output();
+    let sda = gpiob.pb11.into_open_drain_output();
+    let i2c = I2c::i2c2(dp.I2C2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
+
+    let delay = dp.TIM2.delay(&mut rcc);
+
+    // led
+    let gpioc = dp.GPIOC.split(&mut rcc);
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+
+        fn blink(&mut self, time: u16, delay: &mut Delay<TIM2>) -> () {
+            self.on();
+            delay.delay_ms(time);
+            self.off();
+            delay.delay_ms(time); //consider delay.delay_ms(500u16);
+        }
+    }
+
+    // (tx, rx) 
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    let (tx, rx) = dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+
+    (i2c, led, delay, tx, rx)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::delay::Delay,
+    gpio::{gpioc::PC13, Output, PushPull},
+    i2c::{I2c, Pins},
+    pac::{CorePeripherals, Peripherals, I2C2, USART1},
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (
+    I2c<I2C2, impl Pins<I2C2>>,
+    impl LED,
+    Delay,
+    Tx<USART1>,
+    Rx<USART1>,
+) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze();
+
+    let gpiob = dp.GPIOB.split(); // for i2c
+
+    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
+    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
+
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
+
+    let delay = cp.SYST.delay(&clocks);
+
+    // led
+    let gpioc = dp.GPIOC.split();
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+    }
+
+    let gpioa = dp.GPIOA.split();
+
+    dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    let (tx, rx) = Serial::new(
+        dp.USART1,
+        (
+            gpioa.pa9.into_alternate(), //tx pa9
+            gpioa.pa10.into_alternate(),
+        ), //rx pa10
+        Config::default().baudrate(9600.bps()),
+        &clocks,
+    )
+    .unwrap()
+    .split();
+
+    (i2c, led, delay, tx, rx)
+}
+
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

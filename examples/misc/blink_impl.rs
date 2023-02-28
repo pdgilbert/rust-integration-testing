@@ -243,14 +243,14 @@ fn setup() -> (impl LED, Delay) {
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
+    timer::delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     prelude::*,
-    timer::delay::SysDelay as Delay,
     pac::{TIM2, Peripherals},
 };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup() -> (impl LED, Delay) {
+pub fn setup() -> (impl LED, Delay<TIM2>) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 

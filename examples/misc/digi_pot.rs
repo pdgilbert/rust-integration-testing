@@ -305,6 +305,89 @@ fn setup() -> (
 
 
 
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    gpio::{gpioa::PA1, Output, PushPull},
+    pac::{Peripherals, SPI1},
+    prelude::*,
+    spi::{Pins, Spi},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>>,
+    PA1<Output<PushPull>>,
+    LedType,
+    DelayType,
+) {
+    let dp = Peripherals::take().unwrap();
+
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    let spi = dp.SPI1.spi((gpioa.pa5, gpioa.pa6, gpioa.pa7), //sck, miso, mosi
+        mcp4x::MODE, 
+        3.MHz(), &mut rcc, );
+
+    let mut cs = gpioa.pa1.into_push_pull_output();
+    cs.set_high().unwrap();
+
+    let led = setup_led(dp.GPIOC.split(&mut rcc));
+
+    let delay = dp.TIM2.delay(&mut rcc);
+
+    (spi, cs, led, delay)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    gpio::{gpioa::PA1, Output, PushPull},
+    pac::{Peripherals, SPI1},
+    prelude::*,
+    spi::{Pins, Spi, TransferModeNormal},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
+    PA1<Output<PushPull>>,
+    LedType,
+    DelayType,
+) {
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+
+    let gpioa = dp.GPIOA.split();
+
+    let spi = Spi::new(
+        dp.SPI1,
+        (
+            gpioa.pa5.into_alternate(), // sck   on PA5
+            gpioa.pa6.into_alternate(), // miso  on PA6
+            gpioa.pa7.into_alternate(), // mosi  on PA7
+        ),
+        mcp4x::MODE,
+        8.MHz(),
+        &clocks,
+    );
+
+    let mut cs = gpioa.pa1.into_push_pull_output();
+    cs.set_high();
+
+    let led = setup_led(dp.GPIOC.split());
+
+    let delay = dp.TIM2.delay_us(&clocks);
+
+    (spi, cs, led, delay)
+}
+
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},

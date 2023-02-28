@@ -135,6 +135,8 @@ fn setup() -> I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> {
     I2c::new(p.I2C1, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1)
 }
 
+
+
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
     i2c::{I2c, Pins},
@@ -158,6 +160,8 @@ fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
     // return i2c
     I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks)
 }
+
+
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -193,6 +197,55 @@ fn setup() -> BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>> {
         1000,
     )
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    i2c::{I2c, Config as i2cConfig,},
+    gpio::{Output, OpenDrain, 
+           gpiob::{PB10, PB11}},
+    pac::{Peripherals, I2C2},
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>> {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let scl = gpiob.pb10.into_open_drain_output();
+    let sda = gpiob.pb11.into_open_drain_output();
+ 
+    // return i2c
+    I2c::i2c2(dp.I2C2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    i2c::{I2c, Pins},
+    pac::{Peripherals, I2C2},
+    prelude::*,
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
+    let p = Peripherals::take().unwrap();
+    let rcc = p.RCC.constrain();
+    let clocks = rcc.cfgr.freeze();
+    let gpiob = p.GPIOB.split();
+
+    let scl = gpiob.pb10.into_alternate().set_open_drain();
+    let sda = gpiob.pb3.into_alternate().set_open_drain();
+
+    I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks)
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{i2c::I2c, pac::Peripherals, pac::I2C1, prelude::*};
