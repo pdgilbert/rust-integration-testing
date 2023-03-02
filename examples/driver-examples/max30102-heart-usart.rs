@@ -459,7 +459,6 @@ use stm32g0xx_hal::{
 fn setup() -> (
     I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
     impl LED,
-    Delay<TIM2>,
     Tx<USART1, FullConfig>,
     Rx<USART1, FullConfig>,
 ) {
@@ -474,7 +473,9 @@ fn setup() -> (
     let sda = gpiob.pb11.into_open_drain_output();
     let i2c = I2c::i2c2(dp.I2C2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
 
-    let delay = dp.TIM2.delay(&mut rcc);
+    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
+    //                     trait LED then need generic ... which I have not figured out.
+    let delay = cp.SYST.delay(&rcc);
 
     // led
     let gpioc = dp.GPIOC.split(&mut rcc);
@@ -487,13 +488,6 @@ fn setup() -> (
 
         fn off(&mut self) -> () {
             self.set_high()
-        }
-
-        fn blink(&mut self, time: u16, delay: &mut Delay<TIM2>) -> () {
-            self.on();
-            delay.delay_ms(time);
-            self.off();
-            delay.delay_ms(time); //consider delay.delay_ms(500u16);
         }
     }
 

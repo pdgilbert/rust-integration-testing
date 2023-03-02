@@ -241,16 +241,19 @@ fn setup() -> (impl LED, Delay) {
 }
 
 
+
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    timer::delay::Delay,
+    timer::SysDelay as Delay,
+    //timer::delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     prelude::*,
-    pac::{TIM2, Peripherals},
+    pac::{CorePeripherals, Peripherals},   //TIM2, 
 };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup() -> (impl LED, Delay<TIM2>) {
+pub fn setup() -> (impl LED, Delay) {
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
@@ -267,8 +270,11 @@ pub fn setup() -> (impl LED, Delay<TIM2>) {
         }
     }
     
-    let delay = dp.TIM2.delay(&mut rcc);
+    //this requires Delay<TIM2> in blink so trait LED then need generic ... which I have not figured out.
+    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
     
+    let delay = cp.SYST.delay(&mut rcc);
+ 
     (led, delay)
 }
 
