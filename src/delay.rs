@@ -73,7 +73,6 @@ pub type DelayType = Delay<TIM2>;
 use stm32g4xx_hal::{
     delay::Delay,
     //timer::SysDelay as Delay,
-    stm32::TIM2,
 };
 
 #[cfg(feature = "stm32g4xx")]

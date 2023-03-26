@@ -1,5 +1,3 @@
-// THIS FILE SHOULD BE RE-ARRANGED AS IN dht_i2c_led_delay for use with rtic ???
-
 //! Note that pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
@@ -18,17 +16,11 @@ pub trait ReadAdc {
 }
 
 use crate::dp::{Peripherals};
+
+pub use crate::dht::{DhtType};
 pub use crate::delay::{DelayType};
 pub use crate::led::{setup_led, LED, LedType};
-pub use crate::dht::{DhtType};
-
-
-#[cfg(not(feature = "stm32f0xx"))]
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
-
-#[cfg(feature = "stm32f0xx")]
-pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
-
+pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -64,7 +56,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(mut dp: Peripherals) -> (SensorType
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
      }
 
-    let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc), &mut rcc);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
@@ -314,7 +306,6 @@ type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Active>>;
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
-                //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
 
@@ -349,9 +340,6 @@ let ()= sens;
 
 
 
-
-
-
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     adc,
@@ -366,7 +354,6 @@ type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Enabled>>;
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
-                //(SensorType, I2c<I2C1>, LedType, Delay) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -411,10 +398,6 @@ use stm32l0xx_hal::{
     adc::{Adc, Ready},
     gpio::{Analog,  gpioa::{PA1}, },
     delay::Delay,
-//    gpio::{OpenDrain, Output, PushPull,
-//           gpiob::{PB8, PB9, Parts as PartsB},
-//           gpioc::{PC13, Parts as PartsC},
-//    },
     pac::CorePeripherals,
     prelude::*,
     rcc::Config, 
@@ -472,7 +455,6 @@ type SensorType = Sensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
-                //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, Delay) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
     //let clocks = rcc.clocks;
 

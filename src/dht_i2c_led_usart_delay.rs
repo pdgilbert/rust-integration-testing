@@ -367,11 +367,10 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    delay::Delay,
     gpio::{OpenDrain, Output, PushPull,
            gpioa::{PA8, PA9},
     },
-    stm32::{USART1, TIM2}, //I2C1
+    stm32::{USART1}, //I2C1
     prelude::*,
     serial::{FullConfig, Serial, Tx, NoDMA},
 };

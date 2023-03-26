@@ -1,3 +1,4 @@
+// Note this cannot use crate::i2c::setup_i2c1 because the sda pin is handled differently for reset.
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -24,14 +25,9 @@ pub trait SEEK {
     //fn stcint(&mut self) -> ;
 }
 
-pub use crate::led::{setup_led, LED};
 pub use crate::delay::{DelayType};
-
-#[cfg(not(feature = "stm32f0xx"))]
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
-
-#[cfg(feature = "stm32f0xx")]
-pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
+pub use crate::led::{setup_led, LED};
+pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
 pub use embedded_hal::blocking::delay::DelayUs;
 pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
@@ -44,14 +40,14 @@ use stm32f0xx_hal::{
     gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
     },
-    i2c::{I2c, SclPin, SdaPin},
-    pac::{CorePeripherals, I2C1},
+    i2c::{I2c},
+    pac::{CorePeripherals},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f0xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
-    I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
+    I2cType,   //I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
     impl LED,
     DelayType,
     impl SEEK,
@@ -66,9 +62,9 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
         cortex_m::interrupt::free(move |cs| {
             (
                 gpiob.pb8.into_alternate_af1(cs),
-                //gpiob.pb9.into_alternate_af1(cs),      //for i2c
-                gpiob.pb9.into_push_pull_output(cs), //for reset
-                gpiob.pb7.into_push_pull_output(cs),
+                //gpiob.pb7.into_alternate_af1(cs),  //usual this for i2c
+                gpiob.pb7.into_push_pull_output(cs), //but use this in order to do reset first
+                gpiob.pb9.into_push_pull_output(cs),
                 gpiob.pb6.into_pull_up_input(cs),
                 gpiob.pb10.into_pull_down_input(cs),
                 gpiob.pb11.into_pull_down_input(cs),
@@ -106,14 +102,13 @@ use stm32f1xx_hal::{
         gpiob::{PB10, PB11, PB6},
         Input, PullDown, PullUp,
     },
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::{I2C1},
+    i2c::{BlockingI2c, DutyCycle, Mode},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    BlockingI2c<I2C1, impl Pins<I2C1>>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -178,20 +173,19 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     gpio::{Input,
-        gpiob::{PB10, PB11, PB6},
+        gpiob::{PB10, PB11, PB8},
     },
-    i2c::{I2c, SclPin, SdaPin},
-    pac::{I2C1},
+    i2c::{I2c,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f3xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
+    I2cType,   //I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     impl LED,
     DelayType,
     impl SEEK,
-    PB6<Input>,
+    PB8<Input>,
 ) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
@@ -203,22 +197,14 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
-    let mut sda = gpiob
-        .pb9
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
-    let mut rst = gpiob
-        .pb7
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+    let stcint = gpiob.pb8.into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
+    let mut rst = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
+    let mut sda = gpiob.pb7.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
-    let sda = sda.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
-    let stcint = gpiob
-        .pb6
-        .into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
-    let scl = gpiob
-        .pb8
-        .into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let sda = sda.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
+    let scl = gpiob.pb6.into_af_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 100_000.Hz(), clocks, &mut rcc.apb1);
 
@@ -307,14 +293,13 @@ use stm32f7xx_hal::{
     gpio::{Input, PullDown, PullUp,
            gpiob::{PB10, PB11, PB6},
     },
-    i2c::{BlockingI2c, Mode, PinScl, PinSda},
-    pac::{I2C1},
+    i2c::{BlockingI2c, Mode, },
     prelude::*,
 };
 
 #[cfg(feature = "stm32f7xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -371,16 +356,15 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 use stm32g0xx_hal::{
     //timer::SysDelay as Delay,
     i2c::{I2c, Config as i2cConfig,},
-    gpio::{Input, PullUp, PullDown, Output, OpenDrain, 
-           gpiob::{PB6, PB8, PB9,  PB10, PB11}
+    gpio::{Input, PullUp, PullDown, 
+           gpiob::{PB6, PB10, PB11}
     },
-    pac::{I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g0xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -424,18 +408,16 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    delay::Delay,
     gpio::{Input, PullUp, PullDown,
            gpiob::{PB10, PB11, PB6},        
     },
-    i2c::{I2c, SDAPin, SCLPin},
-    stm32::{I2C1},
+    i2c::{I2c, Config as i2cConfig,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, SDAPin<I2C1>, SCLPin<I2C1>>,   //Pins<I2C1>
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -454,7 +436,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
-    let i2c = i2c1.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c = I2c::i2c1(dp.I2C1,  sda, scl, i2cConfig::new(400.khz()), &mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
@@ -480,13 +462,11 @@ use stm32h7xx_hal::{
     gpio::{Input,
         gpiob::{PB10, PB11, PB6},
     },
-    i2c::I2c,
-    pac::{I2C1},
     prelude::*,
 };
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2c<I2C1>, impl LED, DelayType, impl SEEK, PB6<Input>) {
+pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType, impl LED, DelayType, impl SEEK, PB6<Input>) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -534,19 +514,16 @@ use stm32l0xx_hal::{
     delay::Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
-        gpiob::{PB8, PB9},
-        Input, OpenDrain, Output, PullDown, PullUp,
+        Input, PullDown, PullUp,
     },
-    i2c::I2c,
-    pac::{CorePeripherals, I2C1},
+    pac::{CorePeripherals,},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
 };
 
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>,
-    //I2c<I2C1, impl Pins<I2C1>>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -597,10 +574,8 @@ use stm32l1xx_hal::{
     gpio::{Input, PullDown, PullUp,
            gpiob::{ PB10, PB11, PB6},
     },
-    i2c::{I2c, Pins},
     prelude::*,
     rcc, // for ::Config but avoid name conflict with serial
-    stm32::{I2C1},
 };
 
 #[cfg(feature = "stm32l1xx")]
@@ -608,7 +583,7 @@ use embedded_hal::digital::v2::{InputPin};
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, impl Pins<I2C1>>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
@@ -653,14 +628,13 @@ use stm32l4xx_hal::{
     gpio::{Input, PullDown, PullUp,
            gpiob::{PB10, PB11, PB6},
     },
-    i2c::{Config as i2cConfig, I2c, SclPin, SdaPin},
-    pac::{I2C1},
+    i2c::{Config as i2cConfig, I2c},
     prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
+    I2cType,
     impl LED,
     DelayType,
     impl SEEK,
