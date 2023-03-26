@@ -303,14 +303,14 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 
 #[cfg(feature = "stm32g4xx")] 
 use stm32g4xx_hal::{
-    adc::{config::AdcConfig, Adc}, //SampleTime
+    adc::{config::AdcConfig, Adc, Active}, //SampleTime
     gpio::{Analog, gpioa::{PA1}, },
-    pac::{ADC1,},
+    stm32::{ADC1,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Active>>;
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
@@ -318,7 +318,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
 
-    let gpioa = dp.GPIOA.split();
+    let gpioa = dp.GPIOA.split(&mut rcc);
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
@@ -333,7 +333,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &clocks);
 
     let led = setup_led(dp.GPIOC.split());
     //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &clocks);
@@ -343,7 +343,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
     let mut delay = dp.TIM2.delay_us(&clocks);
 
     delay.delay_ms(1000_u16);
-
+let ()= sens;
     (sens, dht, i2c, led, delay)
 }
 

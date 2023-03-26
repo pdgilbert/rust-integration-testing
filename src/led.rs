@@ -227,10 +227,10 @@ pub fn setup_led(gpiox: Parts) -> LedType {
 
     impl LED for LedType {
         fn on(&mut self) -> () {
-            self.set_low()                          //AND CHECK THIS
+            self.set_low().unwrap()
         }
         fn off(&mut self) -> () {
-            self.set_high()
+            self.set_high().unwrap()
         }
     }
     
@@ -459,8 +459,8 @@ pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
 }
 
 #[cfg(feature = "stm32g4xx")]
-use stm32g0xx_hal::{
-    pac::Peripherals,
+use stm32g4xx_hal::{
+    stm32::Peripherals,
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -468,7 +468,8 @@ pub const MONOCLOCK: u32 = 16_000_000;
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-   let mut led = setup_led(dp.GPIOC.split()); 
+   let mut rcc = dp.RCC.constrain();
+   let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
    led

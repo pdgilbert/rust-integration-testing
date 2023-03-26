@@ -367,13 +367,13 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    timer::Delay,
-    gpio::{OpenDrain, Output,
-           gpioa::PA8,
+    delay::Delay,
+    gpio::{OpenDrain, Output, PushPull,
+           gpioa::{PA8, PA9},
     },
-    pac::{USART1, TIM2}, //I2C1
+    stm32::{USART1, TIM2}, //I2C1
     prelude::*,
-    serial::{config::Config, Serial, Tx},
+    serial::{FullConfig, Serial, Tx, NoDMA},
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -383,7 +383,7 @@ pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 pub type DhtPin = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32g4xx")]
-pub type TxType = Tx<USART1>;
+pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
@@ -394,9 +394,9 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, 
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
 
-   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &clocks);
 
-   let mut led = setup_led(dp.GPIOC.split()); 
+   let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
    //let delay = DelayType{};
@@ -407,12 +407,12 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, 
    let (tx, _rx) = Serial::new(
        dp.USART1,
        (tx, rx),
-       Config::default().baudrate(115200.bps()),
+       FullConfig::default().baudrate(115200.bps()),
        &clocks,
    )
    .unwrap()
    .split();
-
+let () = tx;
    (dht, i2c, led, tx, delay)
 }
 
