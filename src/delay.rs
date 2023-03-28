@@ -71,13 +71,15 @@ pub type DelayType = Delay<TIM2>;
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    delay::Delay,
+    timer::CountDownTimer,
+    delay::DelayFromCountDownTimer,
+    //delay::Delay,
     //timer::SysDelay as Delay,
+    stm32::{TIM2}, 
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub type DelayType = Delay;
-
+pub type DelayType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 
 
 //#[cfg(feature = "stm32h7xx")]

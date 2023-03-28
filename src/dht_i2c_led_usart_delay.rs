@@ -367,12 +367,14 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    gpio::{OpenDrain, Output, PushPull,
+    timer::Timer,
+    delay::DelayFromCountDownTimer,
+    gpio::{OpenDrain, Output, Alternate,
            gpioa::{PA8, PA9},
     },
     stm32::{USART1}, //I2C1
     prelude::*,
-    serial::{FullConfig, Serial, Tx, NoDMA},
+    serial::{FullConfig, Tx, NoDMA},
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -382,36 +384,33 @@ pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 pub type DhtPin = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32g4xx")]
-pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
+pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
+//pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
-   let gpioa = dp.GPIOA.split();
+pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
+   let mut rcc = dp.RCC.constrain();
+   
+   let gpioa = dp.GPIOA.split(&mut rcc);
+   let gpiob = dp.GPIOB.split(&mut rcc);
+
    let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+   dht.set_high().unwrap(); // Pull high to avoid confusing the sensor when initializing.
 
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
-
-   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &clocks);
+   let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
-   //let delay = DelayType{};
-   let delay = dp.TIM2.delay_us(&clocks);
+   let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+   let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
 
    let tx = gpioa.pa9.into_alternate();
    let rx = gpioa.pa10.into_alternate();
-   let (tx, _rx) = Serial::new(
-       dp.USART1,
-       (tx, rx),
-       FullConfig::default().baudrate(115200.bps()),
-       &clocks,
-   )
-   .unwrap()
-   .split();
-let () = tx;
+   //let (tx, _rx) = Serial::new(dp.USART1,(tx, rx),...  would be nice
+   let (tx, _rx) = dp.USART1.usart(tx, rx, FullConfig::default().baudrate(115200.bps()),
+         &mut rcc).unwrap().split();
+
    (dht, i2c, led, tx, delay)
 }
 

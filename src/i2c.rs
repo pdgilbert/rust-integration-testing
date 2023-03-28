@@ -456,9 +456,10 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, rcc: &mut Rcc) -> 
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    i2c::{I2c, Config, SDAPin, SCLPin},
-    gpio::{gpioa::{Parts as PartsA},
-           gpiob::{Parts as PartsB}
+    i2c::{I2c, Config},   //SDAPin, SCLPin
+    gpio::{AlternateOD,
+           gpioa::{PA8, PA9, Parts as PartsA},
+           gpiob::{PB8, PB9, Parts as PartsB}
     },
     rcc::Rcc,
     stm32::{I2C1, I2C2},
@@ -467,45 +468,48 @@ use stm32g4xx_hal::{
 
 
 #[cfg(feature = "stm32g4xx")]
-pub type I2c1Type = I2c<I2C1, SDAPin<I2C1>, SCLPin<I2C1>>;
+pub type I2c1Type = I2c<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
 //pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
+//pub type I2c1Type = I2c<I2C1, SDAPin<I2C1>, SCLPin<I2C1>>;  trait objects must include the `dyn` keyword
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
+pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     let sda = gpiob.pb9.into_alternate_open_drain(); 
 
     //let i2c = I2c::new(i2c1, (scl, sda), 400.khz(), &clocks);
-    let i2c = i2c1.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c = i2c1.i2c(sda, scl, Config::new(400.khz()), rcc);
 
     i2c
 }
 
 #[cfg(feature = "stm32g4xx")]
-pub type I2c2Type = I2c<I2C2, SDAPin<I2C2>, SCLPin<I2C2>>;
-//pub type I2c2Type = I2c<I2C2, PB10<Output<OpenDrain>>, PB3<Output<OpenDrain>>>;
+pub type I2c2Type = I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
+//pub type I2c2Type = I2c<I2C2, PA8<Output<OpenDrain>>, PA9<Output<OpenDrain>>>;
+//pub type I2c2Type = I2c<I2C2, SDAPin<I2C2>, SCLPin<I2C2>>;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpioa: PartsA, mut rcc: Rcc) -> I2c2Type {
+pub fn setup_i2c2(i2c2: I2C2 , gpioa: PartsA, rcc: &mut Rcc) -> I2c2Type {
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
 
     //let i2c = I2c::new(i2c2, (scl, sda), 400.khz(), &clocks);
-    let i2c = i2c2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c = i2c2.i2c(sda, scl, Config::new(400.khz()), rcc);
 
     i2c
 }
 
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpioa: PartsA, gpiob: PartsB, mut rcc: Rcc ) -> (I2c1Type, I2c2Type) {
+pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpioa: PartsA, gpiob: PartsB, rcc: &mut Rcc )
+       -> (I2c1Type, I2c2Type) {
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     let sda = gpiob.pb9.into_alternate_open_drain(); 
-    let mut i2c1 = i2c1.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c1 = i2c1.i2c(sda, scl, Config::new(400.khz()), rcc);
 
     let scl = gpioa.pa9.into_alternate_open_drain();
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let mut i2c2 = i2c2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c2 = i2c2.i2c(sda, scl, Config::new(400.khz()), rcc);
 
     (i2c1, i2c2)
 }

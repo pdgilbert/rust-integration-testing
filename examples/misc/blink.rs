@@ -257,6 +257,47 @@ pub fn setup() -> (PC13<Output<PushPull>>, Delay<TIM2>) {//NOT SURE WHAT PIN THI
 }
 
 
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::{Timer, CountDownTimer},
+    delay::DelayFromCountDownTimer,
+    gpio::{gpioc::PC13, Output, PushPull},
+    prelude::*,
+    stm32::{TIM2, Peripherals},
+};
+
+#[cfg(feature = "stm32g4xx")]
+pub type DelayType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup() -> (PC13<Output<PushPull>>, DelayFromCountDownTimer<CountDownTimer<TIM2>>) {//NOT SURE WHAT PIN THIS SHOULD BE
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let led = gpioc.pc13.into_push_pull_output();
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
+
+    //let cp = CorePeripherals::take().unwrap();
+    //let delay = cp.SYST.delay(&rcc.clocks);
+
+    (led, delay)
+}
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

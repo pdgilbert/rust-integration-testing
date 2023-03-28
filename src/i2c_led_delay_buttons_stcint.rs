@@ -408,6 +408,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
+    timer::Timer,
+    delay::DelayFromCountDownTimer,
     gpio::{Input, PullUp, PullDown,
            gpiob::{PB10, PB11, PB6},        
     },
@@ -424,7 +426,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     PB6<Input<PullUp>>,
 ) {
     let mut rcc = dp.RCC.constrain();
-    let mut delay = dp.TIM2.delay(&rcc.clocks);
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
 
     let gpiob = dp.GPIOB.split(&mut rcc);
 
@@ -444,12 +447,12 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullUp>>, PB11<Input<PullUp>>> {
+    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
         fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
+            self.p_seekup.is_high().unwrap()
         }
         fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
+            self.p_seekdown.is_high().unwrap()
         }
     }
 

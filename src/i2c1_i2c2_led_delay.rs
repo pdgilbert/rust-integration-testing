@@ -207,24 +207,31 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
 
 
 #[cfg(feature = "stm32g4xx")]
-use stm32g4xx_hal::{prelude::*,};
+use stm32g4xx_hal::{
+    timer::Timer,
+    delay::DelayFromCountDownTimer,
+    prelude::*,
+};
 
 #[cfg(feature = "stm32g4xx")]
 pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Type, LedType, DelayType) {
-   let gpiob = dp.GPIOB.split();
 
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
+    let mut rcc = dp.RCC.constrain();
 
-   let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &clocks);
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
-   let mut led = setup_led(dp.GPIOC.split()); 
-   led.off();
+    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpioa, gpiob, &mut rcc);
 
-   let delay = dp.TIM2.delay_us(&clocks);
+    let mut led = setup_led(gpioc); 
+    led.off();
+
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
 
     (i2c1, i2c2, led, delay)
 }
