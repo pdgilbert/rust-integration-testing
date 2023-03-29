@@ -357,42 +357,42 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g4xx")] 
 use stm32g4xx_hal::{
-    timer::SysDelay as Delay,
-    i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    delay::Delay,
+    i2c::{I2c, Config},
+    stm32::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial::{FullConfig, Rx, Tx, NoDMA},
+    gpio::{Alternate, AlternateOD, gpioa::{PA2, PA3, PA8, PA9}},
 };
 
+
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
+fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>, 
+               I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,  //I2c<I2C2, impl Pins<I2C2>>, 
+               Delay) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let clocks = dp.RCC.constrain().cfgr.freeze();
-    let gpioa = dp.GPIOA.split();
+    let mut rcc = dp.RCC.constrain();
 
-    let (tx2, rx2) = Serial::new(
-        dp.USART2,
-        (
-            gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
-            gpioa.pa3.into_alternate(),
-        ), //rx pa3  for GPS tx
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split();
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
 
-    let gpiob = dp.GPIOB.split();
+    let (tx2, rx2) = dp.USART2.usart(   //tx, rx  for GPS
+        gpioa.pa2.into_alternate(), 
+        gpioa.pa3.into_alternate(),
+        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
-    let scl = gpiob.pb10.into_alternate().set_open_drain();
-    let sda = gpiob.pb3.into_alternate().set_open_drain();
+    let scl = gpioa.pa9.into_alternate_open_drain(); 
+    let sda = gpioa.pa8.into_alternate_open_drain(); 
+    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+
+    let delay = cp.SYST.delay(&mut rcc.clocks);
 
     (
         tx2,
         rx2,
-        I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks), // i2c
-        cp.SYST.delay(&clocks),
+        i2c,
+        delay,
     )
 }
 

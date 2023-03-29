@@ -214,27 +214,23 @@ fn setup() -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>) {
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    pac::Peripherals,
-    pac::USART1,
+    stm32::Peripherals,
+    stm32::USART1,
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial::{FullConfig, Rx, Tx, NoDMA},
+    gpio::{Alternate, gpioa::{PA9, PA10}},
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>) {
+fn setup() -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>) {
     let dp = Peripherals::take().unwrap();
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let gpioa = dp.GPIOA.split();
+    let mut rcc = dp.RCC.constrain();
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
-    Serial::new(
-        dp.USART1,
-        (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split()
+    dp.USART1.usart(
+       gpioa.pa9.into_alternate(), 
+       gpioa.pa10.into_alternate(), 
+       FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split()
 }
 
 

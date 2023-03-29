@@ -616,7 +616,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 use stm32g4xx_hal::{
     adc::{config::AdcConfig, Adc, Temperature}, //SampleTime
     gpio::{gpiob::PB1, Analog},
-    pac::{Peripherals, ADC1}, //ADC2}, 
+    stm32::{Peripherals, ADC1}, //ADC2}, 
     prelude::*,
 };
 
@@ -625,21 +625,13 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
 
     type McuTemperatureType = ();
 
-    let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
 
-    let _clocks = rcc
-        .cfgr
-        .hclk(48.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .pclk2(24.MHz())
-        .freeze();
-
-    let gpiob = p.GPIOB.split();
+    let gpiob = dp.GPIOB.split(&mut rcc);
 
     let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, true, AdcConfig::default()),
+        ad_1st: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
     };
 
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // internal

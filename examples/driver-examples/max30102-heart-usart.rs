@@ -505,64 +505,55 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    timer::delay::Delay,
+    delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C2, USART1},
+    i2c::{I2c, Config},
+    stm32::{CorePeripherals, Peripherals, I2C2, USART1, USART2},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial::{FullConfig, Rx, Tx, NoDMA},
+    gpio::{Alternate,  AlternateOD,
+          gpioa::{PA2, PA3, PA8, PA9},
+          gpiob::{PB10, PB11}},
 };
 
 #[cfg(feature = "stm32g4xx")]
 fn setup() -> (
-    I2c<I2C2, impl Pins<I2C2>>,
+    I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,   //I2c<I2C2, impl Pins<I2C2>>,
     impl LED,
     Delay,
-    Tx<USART1>,
-    Rx<USART1>,
+    Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>,
+    Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let mut rcc = dp.RCC.constrain();
 
-    let gpiob = dp.GPIOB.split(); // for i2c
+    let gpioa = dp.GPIOA.split(&mut  rcc);
 
-    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
+    let scl = gpioa.pa9.into_alternate_open_drain(); 
+    let sda = gpioa.pa8.into_alternate_open_drain(); 
+    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
 
-    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
-
-    let delay = cp.SYST.delay(&clocks);
+    let delay = cp.SYST.delay(&mut rcc.clocks);
 
     // led
-    let gpioc = dp.GPIOC.split();
+    let gpioc = dp.GPIOC.split(&mut  rcc);
     let led = gpioc.pc13.into_push_pull_output();
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low()
+            self.set_low().unwrap()
         }
         fn off(&mut self) -> () {
-            self.set_high()
+            self.set_high().unwrap()
         }
     }
 
-    let gpioa = dp.GPIOA.split();
-
-    dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx, rx) = Serial::new(
-        dp.USART1,
-        (
-            gpioa.pa9.into_alternate(), //tx pa9
-            gpioa.pa10.into_alternate(),
-        ), //rx pa10
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split();
+    let (tx, rx) = dp.USART2.usart(
+        gpioa.pa2.into_alternate(), 
+        gpioa.pa3.into_alternate(),
+        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
     (i2c, led, delay, tx, rx)
 }

@@ -307,42 +307,29 @@ fn setup() -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>, Tx<USART2, FullCo
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    pac::Peripherals,
-    pac::{USART1, USART2},
+    stm32::Peripherals,
+    stm32::{USART1, USART2},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial::{FullConfig, Rx, Tx, NoDMA},
+    gpio::{Alternate, gpioa::{PA2, PA3, PA9, PA10}},
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+fn setup() -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
+               Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>) {
     let dp = Peripherals::take().unwrap();
-    let clocks = dp.RCC.constrain().cfgr.freeze();
-    let gpioa = dp.GPIOA.split();
-    let (tx1, rx1) = Serial::new(
-        p.USART1,
-        (
-            gpioa.pa9.into_alternate(),  //tx pa9   for console
-            gpioa.pa10.into_alternate(), //rx pa10  for console
-        ),
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split();
+    let mut rcc = dp.RCC.constrain();
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
-    // this probably needs fix here. rx2.read() stalls and does not return.
-    //p.USART2.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
-    let (tx2, rx2) = Serial::new(
-        dp.USART2,
-        (
-            gpioa.pa2.into_alternate(), //tx pa2  for GPS
-            gpioa.pa3.into_alternate(), //rx pa3  for GPS
-        ),
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split();
+    let (tx1, rx1) = dp.USART1.usart(   //tx, rx  for console
+       gpioa.pa9.into_alternate(), 
+       gpioa.pa10.into_alternate(), 
+       FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
+
+    let (tx2, rx2) = dp.USART2.usart(   //tx, rx  forGPS
+        gpioa.pa2.into_alternate(), 
+        gpioa.pa3.into_alternate(),
+        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
     (tx1, rx1, tx2, rx2)
 }

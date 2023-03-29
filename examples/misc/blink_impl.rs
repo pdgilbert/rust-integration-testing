@@ -279,6 +279,43 @@ pub fn setup() -> (impl LED, Delay) {
 }
 
 
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    delay::Delay,
+    gpio::{gpioc::PC13, Output, PushPull},
+    prelude::*,
+    stm32::{CorePeripherals, Peripherals},   //TIM2, 
+};
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup() -> (impl LED, Delay) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let led = gpioc.pc13.into_push_pull_output(); //NOT SURE WHAT PIN THIS SHOULD BE
+
+    impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+    
+    //this requires Delay<TIM2> in blink so trait LED then need generic ... which I have not figured out.
+    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
+    
+    let delay = cp.SYST.delay(&mut rcc.clocks);
+ 
+    (led, delay)
+}
+
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
     delay::Delay,

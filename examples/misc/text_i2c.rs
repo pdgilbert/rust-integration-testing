@@ -227,22 +227,22 @@ fn setup() -> I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>> {
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    i2c::{I2c, Pins},
-    pac::{Peripherals, I2C2},
+    i2c::{I2c, Config},
+    stm32::{Peripherals, I2C2},
     prelude::*,
+    gpio::{AlternateOD, gpioa::{PA8, PA9}},
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
-    let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let gpiob = p.GPIOB.split();
+fn setup() -> I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>> {   //impl Pins<I2C2>>
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
-    let scl = gpiob.pb10.into_alternate().set_open_drain();
-    let sda = gpiob.pb3.into_alternate().set_open_drain();
-
-    I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks)
+    let scl = gpioa.pa9.into_alternate_open_drain(); 
+    let sda = gpioa.pa8.into_alternate_open_drain(); 
+    
+    dp.I2C2.i2c(sda, scl, Config::new(400.khz()), &mut rcc)
 }
 
 

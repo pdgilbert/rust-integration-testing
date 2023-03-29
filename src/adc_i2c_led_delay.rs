@@ -297,14 +297,14 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 use stm32g4xx_hal::{
     timer::Timer,
     delay::DelayFromCountDownTimer,
-    adc::{config::{AdcConfig,  SampleTime}, Adc, Active, Disabled, AdcClaim, ClockSource},
+    adc::{config::{SampleTime}, Adc, Disabled, AdcClaim, ClockSource},
     gpio::{Analog, gpioa::{PA1}, },
     stm32::{ADC1,},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Disabled>>;
+type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {

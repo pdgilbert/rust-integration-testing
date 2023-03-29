@@ -7,7 +7,14 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use panic_rtt_target as _;
+
+#[cfg(debug_assertions)]
+use panic_semihosting as _;
+
+#[cfg(not(debug_assertions))]
+use panic_halt as _;
+
+//use panic_rtt_target as _;  THIS CAUSE LINK PROBLEM ... undefined symbol: _SEGGER_RTT
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
 pub const MODE: Mode = Mode {
@@ -216,6 +223,76 @@ fn setup() -> (
 
     (spi, cs)
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    gpio::{gpioa::PA1, Output, PushPull},
+    pac::{Peripherals, SPI1},
+    prelude::*,
+    spi::{Pins, Spi},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>>,
+    PA1<Output<PushPull>>,
+) {
+    let dp = Peripherals::take().unwrap();
+
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    let spi = dp.SPI1.spi((gpioa.pa5, gpioa.pa6, gpioa.pa7), //sck, miso, mosi
+        mcp4x::MODE, 
+        3.MHz(), &mut rcc, );
+
+    let mut cs = gpioa.pa1.into_push_pull_output();
+    cs.set_high().unwrap();
+
+    (spi, cs)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    gpio::{gpioa::PA8, Output, PushPull},
+    stm32::{Peripherals, SPI1},
+    prelude::*,
+    spi::{Pins, Spi, MODE_0},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (
+    Spi<SPI1, impl Pins<SPI1>>,
+    PA8<Output<PushPull>>,
+) {
+    let dp = Peripherals::take().unwrap();
+
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    let spi = dp.SPI1.spi(
+            (gpioa.pa5.into_alternate(), // sck   on PA5
+             gpioa.pa6.into_alternate(), // miso  on PA6
+             gpioa.pa7.into_alternate(), // mosi  on PA7
+            ),
+        MODE_0,
+        400.khz(),
+        &mut rcc,
+    );
+
+    let mut cs = gpioa.pa8.into_push_pull_output();
+    cs.set_high().unwrap();
+
+    (spi, cs)
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
