@@ -48,83 +48,52 @@ use cortex_m_semihosting::hprintln;
 
 // possibly trait cfg's could be eliminated by using <T> or <T: Adcs> or Type: item =  x; ??
 
+#[cfg(any(
+        feature = "stm32f0xx",
+        feature = "stm32g0xx",
+        feature = "stm32l1xx"
+    ))]
+type AdcsType =  Adcs<Adc>;
+
+#[cfg(any(
+        feature = "stm32f103",
+        feature = "stm32f7xx",
+    ))]
+type AdcsType =  Adcs<Adc<ADC1>, Adc<ADC2>>;
+
+#[cfg(any(
+        feature = "stm32f100", 
+        feature = "stm32f101",
+        feature = "stm32f4xx",
+        feature = "stm32l4xx",
+    ))]
+type AdcsType =  Adcs<Adc<ADC1>>;
+
+#[cfg(feature = "stm32f3xx")]
+type AdcsType =  Adcs<Adc<ADC1>, Adc<ADC3>>;
 
 #[cfg(feature = "stm32g4xx")]
-type AdcsType = Adcs<Adc<ADC1, Active>, Adc<ADC2, Disabled>>;
+type AdcsType =  Adcs<Adc<ADC1, Active>, Adc<ADC2, Disabled>>;
 
-pub trait ReadTempC {
-    // for reading channel temperature in degrees C on channel (self.ch)
+
+#[cfg(feature = "stm32h7xx")]
+type AdcsType =  Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>;
+
+#[cfg(feature = "stm32l0xx")]
+type AdcsType =  Adcs<Adc<Ready>>;
+
+
+pub trait ReadTempC {     // for reading channel temperature in degrees C on channel (self.ch)
     #![allow(non_snake_case)]
-    #[cfg(any(
-        feature = "stm32f0xx",
-        feature = "stm32g0xx",
-        feature = "stm32l1xx"
-    ))]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc>) -> i32;
 
-    #[cfg(any(
-        feature = "stm32f103",
-        feature = "stm32f7xx",
-    ))]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32;
-
-    #[cfg(any(
-        feature = "stm32f100", 
-        feature = "stm32f101",
-        feature = "stm32f4xx",
-        feature = "stm32l4xx",
-    ))]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1>>) -> i32;
-
-    #[cfg(feature = "stm32f3xx")]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> i32;
-
-    #[cfg(feature = "stm32g4xx")]
     fn read_tempC(&mut self, adcs: &mut AdcsType) -> i32;
 
-    #[cfg(feature = "stm32h7xx")]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> i32;
-
-    #[cfg(feature = "stm32l0xx")]
-    fn read_tempC(&mut self, adcs: &mut Adcs<Adc<Ready>>) -> i32;
 }
 
-pub trait ReadMV {
-    // for reading channel millivolts on channel (self.ch)
-    #[cfg(any(
-        feature = "stm32f0xx",
-        feature = "stm32g0xx",
-        feature = "stm32l1xx"
-    ))]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc>) -> u32;
-
-    #[cfg(any(
-        feature = "stm32f103",
-        feature = "stm32f7xx",
-    ))]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> u32;
-
-    #[cfg(any(
-        feature = "stm32f100", 
-        feature = "stm32f101",
-        feature = "stm32f4xx",
-        feature = "stm32l4xx",
-    ))]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1>>) -> u32;
-
-    #[cfg(feature = "stm32f3xx")]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> u32;
-
-    #[cfg(feature = "stm32g4xx")]
+pub trait ReadMV {         // for reading channel millivolts on channel (self.ch)
     fn read_mv(&mut self, adcs: &mut AdcsType) -> u32;
-
-    #[cfg(feature = "stm32h7xx")]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> u32;
-
-    #[cfg(feature = "stm32l0xx")]
-    fn read_mv(&mut self, adcs: &mut Adcs<Adc<Ready>>) -> u32;
-
 }
+
 
 pub struct Sensor<U> { ch: U,}
 
@@ -237,9 +206,9 @@ use stm32f1xx_hal::{
 fn setup() -> (
     impl ReadTempC,
     impl ReadTempC + ReadMV,
-    Adcs<Adc<ADC1>, Adc<ADC2>>,
+    AdcsType,
 ) {
-    //fn setup() ->  (Sensor<PB1<Analog>>,  Sensor<PB1<Analog>>,   Adcs<Adc<ADC1>, Adc<ADC2>>) {
+    //fn setup() ->  (Sensor<PB1<Analog>>,  Sensor<PB1<Analog>>,   AdcsType) {
 
     type McuTemperatureType = ();
 
@@ -258,7 +227,7 @@ fn setup() -> (
 
     let mut gpiob = p.GPIOB.split();
 
-    let adcs: Adcs<Adc<ADC1>, Adc<ADC2>> = Adcs {
+    let adcs: AdcsType = Adcs {
         ad_1st: Adc::adc1(p.ADC1, clocks),
         ad_2nd: Adc::adc2(p.ADC2, clocks),
     };
@@ -269,7 +238,7 @@ fn setup() -> (
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let z = &mut a.ad_1st;
            z.read_temp() as i32
         }
@@ -278,7 +247,7 @@ fn setup() -> (
     let tmp36: Sensor<PB1<Analog>> = Sensor {ch: gpiob.pb1.into_analog(&mut gpiob.crl)};
 
     impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
                     let v: f32 = a.ad_2nd.read(&mut self.ch).unwrap();
                     (v / 12.412122) as i32 - 50 as i32
         }
@@ -286,7 +255,7 @@ fn setup() -> (
 
     impl ReadMV for Sensor<PB1<Analog>> {
         // TMP36 on PB1 using ADC2
-        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> u32 {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
             a.ad_2nd.read(&mut self.ch).unwrap()
         }
     }
@@ -356,7 +325,7 @@ use stm32f3xx_hal::{
 fn setup() -> (
     impl ReadTempC,
     impl ReadTempC + ReadMV,
-    Adcs<Adc<ADC1>, Adc<ADC3>>,
+    AdcsType,
 ) {
     // On stm32f303xc a temperature sensor is internally connected to ADC3_IN18.
     // Two adc's are used but no channel is specified for the mcutemp on adc3 because it uses an internal channel.
@@ -377,7 +346,7 @@ fn setup() -> (
     let adc_common1_2 = CommonAdc::new(p.ADC1_2, &clocks, &mut rcc.ahb);
     let adc_common3_4 = CommonAdc::new(p.ADC3_4, &clocks, &mut rcc.ahb);
 
-    let adcs: Adcs<Adc<ADC1>, Adc<ADC3>> = Adcs {
+    let adcs: AdcsType = Adcs {
         ad_1st: Adc::new(p.ADC1, Config::default(), &clocks, &adc_common1_2,),
         ad_2nd: Adc::new(p.ADC3, Config::default(), &clocks, &adc_common3_4,),
     };
@@ -398,7 +367,7 @@ fn setup() -> (
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let z = &mut a.ad_1st;
            //z.read_temp() as i32;  //NEEDS TO CONNECT USING INTERNAL CHANNEL 16
            // see https://github.com/stm32-rs/stm32f3xx-hal/issues/163
@@ -413,14 +382,14 @@ fn setup() -> (
     };
 
     impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
             let v: f32 = a.ad_2nd.read(&mut self.ch).unwrap();
             (v / 12.412122) as i32 - 50 as i32
         }
     }
 
     impl ReadMV for Sensor<PB1<Analog>> {
-        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> u32 {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
             a.ad_2nd.read(&mut self.ch).unwrap()
         }
     }
@@ -513,7 +482,7 @@ use stm32f7xx_hal::{
 fn setup() -> (
     impl ReadTempC,
     impl ReadTempC + ReadMV,
-    Adcs<Adc<ADC1>, Adc<ADC2>>,
+    AdcsType,
 ) {
     // adc module in stm32f7xx_hal is only supported for stm32f765, stm32f767, and stm32f769. See
     //    https://github.com/stm32-rs/stm32f7xx-hal/blob/master/src/lib.rs
@@ -531,7 +500,7 @@ fn setup() -> (
 
     let gpiob = p.GPIOB.split();
 
-    let adcs: Adcs<Adc<ADC1>, Adc<ADC2>> = Adcs {
+    let adcs: AdcsType = Adcs {
         ad_1st: Adc::adc1(p.ADC1, &mut rcc.apb2, &clocks, 4, true), // NO IDEA WHAT ARGS 4 AND 5 ARE! FIND EXAMPLE OR DOCUMENTATION
         ad_2nd: Adc::adc2(p.ADC2, &mut rcc.apb2, &clocks, 4, true),
     };
@@ -542,7 +511,7 @@ fn setup() -> (
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let z = &mut a.ad_1st;
            // Need internal hal setting ch 16.  See https://github.com/stm32-rs/stm32f7xx-hal/issues/116
            //z.read(&mut Temperature) as i32
@@ -555,14 +524,14 @@ fn setup() -> (
     };
 
     impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
             let v: f32 = a.ad_2nd.read(&mut self.ch).unwrap();
             (v / 12.412122) as i32 - 50 as i32
         }
     }
 
     impl ReadMV for Sensor<PB1<Analog>> {
-        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>, Adc<ADC2>>) -> u32 {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
             a.ad_2nd.read(&mut self.ch).unwrap()
         }
     }
@@ -731,7 +700,7 @@ use stm32h7xx_hal::{
 fn setup() -> (
     impl ReadTempC,
     impl ReadTempC + ReadMV,
-    Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>,
+    AdcsType,
 ) {
     // On stm32h742 a temperature sensor is internally connected to ADC3_IN18.
     // Two adc's are used but no channel is specified for the mcutemp on adc3 because it uses an internal channel.
@@ -772,7 +741,7 @@ fn setup() -> (
 
     let adc3 = adc3.enable();
 
-    let adcs: Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>> = Adcs {
+    let adcs: AdcsType = Adcs {
         ad_1st: adc1, // tmp36 temp and mv
         ad_2nd: adc3, // mcu temp
     };
@@ -780,7 +749,7 @@ fn setup() -> (
     let mcutemp = Sensor { ch: mcutemp_channel }; // internal temperature channel
     
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
             let z = &mut a.ad_2nd;
             let v: u32 = z.read(&mut self.ch).expect("MCU temperature read failed.");
             //  CHECK above link regarding  voltage = reading * (vref/resolution)
@@ -791,7 +760,7 @@ fn setup() -> (
     let tmp36: Sensor<PB1<Analog>> = Sensor { ch: gpiob.pb1.into_analog() }; 
 
     impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
             let z = &mut a.ad_1st;
             let v: u32 = z.read(&mut self.ch).expect("TMP36 temperature read failed.");
             (v as f32 / 12.412122) as i32 - 50 as i32
@@ -800,7 +769,7 @@ fn setup() -> (
 
 
     impl ReadMV for Sensor<PB1<Analog>> {
-        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> u32 {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
             a.ad_1st.read(&mut self.ch).unwrap()
         }
     }
@@ -821,7 +790,7 @@ use stm32l0xx_hal::{
 
 #[cfg(feature = "stm32l0xx")]
 #[cfg(feature = "stm32l0xx")]
-fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
+fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
     // On stm32L0X2 a temperature sensor is internally connected to the single adc.
     // No channel is specified for the mcutemp because it uses an internal channel ADC_IN18.
     // Needs to be built with  --release  to fit memory.
@@ -837,7 +806,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
 
     // only one  adc
 
-    let adcs: Adcs<Adc<Ready>> = Adcs { ad_1st: adc };
+    let adcs: AdcsType = Adcs { ad_1st: adc };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel
     // so no channel needs to be specified here.
@@ -845,7 +814,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // no pin
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<Ready>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let v: f32 = a.ad_1st.read(&mut VTemp).unwrap();
            (v / 12.412122) as i32 - 50 as i32 //CHECK THIS
         }
@@ -856,14 +825,14 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<Ready>>) {
     }; 
 
     impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<Ready>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
             let v: f32 = a.ad_1st.read(&mut self.ch).unwrap();
             (v / 12.412122) as i32 - 50 as i32
         }
     }
 
     impl ReadMV for Sensor<PB1<Analog>> {
-        fn read_mv(&mut self, a: &mut Adcs<Adc<Ready>>) -> u32 {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
             a.ad_1st.read(&mut self.ch).unwrap()
         }
     }
