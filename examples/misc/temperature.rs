@@ -8,6 +8,9 @@
      Setup() functions return (mcutemp, tmp36, adcs) and set methods for ...
      CHECK METHODS ARE ALL ON RIGHT CHANNELS
 
+     regarding adc use see
+     https://www.st.com/resource/en/application_note/cd00258017-stm32s-adc-modes-and-their-applications-stmicroelectronics.pdf
+
       Notes of Interest:
       -I don't understand the details of setting  ADC or ADC clocks. If you know what you are
        doing you can probably do better than what is done below. Please let me know of important
@@ -46,6 +49,9 @@ use cortex_m_semihosting::hprintln;
 // possibly trait cfg's could be eliminated by using <T> or <T: Adcs> or Type: item =  x; ??
 
 
+#[cfg(feature = "stm32g4xx")]
+type AdcsType = Adcs<Adc<ADC1, Active>, Adc<ADC2, Disabled>>;
+
 pub trait ReadTempC {
     // for reading channel temperature in degrees C on channel (self.ch)
     #![allow(non_snake_case)]
@@ -72,6 +78,9 @@ pub trait ReadTempC {
 
     #[cfg(feature = "stm32f3xx")]
     fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> i32;
+
+    #[cfg(feature = "stm32g4xx")]
+    fn read_tempC(&mut self, adcs: &mut AdcsType) -> i32;
 
     #[cfg(feature = "stm32h7xx")]
     fn read_tempC(&mut self, adcs: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> i32;
@@ -106,6 +115,9 @@ pub trait ReadMV {
     #[cfg(feature = "stm32f3xx")]
     fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1>, Adc<ADC3>>) -> u32;
 
+    #[cfg(feature = "stm32g4xx")]
+    fn read_mv(&mut self, adcs: &mut AdcsType) -> u32;
+
     #[cfg(feature = "stm32h7xx")]
     fn read_mv(&mut self, adcs: &mut Adcs<Adc<ADC1, Enabled>, Adc<ADC3, Enabled>>) -> u32;
 
@@ -122,6 +134,7 @@ pub struct Sensor<U> { ch: U,}
     feature = "stm32f103",
     feature = "stm32f3xx",
     feature = "stm32f7xx",
+    feature = "stm32g4xx",
     feature = "stm32h7xx"
 ))]
 pub struct Adcs<T, U> {
@@ -614,49 +627,83 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    adc::{config::AdcConfig, Adc, Temperature}, //SampleTime
-    gpio::{gpiob::PB1, Analog},
-    stm32::{Peripherals, ADC1}, //ADC2}, 
+    timer::Timer,
+    delay::DelayFromCountDownTimer,
+    adc::{config::{SampleTime, Continuous, Sequence}, 
+          Adc, Active, Disabled, AdcClaim, ClockSource, Temperature, Vref},
+    gpio::{gpioa::{PA0, PA4}, Analog},
+    stm32::{Peripherals, ADC1, ADC2},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
+fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
 
-    type McuTemperatureType = ();
+    // compare https://github.com/stm32-rs/stm32g4xx-hal/blob/master/examples/adc-continious.rs
+    type McuTemperatureType = PA0<Analog>;
 
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
-    let gpiob = dp.GPIOB.split(&mut rcc);
+    //let cp = CorePeripherals::take().expect("failed taking core peripherals");
+    //let mut delay = cp.SYST.delay(&rcc.clocks);
+   
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
 
-    let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
+    // compare https://github.com/stm32-rs/stm32g4xx-hal/blob/master/examples/adc-continious.rs
+    //     and Note: Temperature seems quite low...
+
+    let pa0 = gpioa.pa0.into_analog();
+
+    let mut adc1 = dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true);
+
+    adc1.enable_temperature(&dp.ADC12_COMMON);
+    adc1.enable_vref(&dp.ADC12_COMMON);
+    adc1.set_auto_delay(true);
+    adc1.set_continuous(Continuous::Continuous);
+    adc1.reset_sequence();
+    adc1.configure_channel(&pa0, Sequence::One, SampleTime::Cycles_640_5);
+    adc1.configure_channel(&Vref, Sequence::Two, SampleTime::Cycles_640_5);
+    adc1.configure_channel(&Temperature, Sequence::Three, SampleTime::Cycles_640_5);
+    let adc1 = adc1.enable();
+
+    let adc1 = adc1.start_conversion();
+
+    let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: pa0 }; 
+
+    let pa4 = gpioa.pa4.into_analog();
+    let adc2 = dp.ADC2.claim(ClockSource::SystemClock, &rcc, &mut delay, true);
+
+    let adcs: AdcsType = Adcs {
+        ad_1st: adc1,
+        ad_2nd: adc2,
     };
-
-    let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: () }; // internal
 
     impl ReadTempC for Sensor<McuTemperatureType> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>>) -> i32 {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let z = &mut a.ad_1st;
-           z.read(&mut Temperature).unwrap() as i32
+          //z = z.wait_for_conversion_sequence().unwrap_active();
+          Temperature::temperature_to_degrees_centigrade(z.current_sample()) as i32  //  NOT CHECKED
         }
     }
 
-    let tmp36: Sensor<PB1<Analog>> = Sensor {
-        ch: gpiob.pb1.into_analog(),
-    };
+    let tmp36: Sensor<PA4<Analog>> = Sensor { ch: pa4 };
 
-    impl ReadTempC for Sensor<PB1<Analog>> {
-        fn read_tempC(&mut self, a: &mut Adcs<Adc<ADC1>>) -> i32 {
-            let v: f32 = a.ad_1st.read(&mut self.ch).unwrap().into(); //into converts u16 to f32
-            (v / 12.412122) as i32 - 50 as i32
+    impl ReadTempC for Sensor<PA4<Analog>> {
+        fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
+           let sample = a.ad_2nd.convert(&self.ch, SampleTime::Cycles_640_5);
+           let v = a.ad_2nd.sample_to_millivolts(sample) as f32;
+           (v / 12.412122 ) as i32 - 50 as i32                                      //  NOT CHECKED
         }
     }
 
-    impl ReadMV for Sensor<PB1<Analog>> {
-        fn read_mv(&mut self, a: &mut Adcs<Adc<ADC1>>) -> u32 {
-            a.ad_1st.read(&mut self.ch).unwrap().into() //into converts u16 to u32
+    impl ReadMV for Sensor<PA4<Analog>> {
+        fn read_mv(&mut self, a: &mut AdcsType) -> u32 {
+           let sample = a.ad_2nd.convert(&self.ch, SampleTime::Cycles_640_5);
+           a.ad_2nd.sample_to_millivolts(sample) as u32                            //  NOT CHECKED
         }
     }
 

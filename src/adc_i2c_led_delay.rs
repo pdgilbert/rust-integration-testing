@@ -1,6 +1,10 @@
 //! Note that pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
+// regarding adc use see
+// https://www.st.com/resource/en/application_note/cd00258017-stm32s-adc-modes-and-their-applications-stmicroelectronics.pdf
+
+
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
 
