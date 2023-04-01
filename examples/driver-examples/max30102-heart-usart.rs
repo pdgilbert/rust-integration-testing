@@ -444,28 +444,31 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    timer::delay::Delay,
+    timer::delay::Delay as DelayX,
     gpio::{Output, OpenDrain, PushPull, 
            gpiob::{PB10, PB11},
            gpioc::PC13,
     },
     i2c::{I2c, Config as i2cConfig},
-    pac::{CorePeripherals, Peripherals, I2C2, USART1, TIM2},
+    pac::{Peripherals, I2C2, USART1, TIM2},
     prelude::*,
     serial::{FullConfig, Tx, Rx},
 };
 
 #[cfg(feature = "stm32g0xx")]
+type Delay = DelayX<TIM2>;
+
+#[cfg(feature = "stm32g0xx")]
 fn setup() -> (
     I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
     impl LED,
+    Delay,
     Tx<USART1, FullConfig>,
     Rx<USART1, FullConfig>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
+    let mut rcc = dp.RCC.constrain();
 
     //  i2c
     let gpiob = dp.GPIOB.split(&mut rcc); // for i2c
@@ -473,9 +476,10 @@ fn setup() -> (
     let sda = gpiob.pb11.into_open_drain_output();
     let i2c = I2c::i2c2(dp.I2C2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
 
-    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
-    //                     trait LED then need generic ... which I have not figured out.
-    let delay = cp.SYST.delay(&rcc);
+    let delay = dp.TIM2.delay(&mut rcc);         //timer::delay::Delay<TIM2> 
+    
+    //let cp = CorePeripherals::take().unwrap();
+    //let delay = cp.SYST.delay(&mut rcc);       //timer::delay::Delay<SYST>
 
     // led
     let gpioc = dp.GPIOC.split(&mut rcc);
@@ -483,11 +487,11 @@ fn setup() -> (
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_low()
+            self.set_low().unwrap()
         }
 
         fn off(&mut self) -> () {
-            self.set_high()
+            self.set_high().unwrap()
         }
     }
 

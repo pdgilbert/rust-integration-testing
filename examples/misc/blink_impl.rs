@@ -244,12 +244,14 @@ fn setup() -> (impl LED, Delay) {
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    timer::SysDelay as Delay,
-    //timer::delay::Delay,
+    timer::delay::Delay as SysDelay,
     gpio::{gpioc::PC13, Output, PushPull},
     prelude::*,
-    pac::{CorePeripherals, Peripherals},   //TIM2, 
+    pac::{CorePeripherals, Peripherals, SYST},   //TIM2, 
 };
+
+#[cfg(feature = "stm32g0xx")]
+type Delay = SysDelay<SYST>;
 
 #[cfg(feature = "stm32g0xx")]
 pub fn setup() -> (impl LED, Delay) {
@@ -269,9 +271,6 @@ pub fn setup() -> (impl LED, Delay) {
             self.set_high().unwrap()
         }
     }
-    
-    //this requires Delay<TIM2> in blink so trait LED then need generic ... which I have not figured out.
-    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
     
     let delay = cp.SYST.delay(&mut rcc);
  
