@@ -31,8 +31,7 @@ pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 use stm32f0xx_hal::{
     adc::Adc,
     gpio::{Analog, gpioa::{PA1}},
-    delay::Delay,
-    pac::{CorePeripherals},
+    //delay::Delay,
     prelude::*,
 };
 
@@ -62,7 +61,8 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(mut dp: Peripherals) -> (SensorType
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+    let delay = DelayType{};
 
     (sens, dht, i2c, led, delay)
 }

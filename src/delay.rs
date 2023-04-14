@@ -1,14 +1,16 @@
-#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-use stm32f0xx_hal::{
-    delay::Delay,
-    pac::{TIM1, TIM3},
-};
+//#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
+//use stm32f0xx_hal::{
+//    delay::Delay,
+//    pac::{TIM1, TIM3},
+//};
 
 #[cfg(feature = "stm32f0xx")]
-pub type Delay1Type = Delay;
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay;
 
 #[cfg(feature = "stm32f0xx")]
-pub type Delay2Type = Delay;
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay;
 
 
 #[cfg(feature = "stm32f1xx")]

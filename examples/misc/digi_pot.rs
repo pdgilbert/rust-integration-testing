@@ -50,12 +50,12 @@ use rust_integration_testing_of_examples::setups::{
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{
         gpioa::{PA1, PA5, PA6, PA7},
         Alternate, Output, PushPull, AF0,
     },
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{EightBit, Spi},
     //spi::{EightBit, MisoPin, MosiPin, SckPin, Spi},
@@ -91,7 +91,8 @@ fn setup() -> (
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     //let cp = CorePeripherals::take().unwrap();
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+    let delay = DelayType{};
 
     (spi, cs, led, delay)
 }

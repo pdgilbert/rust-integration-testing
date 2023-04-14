@@ -345,6 +345,8 @@ fn setup() -> (
     ( tx1, rx1,  tx2, rx2,  tx3, rx3 )
 }
 
+
+
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     pac::Peripherals,
@@ -425,6 +427,108 @@ fn setup() -> (
 
     (tx1, rx1, tx2, rx2, tx3, rx3)
 }
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    pac::Peripherals,
+    pac::{USART1, USART2, USART3},
+    prelude::*,
+    serial::{FullConfig, Tx, Rx, BasicConfig},
+};
+
+#[cfg(feature = "stm32g0xx")]
+fn setup() -> (
+    Tx<USART1, FullConfig>,
+    Rx<USART1, FullConfig>,
+    Tx<USART2, FullConfig>,
+    Rx<USART2, FullConfig>,
+    Tx<USART3, BasicConfig>,
+    Rx<USART3, BasicConfig>,
+) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let (tx1, rx1) = dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let (tx2, rx2) = dp.USART2.usart((gpioa.pa2, gpioa.pa3),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let (tx3, rx3) = dp.USART3.usart((gpiob.pb8, gpiob.pb9),
+                        BasicConfig::default(), &mut rcc).unwrap().split();
+
+
+    let channels = dp.DMA.split();
+    let tx1  = tx1.with_dma(channels.4);                // console
+    let rx1  = rx1.with_dma(channels.5);
+    let tx2  = tx2.with_dma(channels.7);
+    let rx2  = rx2.with_dma(channels.6);
+    let tx3  = tx3.with_dma(channels.2);
+    let rx3  = rx3.with_dma(channels.3);
+
+    (tx1, rx1, tx2, rx2, tx3, rx3)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    stm32::Peripherals,
+    stm32::{USART1, USART2, USART3},
+    prelude::*,
+    serial::{FullConfig, Rx, Tx, NoDMA},
+    gpio::{Alternate,  
+          gpioa::{PA2, PA3, PA9, PA10},
+          gpiob::{PB10, PB11}},
+};
+
+#[cfg(feature = "stm32g4xx")]
+fn setup() -> (
+    Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>,
+    Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
+    Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>,
+    Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>,
+    Tx<USART3, PB10<Alternate<7_u8>>, NoDMA>,
+    Rx<USART3, PB11<Alternate<7_u8>>, NoDMA>,
+) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let (tx1, rx1) = dp.USART1.usart(   
+        gpioa.pa9.into_alternate(), 
+        gpioa.pa10.into_alternate(),
+        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
+
+    let (tx2, rx2) = dp.USART2.usart(  
+        gpioa.pa2.into_alternate(), 
+        gpioa.pa3.into_alternate(),
+        FullConfig::default().baudrate(115_200.bps()), &mut rcc).unwrap().split();
+
+    let (tx3, rx3) = dp.USART3.usart( 
+        gpiob.pb10.into_alternate(),
+        gpiob.pb11.into_alternate(), 
+        FullConfig::default().baudrate(115_200.bps()), &mut rcc).unwrap().split();
+
+    let channels = dp.DMA1.split();
+    let tx1  = tx1.with_dma(channels.4);                // console
+    let rx1  = rx1.with_dma(channels.5);
+    let tx2  = tx2.with_dma(channels.7);
+    let rx2  = rx2.with_dma(channels.6);
+    let tx3  = tx3.with_dma(channels.2);
+    let rx3  = rx3.with_dma(channels.3);
+
+    (tx1, rx1, tx2, rx2, tx3, rx3)
+}
+
+
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{

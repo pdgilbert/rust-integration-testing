@@ -46,8 +46,8 @@ pub fn setup_i2c1_i2c2_led_delay() ->  (I2cType, I2c2Type, LedType, Delay1Type) 
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
-    delay::Delay,
-    pac::{CorePeripherals},
+    //delay::Delay,
+    //pac::{CorePeripherals},
     prelude::*,
 };
 
@@ -66,8 +66,10 @@ pub fn setup_i2c1_i2c2_led_delays_using_dp(mut dp: Peripherals) ->  (I2cType, I2
    
    //let cp = CorePeripherals::take().unwrap();
    //let delay1 = Delay::new(cp.SYST, &rcc);
-   let delay1 = dp.TIM1.delay_us(&rcc);
-   let delay2 = dp.TIM3.delay_us(&rcc);
+   let delay1 = Delay1Type{};
+   let delay2 = Delay2Type{};
+   //let delay1 = dp.TIM1.delay_ms(&rcc);
+   //let delay2 = dp.TIM3.delay_ms(&rcc);
 
    (i2c1, i2c2, led, delay1, delay2)
 }
@@ -101,8 +103,10 @@ pub fn setup_i2c1_i2c2_led_delays_using_dp(dp: Peripherals) ->  (I2cType, I2c2Ty
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
-   let delay1 = dp.TIM2.delay_us(&clocks);
-   let delay2 = dp.TIM3.delay_us(&clocks);
+   let delay1 = Delay1Type{};
+   let delay2 = Delay2Type{};
+   //let delay1 = dp.TIM2.delay_us(&clocks);
+   //let delay2 = dp.TIM3.delay_us(&clocks);
 
    (i2c1, i2c2, led, delay1, delay2)
    }

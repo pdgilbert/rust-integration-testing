@@ -36,12 +36,11 @@ pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{Input, PullDown, PullUp,
         gpiob::{PB10, PB11, PB6},
     },
     i2c::{I2c},
-    pac::{CorePeripherals},
     prelude::*,
 };
 
@@ -54,7 +53,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
     PB6<Input<PullUp>>,
 ) {
     let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+    let mut delay = DelayType{};
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
 

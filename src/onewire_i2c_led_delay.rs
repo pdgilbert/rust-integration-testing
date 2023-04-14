@@ -21,8 +21,8 @@ pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
-    delay::Delay,
-    pac::{CorePeripherals},
+    //delay::Delay,
+    //pac::{CorePeripherals},
     prelude::*,
 };
 
@@ -41,9 +41,9 @@ pub fn setup_onewire_i2c_led_delay_using_dp(mut dp: Peripherals) ->  (OneWireTyp
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
    
-   //let delay = DelayType{};
-   let cp = CorePeripherals::take().unwrap();
-   let delay = Delay::new(cp.SYST, &rcc);
+   let delay = DelayType{};
+   //let cp = CorePeripherals::take().unwrap();
+   //let delay = Delay::new(cp.SYST, &rcc);
    //let delay = cp.SYST.delay(&rcc);
    //let delay = dp.TIM3.delay_us(&rcc);
 

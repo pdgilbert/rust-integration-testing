@@ -37,8 +37,7 @@ pub fn setup() ->  (I2cType, I2c2Type, LedType, DelayType) {
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
-    delay::Delay,
-    pac::{CorePeripherals},
+    //delay::Delay,
     prelude::*,
 };
 
@@ -55,8 +54,9 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(mut dp: Peripherals) ->  (I2cType, I2c
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
    
-   let cp = CorePeripherals::take().unwrap();
-   let delay = Delay::new(cp.SYST, &rcc);
+   let delay = DelayType{};
+   //let cp = CorePeripherals::take().unwrap();
+   //let delay = Delay::new(cp.SYST, &rcc);
 
     (i2c1, i2c2, led, delay)
 }

@@ -23,9 +23,9 @@ pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{gpioa::PA8, OpenDrain, Output},
-    pac::{CorePeripherals, USART1},
+    pac::{USART1},
     prelude::*,
     serial::{Serial, Tx},
 };
@@ -52,8 +52,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(mut dp: Peripherals) ->  (DhtPin, 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
 
-   //let delay = DelayType{};
-   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+   let delay = DelayType{};
+   //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
    let (tx, rx) = cortex_m::interrupt::free(move |cs| {
        (
