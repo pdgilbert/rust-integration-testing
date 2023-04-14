@@ -22,7 +22,7 @@ pub trait ReadAdc {
 use crate::dp::{Peripherals};
 
 pub use crate::dht::{DhtType};
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
@@ -238,11 +238,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 
     let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
     let led = setup_led(dp.GPIOC.split());
-    let mut delay = DelayType{};
-    //let delay = dp.TIM2.delay_us(&clocks);
-    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
-    //let cp = CorePeripherals::take().unwrap();
-    //let mut delay = cp.SYST.delay(&clocks);
+    let mut delay = dp.TIM2.delay_us(&clocks);
 
     delay.delay_ms(1000_u16);
 
@@ -411,8 +407,7 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
 use stm32l0xx_hal::{
     adc::{Adc, Ready},
     gpio::{Analog,  gpioa::{PA1}, },
-    delay::Delay,
-    pac::CorePeripherals,
+    //delay::Delay,
     prelude::*,
     rcc::Config, 
 };
@@ -424,7 +419,7 @@ type SensorType = Sensor<PA1<Analog>, Adc<Ready>>;
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, DelayType) {
     let mut rcc = dp.RCC.freeze(Config::hsi16());
-    let clocks = rcc.clocks;
+    //let clocks = rcc.clocks;
 
     let gpioa = dp.GPIOA.split(&mut rcc);
     let sens: SensorType = Sensor {
@@ -445,7 +440,8 @@ pub fn setup_sens_dht_i2c_led_delay_using_dp(dp: Peripherals) -> (SensorType, Dh
     let gpiob =dp.GPIOB.split(&mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
     let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    let mut delay = DelayType{};
 
     delay.delay_ms(1000_u16);
 

@@ -95,6 +95,7 @@ ina219           = {  version = "0.1.0" }
 ##ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-configuration-register" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
 htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
+xca9548a        = { git = "https://github.com/eldruin/xca9548a-rs" }
 
 cortex-m-rtic = ">=1.0" 
 #cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
@@ -522,6 +523,10 @@ path = "examples/misc-i2c-drivers/ina219-display.rs"
 [[example]]
 name = "air_quality"
 path = "examples/misc-i2c-drivers/air_quality.rs"
+
+[[example]]
+name = "xca9548a"
+path = "examples/misc-i2c-drivers/xca9548a.rs"
 
 
 # examples/projects

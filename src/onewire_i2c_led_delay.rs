@@ -6,7 +6,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use crate::dp::{Peripherals};
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::onewire::{OneWireType};
 
@@ -176,8 +176,7 @@ pub fn setup_onewire_i2c_led_delay_using_dp(dp: Peripherals) ->  (OneWireType, I
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
 
    let led = setup_led(dp.GPIOC.split());
-   let delay = DelayType{};
-   //let delay = dp.TIM2.delay_us(&clocks);
+   let delay = dp.TIM2.delay_us(&clocks);
 
    (onewire, i2c, led, delay)
 }
@@ -277,8 +276,7 @@ pub fn setup_onewire_i2c_led_delay_using_dp(dp: Peripherals) ->  (OneWireType, I
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-   delay::Delay,
-   pac::{CorePeripherals},
+   //delay::Delay,
    prelude::*,
     rcc::Config, // for ::Config but note name conflict with serial
 };
@@ -292,14 +290,14 @@ pub fn setup_onewire_i2c_led_delay_using_dp(dp: Peripherals) ->  (OneWireType, I
    let mut rcc = dp.RCC.freeze(Config::hsi16());
 
    let onewire = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
-   let clocks = rcc.clocks;
+   //let clocks = rcc.clocks;
 
    //let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), dp.AFIO.constrain(), &clocks);
    let led = setup_led(dp.GPIOC.split(&mut rcc));
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
-   //let delay = DelayType{};
+   let delay = DelayType{};
    //let delay = dp.TIM2.delay_us(&clocks);
-   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+   //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
    (onewire, i2c, led, delay)
 }

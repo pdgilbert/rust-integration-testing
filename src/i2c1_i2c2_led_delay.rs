@@ -7,7 +7,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use crate::dp::{Peripherals};
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 
 //#[cfg(not(feature = "stm32f0xx"))]
@@ -175,7 +175,8 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &clocks, &mut rcc.apb1);
 
    let led = setup_led(dp.GPIOC.split());
-   let delay = DelayType{};
+   //let delay = DelayType{};
+   let delay = dp.TIM2.delay_us(&clocks);
 
     (i2c1, i2c2, led, delay)
 }
@@ -270,8 +271,7 @@ pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Typ
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-   delay::Delay,
-   pac::{CorePeripherals},
+   //delay::Delay,
    prelude::*,
     rcc::Config, // for ::Config but note name conflict with serial
 };
@@ -283,13 +283,14 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) ->  (I2cType, I2c2Type, LedType, DelayType) {
    // UNTESTED
    let mut rcc = dp.RCC.freeze(Config::hsi16());
-   let clocks = rcc.clocks;
+   //let clocks = rcc.clocks;
    let gpiob = dp.GPIOB.split(&mut rcc);
 
    let led = setup_led(dp.GPIOC.split(&mut rcc));
    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, rcc);
 
-   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+   let delay = DelayType{};
+   //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     (i2c1, i2c2, led, delay)
 }

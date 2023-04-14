@@ -2,7 +2,7 @@
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
 
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed

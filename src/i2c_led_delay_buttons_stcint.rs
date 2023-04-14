@@ -25,7 +25,7 @@ pub trait SEEK {
     //fn stcint(&mut self) -> ;
 }
 
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
@@ -307,8 +307,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 ) {
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    //let mut delay = Delay::new(cp.SYST, clocks);
-    let mut delay = DelayType{};
+    let mut delay = dp.TIM2.delay_us(&clocks);
 
     let led = setup_led(dp.GPIOC.split());
 
@@ -514,12 +513,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType,
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6},
         Input, PullDown, PullUp,
     },
-    pac::{CorePeripherals,},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
 };
@@ -533,11 +531,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     PB6<Input<PullUp>>,
 ) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-    let clocks = rcc.clocks;
+    //let clocks = rcc.clocks;
  
+    let mut delay = DelayType{};
     //let mut delay = Delay::new(cp.SYST, clocks);
-    //let mut delay = DelayType{};
-    let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+    //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);

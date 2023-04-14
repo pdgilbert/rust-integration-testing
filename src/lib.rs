@@ -10,10 +10,13 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
+pub mod setups;
+
 // pub mod lora_spi_gps_usart; 
 pub mod i2c_led_delay_buttons_stcint;
 pub mod onewire_i2c_led_delay;
 pub mod i2c1_i2c2_led_delay;
+pub mod i2c1_i2c2_led_delays;
 //pub mod dht_i2c_led_delay;
 pub mod dht_i2c_led_usart_delay;
 pub mod adc_i2c_led_delay;

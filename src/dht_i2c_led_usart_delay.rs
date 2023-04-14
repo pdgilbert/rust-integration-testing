@@ -12,7 +12,7 @@ use crate::dp::{Peripherals};
 //pub use crate::alt_delay::{AltDelay as DelayType};
 //
 //#[cfg(any(feature="stm32g0xx", feature="stm32f4xx" ))]
-pub use crate::delay::{DelayType};
+pub use crate::delay::{Delay1Type as DelayType};
 
 pub use crate::dht::{DhtType};
 pub use crate::led::{setup_led, LED, LedType};
@@ -296,7 +296,7 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
    let mut led = setup_led(dp.GPIOC.split());
    led.off();
 
-   let delay = DelayType{};
+   let delay = dp.TIM2.delay_us(&clocks);
 
    let (tx, _rx) = Serial::new(
        dp.USART2,
@@ -478,8 +478,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
     gpio::{Output, OpenDrain, gpioa::PA8},
-    delay::Delay,
-    pac::{CorePeripherals, USART1},
+    //delay::Delay,
+    pac::{USART1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     serial::{Config, Serial1Ext, Tx},
@@ -497,7 +497,7 @@ pub type TxType = Tx<USART1>;
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, DelayType) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
-   let clocks = rcc.clocks;
+   //let clocks = rcc.clocks;
 
    let gpioa = dp.GPIOA.split(&mut rcc);
    let (tx, _rx) = dp.USART1.usart(
@@ -516,8 +516,8 @@ pub fn setup_dht_i2c_led_usart_delay_using_dp(dp: Peripherals) ->  (DhtPin, I2cT
    led.off();
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
-   //let delay = DelayType{};
-   let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
+   let delay = DelayType{};
+   //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
    (dht, i2c, led, tx, delay)
 }
