@@ -103,10 +103,8 @@ pub fn setup_i2c1_i2c2_led_delays_using_dp(dp: Peripherals) ->  (I2cType, I2c2Ty
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
-   let delay1 = Delay1Type{};
-   let delay2 = Delay2Type{};
-   //let delay1 = dp.TIM2.delay_us(&clocks);
-   //let delay2 = dp.TIM3.delay_us(&clocks);
+   let delay1 = dp.TIM2.delay_us(&clocks);
+   let delay2 = dp.TIM3.delay_us(&clocks);
 
    (i2c1, i2c2, led, delay1, delay2)
    }

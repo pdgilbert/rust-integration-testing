@@ -255,8 +255,8 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2,  mut gpioa: PartsA, mut gpiob: Pa
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     i2c::{I2c,},
-    gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}
-    },
+    //gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}},
+    gpio::{gpiob::{Parts as PartsB}},
     rcc::Clocks,
     pac::{I2C1, I2C2},
     prelude::*,
@@ -264,7 +264,8 @@ use stm32f4xx_hal::{
 
 
 #[cfg(feature = "stm32f4xx")]
-pub type I2c1Type = I2c<I2C1, (PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>)>;
+pub type I2c1Type = I2c<I2C1>;
+//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>)>;
 //pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
 //pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;
 
@@ -279,7 +280,8 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks) -> I2c1Type {
 }
 
 #[cfg(feature = "stm32f4xx")]
-pub type I2c2Type = I2c<I2C2, (PB10<Alternate<4u8, OpenDrain>>, PB3<Alternate<9u8, OpenDrain>>)>;
+pub type I2c2Type = I2c<I2C2>;
+//pub type I2c2Type = I2c<I2C2, (PB10<Alternate<4u8, OpenDrain>>, PB3<Alternate<9u8, OpenDrain>>)>;
 //pub type I2c2Type =   I2c<I2C2, impl Pins<I2C2>>;   
 
 #[cfg(feature = "stm32f4xx")]

@@ -139,13 +139,13 @@ fn setup() -> I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
-    i2c::{I2c, Pins},
+    i2c::{I2c},
     pac::{Peripherals, I2C2},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> I2c<I2C2, impl Pins<I2C2>> {
+fn setup() -> I2c<I2C2> {
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze();

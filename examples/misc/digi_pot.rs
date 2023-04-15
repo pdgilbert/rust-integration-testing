@@ -216,12 +216,12 @@ use stm32f4xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Pins, Spi, TransferModeNormal},
+    spi::{Spi, TransferModeNormal},
 };
 
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (
-    Spi<SPI1, impl Pins<SPI1>, TransferModeNormal>,
+    Spi<SPI1, TransferModeNormal>,
     PA1<Output<PushPull>>,
     LedType,   //impl LED,
     DelayType,
@@ -436,9 +436,9 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    delay::Delay,
+    //delay::Delay,
     gpio::{gpioa::PA1, Output, PushPull},
-    pac::{CorePeripherals, Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     rcc, // for ::Config but note name conflict with serial
     spi::{Pins, Spi},
@@ -471,8 +471,9 @@ fn setup() -> (
     cs.set_high().unwrap();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
-    //let delay = dp.TIM2.delay_us(&rcc.clocks); //DelayType{};  
-    let delay = Delay::new(CorePeripherals::take().unwrap().SYST, rcc.clocks);
+    //let delay = dp.TIM2.delay_us(&rcc.clocks); 
+    let delay = DelayType{};  
+    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, rcc.clocks);
 
     (spi, cs, led, delay)
 }

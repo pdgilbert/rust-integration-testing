@@ -209,14 +209,14 @@ fn setup() -> (
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
     timer::SysDelay as Delay,
-    i2c::{I2c, Pins},
+    i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2, impl Pins<I2C2>>, Delay) {
+fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.freeze();

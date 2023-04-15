@@ -293,7 +293,7 @@ fn setup() -> (
 use stm32f4xx_hal::{
     timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, Pins},
+    i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
@@ -305,7 +305,7 @@ use stm32f4xx_hal::{
 
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (
-    I2c<I2C2, impl Pins<I2C2>>,
+    I2c<I2C2>,
     impl LED,
     Delay,
     Tx<USART1>,
