@@ -14,11 +14,12 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-# The first job is only with dev-testing on bluepill and discovery-stm32f303. It goes by example so they
-# are all attempted. The job does not stop at the first example to fail. This is nice for 
+# One job (examples named eg) is only with dev-testing on bluepill, discovery-stm32f303, and others to run all examples 
+# in development. It goes by example so they are all attempted. 
+# The job does not stop at the first example to fail. This is nice for 
 # identifying problems in the examples, but is slow because of rebuild for each example.
 # (It would be faster if I could get caching to work.)
-# The 2nd job runs a matrix of stratagies x 14 boards.
+# The other job (boards named CI) runs a matrix of strategies x all "boards".
 # For each matrix point all examples are run with a single build. This is faster but
 # terminates on the first example failure so examples that are known to fail are omitted.
 
@@ -29,90 +30,6 @@ jobs:
 # The driver-testing  uses the git versions of the driver crate and the release version of the HAL crate.
 # The   hal-testing   uses the release versions of the driver crate and the git version of the HAL crate.
 # The   dev-testing   uses git versions of both the driver crate and the HAL crate.
-
-#################################################################################################
-
-  examples:
-    name: eg
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    strategy:
-      matrix:
-
-        eg:  [blink3,                  blink_impl,                   blink,     dht,   
-              echo_by_char,            echo_string,                      gps_rw,        
-              oled_gps,                serial_char,                      serial_string,        
-              temperature,             text_i2c,                         battery_monitor_ads1015,
-              ads1015-adc-display,              at24c256-eeprom,   
-              bmi160-imu-display,      digi_pot,                         oled_dht,
-              ccs811-gas-voc-display,  ccs811-gas-voc-hdc2080-display,   
-              ds1307-rtc,              hdc2080-temp-humidity-display,    iaq-core-c-gas-voc-display, 
-              isl29125-color-display,  max17043-battery-monitor-display, max30102-heart-usart, 
-              mcp7940n-rtc-display,    mlx90614-temperature-display,     mlx90615-temperature-display, 
-              mma8452-accel-display,   opt3001-als-display,              pca9685-pwm-rgb-led-servos, 
-              si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
-              tmp006-ir-temp-display,  tmp102-temp-display,              
-              veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
-              iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger,
-              lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
-              blink_rtic,              schedule,                         resource-user-struct,
-              dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
-              display_stuff_rtic,      ds18b20,
-              aht10-display,           aht10_rtic,                       aht20-display,       
-              hdc1080-display,
-              htu2xd-display,          htu2xd_rtic,
-              vl53lox-display,         air_quality,    
-              ina219-display,          ina219_rtic,
-             ]
-
-             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
-             # because the feature indicating the sensor needs to be set.
-             #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
-
-        brd: [bluepill, discovery-stm32f303, none-stm32g473]  
-
-        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
-        include:
-           - brd: "bluepill"
-             mcu:  stm32f103
-             hal: "stm32f1xx"
-             trg: "thumbv7m-none-eabi"
-           - brd: "discovery-stm32f303"
-             mcu:  stm32f303xc
-             hal: "stm32f3xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32g473"
-             mcu:  stm32g473
-             hal: "stm32g4xx"
-             trg: "thumbv7em-none-eabihf"
-
-    steps:
-      - uses: actions/checkout@v3
-      #previously  uses: actions-rs/toolchain@v1
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          #profile: minimal
-          toolchain: stable
-          target: ${{ matrix.trg }}
-    
-      - name: Configure caching 
-        uses: actions/cache@v3
-        with:
-          key: ${{ matrix.brd }}
-          path: |
-            ${{ env.HOME }}/.cargo
-            target
-
-      - name: tree
-        #--manifest-path to find Caro.toml.      
-        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
-
-      - name: Build
-        run: cargo build   --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
-
-      - name: Build example 
-        run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
-
 
 #################################################################################################
 #################################################################################################
@@ -494,3 +411,88 @@ jobs:
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_char
 
 #################################################################################################
+#################################################################################################
+#################################################################################################
+#################################################################################################
+
+  examples:
+    name: eg
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+
+        eg:  [blink3,                  blink_impl,                   blink,     dht,   
+              echo_by_char,            echo_string,                      gps_rw,        
+              oled_gps,                serial_char,                      serial_string,        
+              temperature,             text_i2c,                         battery_monitor_ads1015,
+              ads1015-adc-display,              at24c256-eeprom,   
+              bmi160-imu-display,      digi_pot,                         oled_dht,
+              ccs811-gas-voc-display,  ccs811-gas-voc-hdc2080-display,   
+              ds1307-rtc,              hdc2080-temp-humidity-display,    iaq-core-c-gas-voc-display, 
+              isl29125-color-display,  max17043-battery-monitor-display, max30102-heart-usart, 
+              mcp7940n-rtc-display,    mlx90614-temperature-display,     mlx90615-temperature-display, 
+              mma8452-accel-display,   opt3001-als-display,              pca9685-pwm-rgb-led-servos, 
+              si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
+              tmp006-ir-temp-display,  tmp102-temp-display,              
+              veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
+              iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger,
+              lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
+              blink_rtic,              schedule,                         resource-user-struct,
+              dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
+              display_stuff_rtic,      ds18b20,
+              aht10-display,           aht10_rtic,                       aht20-display,       
+              hdc1080-display,
+              htu2xd-display,          htu2xd_rtic,
+              vl53lox-display,         air_quality,    
+              ina219-display,          ina219_rtic,
+             ]
+
+             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
+             # because the feature indicating the sensor needs to be set.
+             #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
+
+        brd: [bluepill, discovery-stm32f303, none-stm32g473]  
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "discovery-stm32f303"
+             mcu:  stm32f303xc
+             hal: "stm32f3xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32g473"
+             mcu:  stm32g473
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
+
+    steps:
+      - uses: actions/checkout@v3
+      #previously  uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          #profile: minimal
+          toolchain: stable
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
+
+      - name: Build
+        run: cargo build   --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
+
+      - name: Build example 
+        run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
