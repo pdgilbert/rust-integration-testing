@@ -42,38 +42,26 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-//use rust_integration_testing_of_examples::led::{setup_led, LED};
-//use rust_integration_testing_of_examples::setups::{setup_led, LED};
-//use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{setup_i2c1_i2c2_led_delay_using_dp, LED};
-//use rust_integration_testing_of_examples::dp::{Peripherals};
-//use rust_integration_testing_of_examples::i2c as setups;  //::{setup_i2c1_i2c2};
-
-use rust_integration_testing_of_examples::setups;
-use rust_integration_testing_of_examples::setups::{LED, Peripherals};
-//or
-//use rust_integration_testing_of_examples::setups::*;
+use rust_integration_testing_of_examples::setups::{setup_i2c1_i2c2_led_delays_using_dp, LED, Peripherals};
 
 
-#[cfg(feature = "stm32f4xx")]
-use stm32f4xx_hal::{prelude::*,};
 
 #[entry]
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
-    //let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay1, delay2) = setup_i2c1_i2c2_led_delays_using_dp(dp);
 
-    let clocks = dp.RCC.constrain().cfgr.freeze();
+    //let clocks = dp.RCC.constrain().cfgr.freeze();
+    //let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, dp.GPIOB.split(), &clocks);
 
-    let (i2c1, i2c2) = setups::setup_i2c1_i2c2(dp.I2C1, dp.I2C2, dp.GPIOB.split(), &clocks);
-
-    let mut led = setups::setup_led(dp.GPIOC.split()); 
+    //let mut led = setup_led(dp.GPIOC.split()); 
     led.off();
 
-    let mut delay  = dp.TIM2.delay_us(&clocks);
-    let delay2 = dp.TIM5.delay_us(&clocks);
+    //let mut delay1  = dp.TIM2.delay_us(&clocks);
+    //let delay2 = dp.TIM5.delay_us(&clocks);
 
-    led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
+    led.blink(2000_u16, &mut delay1); // Blink LED to indicate setup finished.
 
     let manager = shared_bus::BusManagerSimple::new(i2c2);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
@@ -94,9 +82,9 @@ fn main() -> ! {
     Text::with_baseline(   "aht10-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
-    //delay.delay(2000u32);    
+    //delay1.delay(2000u32);    
 
-    led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
+    led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
     hprintln!("Text::with_baseline").unwrap();
 
     // now multiple devices on i2c1 bus
@@ -133,7 +121,7 @@ fn main() -> ! {
     // Split the device and pass the virtual I2C devices to AHT10 driver
     let parts = switch.split();
 
-    let mut sensor1 = AHT10::new(parts.i2c1, delay).expect("sensor failed");
+    let mut sensor1 = AHT10::new(parts.i2c1, delay1).expect("sensor failed");
     sensor1.reset().expect("sensor1 reset failed");
 
     let mut sensor2 = AHT10::new(parts.i2c2, delay2).expect("sensor2 failed");
