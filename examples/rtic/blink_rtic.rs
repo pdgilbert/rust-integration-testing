@@ -47,9 +47,8 @@ mod app {
     const ONE_DURATION: u64 = 20;  // used as milliseconds
     const TEN_DURATION: u64 = 500;
 
-    use rust_integration_testing_of_examples::led::{setup_led_using_dp, LED, LedType, MONOCLOCK};
-    //use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-    //    setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, LedType, DelayMs, MONOCLOCK};
+    use rust_integration_testing_of_examples::setups::{
+        setup_led_using_dp, LED, LedType, MONOCLOCK};
 
 
     #[monotonic(binds = SysTick, default = true)]

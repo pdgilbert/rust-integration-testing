@@ -43,10 +43,9 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-//use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, };
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
-        setup_i2c1_i2c2_led_delay_using_dp, LED, };
-use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::setups::{
+    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, LED};
+
 
 #[entry]
 fn main() -> ! {

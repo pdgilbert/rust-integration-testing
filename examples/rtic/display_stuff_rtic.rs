@@ -69,8 +69,7 @@ mod app {
 
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
-    //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{
+    use rust_integration_testing_of_examples::setups::{
         setup_i2c1_i2c2_led_delay_using_dp, I2c1Type as I2cType, LED, LedType, MONOCLOCK};
 
     use shared_bus::{I2cProxy};

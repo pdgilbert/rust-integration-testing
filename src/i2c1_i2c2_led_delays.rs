@@ -43,6 +43,12 @@ pub fn setup_i2c1_i2c2_led_delay() ->  (I2cType, I2c2Type, LedType, Delay1Type) 
    (i2c1, i2c2, led, delay1)
 }
 
+pub fn setup_i2c1_i2c2_led_delay_using_dp(dp: Peripherals) -> (
+             I2cType, I2c2Type, LedType, Delay1Type) {
+   let (i2c1, i2c2, led, delay1, _delay2) = setup_i2c1_i2c2_led_delays_using_dp(dp);  
+
+   (i2c1, i2c2, led, delay1)
+}
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{

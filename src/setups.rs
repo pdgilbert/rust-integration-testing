@@ -1,5 +1,6 @@
 // provide a common place to use  rust_integration_testing_of_examples::setups;
 
+pub use crate::monoclock::MONOCLOCK;
 pub use crate::delay::*;
 pub use crate::led::*;
 pub use crate::i2c::*;
