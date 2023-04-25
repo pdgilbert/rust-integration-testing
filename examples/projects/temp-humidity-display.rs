@@ -405,7 +405,7 @@ mod app {
         //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
 
         #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10", feature = "aht20")))]
-        sensor; // sensor must be specified. crash
+        sensor; // sensor feature must be specified. eg --features $MCU,$HAL,aht10".  COMPILING STOPPED
 
         #[cfg(feature = "hdc1080")]
         let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
