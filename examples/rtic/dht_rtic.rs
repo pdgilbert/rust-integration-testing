@@ -1,3 +1,5 @@
+//!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
+//!  
 //! Jan, 2023 - This is working with USB probe and with battery. Run tested on bluepill. 
 //!             It has a  workaround for SSD1306  text_style.
 //! 
@@ -69,14 +71,16 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     use embedded_graphics::{
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        //mono_font::{ascii::FONT_10X20 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
+        //mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
+        mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
     };
 
-    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306,
+                  prelude::DisplaySize128x32 as DISPLAYSIZE };
 
     const MONOTICK:  u32 = 100;
     const READ_INTERVAL: u64 = 10;  // used as seconds
@@ -104,7 +108,7 @@ mod app {
     {
        
        // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     
        let mut lines: [heapless::String<32>; 1] = [
            heapless::String::new(),
@@ -121,7 +125,7 @@ mod app {
        //let test_text  = "¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ";
        //   degree symbol "°" is about                  ^^ here 
        
-       write!(lines[0], "{:3}°C {:3}% RH", temperature, relative_humidity).unwrap();
+       write!(lines[0], "{:3}°C{:3}%RH", temperature, relative_humidity).unwrap();
 
        disp.clear();
        for i in 0..lines.len() {
@@ -162,9 +166,9 @@ mod app {
 
         let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
 
         display.init().unwrap();
@@ -202,10 +206,10 @@ mod app {
     struct Local {
         dht:   DhtType,
         delay: DelayType,
-        //display: Ssd1306<impl WriteOnlyDataCommand, DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>,
+        //display: Ssd1306<impl WriteOnlyDataCommand, DISPLAYSIZE, BufferedGraphicsMode<DISPLAYSIZE>>,
         display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+                          DISPLAYSIZE, 
+                          BufferedGraphicsMode<DISPLAYSIZE>>,
 //        text_style: MonoTextStyle<BinaryColor>,
     }
 

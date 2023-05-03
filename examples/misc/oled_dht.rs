@@ -1,7 +1,12 @@
-//!  MAYBE CONVERT THIS TO RTIC
+//!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
+//!  
 //!  Measure the temperature and humidity from a DHT11 or DHT22 on data pin (A8) and display on OLED with i2c.
 //!  (Specify feature "dht22"for DHT22).
-//!  Compare examples dht, oled_gps, and temperature_display which have more comments.
+//!  Compare example dht_rtic for similar capability.
+//!  See example dht for more details, and also compare examples oled_gps, and temperature_display.
+//!    [The DHT data pin is connected to the MCU pin PA8 in most (all) cases. ]
+//!  The i2c is using src/dht_i2c_led_usart_delay.rs which calls src/i2c.rs. See i2c.rs for pin details.
+//!    [ oled is on i2c1 using scl on pb8 and  sda on pb9 in many cases, including blackpill ]
 //!  Note that the DisplaySize setting needs to be adjusted for 128x64 or 128x32 display
 //!  Note that '--release' is needed when doing a run test on actual hardware. Otherwise
 //!  code is too slow for the timeout set in the crate and run gives 'Error Timeout'.
@@ -41,13 +46,14 @@ use dht_sensor::*;
 
 use embedded_graphics::{
     //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-    mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+    mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
 
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode,
+                  prelude::DisplaySize128x32 as DISPLAYSIZE };
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
@@ -111,13 +117,12 @@ fn main() -> ! {
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
 
-    //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_10X20)
+        .font(&FONT)
         .text_color(BinaryColor::On)
         .build();
 
