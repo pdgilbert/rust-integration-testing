@@ -1,8 +1,15 @@
+//!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
+//!  
 //!  Measure the temperature and humidity from a DHT11 sensor and print with hprintln (to
 //!  a gdb session).  The DHT11 data pin is connectted to pin A8 on the MCU board and has
 //!  a pull up resistor. (18K ohms used in some testing.)
-//!  The largest part of this file is the setup() functions used for each hal.
-//!  These make the application code common.
+//!  The largest part of this code is the setup() functions used for each hal.
+//!  They are in the file src/dht_i2c_led_usart_delay.rs which also uses src/dht.rs.
+//!  These make the application code below common for all hals.
+//!  The DHT uses 3 pin connections (and has an unused 4th pin). The pins are VCC, GND, and data.
+//!  The DHT data pin is connected to the MCU pin PA8 in most (all) cases. 
+//!  The data pin needs a (10K) pull up resistor. The pin is specified in src/dht.rs and would be 
+//!  changed there in the case of an MCU that requires a different pin to be used.
 //!
 //!  Note that '--release' is needed when doing a run test on actual hardware. Otherwise
 //!  code is too slow for the timeout set in the crate and run gives 'Error Timeout'.
