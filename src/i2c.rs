@@ -22,6 +22,9 @@ use stm32f0xx_hal::{
     prelude::*,
 };
 
+#[cfg(feature = "stm32f0xx")]
+pub use stm32f0xx_hal::i2c::Error as i2cError;
+
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 pub type I2c1Type = I2c<I2C1, PB8<Alternate<AF1>>, PB7<Alternate<AF1>>>;
 //pub type I2c1Type = I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
@@ -85,6 +88,9 @@ use stm32f1xx_hal::{
     rcc::Clocks,
     prelude::*
 };
+
+#[cfg(feature = "stm32f1xx")]
+pub use stm32f1xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32f1xx")]
 pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;   
@@ -198,6 +204,9 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
+pub use stm32f3xx_hal::i2c::Error as i2cError;
+
+#[cfg(feature = "stm32f3xx")]
 pub type I2c1Type = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
 //pub type I2c1Type = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> ;
 
@@ -254,7 +263,7 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2,  mut gpioa: PartsA, mut gpiob: Pa
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-    i2c::{I2c,},
+    i2c::{I2c, },
     //gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}},
     gpio::{gpiob::{Parts as PartsB}},
     rcc::Clocks,
@@ -262,6 +271,8 @@ use stm32f4xx_hal::{
     prelude::*,
 };
 
+#[cfg(feature = "stm32f4xx")]
+pub use stm32f4xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32f4xx")]
 pub type I2c1Type = I2c<I2C1>;
@@ -320,6 +331,10 @@ use stm32f7xx_hal::{
     pac::{I2C1, I2C2},
     prelude::*,
 };
+
+#[cfg(feature = "stm32f7xx")]
+pub use nb::Error as i2cError;
+//pub use stm32f7xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32f7xx")]
 pub type I2c1Type = BlockingI2c<I2C1, PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>>;
@@ -416,6 +431,9 @@ use stm32g0xx_hal::{
     prelude::*,
 };
 
+#[cfg(feature = "stm32g0xx")]
+pub use stm32g0xx_hal::i2c::Error as i2cError;
+
 
 #[cfg(feature = "stm32g0xx")]
 pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
@@ -467,6 +485,9 @@ use stm32g4xx_hal::{
     stm32::{I2C1, I2C2},
     prelude::*,
 };
+
+#[cfg(feature = "stm32g4xx")]
+pub use stm32g4xx_hal::i2c::Error as i2cError;
 
 
 #[cfg(feature = "stm32g4xx")]
@@ -528,6 +549,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+pub use stm32h7xx_hal::i2c::Error as i2cError;
+
+#[cfg(feature = "stm32h7xx")]
 pub type I2c1Type =  I2c<I2C1>;
 
 #[cfg(feature = "stm32h7xx")]
@@ -579,6 +603,9 @@ use stm32l0xx_hal::{
     prelude::*,
     rcc::Rcc,
 };
+
+#[cfg(feature = "stm32l0xx")]
+pub use stm32l0xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32l0xx")]
 pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
@@ -638,6 +665,9 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
+pub use stm32l1xx_hal::i2c::Error as i2cError;
+
+#[cfg(feature = "stm32l1xx")]
 pub type I2c1Type = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
 //pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;
 
@@ -691,6 +721,9 @@ use stm32l4xx_hal::{
     pac::{I2C1, I2C2},
     prelude::*,
 };
+
+#[cfg(feature = "stm32l4xx")]
+pub use stm32l4xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32l4xx")]
 pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;

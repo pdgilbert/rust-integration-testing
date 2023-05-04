@@ -34,77 +34,76 @@ use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-    use embedded_graphics::{
-        //mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
-        //mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
-        pixelcolor::BinaryColor,
-        prelude::*,
-        text::{Baseline, Text},
-    };
+use embedded_graphics::{
+    //mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
+    //mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
+    //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+    mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
+    pixelcolor::BinaryColor,
+    prelude::*,
+    text::{Baseline, Text},
+};
 
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::setups::{setup_i2c1_i2c2_led_delays_using_dp, LED, Peripherals};
+use rust_integration_testing_of_examples::setups::{setup_i2c1_i2c2_led_delays_using_dp, LED, Peripherals, i2cError};
 
-use stm32f4xx_hal::i2c::Error;
 
-    fn show_display<S>(
-        s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<Error>>>, 
-        s2: Result<(Humidity, Temperature), aht10Error<xca9548aError<Error>>>, 
-        //text_style: MonoTextStyle<BinaryColor>,
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-    ) -> ()
-    where
-        S: ssd1306::size::DisplaySize,  //trait
-    {
-       let mut line: heapless::String<64> = heapless::String::new();
-             
-       match s1 {
-            Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                          write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
-                         },
-            Err(e)    => {hprintln!("Error {:?}", e).unwrap();
-                          write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
-                         }
-        };
-             
-       match s2 {
-            Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                          write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
-                         },
-            Err(e)    => {hprintln!("Error {:?}", e).unwrap();
-                          write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
-                         }
-        };
-       
-       //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
-       // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
-      
-       show_message(&line, disp);
-       ()
-    }
+fn show_display<S>(
+    s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
+    s2: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
+    //text_style: MonoTextStyle<BinaryColor>,
+    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+) -> ()
+where
+    S: ssd1306::size::DisplaySize,  //trait
+{
+   let mut line: heapless::String<64> = heapless::String::new();
+         
+   match s1 {
+        Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                      write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
+                     },
+        Err(e)    => {hprintln!("Error {:?}", e).unwrap();
+                      write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
+                     }
+    };
+         
+   match s2 {
+        Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                      write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
+                     },
+        Err(e)    => {hprintln!("Error {:?}", e).unwrap();
+                      write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
+                     }
+    };
+   
+   //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
+   // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
+  
+   show_message(&line, disp);
+   ()
+}
 
-    fn show_message<S>(
-        text: &str,   //text_style: MonoTextStyle<BinaryColor>,
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-    ) -> ()
-    where
-        S: ssd1306::size::DisplaySize,  //trait
-    {
-       
-       // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
-    
-       disp.clear();
-       Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
-               .draw(&mut *disp)
-               .unwrap();
+fn show_message<S>(
+    text: &str,   //text_style: MonoTextStyle<BinaryColor>,
+    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+) -> ()
+where
+    S: ssd1306::size::DisplaySize,  //trait
+{
+   
+   // workaround. build here because text_style cannot be shared
+   let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-       disp.flush().unwrap();
-       ()
-    }
+   disp.clear();
+   Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
+           .draw(&mut *disp)
+           .unwrap();
+
+   disp.flush().unwrap();
+   ()
+}
 
 
 
