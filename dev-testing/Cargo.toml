@@ -534,3 +534,7 @@ path = "examples/misc-i2c-drivers/xca9548a.rs"
 [[example]]
 name = "temp-humidity-display"
 path = "examples/projects/temp-humidity-display.rs"
+
+[[example]]
+name = "temperature-display"
+path = "examples/projects/temperature-display.rs"

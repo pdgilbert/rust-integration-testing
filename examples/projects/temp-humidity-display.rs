@@ -377,8 +377,6 @@ mod app {
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
         let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
 
-        //let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
-
         //common display sizes are 128x64 and 128x32
         let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
