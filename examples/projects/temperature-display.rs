@@ -59,8 +59,8 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     use embedded_graphics::{
-        //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder}, 
+        //mono_font::{ascii::FONT_10X20 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
+        mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -86,28 +86,31 @@ mod app {
 
 
     fn show_display<S>(
-        v_a: [i16; 3],
-        v_b: [i16; 3],
-        v_c: [i16; 3],
-        v_d: [i16; 3],
+        v_a: [i16; 4],
+        v_b: [i16; 4],
+        v_c: [i16; 4],
+        v_d: [i16; 4],
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
         S: DisplaySize,
-    {
-       
-       // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
-    
-       let mut line: heapless::String<64> = heapless::String::new();
-       // use \n in place of separate writes, with one line rather than vector.
+    {    
+       let mut line: heapless::String<64> = heapless::String::new(); // \n to separate lines
            
        // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "A1:{:3}.{:1}°C A2:{:3}.{:1}°C A3:{:3}.{:1}°C A4:{:3}.{:1}°C ", 
+       write!(line, "A1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
             v_a[0]/10,v_a[0]%10,  v_a[1]/10,v_a[1]%10,  v_a[2]/10,v_a[2]%10,  v_a[2]/10,v_a[2]%10,).unwrap();
 
+       write!(line, "\nB1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
+            v_b[0]/10,v_b[0]%10,  v_b[1]/10,v_b[1]%10,  v_b[2]/10,v_b[2]%10,  v_b[2]/10,v_b[2]%10,).unwrap();
+
+       write!(line, "\nC1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
+            v_c[0]/10,v_c[0]%10,  v_c[1]/10,v_c[1]%10,  v_c[2]/10,v_c[2]%10,  v_c[2]/10,v_c[2]%10,).unwrap();
+
+       write!(line, "\nD1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
+            v_d[0]/10,v_d[0]%10,  v_d[1]/10,v_d[1]%10,  v_d[2]/10,v_d[2]%10,  v_d[2]/10,v_d[2]%10,).unwrap();
+
        show_message(&line, disp);
-       //  REPEAT FOR V_B V_C V_D
        ()
     }
 
@@ -208,7 +211,7 @@ mod app {
         //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
         (Shared {led}, 
-         Local {adc_a, adc_b, display}, 
+         Local {adc_a, adc_b, adc_c, adc_d, display}, 
          init::Monotonics(mono)
         )
     }
@@ -242,9 +245,13 @@ mod app {
        //hprintln!("measure").unwrap();
        blink::spawn(BLINK_DURATION.millis()).ok();
 
-       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-       let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
-       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+       cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+       cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+       cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+       
+       // note the range can be switched if needed, eg.
+       //cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
        let values_a = [
            block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
