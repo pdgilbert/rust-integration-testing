@@ -53,10 +53,10 @@ mod app {
  
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
-    use dht_sensor::dht11::Reading;
+    use dht_sensor::dht11::{read, Reading};
     #[cfg(feature = "dht22")]
-    use dht_sensor::dht22::Reading;
-    use dht_sensor::*;
+    use dht_sensor::dht22::{read, Reading};
+    //use dht_sensor::*;
 
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
@@ -112,7 +112,7 @@ mod app {
         delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
         
         // intial dht reading
-        let (temperature, humidity) = match Reading::read(&mut delay, &mut dht) {
+        let (temperature, humidity) = match read(&mut delay, &mut dht) {
             Ok(Reading {temperature, relative_humidity,})
                =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
                     (temperature, relative_humidity)
@@ -194,7 +194,7 @@ mod app {
         // this might be nicer if read could be done by spawn rather than wait for delay
         let delay = cx.local.delay;
         let dht = cx.local.dht;
-        let z = Reading::read(delay, dht);
+        let z = read(delay, dht);
         let (temperature, humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();

@@ -44,10 +44,10 @@ use rtic::app;
 mod app {
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
-    use dht_sensor::dht11::Reading;
+    use dht_sensor::dht11::{read, Reading};
     #[cfg(feature = "dht22")]
-    use dht_sensor::dht22::Reading;
-    use dht_sensor::*;
+    use dht_sensor::dht22::{read, Reading};
+    //use dht_sensor::*;
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
@@ -221,9 +221,7 @@ mod app {
 
         let delay = cx.local.delay;
         let dht = cx.local.dht;
-        //let z = (delay, dht).lock(|delay, dht| { Reading::read(delay, dht) });  WHY DID THIS NOT NEED mut delay ?
-        //let z = (delay).lock(|delay| { Reading::read(delay, dht) });             whereas this does need mut
-        let z = Reading::read(delay, dht);
+        let z = read(delay, dht);
         let (_temperature, _humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();

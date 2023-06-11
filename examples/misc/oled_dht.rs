@@ -30,10 +30,10 @@ use core::fmt::Write;
 
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
-use dht_sensor::dht11::Reading;
+use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
-use dht_sensor::dht22::Reading;
-use dht_sensor::*;
+use dht_sensor::dht22::{read, Reading};
+//use dht_sensor::*;
 
 // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
 // DisplaySize128x32:
@@ -130,7 +130,7 @@ fn main() -> ! {
         // Blink LED to check that everything is actually running.
         led.blink(50_u16, &mut delay);
 
-        match Reading::read(&mut delay, &mut dht) {
+        match read(&mut delay, &mut dht) {
             Ok(Reading {
                 temperature,
                 relative_humidity,}) 

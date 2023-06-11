@@ -45,12 +45,13 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
+
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
-use dht_sensor::dht11::Reading;
+use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
-use dht_sensor::dht22::Reading;
-use dht_sensor::*;
+use dht_sensor::dht22::{read, Reading};
+//use dht_sensor::*;
 
 use  ina219::{INA219,};
 
@@ -140,7 +141,7 @@ fn main() -> ! {
         // Note that blink takes about a mA current and might make current measurement noisy.
         led.blink(20_u16, &mut delay);
         
-        let z = Reading::read(&mut delay, &mut dht);
+        let z = read(&mut delay, &mut dht);
         let (dht_temp, dht_humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
