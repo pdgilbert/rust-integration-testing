@@ -127,7 +127,7 @@ mod app {
        
        write!(lines[0], "{:3}°C{:3}%RH", temperature, relative_humidity).unwrap();
 
-       disp.clear();
+       disp.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(

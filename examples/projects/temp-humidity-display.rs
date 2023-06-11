@@ -1,5 +1,13 @@
 //! Compile with feature hdc1080, or aht10, or aht20, or htu2xd.
-
+//! eg build
+//!   cargo build --no-default-features --target $TARGET --features $MCU,$HAL,aht10 --example temp-humidity-display
+//! 
+//! or eg run
+//!   export INTERFACE=stlink-v2;  openocd -f interface/$INTERFACE.cfg -f target/$PROC.cfg 
+//! and in another window do
+//!   cargo  run --target $TARGET --features $HAL,$MCU,aht10 --example temp-humidity-display  --release
+//!
+//!
 //! Feb 11, 2023 - This compiles and loads (--release) on bluepill and blackpill stm32f401 
 //!                    for sensors hdc1080, aht10, and htu2xd.
 //!                    with sensor on i2c1 and ssd1306 and ina219 on shared bus i2c2.
@@ -21,6 +29,7 @@
 //!  -Need error handling for init (and reset for htu2dx?).
 //!  -Need better error handling when sensor signal is missed. (ie recover rather than crash)
 //!  -test on power through usb plug.
+//!  -test on 5v power through ina219. (Configured TP5000 module for the battery chemistry or use usb in place of solar?)
 //!  -The ina219 power usage NEEDS CALIBRATION.
 //!  -Need to test more with solar power and adjust rtic sleep to check run time possibilities.
 //! 
@@ -321,7 +330,7 @@ mod app {
        // workaround. build here because text_style cannot be shared
        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     
-       disp.clear();
+       disp.clear_buffer();
        Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
                .draw(&mut *disp)
                .unwrap();

@@ -118,7 +118,7 @@ fn main() -> ! {
         write!(lines[0], "V: {}mv Vs: {}mV", v, vs).unwrap();
         write!(lines[1], "I: {}mA P:{}mW [{}mW]", i,  p, pc).unwrap();
         
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,

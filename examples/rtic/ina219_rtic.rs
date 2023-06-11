@@ -122,7 +122,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
        write!(lines[0], "V: {}mv Vs: {}mV", v, vs).unwrap();
        write!(lines[1], "I: {}mA P:{}mW [{}mW]", i,  p, pc).unwrap();
 
-       disp.clear();
+       disp.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(

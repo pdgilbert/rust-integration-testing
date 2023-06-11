@@ -71,7 +71,7 @@ fn main() -> ! {
 
         buffer.clear();
         write!(buffer, "{:.2}, {:.2}, {:.2}", m.x, m.y, m.z).unwrap();
-        display.clear();
+        display.clear_buffer();
         Text::new(&buffer, Point::zero(), text_style)
             .draw(&mut display)
             .unwrap();

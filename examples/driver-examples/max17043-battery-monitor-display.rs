@@ -70,7 +70,7 @@ fn main() -> ! {
         lines[1].clear();
         write!(lines[0], "Charge: {:.2}%   ", soc).unwrap();
         write!(lines[1], "Voltage: {:.2}V   ", voltage).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

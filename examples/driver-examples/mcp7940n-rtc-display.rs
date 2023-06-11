@@ -80,7 +80,7 @@ fn main() -> ! {
             now.second()
         )
         .unwrap();
-        display.clear();
+        display.clear_buffer();
         Text::new(&buffer, Point::zero(), text_style)
             .draw(&mut display)
             .unwrap();

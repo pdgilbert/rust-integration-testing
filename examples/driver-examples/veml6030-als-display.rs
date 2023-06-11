@@ -71,7 +71,7 @@ fn main() -> ! {
 
         buffer.clear();
         write!(buffer, "lux {:.2}", lux).unwrap();
-        display.clear();
+        display.clear_buffer();
         Text::new(&buffer, Point::zero(), text_style)
             .draw(&mut display)
             .unwrap();

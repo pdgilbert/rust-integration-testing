@@ -84,7 +84,7 @@ fn main() -> ! {
         write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
         write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
         
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,

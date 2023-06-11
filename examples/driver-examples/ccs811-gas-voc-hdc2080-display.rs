@@ -110,7 +110,7 @@ fn main() -> ! {
         write!(lines[1], "eTVOC: {}", data.etvoc).unwrap();
         write!(lines[2], "Temp: {:.2}ºC", env.temperature).unwrap();
         write!(lines[3], "Humidity: {:.2}%", env.humidity.unwrap_or(0.0)).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

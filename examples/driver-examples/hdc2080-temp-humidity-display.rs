@@ -70,7 +70,7 @@ fn main() -> ! {
         lines[1].clear();
         write!(lines[0], "Temperature: {:.2}ºC  ", data.temperature).unwrap();
         write!(lines[1], "Humidity: {:.2}%  ", data.humidity.unwrap()).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

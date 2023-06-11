@@ -77,7 +77,7 @@ fn main() -> ! {
         write!(lines[0], "CO2: {} ppm  ", data.co2).unwrap();
         write!(lines[1], "TVOC: {} ppb  ", data.tvoc).unwrap();
         write!(lines[2], "Resistance: {} Ohm  ", data.resistance).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

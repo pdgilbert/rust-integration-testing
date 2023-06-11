@@ -98,7 +98,7 @@ where
     write!(lines[0], "10k {:4}mV{:3}C", mv, temp).unwrap();
     write!(lines[1], "dht{:4}%RH{:3}C", dht_humidity, dht_temp).unwrap();
 
-    disp.clear();
+    disp.clear_buffer();
     for i in 0..lines.len() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(

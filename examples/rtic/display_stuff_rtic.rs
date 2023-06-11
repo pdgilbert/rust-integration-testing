@@ -104,7 +104,7 @@ mod app {
        // should not be necessary to do this every call but have not yet managed to pass it as an arg
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
     
-       disp.clear();
+       disp.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(
@@ -204,7 +204,7 @@ mod app {
        
        // write!(&lines[0], "stuff").unwrap();
     
-       cx.local.display.clear();
+       cx.local.display.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(

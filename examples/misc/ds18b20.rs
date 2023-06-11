@@ -119,7 +119,7 @@ where
     // See example oled_dht for comments on oled and also relative humidity
     write!(lines[0], "{:3}°C ", temperature).unwrap();
  
-    disp.clear();
+    disp.clear_buffer();
     for i in 0..lines.len() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(

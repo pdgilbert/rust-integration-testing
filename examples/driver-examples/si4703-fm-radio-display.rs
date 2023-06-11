@@ -88,7 +88,7 @@ fn main() -> ! {
     let mut buffer: heapless::String<64> = heapless::String::new();
     buffer.clear();
     write!(buffer, "Radio init...").unwrap();
-    display.clear();
+    display.clear_buffer();
     Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
     display.flush().unwrap();
  
@@ -105,7 +105,7 @@ fn main() -> ! {
 
     hprintln!("loop").unwrap();
     write!(buffer, "\nloop...").unwrap();
-    display.clear();
+    display.clear_buffer();
     Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
     display.flush().unwrap();
 
@@ -123,7 +123,7 @@ fn main() -> ! {
             hprintln!("Seeking...").unwrap();
             write!(buffer, "\nSeeking...").unwrap();
 
-            display.clear();
+            display.clear_buffer();
             Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
@@ -155,7 +155,7 @@ fn main() -> ! {
                 }
                 hprintln!(".").unwrap();
             }
-            display.clear();
+            display.clear_buffer();
             Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();

@@ -100,7 +100,7 @@ mod app {
     {         
        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     
-       disp.clear();
+       disp.clear_buffer();
        Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
                .draw(&mut *disp)
                .unwrap();

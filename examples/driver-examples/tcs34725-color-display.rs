@@ -87,7 +87,7 @@ fn main() -> ! {
         write!(lines[0], "Red  Green  Blue").unwrap();
         write!(lines[1], "{}  {}  {}", measurement.red, measurement.green, measurement.blue).unwrap();
         write!(lines[2], "Clear:   {}",  measurement.clear).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(line, Point::new(0, i as i32 * 10), text_style, Baseline::Top,)
                 .draw(&mut display)

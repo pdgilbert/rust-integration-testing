@@ -95,7 +95,7 @@ where
     write!(lines[1], "temp1:    {:5} C", temp1).unwrap();
     write!(lines[2], "t2 {:5} C t3 {:5} C", temp2, temp3).unwrap();
 
-    disp.clear();
+    disp.clear_buffer();
     for i in 0..lines.len() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(

@@ -83,7 +83,7 @@ fn main() -> ! {
             block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
         ];
 
-        display.clear();
+        display.clear_buffer();
         for i in 0..values.len() {
             write!(lines[i], "Channel {}: {}", i, values[i]).unwrap();
             Text::new(&lines[i], Point::new(0, i as i32 * 16), text_style)

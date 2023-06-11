@@ -82,7 +82,7 @@ fn main() -> ! {
         )
         .unwrap();
 
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

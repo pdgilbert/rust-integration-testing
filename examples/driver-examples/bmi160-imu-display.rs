@@ -96,7 +96,7 @@ fn main() -> ! {
         lines[1].clear();
         write!(lines[0], "acc: x {} y {} z {}", accel.x, accel.y, accel.z).unwrap();
         write!(lines[1], "gyr: x {} y {} z {}", gyro.x, gyro.y, gyro.z).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,

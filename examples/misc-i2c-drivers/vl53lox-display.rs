@@ -81,7 +81,7 @@ fn main() -> ! {
             Err(e)   => write!(lines[0], "Err0r: {:?}", e).unwrap()
         };
         
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,

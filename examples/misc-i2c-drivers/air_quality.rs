@@ -81,7 +81,7 @@ where
         write!(lines[1], "I: {}mA P:{}mW [{}mW]", current, power, power_calc).unwrap();
         write!(lines[2], "{:3} C   RH {:3}%", dht_temp, dht_humidity).unwrap();
 
-    display.clear();
+    display.clear_buffer();
     for (i, line) in lines.iter().enumerate() {
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(

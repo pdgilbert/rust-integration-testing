@@ -84,7 +84,7 @@ fn main() -> ! {
         write!(lines[0], "UVA: {}", uva).unwrap();
         write!(lines[1], "UVB: {}", uvb).unwrap();
         write!(lines[2], "UV index: {}", uv_index).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::new(line, Point::new(0, i as i32 * 16), text_style)
                 .draw(&mut display)

@@ -116,7 +116,7 @@ fn main() -> ! {
         let _read = max30102.read_fifo(&mut data).unwrap_or(0xFF);
 
         write!(buffer, "{}, {}, {}", data[0], data[1], data[2]).unwrap();
-        disp.clear();
+        disp.clear_buffer();
         Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top)
             .draw(&mut disp)
             .unwrap();

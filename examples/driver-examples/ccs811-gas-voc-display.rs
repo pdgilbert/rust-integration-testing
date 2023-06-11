@@ -95,7 +95,7 @@ fn main() -> ! {
         }
         write!(lines[0], "eCO2: {} ppm", data.eco2).unwrap();
         write!(lines[1], "eTVOC: {} ppb", data.etvoc).unwrap();
-        display.clear();
+        display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             //with font 6x10, 12 = 10 high + 2 space
             Text::with_baseline(line, Point::new(0, i as i32 * 12), text_style, Baseline::Top,)

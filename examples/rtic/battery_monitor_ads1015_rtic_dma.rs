@@ -143,7 +143,7 @@ mod app {
        write!(lines[0], "bat {:3}mv bat {:3}ma load {:3}ma temp{:3}°C v1{:3} v2{:3}  v3{:3} FIX ME", 
                          bat_mv, bat_ma, load_ma, temp_c, values_b[0], values_b[1], values_b[2],).unwrap();
 
-       disp.clear();
+       disp.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(

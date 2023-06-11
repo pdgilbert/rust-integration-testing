@@ -34,14 +34,11 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 display-interface-spi = "0.4.1"
 tinybmp = "0.3.1"  # for loading bmp image. could be dev-dependencies
 
-#ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
-ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_memory.x" } 
+ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
+#ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_memory.x" } OLD
 #ssd1306         = { path = "/home/paul/githubClones/ssd1306"  } 
-# NEEDS TO BE FIXED TO PROVIDE PROPER memory.x
-# for some reason ssd1306 fixes 
-#  linking with `rust-lld` failed: exit status: 1
-#  ...
-# >>> INCLUDE memory.x
+# ssd1306 PREVIOUSLY PROVIDED memory.x.  NEED TO CONFIRM THAT THIS HAS BEEN CHANGED
+# https://github.com/jamwaffles/ssd1306/issues/165
 
 #onewire         = { git = "https://github.com/kellerkindt/onewire" }
 onewire         = { git = "https://github.com/asdfuser/onewire" }
