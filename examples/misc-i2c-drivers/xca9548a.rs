@@ -184,7 +184,7 @@ fn main() -> ! {
         // Read humidity and temperature.   Sensor 1
         let s1 = sensor1.read();
         if s1.is_err() { sensor1.reset().unwrap()};    //need delay here
-        
+       
         // Read humidity and temperature.   Sensor 2
         let s2 = sensor2.read();
         if s2.is_err() { sensor2.reset().unwrap()};    //need delay here

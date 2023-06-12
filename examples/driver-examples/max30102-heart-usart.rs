@@ -512,12 +512,11 @@ use stm32g4xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Config},
-    stm32::{CorePeripherals, Peripherals, I2C2, USART1, USART2},
+    stm32::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
     gpio::{Alternate,  AlternateOD,
-          gpioa::{PA2, PA3, PA8, PA9},
-          gpiob::{PB10, PB11}},
+          gpioa::{PA2, PA3, PA8, PA9}},
 };
 
 #[cfg(feature = "stm32g4xx")]
