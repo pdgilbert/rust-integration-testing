@@ -34,14 +34,19 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 display-interface-spi = "0.4.1"
 tinybmp = "0.3.1"  # for loading bmp image. could be dev-dependencies
 
+#ssd1306         = ">=0.8.0"   
 ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
 #ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_memory.x" } OLD
 #ssd1306         = { path = "/home/paul/githubClones/ssd1306"  } 
 # ssd1306 PREVIOUSLY PROVIDED memory.x.  NEED TO CONFIRM THAT THIS HAS BEEN CHANGED
 # https://github.com/jamwaffles/ssd1306/issues/165
 
+# experiments with onewire so far only using stm32f1xx BUT compile problems can cause
+# problems with src/onewire...  that prevent other examples from compiling
 #onewire         = { git = "https://github.com/kellerkindt/onewire" }
-onewire         = { git = "https://github.com/asdfuser/onewire" }
+#onewire         = { git = "https://github.com/asdfuser/onewire" }   # src/ libs compiled circa June 2023
+onewire         = { git = "https://github.com/katyo/onewire" }       # src/ libs compiled circa Aug  2023
+
 #one-wire-bus     = ">=0.1.1" 
 #one-wire-bus    = { git = "https://github.com/pdgilbert/one-wire-bus" }
 #one-wire-bus    = { path = "/home/paul/githubClones/one-wire-bus" }
@@ -52,7 +57,7 @@ ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
 
 # examples//driver-examples/
 mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
-ad983x          = { git = "https://github.com/eldruin/ad983x-rs" }
+#ad983x          = { git = "https://github.com/eldruin/ad983x-rs" }  # CONFLICT needs embedded-hal = "=1.0.0-alpha.8 but stm32f4xx-hal wants 11
 ads1x1x         = { git = "https://github.com/eldruin/ads1x1x-rs" }
 bmi160          = { git = "https://github.com/eldruin/bmi160-rs" }
 ds1307          = { git = "https://github.com/eldruin/ds1307-rs" }

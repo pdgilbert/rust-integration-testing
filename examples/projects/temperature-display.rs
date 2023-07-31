@@ -1,7 +1,11 @@
 //! TARGET Measure temperature with multiple 10k thermistor sensors (NTC 3950 10k thermistors probes) 
 //! using multiple channel adc and crate ads1x1x. Display using SSD1306.
 
+//!  i2c pin numbers for the MCU are set in src/i2c.rs  by links below through 
+//!     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay
+
 //!  WORK IN PROGRESS. MOST CODE STILL FROM ANOTHER EXAMPLE.
+
 //! Compare examples/misc/battery_monitor_ads1015_rtic.rs, examples/misc/therm10k_display.rs,
 //! and examples/projects/temp-humidity-display.rs.
 
