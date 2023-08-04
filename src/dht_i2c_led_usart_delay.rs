@@ -7,19 +7,14 @@ use panic_halt as _;
 
 use crate::dp::{Peripherals};
 
-//#[cfg(any(feature="stm32f0xx", feature="stm32f1xx", feature="stm32f3xx", feature="stm32f7xx",
-//          feature="stm32h7xx", feature="stm32l0xx", feature="stm32l1xx", feature="stm32l4xx"))]
-//pub use crate::alt_delay::{AltDelay as DelayType};
-//
-//#[cfg(any(feature="stm32g0xx", feature="stm32f4xx" ))]
+pub use crate::delay::DelayUs;
+pub use crate::delay::DelayMs;
+
 pub use crate::delay::{Delay1Type as DelayType};
 
 pub use crate::dht::{DhtType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
-
-pub use embedded_hal::blocking::delay::DelayUs;
-pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{

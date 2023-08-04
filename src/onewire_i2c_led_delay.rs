@@ -6,6 +6,10 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use crate::dp::{Peripherals};
+
+pub use crate::delay::DelayUs;
+pub use crate::delay::DelayMs;
+
 pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::onewire::{OneWireType};
@@ -16,8 +20,6 @@ pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
 #[cfg(feature = "stm32f0xx")]
 pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
 
-pub use embedded_hal::blocking::delay::DelayUs;
-pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{

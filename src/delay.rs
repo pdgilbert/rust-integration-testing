@@ -1,3 +1,6 @@
+pub use embedded_hal::blocking::delay::DelayUs;
+pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
+
 //#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 //use stm32f0xx_hal::{
 //    delay::Delay,

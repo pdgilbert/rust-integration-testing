@@ -8,6 +8,14 @@ use panic_halt as _;
 
 use crate::dp::{Peripherals};
 
+pub use crate::delay::DelayUs;
+pub use crate::delay::DelayMs;
+
+pub use crate::delay::{Delay1Type as DelayType};
+pub use crate::led::{setup_led, LED};
+pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+
 pub use si4703::{
     reset_and_select_i2c_method1 as reset_si4703, ChannelSpacing, DeEmphasis, 
     SeekDirection, SeekMode, Si4703, Volume, ErrorWithPin,
@@ -24,13 +32,6 @@ pub trait SEEK {
     fn seekdown(&mut self) -> bool;
     //fn stcint(&mut self) -> ;
 }
-
-pub use crate::delay::{Delay1Type as DelayType};
-pub use crate::led::{setup_led, LED};
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
-
-pub use embedded_hal::blocking::delay::DelayUs;
-pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 
 

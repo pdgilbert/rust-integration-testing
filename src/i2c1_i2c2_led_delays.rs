@@ -7,6 +7,10 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use crate::dp::{Peripherals};
+
+pub use crate::delay::DelayUs;
+pub use crate::delay::DelayMs;
+
 pub use crate::delay::{Delay1Type, Delay2Type};
 pub use crate::led::{setup_led, LED, LedType};
 
@@ -19,8 +23,6 @@ pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType};
 pub use crate::i2c::{setup_i2c1_i2c2, setup_i2c2, I2c1Type, I2c2Type};
 
-pub use embedded_hal::blocking::delay::DelayUs;
-pub use embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs as DelayMs;
 
 // A delay is used in sensor initialization and read. 
 // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
