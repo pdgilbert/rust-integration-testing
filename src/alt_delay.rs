@@ -4,7 +4,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use embedded_hal::blocking::delay::{DelayMs, DelayUs};
+use crate::delay::{DelayMs, DelayUs};
 
 // A delay is used in some sensor initializations and read operationes (eg dht). 
 // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
