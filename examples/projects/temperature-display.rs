@@ -5,6 +5,7 @@
 //!     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay
 
 //!  WORK IN PROGRESS. MOST CODE STILL FROM ANOTHER EXAMPLE.
+//! https://www.ametherm.com/thermistor/ntc-thermistor-beta
 
 //! Compare examples/misc/battery_monitor_ads1015_rtic.rs, examples/misc/therm10k_display.rs,
 //! and examples/projects/temp-humidity-display.rs.
