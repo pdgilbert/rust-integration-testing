@@ -84,11 +84,8 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 # examples/misc-i2c-drivers/
 #aht10           = { git = "https://github.com/heyitsanthony/aht10" }
 aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
-aht20           = { git = "https://github.com/mythmon/aht20" }
-#aht20           = { git = "https://github.com/nim65s/aht20" } # this should now work also for Aht20NoDelay but cargo update gives
-#  conflict for version for `embedded-hal=1.0.0-rc.1 thru embedded-hal-async and embassy-time. Other packages not yet using 1.0.0-rc.1.
-#  switched back to mythmon/aht20, but update problem should resolve in the future.
-#aht20    = { git = "https://github.com/nim65s/aht20", default-features = false } # to use aht20::Aht20NoDelay
+#aht20           = { git = "https://github.com/mythmon/aht20" } # this appears to not be actively updated
+aht20           = { git = "https://github.com/nim65s/aht20" } 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  This one needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } 
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
