@@ -137,7 +137,7 @@ fn setup() -> (
     let mut afio = p.AFIO.constrain();
     let mut gpioa = p.GPIOA.split();
 
-    let txrx1 = Serial::usart1(
+    let txrx1 = Serial::new(
         p.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9,
@@ -147,7 +147,7 @@ fn setup() -> (
         Config::default()
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1),
-        clocks,
+        &clocks,
     ); //.split();
 
     let (tx1, rx1) = txrx1.split();
