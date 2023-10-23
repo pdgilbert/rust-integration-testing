@@ -461,7 +461,7 @@ jobs:
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
            - brd: "blackpill-stm32f401"
-             mcu:  stm32f1401
+             mcu:  stm32f401
              hal: "stm32f4xx"
              trg: "thumbv7em-none-eabihf"
         #   - brd: "bluepill"
