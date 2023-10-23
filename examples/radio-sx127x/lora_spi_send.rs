@@ -59,7 +59,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
-use e_h_1a::delay::blocking::DelayMs;
+use embedded_hal::delay::DelayUs;
 
 use radio::Transmit;
 

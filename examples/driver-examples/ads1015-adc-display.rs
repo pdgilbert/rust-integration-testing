@@ -21,10 +21,9 @@
 #![no_std]
 #![no_main]
 
-use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
-
+use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, ChannelSelection};
+ 
 use cortex_m_rt::entry;
-use embedded_hal::adc::OneShot;
 use nb::block;
 
 use core::fmt::Write;
@@ -77,10 +76,10 @@ fn main() -> ! {
 
         // Read voltage in all channels
         let values = [
-            block!(adc.read(&mut AdcChannel::SingleA0)).unwrap_or(8091),
-            block!(adc.read(&mut AdcChannel::SingleA1)).unwrap_or(8091),
-            block!(adc.read(&mut AdcChannel::SingleA2)).unwrap_or(8091),
-            block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091),
+            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA0)).unwrap_or(8091),
+            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA1)).unwrap_or(8091),
+            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA2)).unwrap_or(8091),
+            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA3)).unwrap_or(8091),
         ];
 
         display.clear_buffer();

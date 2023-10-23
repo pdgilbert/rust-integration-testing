@@ -55,7 +55,7 @@ use dht_sensor::dht22::{read, Reading};
 
 use  ina219::{INA219,};
 
-use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{setup_dht_i2c_led_usart_delay_using_dp, DelayMs, LED, };
+use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{setup_dht_i2c_led_usart_delay_using_dp, DelayUs, LED, };
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 fn display<S>(

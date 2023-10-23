@@ -15,21 +15,21 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
-use embedded_hal::blocking::delay::DelayUs;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::delay::DelayUs;
+use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire};   //, DeviceSearch
 
 //use cortex_m::asm;
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp, DelayMs};
+use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp};
 
 
 fn find_devices<P, E>(
-    delay: &mut impl DelayUs<u16>,
+    delay: &mut impl DelayUs,
     one_wire_pin: P,
-) -> ()   //DeviceSearch< P, impl DelayUs<u16>>
+) -> ()   //DeviceSearch< P, impl DelayUs>
     where
         P: OutputPin<Error=E> + InputPin<Error=E>,
         E: Debug
@@ -71,7 +71,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let (pin, _i2c, _led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
 
-    delay.delay_ms(1000_u16);
+    delay.delay_ms(1000);
 
 // asm::bkpt();
 

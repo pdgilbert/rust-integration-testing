@@ -40,11 +40,10 @@
 #![no_std]
 #![no_main]
 
-use ads1x1x::{channel as AdcChannel, Ads1x1x, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, ChannelSelection};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
-use embedded_hal::adc::OneShot;
+use embedded_hal::delay::DelayUs;
 use nb::block;
 
 use core::fmt::Write;
@@ -149,16 +148,16 @@ fn main() -> ! {
         led.blink(50_u16, &mut delay);
 
         // Read adc
-        let thermistor = block!(adc.read(&mut AdcChannel::SingleA0)).unwrap_or(8091) * 5;  //FIX
-        let a1 = block!(adc.read(&mut AdcChannel::SingleA1)).unwrap_or(8091);
-        let a2 = block!(adc.read(&mut AdcChannel::SingleA2)).unwrap_or(8091);
-        let a3 = block!(adc.read(&mut AdcChannel::SingleA3)).unwrap_or(8091);
+        let thermistor = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA0)).unwrap_or(8091) * 5;  //FIX
+        let a1 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA1)).unwrap_or(8091);
+        let a2 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA2)).unwrap_or(8091);
+        let a3 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA3)).unwrap_or(8091);
 
     hprintln!("values read").unwrap();
     hprintln!("values  {} {} {} {}", thermistor, a1, a2, a3).unwrap();
 
         show_display(thermistor, a1, a2, a3, text_style, &mut display);
 
-        delay.delay_ms(5000_u16);
+        delay.delay_ms(5000);
     }
 }

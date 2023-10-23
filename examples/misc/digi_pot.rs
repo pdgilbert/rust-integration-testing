@@ -33,7 +33,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 //use cortex_m_semihosting::*;
 
-use embedded_hal::blocking::delay::DelayMs;
+//use embedded_hal::delay::DelayUs;
 
 use mcp4x;
 
@@ -254,7 +254,7 @@ fn setup() -> (
     let led = setup_led(dp.GPIOC.split());
 
     //let delay = cp.SYST.delay(&clocks);
-    let delay = dp.TIM2.delay_us(&clocks);
+    let delay = dp.TIM2.delay(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -604,7 +604,7 @@ fn main() -> ! {
         // If the LED 0 does not blink, something went wrong.
         led.blink(50_u16, &mut delay);
 
-        delay.delay_ms(50_u16);
+        delay.delay_ms(50_u32);
 
         pot.set_position(mcp4x::Channel::Ch0, position).unwrap();
         pot.set_position(mcp4x::Channel::Ch1, 255 - position)

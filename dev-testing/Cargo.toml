@@ -15,7 +15,8 @@ edition = "2021"
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true, branch = "hal-rc"} 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -118,6 +119,8 @@ fugit = { version = "0.3.3", optional = true }
 #radio         = { version = "0.9.1" }
 ##radio         = { version = "0.10.0" }
 #radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
+#radio-sx127x  = { version = "0.14.0", default-features = false }
+#radio         = { version = "0.11.0" }
 
 #  check:  diff dev-testing/Cargo.toml release-testing/Cargo.toml
 #
@@ -126,8 +129,11 @@ fugit = { version = "0.3.3", optional = true }
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
 
-embedded-hal = {version = "^0.2.4" }
+#embedded-hal = {version = "^0.2.4" }
 #embedded-hal = {version = "1.0.0-rc.1" }
+#embedded-hal = { features = ["unproven"], version = "0.2.7" }
+embedded-hal = "1.0.0-rc.1"
+#embedded-hal-nb = "1.0.0-rc.1"
 
 embedded-graphics = ">=0.7"
 

@@ -38,7 +38,7 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayUs;
 //use embedded_hal::adc::OneShot;
 //use nb::block;
 
@@ -69,10 +69,9 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
 
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
-use dht_sensor::dht11::Reading;
+use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
-use dht_sensor::dht22::Reading;
-use dht_sensor::*;
+use dht_sensor::dht22::{read, Reading};
 
 use rust_integration_testing_of_examples::adc_i2c_led_delay::{setup, LED, ReadAdc};
 
@@ -153,7 +152,7 @@ fn main() -> ! {
         let temp:i64  = a - (mv / b) as i64 ;
         //hprintln!("probe  {}mV  {}C ", mv, temp).unwrap();
 
-        let z = Reading::read(&mut delay, &mut dht);
+        let z = read(&mut delay, &mut dht);
         let (dht_temp, dht_humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
                =>  {//hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
@@ -168,6 +167,6 @@ fn main() -> ! {
  
         show_display(mv, temp, dht_temp, dht_humidity, text_style, &mut display);
 
-        delay.delay_ms(5000_u16);
+        delay.delay_ms(5000);
     }
 }

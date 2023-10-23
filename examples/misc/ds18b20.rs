@@ -26,8 +26,8 @@ use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-use embedded_hal::blocking::delay::DelayUs;
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::delay::DelayUs;
+use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire, OneWireResult};
 
@@ -49,12 +49,12 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp, LED, DelayMs};
+use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp, LED};
 
 // open_drain_output is really input and output
 
 fn get_sensor<P, E>(
-    delay: &mut (impl DelayMs<u16> + DelayUs<u16>),
+    delay: &mut impl DelayUs,
     one_wire_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where
@@ -69,7 +69,7 @@ fn get_sensor<P, E>(
     // or just wait the longest time, which is the 12-bit resolution (750ms)
     Resolution::Bits12.delay_for_measurement_time(delay);
     // or
-    delay.delay_ms(2000_u16); // Delay 2 seconds
+    delay.delay_ms(2000); // Delay 2 seconds
 
     // iterate over all devices
     //according to  one_wire_bus  device_search:

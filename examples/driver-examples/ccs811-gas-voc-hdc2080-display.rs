@@ -28,7 +28,7 @@ use embedded_ccs811::{
 use hdc20xx::{Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayUs;
 use heapless::String;
 use nb::block;
 
@@ -67,7 +67,7 @@ fn main() -> ! {
     let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
     let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
     ccs811.software_reset().unwrap();
-    delay.delay_ms(10_u16);
+    delay.delay_ms(10);
     let mut lines: [String<32>; 4] = [String::new(), String::new(), String::new(), String::new()];
 
     let mut ccs811 = ccs811.start_application().ok().unwrap();
@@ -89,7 +89,7 @@ fn main() -> ! {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.
         led.blink(500_u16, &mut delay);
-        delay.delay_ms(500_u16);
+        delay.delay_ms(500);
 
         let data = block!(ccs811.data()).unwrap_or(default);
 

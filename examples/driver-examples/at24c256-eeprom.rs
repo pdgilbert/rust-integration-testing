@@ -24,7 +24,7 @@
 use eeprom24x::{Eeprom24x, SlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayUs;
 
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
@@ -49,13 +49,13 @@ fn main() -> ! {
     hprintln!("check").unwrap();
 
     // wait maximum time necessary for write
-    delay.delay_ms(5_u16);
+    delay.delay_ms(5);
     loop {
         let mut data = [0; 4];
         eeprom.read_data(memory_address, &mut data).unwrap();
         if data == [0xAB, 0xCD, 0xEF, 0x12] {
             led.blink(250_u16, &mut delay);
-            delay.delay_ms(250_u16);
+            delay.delay_ms(250);
         }
     }
 }

@@ -284,7 +284,7 @@ mod app {
 
     // DelayType is only needed for some sensors. It gives a warningfor others.
     use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayMs, DelayType, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayUs, DelayType, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;

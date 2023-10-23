@@ -21,8 +21,8 @@
 use tcs3472::{AllChannelMeasurement, Tcs3472};
 
 use core::fmt::Write;
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
 use cortex_m_rt::entry;
+use embedded_hal::delay::DelayUs;
 
 //use rtt_target::{rprintln, rtt_init_print};
 
@@ -60,7 +60,7 @@ fn main() -> ! {
     sensor.enable_rgbc().unwrap();
     while !sensor.is_rgbc_status_valid().unwrap() {
         // wait for measurement to be available
-        delay.delay_ms(50_u8);
+        delay.delay_ms(50);
     }
     let mut lines: [heapless::String<32>; 3] = [
         heapless::String::new(),

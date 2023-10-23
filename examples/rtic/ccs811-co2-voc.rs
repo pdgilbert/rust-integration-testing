@@ -66,10 +66,7 @@ mod app {
     use systick_monotonic::*;
     use nb::block;
 
-    use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
-//use cortex_m::prelude::embedded_hal::blocking::delay::DelayMs;
-
-//    use embedded_hal::blocking::delay::DelayUs;
+    use embedded_hal::delay::DelayUs;
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
     use fugit::TimerDuration;

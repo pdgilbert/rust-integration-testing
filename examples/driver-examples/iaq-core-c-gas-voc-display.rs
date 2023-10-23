@@ -21,7 +21,7 @@
 use iaq_core::{IaqCore, Measurement};
 
 use core::fmt::Write;
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayUs;
 use cortex_m_rt::entry;
 
 use nb::block;
@@ -67,7 +67,7 @@ fn main() -> ! {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.
         led.blink(50_u16, &mut delay);
-        delay.delay_ms(50_u16);
+        delay.delay_ms(50);
 
         let data = block!(sensor.data()).unwrap_or(Measurement::default());
 

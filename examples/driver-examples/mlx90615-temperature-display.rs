@@ -21,7 +21,7 @@
 use mlx9061x::{Mlx9061x, SlaveAddr};
 
 use core::fmt::Write;
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayUs;
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
@@ -64,7 +64,7 @@ fn main() -> ! {
         led.blink(50_u16, &mut delay);
 
         let t_obj = sensor.object_temperature().unwrap_or(-1.0);
-        delay.delay_ms(50_u16); // a pause is necessary in between
+        delay.delay_ms(50); // a pause is necessary in between
         let t_a = sensor.ambient_temperature().unwrap_or(-1.0);
 
         lines[0].clear();
@@ -77,7 +77,7 @@ fn main() -> ! {
                 .draw(&mut display)
                 .unwrap();
         }
-        delay.delay_ms(50_u16); // a pause is necessary in between
+        delay.delay_ms(50); // a pause is necessary in between
         display.flush().unwrap();
     }
 }

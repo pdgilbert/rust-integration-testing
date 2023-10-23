@@ -27,7 +27,7 @@
 use embedded_ccs811::{prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode, SlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayUs;
 use heapless::String;
 use nb::block;
 
@@ -65,7 +65,7 @@ fn main() -> ! {
 
     let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), SlaveAddr::default());
     ccs811.software_reset().unwrap();
-    delay.delay_ms(10_u16);
+    delay.delay_ms(10);
     let mut lines: [String<32>; 2] = [String::new(), String::new()];
 
     let mut ccs811 = ccs811.start_application().ok().unwrap();
@@ -86,7 +86,7 @@ fn main() -> ! {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.
         led.blink(100_u16, &mut delay);
-        delay.delay_ms(100_u16);
+        delay.delay_ms(100);
 
         let data = block!(ccs811.data()).unwrap_or(default);
 

@@ -41,7 +41,7 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::setups::{
-    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, DelayMs};
+    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, DelayUs};
 
 
 #[entry]
@@ -66,7 +66,7 @@ fn main() -> ! {
     Text::with_baseline(   "hdc1080-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
-    delay.delay_ms(2000_u16);
+    delay.delay_ms(2000_u32);
 
     // Start the sensor.
     //let mut sensor = Hdc1080::new(manager.acquire_i2c(), delay).unwrap();

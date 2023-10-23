@@ -16,7 +16,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
-use embedded_hal::blocking::delay::DelayMs;
+use embedded_hal::delay::DelayUs;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
@@ -58,7 +58,7 @@ fn main() -> ! {
     let (_i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
 
     led.off();
-    delay.delay_ms(2000_u16);
+    delay.delay_ms(2000);
     led.blink(1000_u16, &mut delay);
 
     let manager2 = shared_bus::BusManagerSimple::new(i2c2);
@@ -131,7 +131,7 @@ fn main() -> ! {
         }
         display.flush().unwrap();
         
-        delay.delay_ms(2000_u16);
+        delay.delay_ms(2000);
     }
 }
 

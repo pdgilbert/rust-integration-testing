@@ -55,7 +55,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
-                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayMs,
+                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayUs,
                  SEEK, ChannelSpacing, 
                  DeEmphasis, SeekDirection, SeekMode, Si4703, Volume, ErrorWithPin};
 
@@ -94,9 +94,9 @@ fn main() -> ! {
  
     let mut radio = Si4703::new(manager.acquire_i2c());
     radio.enable_oscillator().unwrap();
-    delay.delay_ms(500_u16);
+    delay.delay_ms(500);
     radio.enable().unwrap();
-    delay.delay_ms(110_u16);
+    delay.delay_ms(110);
 
     radio.set_volume(Volume::Dbfsm28).unwrap();
     radio.set_deemphasis(DeEmphasis::Us50).unwrap();

@@ -80,7 +80,7 @@ mod app {
     #[allow(unused_imports)]
 
     use rust_integration_testing_of_examples::setups::{
-        setup_dht_i2c_led_delay_using_dp, I2cType, LED, LedType, DelayMs, MONOCLOCK};
+        setup_dht_i2c_led_delay_using_dp, I2cType, LED, LedType, DelayUs, MONOCLOCK};
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{

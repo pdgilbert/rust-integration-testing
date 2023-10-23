@@ -25,7 +25,7 @@
 
 use pwm_pca9685::{Address, Pca9685};
 
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayUs;
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
@@ -55,7 +55,7 @@ fn main() -> ! {
     loop {
         if let Some((r, g, b)) = rainbow.next() {
             const MAX: u16 = 4080 >> 5;
-            delay.delay_ms(1_u16);
+            delay.delay_ms(1);
             let (r, g, b) = (r >> 5, g >> 5, b >> 5); // make LEDs less bright
             values[0] = r;
             values[1] = g;

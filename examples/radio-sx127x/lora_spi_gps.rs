@@ -16,7 +16,7 @@ use cortex_m_semihosting::*;
 
 use nb::block;
 
-use e_h_1a::delay::blocking::DelayMs;
+use e_h_1a::delay::blocking::DelayUs;
 
 use embedded_hal::serial::Read;
 

@@ -23,7 +23,7 @@
 
 use ds1307::{Ds1307, NaiveDate, DateTimeAccess};
 
-use cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs;
+use embedded_hal::delay::DelayUs;
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
@@ -54,7 +54,7 @@ fn main() -> ! {
             hprintln!("blink").unwrap();
             led.blink(250_u16, &mut delay);
             hprintln!("delay").unwrap();
-            delay.delay_ms(250_u16);
+            delay.delay_ms(250);
         }
     }
 }

@@ -88,14 +88,14 @@ mod app {
     const BLINK_DURATION: u64 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayMs, MONOCLOCK};
+        setup_dht_i2c_led_usart_delay_using_dp, DhtType, I2cType, LED, LedType, DelayType, DelayUs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
     //#[cfg(any(feature = "stm32f3xx", feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
-    //use embedded_hal::digital::v2::OutputPin;
+    //use embedded_hal::digital::OutputPin;
 
     fn show_display<S>(
         temperature: i8,

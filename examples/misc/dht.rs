@@ -45,7 +45,7 @@ use dht_sensor::dht22::{read, Reading};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, DelayMs};
+        setup_dht_i2c_led_usart_delay_using_dp, DelayUs};
 
 
 #[entry]
@@ -78,6 +78,6 @@ fn main() -> ! {
 
         // (Delay at least 500ms before re-polling, 1 second or more advised)
         // Delay 5 seconds
-        delay.delay_ms(5000_u16);
+        delay.delay_ms(5000);
     }
 }

@@ -57,7 +57,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-                   setup_dht_i2c_led_usart_delay_using_dp, LED, DelayMs};
+                   setup_dht_i2c_led_usart_delay_using_dp, LED, DelayUs};
 
 
 fn show_display<S>(
@@ -142,6 +142,6 @@ fn main() -> ! {
         }
 
         // (Delay at least 500ms before re-polling DHT, 1 second or more advised)
-        delay.delay_ms(2000_u16); // Delay 2 seconds
+        delay.delay_ms(2000); // Delay 2 seconds
     }
 }

@@ -21,7 +21,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::digital::v2::{InputPin, OutputPin};
+use embedded_hal::digital::{InputPin, OutputPin};
 use onewire;
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
