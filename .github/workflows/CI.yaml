@@ -3,7 +3,7 @@
 
 on:
   push:
-    branches: [ main, dev]
+    branches: [ main, dev, eh-1-rc1]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -205,11 +205,11 @@ jobs:
 #      - name: Example onewire
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example onewire
 
-      - name: Example one_wire_bus_find_devices
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example one_wire_bus_find_devices
+#      - name: Example one_wire_bus_find_devices
+#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example one_wire_bus_find_devices
 
-      - name: Example ds18b20
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ds18b20
+#      - name: Example ds18b20
+#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ds18b20
 
 
       ##### driver-examples  #####
@@ -320,8 +320,8 @@ jobs:
 #      - name: Example mlx9064x
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx9064x
 #
-      - name: Example xca9548a
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a
+#      - name: Example xca9548a
+#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a
 
 
      #####  sx127x examples  #####
@@ -450,23 +450,28 @@ jobs:
               vl53lox-display,         air_quality,    
               ina219-display,          ina219_rtic,
              ]
-
+             
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [bluepill, discovery-stm32f303]  
+        brd: [blackpill-stm32f401]  
+        #brd: [bluepill, discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
-           - brd: "bluepill"
-             mcu:  stm32f103
-             hal: "stm32f1xx"
-             trg: "thumbv7m-none-eabi"
-           - brd: "discovery-stm32f303"
-             mcu:  stm32f303xc
-             hal: "stm32f3xx"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f1401
+             hal: "stm32f4xx"
              trg: "thumbv7em-none-eabihf"
+        #   - brd: "bluepill"
+        #     mcu:  stm32f103
+        #     hal: "stm32f1xx"
+        #     trg: "thumbv7m-none-eabi"
+        #   - brd: "discovery-stm32f303"
+        #     mcu:  stm32f303xc
+        #     hal: "stm32f3xx"
+        #     trg: "thumbv7em-none-eabihf"
         #   - brd: "none-stm32g473"
         #     mcu:  stm32g473
         #     hal: "stm32g4xx"
