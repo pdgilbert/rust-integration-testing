@@ -54,15 +54,15 @@ use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_
 // open_drain_output is really input and output
 
 fn get_sensor<P, E>(
-    delay: &mut impl DelayUs,
-    one_wire_bus: &mut one_wire_bus::OneWire<P>,
+    delay: &mut (impl DelayUs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayUs<u16>),
+    ow_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where
         P: OutputPin<Error=E> + InputPin<Error=E>,
         E: Debug
 {
     // initiate a temperature measurement for all connected devices
-    ds18b20::start_simultaneous_temp_measurement(one_wire_bus, delay)?;
+    ds18b20::start_simultaneous_temp_measurement(ow_bus, delay)?;
 
     // wait for measurement depends on the resolution specified, which
     // can obtain it from reading the sensor data,
@@ -81,10 +81,10 @@ fn get_sensor<P, E>(
     let mut sensor = None;
     hprintln!("entering loop").unwrap();
     loop {
-        let z = one_wire_bus.device_search(search_state.as_ref(), false, delay);
+        let z = ow_bus.device_search(search_state.as_ref(), false, delay);
         hprintln!("Device at {:?}", z).unwrap();
        
-        if let Some((device_address, state)) = one_wire_bus.device_search(search_state.as_ref(), false, delay)? {
+        if let Some((device_address, state)) = ow_bus.device_search(search_state.as_ref(), false, delay)? {
             search_state = Some(state);
             hprintln!("first if").unwrap();
             if device_address.family_code() != ds18b20::FAMILY_CODE {
@@ -140,7 +140,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let (pin, i2c, mut led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
 
-    let mut one_wire_bus = OneWire::new(pin).unwrap();
+    let mut one_wire_bus = one_wire_bus::zz  OneWire::new(pin).unwrap();
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
@@ -177,6 +177,6 @@ fn main() -> ! {
         show_display(temperature, text_style, &mut display);
 
         //Delay before re-polling 
-        delay.delay_ms(2000_u16); // Delay 2 seconds
+        delay.delay_ms(2000); // Delay 2 seconds
     }
 }

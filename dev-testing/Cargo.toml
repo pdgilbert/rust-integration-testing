@@ -15,8 +15,8 @@ edition = "2021"
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
-stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true, branch = "hal-rc"} 
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true, branch = "hal-rc"} 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -51,9 +51,12 @@ onewire         = { git = "https://github.com/katyo/onewire" }       # src/ libs
 #one-wire-bus     = ">=0.1.1" 
 #one-wire-bus    = { git = "https://github.com/pdgilbert/one-wire-bus" }
 #one-wire-bus    = { path = "/home/paul/githubClones/one-wire-bus" }
-one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
+#one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
+one-wire-bus    = { git = "https://github.com/jneem/one-wire-bus" }
 #ds18b20         = { git = "https://github.com/fuchsnj/ds18b20" }
-ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
+#ds18b20         = { git = "https://github.com/robko23/ds18b20" }
+ds18b20         = { git = "https://github.com/rednaz1337/ds18b20" }
+#ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
 #ds18b20         = { path = "/home/paul/githubClones/ds18b20" }
 
 # examples//driver-examples/
@@ -492,6 +495,10 @@ path = "examples/rtic/ina219_rtic.rs"
 [[example]]
 name = "displayX2_rtic"
 path = "examples/rtic/displayX2_rtic.rs"
+
+[[example]]
+name = "serial-dma"
+path = "examples/rtic/serial-dma.rs"
 
 
 # examples/misc-i2c-drivers

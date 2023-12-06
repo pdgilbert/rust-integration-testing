@@ -18,8 +18,12 @@
 
 use aht10::{AHT10, Humidity, Temperature, Error as aht10Error};
 
-use embedded_hal::i2c::Operation::{Read};   // WriteRead, , Write
+//use embedded_hal::i2c::Operation::{Read, Write};   // WriteRead, , Write
 //use embedded_hal::prelude::_embedded_hal_blocking_i2c_Write;  // need trait for switch.write
+use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Read;
+use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
+use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
+
 use xca9548a::{Error as xca9548aError, SlaveAddr, Xca9548a};
 
 #[cfg(debug_assertions)]

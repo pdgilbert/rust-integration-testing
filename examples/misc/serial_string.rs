@@ -1,11 +1,6 @@
-//! As of Jan 2023, dma syntax is not yet standardized across HALs. 
+//! As of Oct 2023, trying with stm32f4xx and attempting eh-1.0.0-rc1 syntax.
 
-//! Example echo_string is using stm32f3xx_hal syntax. It compiles for discovery-stm32f303 
-//!  but is not yet run tested. It does not compile for other HALs.
-
-//! Example serial_string at the moment is using stm32f1xx_hal syntax. It compiles for bluepill
-//!  but transmition is garbled in run testing. It does not compile for other HALs.
-//!  This example will shortly change to attempting stm32f4xx_hal syntax. 
+//! Not yet run tested. It does not compile for other HALs.
 
 //! Serial interface test writing a buffer of bytes between two usarts and
 //! echo to the computer console connected by usb-ttl dongle on another usart.
@@ -275,6 +270,7 @@ use stm32f4xx_hal::{
     dma::{config, traits::StreamISR, MemoryToPeripheral, Stream4, StreamsTuple, Transfer},
     pac::{Peripherals, USART1, USART2, USART6},
     prelude::*,
+    serial,
     serial::{config::Config, Rx, Serial, Tx},
 };
 
@@ -287,57 +283,64 @@ fn setup() -> (
     Tx<USART6>,
     Rx<USART6>,
 ) {
-    let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let gpioa = p.GPIOA.split();
-    p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    let (tx1, rx1) = Serial::new(
-        p.USART1,
+    let gpioa = dp.GPIOA.split();
+    //dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    let (tx1, rx1) = serial::Serial::new(
+        dp.USART1,
         (
             gpioa.pa9.into_alternate(), //tx pa9
-            gpioa.pa10.into_alternate(),
-        ), //rx pa10
-        Config::default().baudrate(9600.bps()),
+            gpioa.pa10,  //.into_alternate(),//rx pa10
+        ), 
+        serial::Config::default()
+             .baudrate(9600.bps())
+             .dma(serial::config::DmaConfig::Rx),
         &clocks,
     )
     .unwrap()
     .split();
 
-    p.USART2.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    // Listen UART IDLE event, which will be call USART1 interrupt
+    rx1.listen_idle();
+
+
+
+    //dp.USART2.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx2, rx2) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
             gpioa.pa2.into_alternate(), //tx pa2
-            gpioa.pa3.into_alternate(),
-        ), //rx pa3
+            gpioa.pa3.into_alternate(), //rx pa3
+        ),
         Config::default().baudrate(115_200.bps()), //.parity_odd() .stopbits(StopBits::STOP1)
         &clocks,
     )
     .unwrap()
     .split();
 
-    p.USART6.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    //dp.USART6.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx3, rx3) = Serial::new(
         //  NOTE PINS and USART6 !!!
-        p.USART6,
+        dp.USART6,
         (
             gpioa.pa11.into_alternate(), //tx pa11
-            gpioa.pa12.into_alternate(),
-        ), //rx pa12
+            gpioa.pa12.into_alternate(), //rx pa12
+        ), 
         Config::default().baudrate(115_200.bps()),
         &clocks,
     )
     .unwrap()
     .split();
 
-    let channels = p.DMA1.split();
-    let tx1  = tx1.with_dma(channels.4);                // console
-    let rx1  = rx1.with_dma(channels.5);
-    let tx2  = tx2.with_dma(channels.7);
-    let rx2  = rx2.with_dma(channels.6);
-    let tx3  = tx3.with_dma(channels.2);
-    let rx3  = rx3.with_dma(channels.3);
+    //let channels = dp.DMA1.split();
+    //let tx1  = tx1.with_dma(channels.4);                // console
+    //let rx1  = rx1.with_dma(channels.5);
+    //let tx2  = tx2.with_dma(channels.7);
+    //let rx2  = rx2.with_dma(channels.6);
+    //let tx3  = tx3.with_dma(channels.2);
+    //let rx3  = rx3.with_dma(channels.3);
     //let (tx1_ch, rx1_ch) = (dma1.4, dma1.5); // console
     //let (tx2_ch, rx2_ch) = (dma1.7, dma1.6);
     //let (tx3_ch, rx3_ch) = (dma1.2, dma1.3);

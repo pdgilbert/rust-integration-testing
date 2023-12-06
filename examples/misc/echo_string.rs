@@ -263,50 +263,90 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    pac::dma1,
-    pac::Peripherals,
-    pac::USART1,
+    pac::{Peripherals, dma1, DMA2, USART1, },
+    dma::{config::DmaConfig, PeripheralToMemory, Stream2, Stream5, Stream7, StreamsTuple, Transfer},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial,
+    serial::{config::Config, Tx, Rx, Serial},
 };
+
+const BUFFER_SIZE: usize = 15;  //100;
+
+type TxTransfer = Transfer<
+    Stream7<DMA2>,
+    4,
+    Tx<USART1>,
+    PeripheralToMemory,
+    &'static mut [u8; BUFFER_SIZE], >;
+
+type RxTransfer = Transfer<
+    Stream2<DMA2>,
+    4,
+    Rx<USART1>,
+    PeripheralToMemory,
+    &'static mut [u8; BUFFER_SIZE], >;
 
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (
-    TxDma<&'static mut [u8; 15], dma1::C4, Tx<USART1>>,
-    RxDma<&'static mut [u8; 15], dma1::C5, Rx<USART1>>,
+    Tx<USART1>,  //TxTransfer,
+    RxTransfer,
+    //TxDma<&'static mut [u8; 15], Stream7<DMA2>, Tx<USART1>>,
+    //RxDma<&'static mut [u8; 15], Stream5<DMA2>, Rx<USART1>>,
 ) {
-    //fn setup() ->  (impl WriteDma, impl ReadDma) {
 
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
-    let gpioa = p.GPIOA.split();
-    //p.USART1.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
+    let gpioa = dp.GPIOA.split();
+    //dp.USART1.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
 
     let txrx1 = Serial::new(
-        p.USART1,
+        dp.USART1,
         (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
-        Config::default().baudrate(9600.bps()),
+        Config::default()
+           .baudrate(9600.bps())
+           .dma(serial::config::DmaConfig::Rx),
         &clocks,
     )
     .unwrap();
-
     let (mut tx1, mut rx1) = txrx1.split();
 
-    let dma1 = p.DMA1.split(&mut rcc.cfgr);
-    let (tx1_ch, rx1_ch) = (dma1.ch4, dma1.ch5);
+    let dma2 = StreamsTuple::new(dp.DMA2);
 
-    let txbuf = singleton!(: [u8; BUFSIZE] = *b"---- empty ----").unwrap(); //NB. 15 characters
-    let rxbuf = singleton!(: [u8; BUFSIZE] = *b"---- empty ----").unwrap(); //NB. 15 characters
+    let txbuf1 = singleton!(: [u8; BUFSIZE] = *b"---- empty ----").unwrap(); //NB. 15 characters
+    let rxbuf1 = singleton!(: [u8; BUFSIZE] = *b"---- empty ----").unwrap(); //NB. 15 characters
 
-    let send = TxDma {
-        tup: (txbuf, tx1_ch, tx1),
-    };
-    let recv = RxDma {
-        tup: (rxbuf, rx1_ch, rx1),
-    };
+    // Initialize and start DMA streams
+    let mut recv = Transfer::init_peripheral_to_memory(
+        dma2.2,
+        rx1,
+        rxbuf1,
+        None,
+        DmaConfig::default()
+            .memory_increment(true)
+            .fifo_enable(true)
+            .fifo_error_interrupt(true)
+            .transfer_complete_interrupt(true),
+    );
 
-    (send, recv)
+    recv.start(|_rx| {});
+
+//    let mut send = Transfer::init_peripheral_to_memory(
+//        dma2.7,
+//        tx1,
+//        txbuf1,
+//        None,
+//        DmaConfig::default()
+//            .memory_increment(true)
+//            .fifo_enable(true)
+//            .fifo_error_interrupt(true)
+//            .transfer_complete_interrupt(true),
+//    );
+//
+//    send.start(|_tx| {});
+
+//    (send, recv) 
+    (tx1, recv) 
 }
 
 #[cfg(feature = "stm32f7xx")]
@@ -574,7 +614,7 @@ fn setup() -> (
 fn main() -> ! {
     //see serial_char.rs and  echo_by_char.rs for additional comments.
 
-    let (mut send, mut recv) = setup();
+    let (mut send, recv) = setup();
 
     hprintln!("test write to console ...").unwrap();
 
@@ -601,8 +641,12 @@ fn main() -> ! {
     loop {
         // using struct  with tuple (buf, ch, tx) builds with stm32f3xx_hal:
 
-        recv.tup = recv.tup.2.read_exact(send.tup.0, recv.tup.1).wait();
-        send.tup = send.tup.2.write_all(recv.tup.0, send.tup.1).wait();
+        //recv.tup = recv.tup.2.read_exact(send.tup.0, recv.tup.1).wait();
+        //send.tup = send.tup.2.write_all(recv.tup.0, send.tup.1).wait();
+        //let buf = recv.buf;
+        let buf = recv.read_buffer();  //   trait ReadBuffer
+        //recv.tup = recv.tup.2.read_exact(send.tup.0, recv.tup.1).wait();
+        //send.tup = send.tup.2.write_all(recv.tup.0, send.tup.1).wait();
 
         // but this will not work with other hals because .read_exact() and .write_all()
         // are specific to stm32f3xx_hal. A generic API across hals would be nice.
