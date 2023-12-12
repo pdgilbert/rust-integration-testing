@@ -28,7 +28,7 @@ use embedded_ccs811::{
 use hdc20xx::{Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use heapless::String;
 use nb::block;
 

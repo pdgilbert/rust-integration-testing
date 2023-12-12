@@ -21,7 +21,7 @@
 use mlx9061x::{Mlx9061x, SlaveAddr};
 
 use core::fmt::Write;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};

@@ -91,7 +91,7 @@ mod app {
     }
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         rtt_init_print!();

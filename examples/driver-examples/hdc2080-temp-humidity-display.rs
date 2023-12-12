@@ -21,7 +21,7 @@
 use hdc20xx::{Hdc20xx, SlaveAddr};
 
 use core::fmt::Write;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use cortex_m_rt::entry;
 use nb::block;
 

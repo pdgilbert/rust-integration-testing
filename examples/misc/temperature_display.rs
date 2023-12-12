@@ -43,7 +43,7 @@
 use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, ChannelSelection};
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use nb::block;
 
 use core::fmt::Write;

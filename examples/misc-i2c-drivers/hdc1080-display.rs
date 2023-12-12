@@ -41,7 +41,7 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::setups::{
-    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, DelayUs};
+    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, DelayNs};
 
 
 #[entry]

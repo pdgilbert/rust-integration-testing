@@ -33,7 +33,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 //use cortex_m_semihosting::*;
 
-//use embedded_hal::delay::DelayUs;
+//use embedded_hal::delay::DelayNs;
 
 use mcp4x;
 

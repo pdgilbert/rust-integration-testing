@@ -66,7 +66,7 @@ mod app {
     use systick_monotonic::*;
     use nb::block;
 
-    use embedded_hal::delay::DelayUs;
+    use embedded_hal::delay::DelayNs;
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
     use fugit::TimerDuration;
@@ -89,7 +89,7 @@ mod app {
     type MyMono = Systick<MONOTICK>;
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         //rtt_init_print!();
@@ -182,8 +182,7 @@ mod app {
         }
     }
 
-    //#[task(shared = [dht, ccs811, led, tx, delay], local = [env, index, measurements], capacity=5)]
-    #[task(shared = [led,], local = [dht, ccs811, delay, tx,], capacity=2)]
+    #[task(shared = [led,], local = [dht, ccs811, delay, tx,] )]
     fn measure(cx: measure::Context) {
         //hprintln!("measure").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
@@ -238,7 +237,7 @@ mod app {
         measure::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
@@ -247,12 +246,12 @@ mod app {
         crate::app::led_off::spawn_after(duration).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }

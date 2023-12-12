@@ -15,7 +15,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire};   //, DeviceSearch
@@ -27,9 +27,9 @@ use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_
 
 
 fn find_devices<P, E>(
-    delay: &mut impl DelayUs,
+    delay: &mut impl DelayNs,
     one_wire_pin: P,
-) -> ()   //DeviceSearch< P, impl DelayUs>
+) -> ()   //DeviceSearch< P, impl DelayNs>
     where
         P: OutputPin<Error=E> + InputPin<Error=E>,
         E: Debug

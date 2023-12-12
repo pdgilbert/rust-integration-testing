@@ -54,7 +54,7 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 
 use nb::block;
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, DelayUs};
+use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, DelayNs};
 
 
 pub fn read_all<E, A: DynamicOneShot<Error = E>>(

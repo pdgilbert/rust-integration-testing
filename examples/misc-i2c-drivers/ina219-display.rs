@@ -16,7 +16,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};

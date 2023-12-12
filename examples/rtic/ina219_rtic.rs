@@ -143,7 +143,8 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     type MyMono = Systick<MONOTICK>;
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
+    //fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         //rtt_init_print!();
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
@@ -196,7 +197,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
     }
 
-    #[task(shared = [led, ], local = [ina, display ], capacity=2)]
+    #[task(shared = [led, ], local = [ina, display ] )]
     fn read_and_display(cx: read_and_display::Context) {
         blink::spawn(BLINK_DURATION.millis()).ok();
 
@@ -227,7 +228,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
@@ -236,12 +237,12 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         crate::app::led_off::spawn_after(duration).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }

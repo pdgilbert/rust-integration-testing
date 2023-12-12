@@ -22,7 +22,7 @@ use tcs3472::{AllChannelMeasurement, Tcs3472};
 
 use core::fmt::Write;
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 
 //use rtt_target::{rprintln, rtt_init_print};
 

@@ -43,7 +43,7 @@ mod app {
     struct Local {}
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         //let systick = cx.core.SYST;
 
         let mono = Systick::new(cx.core.SYST, MONO_HZ);
@@ -72,22 +72,22 @@ mod app {
         (Shared {}, Local {}, init::Monotonics(mono))
     }
 
-    #[task(capacity=5)]
+    #[task( )]
     fn foo(_: foo::Context) {
         hprintln!("foo").ok();
     }
 
-    #[task(capacity=3)]
+    #[task( )]
     fn bar(_: bar::Context) {
         hprintln!("bar").ok();
     }
 
-    #[task(capacity=2)]
+    #[task( )]
     fn baz(_: baz::Context) {
         hprintln!("baz").ok();
     }
 
-    #[task(capacity=1)]
+    #[task( )]
     fn cdr(_: cdr::Context) {
         hprintln!("cdr").ok();
     }

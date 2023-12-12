@@ -8,7 +8,7 @@ use panic_halt as _;
 
 use crate::dp::{Peripherals};
 
-pub use crate::delay::DelayUs;
+pub use crate::delay::DelayNs;
 
 pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED};

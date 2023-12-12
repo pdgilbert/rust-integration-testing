@@ -15,7 +15,7 @@
 
 use htu2xd::{Htu2xd, Reading};   //, Resolution
 
-//use embedded_hal::blocking::delay::DelayUs;
+//use embedded_hal::blocking::delay::DelayNs;
 
 // use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
 
@@ -41,7 +41,7 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::setups::{
-    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, LED, DelayUs};
+    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, LED, DelayNs};
 
 
 #[entry]

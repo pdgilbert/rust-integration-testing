@@ -1,4 +1,4 @@
-pub use embedded_hal::delay::DelayUs;
+pub use embedded_hal::delay::DelayNs;
 
 //#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 //use stm32f0xx_hal::{

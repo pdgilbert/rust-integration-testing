@@ -45,7 +45,7 @@ use dht_sensor::dht22::{read, Reading};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, DelayUs};
+        setup_dht_i2c_led_usart_delay_using_dp, DelayNs};
 
 
 #[entry]

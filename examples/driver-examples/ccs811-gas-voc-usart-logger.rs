@@ -93,7 +93,7 @@ mod app {
     type MyMono = Systick<MONOTICK>;
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         let mono = Systick::new(cx.core.SYST, MONOCLOCK);
 
         rtt_init_print!();
@@ -165,7 +165,7 @@ mod app {
 
 
     #[task(shared = [led, ccs811, hdc2080, tx], local = [led_state, env, index, measurements])]
-    fn measure(mut cx: measure::Context) {
+    async fn measure(mut cx: measure::Context) {
         if *cx.local.led_state {
             cx.shared.led.lock(|led| led.off());
             *cx.local.led_state = false;

@@ -148,7 +148,7 @@ mod app {
     type MyMono = Systick<MONOTICK>;
 
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
         //hprintln!("dht_rtic example").unwrap();
@@ -213,8 +213,7 @@ mod app {
 //        text_style: MonoTextStyle<BinaryColor>,
     }
 
-    //#[task(shared = [led, delay, dht, text_style, display], capacity=2)]
-    #[task(shared = [led, ], local = [dht, delay, display ], capacity=2)]
+    #[task(shared = [led, ], local = [dht, delay, display ] )]
     fn read_and_display(cx: read_and_display::Context) {
         //hprintln!("read_and_display").unwrap();
         blink::spawn(BLINK_DURATION.millis()).ok();
@@ -239,7 +238,7 @@ mod app {
         read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
@@ -248,12 +247,12 @@ mod app {
         crate::app::led_off::spawn_after(duration).unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
+    #[task(shared = [led] )]
     fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }

@@ -4,7 +4,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use crate::delay::{DelayUs};
+use crate::delay::DelayNs;
 
 // A delay is used in some sensor initializations and read operationes (eg dht). 
 // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -52,7 +52,10 @@ pub const  ALTCLOCK: u32 = 8_000_000;
 
 pub struct AltDelay {}
 
-impl DelayUs for AltDelay {
+impl DelayNs for AltDelay {
+    fn delay_ns(&mut self, t:u32) {
+        delay((t as u32) * (ALTCLOCK / 1_000_000_000)); 
+    }
     fn delay_us(&mut self, t:u32) {
         delay((t as u32) * (ALTCLOCK / 1_000_000)); 
     }

@@ -1,11 +1,12 @@
 //! Blink (onboard) LED with short pulse very second and longer blink every ten seconds.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
-//! Two processes are scheduled, `one` for pulse and `ten` for longer blink. These spawn
-//! a `blink` process that turns the led on and schedules another process to turn it off.
+//! Two processes are started, `one` for pulse and `ten` for longer blink. These spawn
+//! a `blink` process that turns the led on and off.
 
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -31,44 +32,40 @@ mod app {
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
 
-    use systick_monotonic::*;
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-    
-    use fugit::TimerDuration;
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
+
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs 
 
     use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
                        //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
-    const MONOTICK: u32 = 100;
-    const ONE: u64 = 1;  // used as seconds
-    const TEN: u64 = 10;
+    const ONE: u32 = 1;  // used as seconds
+    const TEN: u32 = 10;
 
-    const ONE_DURATION: u64 = 20;  // used as milliseconds
-    const TEN_DURATION: u64 = 500;
+    const ONE_DURATION: u32 = 20;  // used as milliseconds
+    const TEN_DURATION: u32 = 500;
 
     use rust_integration_testing_of_examples::setups::{
         setup_led_using_dp, LED, LedType, MONOCLOCK};
 
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
         hprintln!("blink_rtic example").unwrap();
 
         let mut led = setup_led_using_dp(cx.device);
-        // Note: the following also woorks but result is a bit larger and bluepill need --release
+        // Note: the following also works but result is a bit larger and bluepill need --release
         //let (_i2c1, _i2c2, mut led, _delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
 
         // In an application this delay may be while something initializes.
-        // Note that this delay cannot use SYST because Monotonics uses that (for spawn,
-        //   although spawn has not yet happened so there may be a way?)
+        // Note that this delay cannot use SYST because Monotonics uses that.
         //   delay_ms() would need to use a timer other than default Systick
 
         asm::delay(5 * MONOCLOCK); // (5 * MONOCLOCK cycles gives aprox 5+ second delay
@@ -76,13 +73,14 @@ mod app {
 
         led.off();
 
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         ten::spawn().unwrap();
         one::spawn().unwrap();
         //hprintln!("init exit").unwrap();
 
-        (Shared { led }, Local {}, init::Monotonics(mono))
+        (Shared { led }, Local {} )
     }
 
     #[shared]
@@ -93,37 +91,46 @@ mod app {
     #[local]
     struct Local {}
 
-    #[task(shared = [led], capacity=2)]
-    fn one(_cx: one::Context) {
-        // blink and re-spawn one process to repeat after ONE second
-        blink::spawn(ONE_DURATION.millis()).ok();
-        one::spawn_after(ONE.secs()).ok();
+    #[task(shared = [led] )]
+    async fn one(_cx: one::Context) {
+        // blink and await to repeat after ONE second
+        loop {
+           blink::spawn(ONE_DURATION).ok();
+           Systick::delay(ONE.secs()).await;
+        }
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn ten(_cx: ten::Context) {
-        // blink and re-spawn ten process to repeat after TEN seconds
+    #[task(shared = [led] )]
+    async fn ten(_cx: ten::Context) {
+        // blink and await to repeat after TEN seconds
         // blink on continues after one, otherwise one can turn ten off
-        blink::spawn_after(ONE_DURATION.millis(), (TEN_DURATION - ONE_DURATION).millis()).unwrap(); 
-        ten::spawn_after(TEN.secs()).unwrap();
+        //    NEED TO RE-THINK THIS LOGIC
+        loop {
+           //blink::spawn_after(ONE_DURATION.millis(), (TEN_DURATION - ONE_DURATION).millis()).unwrap(); 
+           //ten::spawn_after(TEN.secs()).unwrap();
+           blink::spawn(ONE_DURATION).unwrap(); 
+           blink::spawn(TEN_DURATION - ONE_DURATION).unwrap(); 
+           Systick::delay(TEN.secs()).await;
+        }
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    #[task(shared = [led] )]
+    async fn blink(_cx: blink::Context, duration: u32 ) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_on(mut cx: led_on::Context) {
+    #[task(shared = [led] )]
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_off(mut cx: led_off::Context) {
+    #[task(shared = [led] )]
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

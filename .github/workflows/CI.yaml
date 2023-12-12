@@ -3,7 +3,7 @@
 
 on:
   push:
-    branches: [ main, dev, eh-1-rc1]
+    branches: [ main, dev, eh-1-rc1, eh-1-rc2]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -126,10 +126,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: dtolnay/rust-toolchain@stable
+      #- uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           #profile: minimal
-          toolchain: stable
+          toolchain: nightly
           target: ${{ matrix.trg }}
     
       - name: Configure caching 
@@ -139,6 +140,7 @@ jobs:
           path: |
             ${{ env.HOME }}/.cargo
             target
+
       - name: tree
         #--manifest-path to find Caro.toml.      
         run: cargo  tree   --manifest-path ${{ matrix.stg }}/Cargo.toml 
@@ -481,10 +483,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       #previously  uses: actions-rs/toolchain@v1
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           #profile: minimal
-          toolchain: stable
+          toolchain: nightly
           target: ${{ matrix.trg }}
     
       - name: Configure caching 

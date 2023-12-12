@@ -55,7 +55,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 
 use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
-                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayUs,
+                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayNs,
                  SEEK, ChannelSpacing, 
                  DeEmphasis, SeekDirection, SeekMode, Si4703, Volume, ErrorWithPin};
 

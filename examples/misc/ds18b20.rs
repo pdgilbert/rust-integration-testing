@@ -26,7 +26,7 @@ use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-use embedded_hal::delay::DelayUs;
+use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire, OneWireResult};
@@ -54,7 +54,7 @@ use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_
 // open_drain_output is really input and output
 
 fn get_sensor<P, E>(
-    delay: &mut (impl DelayUs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayUs<u16>),
+    delay: &mut (impl DelayNs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayNs<u16>),
     ow_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where
