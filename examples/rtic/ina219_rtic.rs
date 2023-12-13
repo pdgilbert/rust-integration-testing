@@ -26,6 +26,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -56,11 +57,9 @@ mod app {
     
     use core::fmt::Write;
 
-    use systick_monotonic::*;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-    use fugit::TimerDuration;
-
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -89,13 +88,12 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK:  u32 = 100;
-    const READ_INTERVAL: u64 = 2;  // used as seconds
+    const READ_INTERVAL: u32 = 2;  // used as seconds
 
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, LedType, DelayUs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -139,12 +137,8 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     }
 
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-    //fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
         //rtt_init_print!();
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
@@ -178,11 +172,12 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         ina.calibrate(0x0100).unwrap(); // possible change. See the data sheet.
         delay.delay_ms(15u32);     // Wait for sensor
 
-        let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display, ina }, init::Monotonics(mono))
+        (Shared { led, },   Local {display, ina })
     }
 
     #[shared]
@@ -198,52 +193,57 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     }
 
     #[task(shared = [led, ], local = [ina, display ] )]
-    fn read_and_display(cx: read_and_display::Context) {
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    async fn read_and_display(cx: read_and_display::Context) {
+       
+       let ina = cx.local.ina;
 
-        let ina = cx.local.ina;
+       loop { 
+           blink::spawn(BLINK_DURATION).ok();
 
-        let v = match ina.voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+           let v = match ina.voltage() {
+               Ok(v) => v,
+               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+           };
 
-        let vs = match ina.shunt_voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+           let vs = match ina.shunt_voltage() {
+               Ok(v) => v,
+               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+           };
 
-        let i = match ina.current() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+           let i = match ina.current() {
+               Ok(v) => v,
+               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+           };
 
-        let p = match ina.power() {  // ina indicated power
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
-        
+           let p = match ina.power() {  // ina indicated power
+               Ok(v) => v,
+               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+           };
+           
 
-        show_display(v, vs, i, p, cx.local.display);
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+           show_display(v, vs, i, p, cx.local.display);
+           
+           Systick::delay(READ_INTERVAL.secs()).await;
+       }
     }
 
     #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    async fn blink(_cx: blink::Context, duration: u32) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
     #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
     #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

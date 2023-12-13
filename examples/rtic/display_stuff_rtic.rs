@@ -8,6 +8,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -59,15 +60,14 @@ mod app {
 //                  mode::BufferedGraphicsMode};
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    use systick_monotonic::*;
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
     
-    use fugit::TimerDuration;
 
-    const MONOTICK: u32 = 100;
-    const READ_INTERVAL: u64 = 10;  // used as seconds
+    const READ_INTERVAL: u32 = 10;  // used as seconds
 
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setups::{
         setup_i2c1_i2c2_led_delay_using_dp, I2c1Type as I2cType, LED, LedType, MONOCLOCK};
@@ -121,17 +121,16 @@ mod app {
     }
 
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-       let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+
+       let mono_token = rtic_monotonics::create_systick_token!();
+       Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
        //rtt_init_print!();
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       //let (i2c, mut led) = setup(cx.device);
        let (i2c, _i2c2, mut led, _delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
        led.on();
@@ -156,8 +155,8 @@ mod app {
 
        display_stuff::spawn().unwrap();
 
-       //(Shared { led }, Local { display, text_style }, init::Monotonics(mono))
-       (Shared { led }, Local { display }, init::Monotonics(mono))
+       //(Shared { led }, Local { display, text_style })
+       (Shared { led }, Local { display })
     }
 
     #[shared]
@@ -186,55 +185,54 @@ mod app {
 //note: required by a bound in `assert_send`
 
     #[task(shared = [ led, ], local = [ display, ] )]
-    fn display_stuff(cx: display_stuff::Context) {
-        // blink and re-spawn process to repeat
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    async fn display_stuff(cx: display_stuff::Context) {
+       loop {
+           // blink and re-spawn process to repeat
+           blink::spawn(BLINK_DURATION).ok();
 
-        // workaround. build here because text_style cannot be shared
-        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+           // workaround. build here because text_style cannot be shared
+           let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
-        let lines: [heapless::String<32>; 1] = [heapless::String::new(),];
-        //show_display(*cx.local.text_style, &mut cx.local.display);
-        //show_display(&lines, cx.local.display);
-        show_display(cx.local.display);
+           let lines: [heapless::String<32>; 1] = [heapless::String::new(),];
+           //show_display(*cx.local.text_style, &mut cx.local.display);
+           //show_display(&lines, cx.local.display);
+           show_display(cx.local.display);
 
-        // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
-        // It is possible to use \n in place of separate writes, with one line rather than vector.
-       
-       // write!(&lines[0], "stuff").unwrap();
-    
-       cx.local.display.clear_buffer();
-       for i in 0..lines.len() {
-           // start from 0 requires that the top is used for font baseline
-           Text::with_baseline(
-               &lines[i],
-               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
-               //cx.local.text_style,
-               text_style,
-               Baseline::Top,
-           ).draw(cx.local.display).unwrap();
-       }
-     cx.local.display.flush().unwrap();
+           // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
+           // It is possible to use \n in place of separate writes, with one line rather than vector.
           
-        display_stuff::spawn_after(READ_INTERVAL.secs()).unwrap();
+          // write!(&lines[0], "stuff").unwrap();
+       
+          cx.local.display.clear_buffer();
+          for i in 0..lines.len() {
+              // start from 0 requires that the top is used for font baseline
+              Text::with_baseline(
+                  &lines[i],
+                  Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+                  //cx.local.text_style,
+                  text_style,
+                  Baseline::Top,
+              ).draw(cx.local.display).unwrap();
+          }
+          cx.local.display.flush().unwrap();
+          Systick::delay(READ_INTERVAL.secs()).await;
+       }        
     }
 
     #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
-        // note that if blink is called with ::spawn_after then the first agument is the after time
-        // and the second is the duration.
-        //hprintln!("blink {}", duration).unwrap();
+    async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
     #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
     #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

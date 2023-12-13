@@ -30,6 +30,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -60,10 +61,9 @@ mod app {
     
     use core::fmt::Write;
 
-    use systick_monotonic::*;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-    use fugit::TimerDuration;
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
@@ -84,13 +84,12 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK:  u32 = 100;
-    const READ_INTERVAL: u64 = 2;  // used as seconds
+    const READ_INTERVAL: u32 = 2;  // used as seconds
 
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp,I2c1Type,  LED, LedType, DelayUs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp,I2c1Type,  LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -142,10 +141,6 @@ mod app {
        ()
     }
 
-
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();
@@ -190,11 +185,12 @@ mod app {
         //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
 
-        let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display, sensor, htu_ch }, init::Monotonics(mono))
+        (Shared { led, },   Local {display, sensor, htu_ch })
     }
 
     #[shared]
@@ -216,49 +212,52 @@ mod app {
 
     //#[task(shared = [led, delay, dht, text_style, display] )]
     #[task(shared = [led, ], local = [sensor, display, htu_ch ] )]
-    fn read_and_display(cx: read_and_display::Context) {
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    async fn read_and_display(cx: read_and_display::Context) {
+       let sensor = cx.local.sensor;
+       let htu_ch = cx.local.htu_ch;
 
-        //let delay = cx.local.delay;
-        let sensor = cx.local.sensor;
-        let htu_ch = cx.local.htu_ch;
+       loop {
+          blink::spawn(BLINK_DURATION).ok();
 
-        let z = sensor.read_temperature_blocking(htu_ch);
-        let t = match z {
-            Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.2,
-        };
+          let z = sensor.read_temperature_blocking(htu_ch);
+          let t = match z {
+              Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
+              Ok(Reading::ErrorLow)  => 409.0,
+              Ok(Reading::ErrorHigh) => 409.1,
+              Err(_)                 => 409.2,
+          };
 
-        let z = sensor.read_humidity_blocking(htu_ch);
-        let h = match z {
-            Ok(Reading::Ok(t))     => t.as_percent_relative(),
-            Ok(Reading::ErrorLow)  => 409.0,
-            Ok(Reading::ErrorHigh) => 409.1,
-            Err(_)                 => 409.,
-        };
+          let z = sensor.read_humidity_blocking(htu_ch);
+          let h = match z {
+              Ok(Reading::Ok(t))     => t.as_percent_relative(),
+              Ok(Reading::ErrorLow)  => 409.0,
+              Ok(Reading::ErrorHigh) => 409.1,
+              Err(_)                 => 409.,
+          };
 
-        show_display(t, h, cx.local.display);
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+          show_display(t, h, cx.local.display);
+          
+          Systick::delay(READ_INTERVAL.secs()).await;
+       }
     }
 
     #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    async fn blink(_cx: blink::Context, duration: u32) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
     #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
     #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

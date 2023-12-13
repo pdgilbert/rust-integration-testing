@@ -5,6 +5,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -39,12 +40,10 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write;
-    use systick_monotonic::*;
 
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
-    use fugit::TimerDuration;
-
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -65,12 +64,11 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK: u32 = 100;
-    const READ_INTERVAL:  u64 =  2;  // used as seconds
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const READ_INTERVAL:  u32 =  2;  // used as seconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayUs, MONOCLOCK};
+        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -137,12 +135,11 @@ mod app {
        ()
     }
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
@@ -192,14 +189,11 @@ mod app {
                        },
         };
 
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+        read_and_display::spawn().unwrap();
 
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
-        (Shared {led}, 
-         Local {adc_a, adc_b, display}, 
-         init::Monotonics(mono)
-        )
+        (Shared {led}, Local {adc_a, adc_b, display} )
     }
 
     #[shared]
@@ -225,54 +219,56 @@ mod app {
         }
     }
 
-    #[task(shared = [led], local = [adc_a, adc_b, display] )]
-    fn read_and_display(mut cx: read_and_display::Context) {
-       //hprintln!("measure").unwrap();
-       blink::spawn(BLINK_DURATION.millis()).ok();
+    #[task(shared = [led], local = [adc_a, adc_b, display], priority=1 )]
+    async fn read_and_display(mut cx: read_and_display::Context) {
+       loop {
+          Systick::delay(READ_INTERVAL.secs()).await;
+          //hprintln!("measure").unwrap();
+          blink::spawn(BLINK_DURATION).ok();
 
-       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-       let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
-       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
+          let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
+          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
-       //first adc  Note that readings will be zero using USB power (ie while programming) 
-       // but not when using battery.
+          //first adc  Note that readings will be zero using USB power (ie while programming) 
+          // but not when using battery.
 
-       let bat_ma =
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+          let bat_ma =
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
-       let load_ma =
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+          let load_ma =
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
-       // second adc
-       let values_b = [
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
-       ];
+          // second adc
+          let values_b = [
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
+          ];
 
-       let temp_c =
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
+          let temp_c =
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
 
-        show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, &mut cx.local.display);
-        
-        hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
- 
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+           show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, &mut cx.local.display);
+           
+           hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+       }
     }
 
-    #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    #[task(shared = [led], priority=1  )]
+    async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
-    #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    #[task(shared = [led], priority=1  )]
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    #[task(shared = [led], priority=1  )]
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

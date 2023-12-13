@@ -13,6 +13,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -47,11 +48,12 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write;
-    use systick_monotonic::*;
+
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
-    use fugit::TimerDuration;
 
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
@@ -73,12 +75,11 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK: u32 = 100;
-    const READ_INTERVAL:  u64 =  2;  // used as seconds
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const READ_INTERVAL:  u32 =  2;  // used as seconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayUs, MONOCLOCK};
+        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -139,12 +140,10 @@ mod app {
        ()
     }
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+    fn init(cx: init::Context) -> (Shared, Local) {
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
@@ -211,14 +210,11 @@ mod app {
                        },
         };
 
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+        read_and_display::spawn().unwrap();
 
         //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
-        (Shared {led}, 
-         Local {adc_a, adc_b, adc_c, adc_d, display}, 
-         init::Monotonics(mono)
-        )
+        (Shared {led}, Local {adc_a, adc_b, adc_c, adc_d, display})
     }
 
     #[shared]
@@ -245,68 +241,70 @@ mod app {
         }
     }
 
-    #[task(shared = [led], local = [adc_a, adc_b, adc_c, adc_d, display], capacity=4)]
-    fn read_and_display(mut cx: read_and_display::Context) {
-       //hprintln!("measure").unwrap();
-       blink::spawn(BLINK_DURATION.millis()).ok();
+    #[task(shared = [led], local = [adc_a, adc_b, adc_c, adc_d, display], priority=1 )]
+    async fn read_and_display(mut cx: read_and_display::Context) {
+       loop {
+          Systick::delay(READ_INTERVAL.secs()).await;
+          //hprintln!("read_and_display").unwrap();
+          blink::spawn(BLINK_DURATION).ok();
 
-       cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-       cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-       cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-       cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-       
-       // note the range can be switched if needed, eg.
-       //cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+          cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+          cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+          cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+          
+          // note the range can be switched if needed, eg.
+          //cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
-       let values_a = [
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
-       ];
+          let values_a = [
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
+          ];
 
-       let values_b = [
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
-       ];
+          let values_b = [
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
+          ];
 
-       let values_c = [
-           block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
-       ];
+          let values_c = [
+              block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_c, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
+          ];
 
-       let values_d = [
-           block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
-           block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
-       ];
+          let values_d = [
+              block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE,
+              block!(DynamicOneShot::read(cx.local.adc_d, ChannelSelection::SingleA3)).unwrap_or(8091) * SCALE,
+          ];
 
-       show_display(values_a, values_b, values_c, values_d, &mut cx.local.display);
-        
-       //hprintln!(" values_a {:?}  values_b {:?}", values_a, values_b).unwrap();
-       //hprintln!(" values_c {:?}  values_d {:?}", values_a, values_b).unwrap();
- 
-       read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+          show_display(values_a, values_b, values_c, values_d, &mut cx.local.display);
+           
+          //hprintln!(" values_a {:?}  values_b {:?}", values_a, values_b).unwrap();
+          //hprintln!(" values_c {:?}  values_d {:?}", values_a, values_b).unwrap();
+       }
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    #[task(shared = [led], priority=1 )]
+    async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_on(mut cx: led_on::Context) {
+    #[task(shared = [led], priority=1 )]
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_off(mut cx: led_off::Context) {
+    #[task(shared = [led], priority=1 )]
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

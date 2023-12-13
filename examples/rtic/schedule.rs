@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -29,12 +30,12 @@ use rtic::app;
 
 mod app {
     use cortex_m_semihosting::{hprintln};
-    use systick_monotonic::*;
 
-    const MONO_HZ: u32 = 8_000_000; // 8 MHz
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<100>;
+    const MONOCLOCK: u32 = 8_000_000; // 8 MHz
 
     #[shared]
     struct Shared {}
@@ -44,9 +45,9 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        //let systick = cx.core.SYST;
 
-        let mono = Systick::new(cx.core.SYST, MONO_HZ);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         //hprintln!("init").ok();
 
@@ -69,26 +70,26 @@ mod app {
         
         hprintln!("init ending").ok();
 
-        (Shared {}, Local {}, init::Monotonics(mono))
+        (Shared {}, Local {})
     }
 
     #[task( )]
-    fn foo(_: foo::Context) {
+    async fn foo(_: foo::Context) {
         hprintln!("foo").ok();
     }
 
     #[task( )]
-    fn bar(_: bar::Context) {
+    async fn bar(_: bar::Context) {
         hprintln!("bar").ok();
     }
 
     #[task( )]
-    fn baz(_: baz::Context) {
+    async fn baz(_: baz::Context) {
         hprintln!("baz").ok();
     }
 
     #[task( )]
-    fn cdr(_: cdr::Context) {
+    async fn cdr(_: cdr::Context) {
         hprintln!("cdr").ok();
     }
 }

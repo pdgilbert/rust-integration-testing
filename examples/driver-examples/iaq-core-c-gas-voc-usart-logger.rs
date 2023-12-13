@@ -1,4 +1,3 @@
-//!  Substantially modified for rtic 0.6
 //!
 //! Measures the CO2 and TVOC equivalents in the air with an iAQ-Core-C module,
 //! logs the values and sends them through the serial interface every 10 seconds.
@@ -23,6 +22,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -54,7 +54,9 @@ mod app {
 
     use core::fmt::Write;
     
-    use systick_monotonic::*;
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     use nb::block;
     use rtt_target::{rprintln, rtt_init_print};
@@ -63,16 +65,11 @@ mod app {
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    const MONOTICK: u32 = 100;
-    const PERIOD: u64 = 10;  // used as seconds
-    //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
+    const PERIOD: u32 = 10;  // used as seconds
     
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
         setup_dht_i2c_led_usart_delay_using_dp, TxType, I2cType, LED, LedType, MONOCLOCK};
 
-
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
 
     #[shared]
     struct Shared {
@@ -92,7 +89,8 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         rtt_init_print!();
         rprintln!("iAQ-Core-C example");
@@ -116,46 +114,48 @@ mod app {
 
         let sensor = IaqCore::new(manager.acquire_i2c());
 
-        measure::spawn_after(PERIOD.secs()).unwrap();
+        measure::spawn().unwrap();
 
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {led, sensor, tx}, Local {led_state, index, measurements}, init::Monotonics(mono),
-        )
+        (Shared {led, sensor, tx}, Local {led_state, index, measurements})
     }
 
     #[task(shared = [led, sensor, tx], local = [led_state, index, measurements,])]
-    fn measure(mut cx: measure::Context) {
-        if *cx.local.led_state {
-            cx.shared.led.lock(|led| led.off());
-            *cx.local.led_state = false;
-        } else {
-            cx.shared.led.lock(|led| led.on());
-            *cx.local.led_state = true;
-        }
+    async fn measure(mut cx: measure::Context) {
+       loop {
+           Systick::delay(PERIOD.secs()).await;
 
-        let default = Measurement {
-            co2: 1,
-            tvoc: 1,
-            resistance: 1,
-        };
-        if *cx.local.index < cx.local.measurements.len() {
-            let data = cx
-                .shared
-                .sensor
-                .lock(|sensor| block!(sensor.data()))
-                .unwrap_or(default);
-            cx.local.measurements[*cx.local.index] = data;
-            *cx.local.index += 1;
-        }
-        for i in 0..*cx.local.index {
-            let data = cx.local.measurements[i];
-            //writeln!(cx.resources.tx,"{},{},{},{}\r",i, data.co2, data.tvoc, data.resistance).unwrap();
-            cx.shared
-                .tx
-                .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
-                .unwrap();
-        }
-        measure::spawn_after(PERIOD.secs()).unwrap();
+           if *cx.local.led_state {
+               cx.shared.led.lock(|led| led.off());
+               *cx.local.led_state = false;
+           } else {
+               cx.shared.led.lock(|led| led.on());
+               *cx.local.led_state = true;
+           }
+
+           let default = Measurement {
+               co2: 1,
+               tvoc: 1,
+               resistance: 1,
+           };
+           if *cx.local.index < cx.local.measurements.len() {
+               let data = cx
+                   .shared
+                   .sensor
+                   .lock(|sensor| block!(sensor.data()))
+                   .unwrap_or(default);
+               cx.local.measurements[*cx.local.index] = data;
+               *cx.local.index += 1;
+           }
+           for i in 0..*cx.local.index {
+               let data = cx.local.measurements[i];
+               //writeln!(cx.resources.tx,"{},{},{},{}\r",i, data.co2, data.tvoc, data.resistance).unwrap();
+               cx.shared
+                   .tx
+                   .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
+                   .unwrap();
+           }
+       }
     }
 }

@@ -2,6 +2,7 @@
 
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
@@ -83,8 +84,8 @@ const APP: () = {
         }
     }
 
-    #[task(binds = DMA1_CH1, resources = [transfer])]
-    fn dma1_interrupt(cx: dma1_interrupt::Context) {
+    #[task(binds = DMA1_CH1, resources = [transfer], priority=1)]
+    async fn dma1_interrupt(cx: dma1_interrupt::Context) {
         let transfer = cx.resources.transfer;
         if let Some(transfer_val) = transfer.take() {
             let (buffer, rx_dma) = transfer_val.wait();

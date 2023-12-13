@@ -27,6 +27,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -58,11 +59,9 @@ mod app {
     
     use core::fmt::Write;
 
-    use systick_monotonic::*;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-    use fugit::TimerDuration;
-
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -82,13 +81,11 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK:  u32 = 100;
-    const READ_INTERVAL: u64 = 2;  // used as seconds
-
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const READ_INTERVAL: u32 = 2;  // used as seconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayUs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -175,8 +172,6 @@ mod app {
         (v, vs, i, p)
        }
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
@@ -212,11 +207,12 @@ mod app {
         let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
         show_message("sensor initialized", &mut display); 
 
-        let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display, ina,  sensor }, init::Monotonics(mono))
+        (Shared { led, },   Local {display, ina,  sensor })
     }
 
     #[shared]
@@ -238,48 +234,52 @@ mod app {
     }
 
     #[task(shared = [led, ], local = [sensor, display, ina] )]
-    fn read_and_display(cx: read_and_display::Context) {
-        //hprintln!("read_and_display").unwrap();
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    async fn read_and_display(cx: read_and_display::Context) {
+       
+       //hprintln!("read_and_display").unwrap();
+       let sensor = cx.local.sensor;
+       
+       loop {
+           blink::spawn(BLINK_DURATION).ok();
 
-        //let delay = cx.local.delay;
-        let sensor = cx.local.sensor;
-        let z = sensor.read();
-        // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
-        // 10 * deg C to give one decimal place.
-        let (h, t) = match z {
-            Ok((h, t))
-               =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32),
-            Err(_e) 
-               =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
-                    //panic!("Error reading sensor")
-                    (127, 127)  //supply default values that should be clearly bad
-                   },
-        };
+           //let delay = cx.local.delay;
+           let z = sensor.read();
+           // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
+           // 10 * deg C to give one decimal place.
+           let (h, t) = match z {
+               Ok((h, t))
+                  =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32),
+               Err(_e) 
+                  =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                       //panic!("Error reading sensor")
+                       (127, 127)  //supply default values that should be clearly bad
+                      },
+           };
 
-        let (v, vs, i, p) = read_ina(cx.local.ina);
+           let (v, vs, i, p) = read_ina(cx.local.ina);
 
-        show_display(t, h, v, vs, i, p, cx.local.display);
-        //hprintln!("shown").unwrap();
-        read_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+           show_display(t, h, v, vs, i, p, cx.local.display);
+           //hprintln!("shown").unwrap();
+
+           Systick::delay(READ_INTERVAL.secs()).await;
+       }
     }
 
     #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
-        // note that if blink is called with ::spawn_after then the first agument is the after time
-        // and the second is the duration.
+    async fn blink(_cx: blink::Context, duration: u32) {
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
     #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
     #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

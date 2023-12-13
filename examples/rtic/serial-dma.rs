@@ -12,6 +12,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 //  peripherals = true,  is the default, but to reduce code size set false if peripherals are not needed.
 
@@ -48,7 +49,9 @@ mod app {
     #[cfg(not(debug_assertions))]
     use panic_halt as _;
 
-    use systick_monotonic::*;
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     const BUFFER_SIZE: usize = 100;
 
@@ -71,21 +74,19 @@ mod app {
         rx_buffer: Option<&'static mut [u8; BUFFER_SIZE]>,
     }
 
-    #[monotonic(binds = SysTick, default = true)]
-
-    type MyMono = Systick<MONOTICK>;
 
     #[init(local = [
         rx_pool_memory: [u8; 400] = [0; 400],
     ])]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         let core = cx.core;
         let dp: Peripherals = cx.device;
 
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze();
 
-        let mono = Systick::new(core.SYST, clocks.sysclk().to_Hz());
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, clocks.sysclk().to_Hz(), mono_token);
 
         let gpioa = dp.GPIOA.split();
 
@@ -127,13 +128,7 @@ mod app {
 
         rx_transfer.start(|_rx| {});
 
-        (
-            Shared { rx_transfer },
-            Local {
-                rx_buffer: Some(rx_buffer2),
-            },
-            init::Monotonics(mono),
-        )
+        (Shared { rx_transfer }, Local { rx_buffer: Some(rx_buffer2) })
     }
 
     // Important! USART1 and DMA2_STREAM2 should the same interrupt priority!

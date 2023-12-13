@@ -5,7 +5,7 @@ description = "hal integration testing of examples"
 keywords = ["driver", "i2c", "spi", "example"]
 license = "MIT OR Apache-2.0"
 name = "rust-integration-testing-of-examples"
-version = "0.1.6"
+version = "0.2.0"
 edition = "2021"
 
 [dependencies]
@@ -16,7 +16,6 @@ stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = 
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
-#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true, branch = "hal-rc"} 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -102,21 +101,17 @@ ina219           = {  version = "0.1.0" }
 htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
 xca9548a        = { git = "https://github.com/eldruin/xca9548a-rs" }
 
-#cortex-m-rtic = ">=1.0" 
-#cortex-m-rtic = { git = "https://github.com/rtic-rs/cortex-m-rtic" }
 
-#  rustup default nightly
-#  rustup target add thumbv7em-none-eabihf
-#  rustup default stable
+rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+#  NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
+rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
 
-
-#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
-rtic = { version = "2.0.1", features = ["thumbv7-backend", "rtic-monotonics"], optional = true  }
-rtic-monotonics = {version = "1.4.1", features = [ "cortex-m-systick"], optional = true }
+#rtic = { version = "2.0.1", features = ["thumbv7-backend", "rtic-monotonics"], optional = true  }
+#rtic-monotonics = {version = "1.4.1", features = [ "cortex-m-systick"], optional = true }
 
 #systick-monotonic = {version = "1.0.0", optional = true }
-
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
+
 #dwt-systick-monotonic = {version = "1.0" , optional = true }  # needed for adc_dma_rtic fiddling but if not optional it stops build with stm32f0xx
 dwt-systick-monotonic = {git = "https://github.com/rtic-rs/dwt-systick-monotonic" , optional = true }
 
@@ -143,9 +138,6 @@ fugit = { version = "0.3.3", optional = true }
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
 
-#embedded-hal = {version = "^0.2.4" }
-#embedded-hal = {version = "1.0.0-rc.1" }
-#embedded-hal = { features = ["unproven"], version = "0.2.7" }
 embedded-hal = "1.0.0-rc.2"
 #embedded-hal-nb = "1.0.0-rc.1"
 
@@ -168,6 +160,7 @@ rtt-target = { version =  ">=0.3.1", features = ["cortex-m"] }
 
 # for radio-sx127x  https://github.com/rust-iot/rust-radio-sx127x
 
+#LEAVE THESE COMMENTED LINES FOR REFERENCE BUT REMOVE WHEN SOMETHING WORKS
 #embedded-hal  1.0.0-alpha
 #e-h-1a = { version = "1.0.0-alpha.5,<1.0.0-alpha.6", package = "embedded-hal" }  
 # alpha.6 requires changes to delay and radio-sx127x support. See branch eh-1-alpha

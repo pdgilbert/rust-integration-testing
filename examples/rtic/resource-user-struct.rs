@@ -4,6 +4,7 @@
 #![deny(warnings)]
 #![no_main]
 #![no_std]
+#![feature(type_alias_impl_trait)]
 
 use panic_semihosting as _;
 
@@ -92,7 +93,7 @@ mod app {
         rtic::pend(interrupt::USART1);
         rtic::pend(interrupt::USART2);
 
-        (Shared { shared: 0 }, Local {}, init::Monotonics())
+        (Shared { shared: 0 }, Local {})
     }
 
     // `shared` cannot be accessed from this context

@@ -1,4 +1,3 @@
-//!  Substantially modified for rtic 1.0.0
 //!
 //! Continuously measure the eCO2 and eTVOC in the air, logs the values and sends
 //! them through the serial interface every 10 seconds.
@@ -31,6 +30,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -65,16 +65,17 @@ mod app {
     use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write; 
-    use systick_monotonic::*;
     use nb::block;
+
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    const MONOTICK: u32 = 100;
-    const PERIOD: u64 = 10;  // used as seconds
-    //const PERIOD: Duration<T, NOM, DENOM> = 10.secs();
+    const PERIOD: u32 = 10;  // used as seconds
     
     //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
@@ -89,12 +90,11 @@ mod app {
 
 
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
@@ -140,11 +140,11 @@ mod app {
             .unwrap();
         ccs811.set_mode(MeasurementMode::ConstantPower1s).unwrap();
 
-        measure::spawn_after(PERIOD.secs()).unwrap();
+        measure::spawn().unwrap();
 
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {led, ccs811, hdc2080, tx}, Local {led_state, env, index, measurements}, init::Monotonics(mono) )
+        (Shared {led, ccs811, hdc2080, tx}, Local {led_state, env, index, measurements})
     }
 
     #[shared]
@@ -166,61 +166,64 @@ mod app {
 
     #[task(shared = [led, ccs811, hdc2080, tx], local = [led_state, env, index, measurements])]
     async fn measure(mut cx: measure::Context) {
-        if *cx.local.led_state {
-            cx.shared.led.lock(|led| led.off());
-            *cx.local.led_state = false;
-        } else {
-            cx.shared.led.lock(|led| led.on());
-            *cx.local.led_state = true;
-        }
+       loop {
+           Systick::delay(PERIOD.secs()).await;
 
-        let default = AlgorithmResult::default();
-        if *cx.local.index < cx.local.measurements.len() {
-            //let data = block!(cx.shared.ccs811.data()).unwrap_or(default);
-            let data = cx
-                .shared
-                .ccs811
-                .lock(|ccs811| block!(ccs811.data()))
-                .unwrap_or(default);
-            cx.local.measurements[*cx.local.index] = data;
-            //let en = block!(cx.shared.hdc2080.read()).unwrap();
-            let en = cx
-                .shared
-                .hdc2080
-                .lock(|hdc2080| block!(hdc2080.read()))
-                .unwrap();
-            let temp = en.temperature;
-            let humidity = en.humidity.unwrap_or(0.0);
-            cx.local.env[*cx.local.index] = (temp, humidity);
-            *cx.local.index += 1;
-            //cx.shared.ccs811.set_environment(temp, humidity).unwrap();
-            cx.shared
-                .ccs811
-                .lock(|ccs811| ccs811.set_environment(temp, humidity))
-                .unwrap();
-        }
-        //writeln!(cx.shared.tx, "\rstart\r",).unwrap();
-        cx.shared.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
-        for i in 0..*cx.local.index {
-            let data = cx.local.measurements[i];
-            let en = if i == 0 {
-                (0.0, 0.0)
-            } else {
-                cx.local.env[i - 1]
-            };
-            //writeln!(cx.shared.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
-            //        data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1 ).unwrap();
-            cx.shared
-                .tx
-                .lock(|tx| {
-                    writeln!(
-                        tx,
-                        "{},{},{},{},{},{:.2},{:.2}\r",
-                        i, data.eco2, data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1
-                    )
-                })
-                .unwrap();
-        }
-        measure::spawn_after(PERIOD.secs()).unwrap();
+           if *cx.local.led_state {
+               cx.shared.led.lock(|led| led.off());
+               *cx.local.led_state = false;
+           } else {
+               cx.shared.led.lock(|led| led.on());
+               *cx.local.led_state = true;
+           }
+
+           let default = AlgorithmResult::default();
+           if *cx.local.index < cx.local.measurements.len() {
+               //let data = block!(cx.shared.ccs811.data()).unwrap_or(default);
+               let data = cx
+                   .shared
+                   .ccs811
+                   .lock(|ccs811| block!(ccs811.data()))
+                   .unwrap_or(default);
+               cx.local.measurements[*cx.local.index] = data;
+               //let en = block!(cx.shared.hdc2080.read()).unwrap();
+               let en = cx
+                   .shared
+                   .hdc2080
+                   .lock(|hdc2080| block!(hdc2080.read()))
+                   .unwrap();
+               let temp = en.temperature;
+               let humidity = en.humidity.unwrap_or(0.0);
+               cx.local.env[*cx.local.index] = (temp, humidity);
+               *cx.local.index += 1;
+               //cx.shared.ccs811.set_environment(temp, humidity).unwrap();
+               cx.shared
+                   .ccs811
+                   .lock(|ccs811| ccs811.set_environment(temp, humidity))
+                   .unwrap();
+           }
+           //writeln!(cx.shared.tx, "\rstart\r",).unwrap();
+           cx.shared.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
+           for i in 0..*cx.local.index {
+               let data = cx.local.measurements[i];
+               let en = if i == 0 {
+                   (0.0, 0.0)
+               } else {
+                   cx.local.env[i - 1]
+               };
+               //writeln!(cx.shared.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
+               //        data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1 ).unwrap();
+               cx.shared
+                   .tx
+                   .lock(|tx| {
+                       writeln!(
+                           tx,
+                           "{},{},{},{},{},{:.2},{:.2}\r",
+                           i, data.eco2, data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1
+                       )
+                   })
+                   .unwrap();
+           }
+       }
     }
 }

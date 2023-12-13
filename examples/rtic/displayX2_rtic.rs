@@ -25,6 +25,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -53,9 +54,11 @@ mod app {
     //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
-    use systick_monotonic::*;
-    use fugit::TimerDuration;
-    
+
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
+   
     use embedded_graphics::{
         mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
@@ -65,13 +68,12 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const MONOTICK:  u32 = 100;
-    const READ_INTERVAL: u64 = 2;  // used as seconds
+    const READ_INTERVAL: u32 = 2;  // used as seconds
 
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayUs, MONOCLOCK};
+        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -110,11 +112,8 @@ mod app {
     }
 
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
-
     #[init]
-    fn init(cx: init::Context) -> (Shared, Local, init::Monotonics) {
+    fn init(cx: init::Context) -> (Shared, Local) {
         let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
@@ -145,12 +144,13 @@ mod app {
         show_message("displayX2_rtic", &mut display_b);   // Example name
         delay.delay_ms(2000u32);  
 
-        let mono = Systick::new(cx.core.SYST,  MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         let count: u16 = 0;
         display_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display_a, display_b, count }, init::Monotonics(mono))
+        (Shared { led, },   Local {display_a, display_b, count })
     }
 
     #[shared]
@@ -172,30 +172,33 @@ mod app {
         count: u16,
     }
 
-    #[task(shared = [led, ], local = [display_a, display_b, count ], capacity=2)]
-    fn display_and_display(cx: display_and_display::Context) {
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    #[task(shared = [led, ], local = [display_a, display_b, count ])]
+    async fn display_and_display(cx: display_and_display::Context) {
+        loop {
+           blink::spawn(BLINK_DURATION).ok();
 
-        *cx.local.count = *cx.local.count + 1u16;
-        show_display("display A", cx.local.count, cx.local.display_a);
-        show_display("display B", cx.local.count, cx.local.display_b);
+           *cx.local.count = *cx.local.count + 1u16;
+           show_display("display A", cx.local.count, cx.local.display_a);
+           show_display("display B", cx.local.count, cx.local.display_b);
 
-        display_and_display::spawn_after(READ_INTERVAL.secs()).unwrap();
+           Systick::delay(READ_INTERVAL.secs()).await;
+       }
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
+    #[task(shared = [led])]
+    async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_on(mut cx: led_on::Context) {
+    #[task(shared = [led])]
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led], capacity=2)]
-    fn led_off(mut cx: led_off::Context) {
+    #[task(shared = [led])]
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }

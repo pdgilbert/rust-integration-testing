@@ -23,6 +23,7 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
+#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -63,34 +64,33 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write;
-    use systick_monotonic::*;
+
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
+
     use nb::block;
 
     use embedded_hal::delay::DelayNs;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-    use fugit::TimerDuration;
 
     // set up for shared bus even though only one i2c device is used here
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-    const MONOTICK: u32 = 100;
-    const READ_INTERVAL: u64 = 10;  // used as seconds
-    const BLINK_DURATION: u64 = 20;  // used as milliseconds
+    const READ_INTERVAL: u32 = 10;  // used as seconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
          setup_dht_i2c_led_usart_delay_using_dp, DhtPin, LED, LedType, 
          I2cType, TxType, DelayType, MONOCLOCK};
 
-    #[monotonic(binds = SysTick, default = true)]
-    type MyMono = Systick<MONOTICK>;
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono = Systick::new(cx.core.SYST, MONOCLOCK);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         //rtt_init_print!();
         //rprintln!("CCS811 example");
@@ -148,12 +148,12 @@ mod app {
         hprintln!("ccs811.set_mode(3000u32)").unwrap();
 
         // make certain this does not start sooner than end of systick timer led check above
-        measure::spawn_after(READ_INTERVAL.secs()).unwrap();
+        measure::spawn().unwrap();
 
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {led}, Local {dht, ccs811, tx, delay,}, init::Monotonics(mono))
+        (Shared {led}, Local {dht, ccs811, tx, delay,})
     }
 
     #[shared]
@@ -182,77 +182,81 @@ mod app {
         }
     }
 
-    #[task(shared = [led,], local = [dht, ccs811, delay, tx,] )]
-    fn measure(cx: measure::Context) {
-        //hprintln!("measure").unwrap();
-        blink::spawn(BLINK_DURATION.millis()).ok();
+    #[task(shared = [led,], local = [dht, ccs811, delay, tx,], priority=1 )]
+    async fn measure(cx: measure::Context) {
 
-        // this might be nicer if read could be done by spawn rather than wait for delay
-        let delay = cx.local.delay;
-        let dht = cx.local.dht;
-        let z = read(delay, dht);
-        let (temperature, humidity) = match z {
-            Ok(Reading {temperature, relative_humidity,})
-               =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
-                    (temperature, relative_humidity)
-                   },
-            Err(e) 
-               =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
-                    //panic!("Error reading DHT"),
-                    (25, 40)  //supply default values
-                   },
-        };
-        //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity).unwrap();
+       // this might be nicer if read could be done by spawn rather than wait for delay
+       let delay = cx.local.delay;
+       let dht = cx.local.dht;
 
-        //let data = cx.share.ccs811.lock(|ccs811| block!(ccs811.data())).unwrap_or(AlgorithmResult::default());
-        let data = block!(cx.local.ccs811.data()).unwrap_or(AlgorithmResult::default());
-        hprintln!("ccs811 data eco2:{}, etvoc:{}, raw_current:{}, raw_volt:{}", 
-                          data.eco2, data.etvoc, data.raw_current, data.raw_voltage).unwrap();
+       loop {
+           Systick::delay(READ_INTERVAL.secs()).await;
 
-        //cx.share.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
-        cx.local.ccs811.set_environment(temperature.into(), humidity.into()).unwrap();
+           //hprintln!("measure").unwrap();
+           blink::spawn(BLINK_DURATION).ok();
+
+           let z = read(delay, dht);
+           let (temperature, humidity) = match z {
+               Ok(Reading {temperature, relative_humidity,})
+                  =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+                       (temperature, relative_humidity)
+                      },
+               Err(e) 
+                  =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
+                       //panic!("Error reading DHT"),
+                       (25, 40)  //supply default values
+                      },
+           };
+           //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity).unwrap();
+
+           //let data = cx.share.ccs811.lock(|ccs811| block!(ccs811.data())).unwrap_or(AlgorithmResult::default());
+           let data = block!(cx.local.ccs811.data()).unwrap_or(AlgorithmResult::default());
+           hprintln!("ccs811 data eco2:{}, etvoc:{}, raw_current:{}, raw_volt:{}", 
+                             data.eco2, data.etvoc, data.raw_current, data.raw_voltage).unwrap();
+
+           //cx.share.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
+           cx.local.ccs811.set_environment(temperature.into(), humidity.into()).unwrap();
 
 
-//       cx.local.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
-//       for i in 0..*cx.local.index {
-//           let data = cx.local.measurements[i];
-//           let en = if i == 0 {
-//               (0.0, 0.0)
-//           } else {
-//               cx.local.env[i - 1]
-//           };
-//           //writeln!(cx.local.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
-//           //        data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1 ).unwrap();
-//           cx.local
-//               .tx
-//               .lock(|tx| {
-//                   writeln!(
-//                       tx,
-//                       "{},{},{},{},{},{:.2},{:.2}\r",
-//                       i, data.eco2, data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1
-//                   )
-//               })
-//               .unwrap();
-//       }
-        measure::spawn_after(READ_INTERVAL.secs()).unwrap();
+//          cx.local.tx.lock(|tx| writeln!(tx, "\rstart\r",)).unwrap();
+//          for i in 0..*cx.local.index {
+//              let data = cx.local.measurements[i];
+//              let en = if i == 0 {
+//                  (0.0, 0.0)
+//              } else {
+//                  cx.local.env[i - 1]
+//              };
+//              //writeln!(cx.local.tx,  "{},{},{},{},{},{:.2},{:.2}\r", i, data.eco2,
+//              //        data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1 ).unwrap();
+//              cx.local
+//                  .tx
+//                  .lock(|tx| {
+//                      writeln!(
+//                          tx,
+//                          "{},{},{},{},{},{:.2},{:.2}\r",
+//                          i, data.eco2, data.etvoc, data.raw_current, data.raw_voltage, en.0, en.1
+//                      )
+//                  })
+//                  .unwrap();
+//          }
+       }
     }
 
-    #[task(shared = [led] )]
-    fn blink(_cx: blink::Context, duration: TimerDuration<u64, MONOTICK>) {
-        // note that if blink is called with ::spawn_after then the first agument is the after time
-        // and the second is the duration.
+    #[task(shared = [led], priority=1 )]
+    async fn blink(_cx: blink::Context, duration: u32) {
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        crate::app::led_off::spawn_after(duration).unwrap();
+        Systick::delay(duration.millis()).await;
+        crate::app::led_off::spawn().unwrap();
     }
 
-    #[task(shared = [led] )]
-    fn led_on(mut cx: led_on::Context) {
+    #[task(shared = [led], priority=1 )]
+    async fn led_on(mut cx: led_on::Context) {
         cx.shared.led.lock(|led| led.on());
     }
 
-    #[task(shared = [led] )]
-    fn led_off(mut cx: led_off::Context) {
+    #[task(shared = [led], priority=1 )]
+    async fn led_off(mut cx: led_off::Context) {
         cx.shared.led.lock(|led| led.off());
     }
 }
