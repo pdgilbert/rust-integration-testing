@@ -1,4 +1,6 @@
-// from  /cortex-m-rtic/examples/schedule.rs
+// Originally from  /cortex-m-rtic/examples/schedule.rs. This is reworked for rtic v2. 
+
+// NEED TO ADD MORE CHECKS FOR SCHEDULING
 
 #![deny(unsafe_code)]
 #![deny(warnings)]
@@ -32,7 +34,7 @@ mod app {
     use cortex_m_semihosting::{hprintln};
 
     use rtic;
-    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::{Systick};
     use rtic_monotonics::systick::fugit::{ExtU32};
 
     const MONOCLOCK: u32 = 8_000_000; // 8 MHz
@@ -52,21 +54,20 @@ mod app {
         //hprintln!("init").ok();
 
         //hprintln!("init spawn").ok();
-        foo::spawn().ok();
-        bar::spawn().ok();
-        foo::spawn().ok();
-        foo::spawn().unwrap();
+        foobar1::spawn().unwrap();
+        foobar2::spawn().unwrap();
+        foobar3::spawn().unwrap();
 
         //hprintln!("init spawn_at").ok();
-        bar::spawn_at(monotonics::now() + 10.secs()).ok();
-        baz::spawn_at(monotonics::now() + 11.secs()).ok();
-        foo::spawn_at(monotonics::now() + 12.secs()).unwrap();
+        //bar::spawn_at(monotonics::now() + 10.secs()).ok();
+        //baz::spawn_at(monotonics::now() + 11.secs()).ok();
+        //foo::spawn_at(monotonics::now() + 12.secs()).unwrap();
 
         //hprintln!("init spawn_after").ok();
-        foo::spawn_after(5.secs()).unwrap();
-        baz::spawn_after(6.secs()).ok();
-        bar::spawn_after(7.secs()).ok();
-        cdr::spawn_after(8.secs()).ok();
+        //foo::spawn_after(5.secs()).unwrap();
+        //baz::spawn_after(6.secs()).ok();
+        //bar::spawn_after(7.secs()).ok();
+        //cdr::spawn_after(8.secs()).ok();
         
         hprintln!("init ending").ok();
 
@@ -74,22 +75,61 @@ mod app {
     }
 
     #[task( )]
+    async fn foobar1(_: foobar1::Context) {
+        foo::spawn().ok();
+        bar::spawn().ok();
+        foo::spawn().ok();
+        foo::spawn().unwrap();
+    }
+
+    // TRY TO DO SOMETHING MORE LIKE SPAWN_AT AND SPAWN_AFTER
+    #[task( )]
+    async fn foobar2(_: foobar2::Context) {
+       Systick::delay(0.secs() + 10.secs()).await;  //0 in place of now()
+       foo::spawn().unwrap();
+
+       Systick::delay(1.secs()).await;
+       baz::spawn().ok();
+
+       Systick::delay(1.secs()).await;
+       bar::spawn().ok();
+
+       Systick::delay(1.secs()).await;
+       cdr::spawn().ok();
+    }
+
+    #[task( )]
+    async fn foobar3(_: foobar3::Context) {
+       Systick::delay(1.secs()).await;
+       baz::spawn().ok();
+
+       Systick::delay(1.secs()).await;
+       bar::spawn().ok();
+
+       Systick::delay(1.secs()).await;
+       cdr::spawn().ok();
+    }
+
+
+    #[task( )]
     async fn foo(_: foo::Context) {
-        hprintln!("foo").ok();
+       hprintln!("foo").ok();
     }
 
     #[task( )]
     async fn bar(_: bar::Context) {
-        hprintln!("bar").ok();
+       hprintln!("bar").ok();
     }
 
     #[task( )]
     async fn baz(_: baz::Context) {
-        hprintln!("baz").ok();
+       Systick::delay(1000.millis()).await;
+       hprintln!("baz").ok();
     }
 
     #[task( )]
     async fn cdr(_: cdr::Context) {
-        hprintln!("cdr").ok();
-    }
+       Systick::delay(1000.millis()).await;
+       hprintln!("cdr").ok();
+   }
 }
