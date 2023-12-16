@@ -15,7 +15,8 @@ edition = "2021"
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+stm32f4xx-hal = { git = "https://github.com/rursprung/stm32f4xx-hal", optional = true, branch = "update-to-embedded-hal-1.0.0-rc.3" } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -138,7 +139,7 @@ fugit = { version = "0.3.3", optional = true }
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
 
-embedded-hal = "1.0.0-rc.2"
+embedded-hal = "1.0.0-rc.3"
 #embedded-hal-nb = "1.0.0-rc.1"
 
 embedded-graphics = ">=0.7"
