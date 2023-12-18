@@ -15,8 +15,8 @@ edition = "2021"
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-#stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
-stm32f4xx-hal = { git = "https://github.com/rursprung/stm32f4xx-hal", optional = true, branch = "update-to-embedded-hal-1.0.0-rc.3" } 
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
+#stm32f4xx-hal = { git = "https://github.com/rursprung/stm32f4xx-hal", optional = true, branch = "update-to-embedded-hal-1.0.0-rc.3" } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -52,11 +52,12 @@ onewire         = { git = "https://github.com/katyo/onewire" }       # src/ libs
 #one-wire-bus    = { git = "https://github.com/pdgilbert/one-wire-bus" }
 #one-wire-bus    = { path = "/home/paul/githubClones/one-wire-bus" }
 #one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
-#* one-wire-bus    = { git = "https://github.com/jneem/one-wire-bus" }
+one-wire-bus    = { git = "https://github.com/daniel-larsen/one-wire-bus" }
+#one-wire-bus    = { git = "https://github.com/jneem/one-wire-bus" }
 #ds18b20         = { git = "https://github.com/fuchsnj/ds18b20" }
 #ds18b20         = { git = "https://github.com/robko23/ds18b20" }
-#* ds18b20         = { git = "https://github.com/rednaz1337/ds18b20" }
-#ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
+#*ds18b20         = { git = "https://github.com/rednaz1337/ds18b20" }
+ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
 #ds18b20         = { path = "/home/paul/githubClones/ds18b20" }
 
 # examples//driver-examples/

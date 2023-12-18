@@ -29,7 +29,7 @@ use cortex_m_semihosting::hprintln;
 use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
-use one_wire_bus::{OneWire, OneWireResult};
+use one_wire_bus::{OneWireResult};
 
 
 use ds18b20;
@@ -54,7 +54,7 @@ use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_
 // open_drain_output is really input and output
 
 fn get_sensor<P, E>(
-    delay: &mut (impl DelayNs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayNs<u16>),
+    delay: &mut (impl DelayNs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs<u16>),
     ow_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where
@@ -69,7 +69,7 @@ fn get_sensor<P, E>(
     // or just wait the longest time, which is the 12-bit resolution (750ms)
     Resolution::Bits12.delay_for_measurement_time(delay);
     // or
-    delay.delay_ms(2000); // Delay 2 seconds
+    //delay.delay_ms(2000); // Delay 2 seconds
 
     // iterate over all devices
     //according to  one_wire_bus  device_search:
@@ -140,7 +140,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let (pin, i2c, mut led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
 
-    let mut one_wire_bus = one_wire_bus::zz  OneWire::new(pin).unwrap();
+    let mut ow_bus = one_wire_bus::OneWire::new(pin).unwrap();
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
@@ -160,7 +160,7 @@ fn main() -> ! {
     show_display(-300.0, text_style, &mut display);  //just to show display is working
 
     // get sensor address    
-    let sensor = get_sensor(&mut delay, &mut one_wire_bus).unwrap();
+    let sensor = get_sensor(&mut delay, &mut ow_bus).unwrap();
       
     //hprintln!("endless loop. ^c to kill ...").unwrap();
 
@@ -168,7 +168,7 @@ fn main() -> ! {
         // Blink LED to check that everything is actually running.
         led.blink(50_u16, &mut delay);
 
-        let sensor_data = sensor.read_data(&mut one_wire_bus, &mut delay);
+        let sensor_data = sensor.read_data(&mut ow_bus, &mut delay);
         
         //hprintln!("Device at {:?} is {}°C", device_address, sensor_data.temperature).unwrap();
        
