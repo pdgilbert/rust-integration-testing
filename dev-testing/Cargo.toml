@@ -47,6 +47,7 @@ ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }
 #onewire         = { git = "https://github.com/kellerkindt/onewire" }
 #onewire         = { git = "https://github.com/asdfuser/onewire" }   # src/ libs compiled circa June 2023
 onewire         = { git = "https://github.com/katyo/onewire" }       # src/ libs compiled circa Aug  2023
+#katyo has an eh1 branch
 
 #one-wire-bus     = ">=0.1.1" 
 #one-wire-bus    = { git = "https://github.com/pdgilbert/one-wire-bus" }
