@@ -461,6 +461,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::delay::DelayNs;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     // see https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/blinky.rs
     let cp = CorePeripherals::take().unwrap();

@@ -1,6 +1,7 @@
 //! Note that (on board) led pin settings are specific to a board used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
+use embedded_hal::delay::DelayNs;
 
 pub use crate::delay::{Delay1Type as DelayType};
 
@@ -14,9 +15,9 @@ pub trait LED {
 
     fn blink(&mut self, time: u16, delay: &mut DelayType) -> () {
         self.on();
-        delay.delay_ms(time);
+        delay.delay_ms(time.into());
         self.off();
-        delay.delay_ms(time); //consider delay.delay_ms(500u16);
+        delay.delay_ms(time.into()); //consider delay.delay_ms(500);
     }
 
     fn blink_ok(&mut self, delay: &mut DelayType) -> () {
@@ -27,20 +28,20 @@ pub trait LED {
         let end: u16 = 1500;
 
         // dash-dash-dash
-        self.blink(dash, delay);
-        delay.delay_ms(spc);
-        self.blink(dash, delay);
-        delay.delay_ms(spc);
-        self.blink(dash, delay);
-        delay.delay_ms(space);
+        self.blink(dash.into(), delay);
+        delay.delay_ms(spc.into());
+        self.blink(dash.into(), delay);
+        delay.delay_ms(spc.into());
+        self.blink(dash.into(), delay);
+        delay.delay_ms(space.into());
 
         // dash-dot-dash
-        self.blink(dash, delay);
-        delay.delay_ms(spc);
-        self.blink(dot, delay);
-        delay.delay_ms(spc);
-        self.blink(dash, delay);
-        delay.delay_ms(end);
+        self.blink(dash.into(), delay);
+        delay.delay_ms(spc.into());
+        self.blink(dot.into(), delay);
+        delay.delay_ms(spc.into());
+        self.blink(dash.into(), delay);
+        delay.delay_ms(end.into());
     }
 }
 

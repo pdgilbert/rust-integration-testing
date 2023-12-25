@@ -26,17 +26,17 @@ pub trait LED {
     fn off(&mut self) -> ();
 
     // default methods
-    fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
+    fn blink(&mut self, time: u32, delay: &mut Delay) -> () {
         self.on();
         delay.delay_ms(time);
         self.off()
     }
     fn blink_ok(&mut self, delay: &mut Delay) -> () {
-        let dot: u16 = 5;
-        let dash: u16 = 100;
-        let spc: u16 = 300;
-        let space: u16 = 800;
-        let end: u16 = 1500;
+        let dot   = 5;
+        let dash  = 100;
+        let spc   = 300;
+        let space = 800;
+        let end   = 1500;
 
         // dash-dash-dash
         self.blink(dash, delay);
@@ -324,6 +324,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::delay::DelayNs;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -468,8 +471,8 @@ fn main() -> ! {
 
     led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
 
-    let on: u16 = 10; // on for 10 ms
-    let off: u16 = 3000; //off for  3 s
+    let on: u32  = 10; // on for 10 ms
+    let off: u32 = 3000; //off for  3 s
 
     // blink LED and sleep
     loop {

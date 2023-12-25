@@ -271,7 +271,15 @@ pub fn setup_i2c1_i2c2_led_delays_using_dp(dp: Peripherals) ->  (I2cType, I2c2Ty
 
 
 #[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{prelude::*,};
+use stm32h7xx_hal::{
+    //pac::{TIM2, TIM5},
+    interrupt::{TIM2, TIM5},
+    time::MilliSeconds,
+    //timer::CountDownTimer,
+    //delay::DelayFromCountDownTimer, removed
+    block,
+    prelude::*,}
+;
 
 #[cfg(feature = "stm32h7xx")]
 pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
@@ -293,15 +301,22 @@ pub fn setup_i2c1_i2c2_led_delays_using_dp(dp: Peripherals) ->  (I2cType, I2c2Ty
    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx1,  dp.I2C2, gpiof, i2cx2, &clocks);
 
    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
-   let delay1 = Delay1Type{};
-   let delay2 = Delay2Type{};
+   //let delay1 = Delay1Type::new(TIM2, clocks);
+   //let delay2 = Delay2Type::new(TIM2, clocks);
+   //let delay1 = Delay1Type{};
+   //let delay2 = Delay2Type{};
    //let delay1 = dp.TIM2.delay_ms(&mut rcc);
    //let delay2 = dp.TIM5.delay_ms(&mut rcc);
+   //let delay1 = dp.TIM2.delay(&mut rcc);
+   //let delay2 = dp.TIM5.delay(&mut rcc);
    // try building method like 
-   //let mut timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &ccdr.clocks);
+   let mut timer2 = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &clocks);
+   let mut timer5 = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
    // 20ms wait with timer
-   // timer.start(MilliSeconds::from_ticks(20).into_rate());
-   // block!(timer.wait()).ok();
+   timer2.start(MilliSeconds::from_ticks(20).into_rate());
+   block!(timer2.wait()).ok();
+   let mut delay1 = DelayFromCountDownTimer::new(timer2);
+   let mut delay2 = DelayFromCountDownTimer::new(timer5);
 
    (i2c1, i2c2, led, delay1, delay2)
 }

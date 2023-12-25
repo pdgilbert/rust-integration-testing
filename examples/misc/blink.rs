@@ -40,6 +40,7 @@ use cortex_m_rt::entry;
 // 3. Configure gpio pin as a push-pull output.
 // 4. See Note of Interest above.
 
+
 #[cfg(feature = "stm32f0xx")] //  eg  stm32f303x4
 use stm32f0xx_hal::{
     delay::Delay,
@@ -308,6 +309,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use embedded_hal::delay::DelayNs;
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (PC13<Output<PushPull>>, Delay) {
     // see https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/blinky.rs
     let cp = CorePeripherals::take().unwrap();
@@ -455,7 +459,7 @@ pub trait LED {
 fn main() -> ! {
     let (mut led, mut delay) = setup();
 
-    let on: u32 = 1000;
+    let on: u32  = 1000;
     let off: u32 = 3000;
 
     // Wait for the timer to trigger an update and change the state of the LED

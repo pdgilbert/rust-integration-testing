@@ -464,6 +464,7 @@ use stm32h7xx_hal::{
     gpio::{Input,
         gpiob::{PB10, PB11, PB6},
     },
+    interrupt::TIM2,
     prelude::*,
 };
 
@@ -475,7 +476,9 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType,
     let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
     //let mut delay = Delay::new(cp.SYST, clocks);
-    let mut delay = DelayType{};
+    //let mut delay = DelayType::new(_, _);
+    //let mut delay = dp.TIM2.delay_us(&clocks);
+    //let mut delay = DelayType::new(TIM2, 160.MHz());
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 
