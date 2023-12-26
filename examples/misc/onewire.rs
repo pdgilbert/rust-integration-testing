@@ -60,20 +60,16 @@ use onewire;
 //}
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::delay_syst::Delay;
 
 fn main() -> ! {
-    //let cp = CorePeripherals::take().unwrap();
-    //let p = Peripherals::take().unwrap();
-    //let mut flash = p.FLASH.constrain();
-    //let mut rcc = p.RCC.constrain();
-    //let clocks = rcc.cfgr.freeze(&mut flash.acr);
-    //let mut gpioa = p.GPIOA.split();
-    // 
-    //let mut delay = cp.SYST.delay(&clocks);  //Delay::new(cp.SYST, clocks);
-
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (one, _i2c, _led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
+
+    let (one, _i2c, _led, clocks) = onewire_i2c_led::setup(dp);
+    let mut delay = Delay::new(cp.SYST, clocks); 
 
     delay.delay_ms(1000);
     

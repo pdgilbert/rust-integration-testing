@@ -34,6 +34,8 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
+use embedded_hal::delay::DelayNs;
+
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 // 1. Get device specific peripherals
 // 2. Take ownership of the raw rcc (Reset and Clock Control) device and convert to  HAL structs
@@ -153,6 +155,7 @@ fn setup() -> (PE15<Output<PushPull>>, Delay) {
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
     timer::SysDelay as Delay,
+    timer::TimerExt,
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
@@ -307,9 +310,6 @@ use stm32h7xx_hal::{
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
-
-#[cfg(feature = "stm32h7xx")]
-use embedded_hal::delay::DelayNs;
 
 #[cfg(feature = "stm32h7xx")]
 fn setup() -> (PC13<Output<PushPull>>, Delay) {

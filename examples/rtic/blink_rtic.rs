@@ -48,8 +48,8 @@ mod app {
     const ONE_DURATION: u32 = 20;  // used as milliseconds
     const TEN_DURATION: u32 = 500;
 
-    use rust_integration_testing_of_examples::setups::{
-        setup_led_using_dp, LED, LedType, MONOCLOCK};
+    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
+    use rust_integration_testing_of_examples::led::{LED, LedType, setup_led_using_dp};
 
 
     #[init]
@@ -59,8 +59,6 @@ mod app {
         hprintln!("blink_rtic example").unwrap();
 
         let mut led = setup_led_using_dp(cx.device);
-        // Note: the following also works but result is a bit larger and bluepill need --release
-        //let (_i2c1, _i2c2, mut led, _delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
 
         led.on();
 

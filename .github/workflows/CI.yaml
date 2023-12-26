@@ -3,7 +3,8 @@
 
 on:
   push:
-    branches: [ main, dev, eh-1-rc1, eh-1-rc2, eh-1-rc3]
+    branches: [ main, dev, eh-1-rc3, eh-1-rc3-h7, eh--1-rc3-h7-refactor_setup
+]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -458,7 +459,7 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [blackpill-stm32f401]  
+        brd: [blackpill-stm32f401, none-stm32h742]  
         #brd: [bluepill, discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
@@ -479,6 +480,10 @@ jobs:
         #     mcu:  stm32g473
         #     hal: "stm32g4xx"
         #     trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32h742"
+             mcu:  stm32h742             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
 
     steps:
       - uses: actions/checkout@v3

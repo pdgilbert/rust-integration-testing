@@ -67,7 +67,11 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::delay_syst::Delay;
 
 
 
@@ -117,7 +121,11 @@ fn main() -> ! {
     //rprintln!("temperature_display example");
     hprintln!("temperature_display example").unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let (i2c, mut led, clocks) = i2c_led::setup(dp);
+
+    let mut delay = Delay::new(cp.SYST, clocks); 
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

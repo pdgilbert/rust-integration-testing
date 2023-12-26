@@ -2,6 +2,7 @@
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
 use embedded_hal::delay::DelayNs;
+use embedded_hal;
 
 pub use crate::delay::{Delay1Type as DelayType};
 

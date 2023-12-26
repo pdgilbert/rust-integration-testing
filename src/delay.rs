@@ -112,7 +112,7 @@ use stm32h7xx_hal::{
     delay::{Delay},   //, DelayFromCountDownTimer, Countdown},
     //timer::CountDownTimer,
     //delay::DelayFromCountDownTimer,
-    pac::{TIM2, TIM5}
+    //pac::{TIM2, TIM5}
 };
 
 #[cfg(feature = "stm32h7xx")]

@@ -30,6 +30,8 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
+use embedded_hal::delay::DelayNs;
+
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
 use dht_sensor::dht11::{read, Reading};
@@ -43,16 +45,19 @@ use dht_sensor::dht22::{read, Reading};
 //Also more in comments in dht-sensor crate file src/lib.rs
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-
-use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, DelayNs};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::dht_i2c_led_usart;
+use rust_integration_testing_of_examples::delay_syst;
 
 
 #[entry]
 fn main() -> ! {
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    //let (mut dht, mut delay) = setup(); //dht is usually pa8 in setup functions
-    let (mut dht, _i2c, _led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(dp);
+
+    //dht is usually pa8 in setup functions
+    let mut delay = delay_syst::setup(dp, cp);
+    let (mut dht, _i2c, _led, _usart) = dht_i2c_led_usart::setup(dp);
 
     hprintln!("Reading sensor...").unwrap();
 

@@ -23,8 +23,9 @@ use one_wire_bus::{OneWire};   //, DeviceSearch
 //use cortex_m::asm;
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp};
-
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::delay_syst::Delay;
 
 fn find_devices<P, E>(
     delay: &mut impl DelayNs,
@@ -67,9 +68,11 @@ fn find_devices<P, E>(
 }
 #[entry]
 fn main() -> ! {
-
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (pin, _i2c, _led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
+
+    let (pin, _i2c, _led, clocks) = onewire_i2c_led::setup(dp);
+    let mut delay = Delay::new(cp.SYST, clocks);   //SysTick: System Timer  delay
 
     delay.delay_ms(1000);
 

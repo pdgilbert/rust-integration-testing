@@ -49,7 +49,10 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led_delay::{setup_onewire_i2c_led_delay_using_dp, LED};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::delay_syst::Delay;
+use rust_integration_testing_of_examples::led::{LED};
 
 // open_drain_output is really input and output
 
@@ -137,8 +140,11 @@ where
 
 #[entry]
 fn main() -> ! {
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (pin, i2c, mut led, mut delay) = setup_onewire_i2c_led_delay_using_dp(dp);
+
+    let (pin, i2c, mut led, clocks) = onewire_i2c_led::setup(dp);
+    let mut delay = Delay::new(cp.SYST, clocks);   //SysTick: System Timer  delay
 
     let mut ow_bus = one_wire_bus::OneWire::new(pin).unwrap();
 
