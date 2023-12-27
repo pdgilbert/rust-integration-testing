@@ -47,18 +47,20 @@ pub use crate::alt_delay::{AltDelay as Delay2Type};
 
 
 
-#[cfg(feature = "stm32f4xx")]
-use stm32f4xx_hal::{
-    timer::Delay,
-    //timer::SysDelay as Delay,
-    pac::{TIM2, TIM5},
-};
+//#[cfg(feature = "stm32f4xx")]
+//use stm32f4xx_hal::pac::{TIM2, TIM5};
+
+//#[cfg(feature = "stm32f4xx")]
+//pub use stm32f4xx_hal::timer::Delay; 
 
 #[cfg(feature = "stm32f4xx")]
-pub type Delay1Type = Delay<TIM2, 1000000_u32>;
+pub use stm32f4xx_hal::timer::SysDelay as Delay;
 
 #[cfg(feature = "stm32f4xx")]
-pub type Delay2Type = Delay<TIM5, 1000000_u32>;
+pub type Delay1Type = Delay;  //<TIM2, 1000000_u32>;
+
+#[cfg(feature = "stm32f4xx")]
+pub type Delay2Type = Delay;  //<TIM5, 1000000_u32>;
 
 
 
@@ -108,12 +110,13 @@ pub type Delay2Type = DelayFromCountDownTimer<CountDownTimer<TIM3>>;
 
 
 #[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{
-    delay::{Delay},   //, DelayFromCountDownTimer, Countdown},
-    //timer::CountDownTimer,
-    //delay::DelayFromCountDownTimer,
-    //pac::{TIM2, TIM5}
-};
+pub use stm32h7xx_hal::delay::Delay;
+
+//use stm32h7xx_hal::{
+//    //timer::CountDownTimer,
+//    //delay::DelayFromCountDownTimer,
+//    //pac::{TIM2, TIM5}
+//};
 
 #[cfg(feature = "stm32h7xx")]
 pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;

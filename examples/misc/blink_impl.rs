@@ -1,13 +1,13 @@
 //! Blink  onboard LED if one is available, or PC13 otherwise.
 //! See blink.rs  example for more details.
 //! Relative to blink.rs this file uses trait LED with trait bounds and
-//!    fn setup() -> (impl LED, Delay)
+//!    fn setup() -> (impl LED, impl DelayNs)
 //! so setups all have similar and simpler signature.
 
 // Example use of impl trait: If the LED  output pin is PC13 then
 //      fn setup() -> (PC13<Output<PushPull>>, Delay) {
 // is changed to
-//      fn setup() -> (impl LED, Delay) {
+//      fn setup() -> (impl LED, impl DelayNs) {
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -21,17 +21,19 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
+use embedded_hal::delay::DelayNs;
+
 pub trait LED {
     fn on(&mut self) -> ();
     fn off(&mut self) -> ();
 
     // default methods
-    fn blink(&mut self, time: u32, delay: &mut Delay) -> () {
+    fn blink(&mut self, time: u32, delay: &mut impl DelayNs) -> () {
         self.on();
         delay.delay_ms(time);
         self.off()
     }
-    fn blink_ok(&mut self, delay: &mut Delay) -> () {
+    fn blink_ok(&mut self, delay: &mut impl DelayNs) -> () {
         let dot   = 5;
         let dash  = 100;
         let spc   = 300;
@@ -67,7 +69,7 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let mut p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.configure().sysclk(8.mhz()).freeze(&mut p.FLASH);
@@ -101,7 +103,7 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
@@ -135,7 +137,7 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
@@ -164,7 +166,6 @@ fn setup() -> (impl LED, Delay) {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
@@ -172,7 +173,7 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
@@ -216,7 +217,7 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     // fn setup() -> (PC13<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -254,7 +255,7 @@ use stm32g0xx_hal::{
 type Delay = SysDelay<SYST>;
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup() -> (impl LED, Delay) {
+pub fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
@@ -288,7 +289,7 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup() -> (impl LED, Delay) {
+pub fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
@@ -324,10 +325,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::delay::DelayNs;
-
-#[cfg(feature = "stm32h7xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let pwr = p.PWR.constrain();
@@ -362,7 +360,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
@@ -397,7 +395,7 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     //fn setup() -> (PB6<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -430,7 +428,7 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (impl LED, Delay) {
+fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut flash = p.FLASH.constrain();

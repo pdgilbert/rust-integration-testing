@@ -35,6 +35,8 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
+use embedded_hal::delay::DelayNs;
+
 //use cortex_m_semihosting::{debug, hprintln};
 //use cortex_m_semihosting::{hprintln};
 //use rtt_target::{rprintln, rtt_init_print};
@@ -54,7 +56,11 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 
 use nb::block;
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED, DelayNs};
+use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::delay::{Delay};
 
 
 pub fn read_all<E, A: DynamicOneShot<Error = E>>(
@@ -158,7 +164,18 @@ where
 
 #[entry]
 fn main() -> ! {
-    let (i2c, mut led, mut delay) = setup();
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let (i2c, mut led, mut clocks) = i2c_led::setup(dp);
+
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&mut clocks);
 
     led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
 

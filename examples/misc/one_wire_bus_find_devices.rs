@@ -25,7 +25,7 @@ use one_wire_bus::{OneWire};   //, DeviceSearch
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::onewire_i2c_led;
-use rust_integration_testing_of_examples::delay_syst::Delay;
+use rust_integration_testing_of_examples::delay::Delay;
 
 fn find_devices<P, E>(
     delay: &mut impl DelayNs,
@@ -72,7 +72,15 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
     let (pin, _i2c, _led, clocks) = onewire_i2c_led::setup(dp);
-    let mut delay = Delay::new(cp.SYST, clocks);   //SysTick: System Timer  delay
+    
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&clocks);
 
     delay.delay_ms(1000);
 

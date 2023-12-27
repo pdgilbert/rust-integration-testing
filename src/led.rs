@@ -14,14 +14,14 @@ pub trait LED {
 
     // default methods. Note these use delay so DO NOT USE IN rtic.
 
-    fn blink(&mut self, time: u16, delay: &mut DelayType) -> () {
+    fn blink(&mut self, time: u16, delay: &mut impl DelayNs) -> () {
         self.on();
         delay.delay_ms(time.into());
         self.off();
         delay.delay_ms(time.into()); //consider delay.delay_ms(500);
     }
 
-    fn blink_ok(&mut self, delay: &mut DelayType) -> () {
+    fn blink_ok(&mut self, delay: &mut impl DelayNs) -> () {
         let dot: u16 = 5;
         let dash: u16 = 200;
         let spc: u16 = 500;

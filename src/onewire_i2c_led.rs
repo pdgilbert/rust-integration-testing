@@ -28,7 +28,7 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup(mut dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {    
+pub fn setup(mut dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpioa = dp.GPIOA.split(&mut rcc);
    let mut onewire = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
@@ -94,7 +94,7 @@ pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
 use stm32f3xx_hal::{prelude::*,};
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
@@ -146,9 +146,6 @@ pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
-   //let delay = DelayType{};
-   let delay = dp.TIM2.delay_us(&clocks);
-
    (onewire, i2c, led, clocks)
 }
 
@@ -158,7 +155,7 @@ pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
 use stm32f7xx_hal::{prelude::*};
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let onewire = dp.GPIOA.split().pa8.into_open_drain_output();
 
    let mut rcc = dp.RCC.constrain();
@@ -179,7 +176,7 @@ pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
 use stm32g0xx_hal::{prelude::* };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
 
    let mut rcc = dp.RCC.constrain();
 
@@ -209,7 +206,7 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let mut rcc = dp.RCC.constrain();
 
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -263,7 +260,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    // UNTESTED
    let mut rcc = dp.RCC.freeze(Config::hsi16());
 
@@ -289,7 +286,7 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
    let onewire = dp.GPIOA.split(&mut rcc).pa8.into_open_drain_output();
@@ -308,7 +305,7 @@ pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
 use stm32l4xx_hal::{prelude::*,};
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, CoreClocks) {
+pub fn setup(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Clocks) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);

@@ -23,6 +23,8 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
+use embedded_hal::delay::DelayNs;
+
 //use nb::block;
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
@@ -55,9 +57,11 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode,
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-                   setup_dht_i2c_led_usart_delay_using_dp, LED, DelayNs};
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::dht_i2c_led_usart;
+use rust_integration_testing_of_examples::delay::Delay;
 
 
 fn show_display<S>(
@@ -109,8 +113,18 @@ fn main() -> ! {
     //rprintln!("oled_dht example");
     //hprintln!("oled_dht example").unwrap();
 
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(dp);
+    let (mut dht, i2c, mut led, _usart, mut clocks) = dht_i2c_led_usart::setup(dp);
+
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&mut clocks);
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

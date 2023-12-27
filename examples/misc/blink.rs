@@ -154,8 +154,6 @@ fn setup() -> (PE15<Output<PushPull>>, Delay) {
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
-    timer::TimerExt,
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
@@ -163,7 +161,7 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (PC13<Output<PushPull>>, Delay) {
+fn setup() -> (PC13<Output<PushPull>>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
@@ -312,7 +310,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (PC13<Output<PushPull>>, Delay) {
+fn setup() -> (PC13<Output<PushPull>>,  impl DelayNs) {
     // see https://github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/blinky.rs
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();

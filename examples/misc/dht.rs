@@ -47,7 +47,7 @@ use dht_sensor::dht22::{read, Reading};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::dht_i2c_led_usart;
-use rust_integration_testing_of_examples::delay_syst;
+use rust_integration_testing_of_examples::delay::Delay;
 
 
 #[entry]
@@ -56,8 +56,16 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
     //dht is usually pa8 in setup functions
-    let mut delay = delay_syst::setup(dp, cp);
-    let (mut dht, _i2c, _led, _usart) = dht_i2c_led_usart::setup(dp);
+    let (mut dht, _i2c, _led, _usart, mut clocks) = dht_i2c_led_usart::setup(dp);
+    
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&mut clocks);
 
     hprintln!("Reading sensor...").unwrap();
 
