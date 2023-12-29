@@ -50,8 +50,11 @@ use embedded_graphics::{
 
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::setups::{setup_i2c1_i2c2_led_delays_using_dp, LED, Peripherals, i2cError};
-
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::i2c1_i2c2_led;
+use rust_integration_testing_of_examples::delay::Delay;
 
 fn show_display<S>(
     s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
@@ -115,7 +118,7 @@ where
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay1, delay2) = setup_i2c1_i2c2_led_delays_using_dp(dp);
+    let (i2c1, i2c2, mut led, clock) = i2c1_i2c2_led::setup(dp);
 
     led.off();
 

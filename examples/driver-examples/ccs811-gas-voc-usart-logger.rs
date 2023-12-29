@@ -77,10 +77,10 @@ mod app {
 
     const PERIOD: u32 = 10;  // used as seconds
     
-    //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-         setup_dht_i2c_led_usart_delay_using_dp, LED, LedType, 
-         I2cType, TxType, MONOCLOCK};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart;
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+        I2cType, TxType, MONOCLOCK};
 
     // cortex_m::asm  delay is only used in init. 
     // See other examples for the case when a shared delay is needed.
@@ -99,9 +99,7 @@ mod app {
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
 
-        //let device: Peripherals = cx.device;
-        //let (i2c, mut led, mut tx) = setup(device);
-        let (_dht, i2c, mut led, mut tx, _delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
+        let (_dht, i2c, mut led, mut tx, _clocks) = dht_i2c_led_usart::setup(cx.device);
 
         led.off();
 

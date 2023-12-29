@@ -27,6 +27,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
+use embedded_hal::delay::DelayNs;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
@@ -40,16 +41,28 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::setups::{
-    setup_i2c1_i2c2_led_delay_using_dp, Peripherals, DelayNs};
+use rust_integration_testing_of_examples::i2c1_i2c2_led;
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::delay::Delay;
 
 
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, _led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(dp);
+    let (i2c1, i2c2, _led, clocks) = i2c1_i2c2_led::setup(dp);
+    
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&clocks);
 
     //let manager = shared_bus::BusManagerSimple::new(i2c1); 
     //let interface = I2CDisplayInterface::new(manager.acquire_i2c());

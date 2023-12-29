@@ -1,8 +1,6 @@
 //! TARGET Measure temperature with multiple 10k thermistor sensors (NTC 3950 10k thermistors probes) 
 //! using multiple channel adc and crate ads1x1x. Display using SSD1306.
 
-//!  i2c pin numbers for the MCU are set in src/i2c.rs  by links below through 
-//!     use rust_integration_testing_of_examples::dht_i2c_led_usart_delay
 
 //!  WORK IN PROGRESS. MOST CODE STILL FROM ANOTHER EXAMPLE.
 //! https://www.ametherm.com/thermistor/ntc-thermistor-beta
@@ -78,8 +76,12 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::dp::{Peripherals};
+    use rust_integration_testing_of_examples::cp::{CorePeripherals};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart;
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+        I2cType, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::delay::Delay;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -149,7 +151,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         //hprintln!("temperature-display example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
+        let (_dht, i2c, mut led, _usart, mut delay) = dht_i2c_led_usart::setup(cx.device);
 
         led.on(); 
         delay.delay_ms(1000u32);

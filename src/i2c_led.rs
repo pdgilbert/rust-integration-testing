@@ -12,13 +12,6 @@ pub use crate::onewire_i2c_led;
 pub use crate::onewire_i2c_led::{I2cType, Clocks};
 pub use crate::led::{setup_led, LED, LedType};
 
-//pub fn setup() ->  (I2cType, LedType, DelayType) {    
-//   let dp = Peripherals::take().unwrap();
-//   let (_dht, i2c, led, _usart, delay) = setup_dht_i2c_led_usart_delay_using_dp(dp);
-//
-//   (i2c, led, delay)
-//}
-
 pub fn setup(dp: Peripherals) ->  (I2cType, LedType, Clocks) {    
    // This is a shortcut. 
    // Really should be done as in onewire_i2c_led::setup(dp) but omitting onewire

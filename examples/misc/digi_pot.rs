@@ -37,10 +37,8 @@ use cortex_m_rt::entry;
 
 use mcp4x;
 
-use rust_integration_testing_of_examples::setups::{
-       setup_led, LED, LedType, Delay1Type as DelayType};
-//use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-//use rust_integration_testing_of_examples::delay::{DelayType};
+use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::delay::{DelayType};
 // need to resolve move problem to get this to work
 //use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 

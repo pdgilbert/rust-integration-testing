@@ -283,9 +283,12 @@ mod app {
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    // DelayType is only needed for some sensors. It gives a warningfor others.
-    use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c1Type, I2c2Type, LED, LedType, DelayNs, DelayType, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led;
+    use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType, DelayNs};
+
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type, Clocks, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -374,11 +377,17 @@ mod app {
         //rprintln!("temp-humidity-display example");
         //hprintln!("temp-humidity-display example").unwrap();
 
-        //let mut led = setup(cx.device);
-        let (i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
+        let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(cx.device);
+
+        // trait DelayNs should work but note SysTimerExt above for stm32f4xx
+        //use stm32f4xx_hal::timer::TimerExt;
+
+        //let delay = cx.device.TIM2.delay_ms(&clocks);
+        let delay = Systick::delay;
+
 
         led.on();
-        delay.delay_ms(1000u32);  
+        delay(1000.millis());  
         led.off();
 
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();

@@ -77,8 +77,12 @@ mod app {
     // NEED THIS UNTIL ALL EXAMPLES ARE CONVERTED TO SOMETHING BETTER (as in stm32f4xx)
     #[allow(unused_imports)]
 
-    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-        setup_dht_i2c_led_usart_delay_using_dp, I2cType, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::dp::{Peripherals};
+    use rust_integration_testing_of_examples::cp::{CorePeripherals};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart;
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+        I2cType, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::delay::Delay;
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{
@@ -171,7 +175,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
+        let (_dht, i2c, mut led, _usart, mut delay) = dht_i2c_led_usart::setup(cx.device);
 
         led.on(); 
         delay.delay_ms(1000u32);

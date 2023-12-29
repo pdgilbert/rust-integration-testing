@@ -19,6 +19,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
+use embedded_hal::delay::DelayNs;
 
 //use cortex_m_semihosting::{debug, hprintln};
 //use cortex_m_semihosting::{hprintln};
@@ -55,8 +56,11 @@ use dht_sensor::dht22::{read, Reading};
 
 use  ina219::{INA219,};
 
-use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{setup_dht_i2c_led_usart_delay_using_dp, DelayNs, LED, };
 use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::dht_i2c_led_usart;
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::delay::Delay;
 
 fn display<S>(
     dht_temp: i8,
@@ -101,8 +105,18 @@ where
 
 #[entry]
 fn main() -> ! {
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, _usart, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(dp);
+    let (mut dht, i2c, mut led, _usart, clocks) = dht_i2c_led_usart::setup(dp);
+    
+    #[cfg(not(feature = "stm32f4xx"))]
+    let mut delay = Delay::new(cp.SYST, clocks); 
+    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+    #[cfg(feature = "stm32f4xx")]
+    let mut delay = cp.SYST.delay(&clocks);
 
     led.blink(1000_u16, &mut delay); 
 

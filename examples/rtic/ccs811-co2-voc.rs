@@ -82,8 +82,9 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-    use rust_integration_testing_of_examples::dht_i2c_led_usart_delay::{
-         setup_dht_i2c_led_usart_delay_using_dp, DhtPin, LED, LedType, 
+    use rust_integration_testing_of_examples::dht_i2c_led_usart;
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+         DhtPin, LED, LedType, 
          I2cType, TxType, DelayType, MONOCLOCK};
 
 
@@ -95,7 +96,7 @@ mod app {
         //rtt_init_print!();
         //rprintln!("CCS811 example");
 
-        let (mut dht, i2c, mut led, mut tx, mut delay) = setup_dht_i2c_led_usart_delay_using_dp(cx.device);
+        let (mut dht, i2c, mut led, mut tx, mut delay) = dht_i2c_led_usart::setup(cx.device);
    
         led.on(); 
         delay.delay_ms(1000u32);

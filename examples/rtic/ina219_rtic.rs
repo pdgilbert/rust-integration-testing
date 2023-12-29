@@ -92,8 +92,8 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::setups::{
-        setup_i2c1_i2c2_led_delay_using_dp, I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led::{ I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -144,7 +144,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         //hprintln!("htu2xd_rtic example").unwrap();
 
         //let mut led = setup(cx.device);
-        let (_i2c1, i2c2, mut led, mut delay) = setup_i2c1_i2c2_led_delay_using_dp(cx.device);
+        let (_i2c1, i2c2, mut led, mut delay) = i2c1_i2c2_led::setup(cx.device);
 
         led.on();
         delay.delay_ms(1000u32);  

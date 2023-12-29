@@ -3,9 +3,6 @@
 //!  Measure the temperature and humidity from a DHT11 sensor and print with hprintln (to
 //!  a gdb session).  The DHT11 data pin is connectted to pin A8 on the MCU board and has
 //!  a pull up resistor. (18K ohms used in some testing.)
-//!  The largest part of this code is the setup() functions used for each hal.
-//!  They are in the file src/dht_i2c_led_usart_delay.rs which also uses src/dht.rs.
-//!  These make the application code below common for all hals.
 //!  The DHT uses 3 pin connections (and has an unused 4th pin). The pins are VCC, GND, and data.
 //!  The DHT data pin is connected to the MCU pin PA8 in most (all) cases. 
 //!  The data pin needs a (10K) pull up resistor. The pin is specified in src/dht.rs and would be 
@@ -58,14 +55,13 @@ fn main() -> ! {
     //dht is usually pa8 in setup functions
     let (mut dht, _i2c, _led, _usart, mut clocks) = dht_i2c_led_usart::setup(dp);
     
-    #[cfg(not(feature = "stm32f4xx"))]
-    let mut delay = Delay::new(cp.SYST, clocks); 
-    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
-
-    #[cfg(feature = "stm32f4xx")]
+    //#[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::timer::SysTimerExt;
-    #[cfg(feature = "stm32f4xx")]
-    let mut delay = cp.SYST.delay(&mut clocks);
+
+    let mut delay: Delay = cp.SYST.delay(&mut clocks);
+
+    // This syntax works with stm32h7xx but not with stm32f4xx, as of eh-rc3
+    // let mut delay = Delay::new(cp.SYST, clocks); 
 
     hprintln!("Reading sensor...").unwrap();
 
