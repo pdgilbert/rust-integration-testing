@@ -37,14 +37,25 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::cp::{CorePeripherals};
+use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::delay::Delay;
 
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
     rprintln!("ADS1015 example");
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let (i2c, mut led, mut clocks) = i2c_led::setup(dp);
+    
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::timer::SysTimerExt;
+
+    let mut delay: Delay = cp.SYST.delay(&mut clocks);
 
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());
