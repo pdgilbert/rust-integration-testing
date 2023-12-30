@@ -549,7 +549,10 @@ fn main() -> ! {
 
     //writeln!(tx_con, "\r\nconsole connect check.\r\n").unwrap();
     for byte in b"\r\nconsole connect check.\r\n" {
+        #[cfg(feature = "stm32f4xx")]
         block!(tx_con.write(*byte)).ok();
+        #[cfg(not(feature = "stm32f4xx"))]
+        block!(tx_con.write_byte(*byte)).ok();
     }
 
     // read gps on usart2
@@ -567,11 +570,18 @@ fn main() -> ! {
     let e: u8 = 9;
     let mut good = false;
     loop {
-        let byte = match block!(rx_gps.read()) {
+        #[cfg(feature = "stm32f4xx")]
+        let z = rx_gps.read();
+        #[cfg(not(feature = "stm32f4xx"))]
+        let z = rx_gps.read_byte();
+        let byte = match block!(z) {
             Ok(byt) => byt,
             Err(_error) => e,
         };
+        #[cfg(feature = "stm32f4xx")]
         block!(tx_con.write(byte)).ok();
+        #[cfg(not(feature = "stm32f4xx"))]
+        block!(tx_con.write_byte(byte)).ok();
         if byte == 36 {
             //  $ is 36. start of a line
             buffer.clear();
@@ -582,8 +592,11 @@ fn main() -> ! {
                 //  \r is 13, \n is 10
                 //writeln!(tx_con, "{}", to_str(&buffer)).unwrap();
                 for byte in &buffer {
+                    #[cfg(feature = "stm32f4xx")]
                     block!(tx_con.write(*byte)).ok();
-                }
+                    #[cfg(not(feature = "stm32f4xx"))]
+                    block!(tx_con.write_byte(*byte)).ok();
+               }
                 //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();
                 buffer.clear();
                 good = false;
