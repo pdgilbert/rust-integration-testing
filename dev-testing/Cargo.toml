@@ -143,6 +143,8 @@ fugit = { version = "0.3.3", optional = true }
 
 embedded-hal = "1.0.0-rc.3"
 #embedded-hal-nb = "1.0.0-rc.1"
+#embedded-io = "0.6.1"
+embedded-io = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-graphics = ">=0.7"
 
