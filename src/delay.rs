@@ -1,5 +1,7 @@
 pub use embedded_hal::delay::DelayNs;
 
+// TRY TO CLEANUP OR REMOVE SOME TYPES IF EH-1.0  AND impl Delay HELP
+
 //#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 //use stm32f0xx_hal::{
 //    delay::Delay,
@@ -47,20 +49,17 @@ pub use crate::alt_delay::{AltDelay as Delay2Type};
 
 
 
-//#[cfg(feature = "stm32f4xx")]
-//use stm32f4xx_hal::pac::{TIM2, TIM5};
-
-//#[cfg(feature = "stm32f4xx")]
-//pub use stm32f4xx_hal::timer::Delay; 
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::pac::{TIM2, TIM5};
 
 #[cfg(feature = "stm32f4xx")]
-pub use stm32f4xx_hal::timer::SysDelay as Delay;
+pub use stm32f4xx_hal::timer::Delay; 
 
 #[cfg(feature = "stm32f4xx")]
-pub type Delay1Type = Delay;  //<TIM2, 1000000_u32>;
+pub type Delay1Type = Delay<TIM2, 1000000_u32>;
 
 #[cfg(feature = "stm32f4xx")]
-pub type Delay2Type = Delay;  //<TIM5, 1000000_u32>;
+pub type Delay2Type = Delay<TIM5, 1000000_u32>;
 
 
 

@@ -1,3 +1,5 @@
+//  THIS IS NOT USING DelayNs yet
+
 //! Compile with feature hdc1080, or aht10, or aht20, or htu2xd.
 //! eg build
 //!   cargo build --no-default-features --target $TARGET --features $MCU,$HAL,aht10 --example temp-humidity-display
@@ -110,7 +112,7 @@ mod app {
     use embedded_hdc1080_rs::{Hdc1080}; 
 
     #[cfg(feature = "hdc1080")]
-    type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, DelayType>;
+    type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, Delay2Type>;
     //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
 
     #[cfg(feature = "hdc1080")]
@@ -143,7 +145,7 @@ mod app {
     //Workaround. This needs a new struct because channel is not part of the Htu2xd structure
 
     #[cfg(feature = "htu2xd")]
-    pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: DelayType}
+    pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: Delay2Type}
 
     #[cfg(feature = "htu2xd")]
     impl TempHumSensor for SensorType {
@@ -154,7 +156,7 @@ mod app {
                 Ok(Reading::ErrorHigh) => -4090,
                 Err(_)                 => -4090,
             };
-            self.delay.delay_ms(15u32);  // not sure if delay is needed
+            self.delay.delay(15.millis());  // not sure if delay is needed
 
             let rh = match self.dev.read_humidity_blocking(&mut self.ch) {
                Ok(Reading::Ok(rh))    => rh.as_percent_relative() as u8,
@@ -162,7 +164,7 @@ mod app {
                Ok(Reading::ErrorHigh) => 255,
                Err(_)                 => 255,
             };
-            self.delay.delay_ms(15u32);  // not sure if delay is needed
+            self.delay.delay(15.millis());  // not sure if delay is needed
         (t, rh)
         }
 
@@ -212,7 +214,7 @@ mod app {
     use aht20::Aht20;
 
     #[cfg(feature = "aht20")]
-    type SensorType = Aht20<I2c1Type, DelayType>;
+    type SensorType = Aht20<I2c1Type, Delay2Type>;
 
     #[cfg(feature = "aht20")]
     impl TempHumSensor for SensorType {
@@ -228,7 +230,7 @@ mod app {
             };
             (t, rh)
         }
-        //fn new(i: I2c1Type, d: DelayType) -> Self {
+        //fn new(i: I2c1Type, d: Delay2Type) -> Self {
         //    Aht20::new(i, d).expect("sensor failed")
         //}
 
@@ -283,26 +285,11 @@ mod app {
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    //use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType, DelayNs};
-    //use rust_integration_testing_of_examples::led::{LED, LedType};
-    //use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    //use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type, Clocks, MONOCLOCK};
-
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{DelayNs};
-
-
-    #[cfg(feature = "stm32f4xx")]   //for delay2 using ole embedded-hal traits
-    use stm32f4xx_hal::{
-        timer::TimerExt,
-        timer::Delay,
-        pac::{TIM2}
-    };
-    #[cfg(feature = "stm32f4xx")]   //for delay2 using ole embedded-hal traits
-    pub type Delay2Type = Delay<TIM2, 1000000_u32>;
+    use rust_integration_testing_of_examples::delay::{Delay2Type};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -390,16 +377,14 @@ mod app {
         //rtt_init_print!();
         //rprintln!("temp-humidity-display example");
         //hprintln!("temp-humidity-display example").unwrap();
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(cx.device);
-
-        // trait DelayNs should work but note SysTimerExt above for stm32f4xx
-        //use stm32f4xx_hal::timer::TimerExt;
+        //  sensors use this delay (not systick)
+        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(cx.device);
 
         led.on();
-        Systick::delay(1000.millis());  
+        //  needs Systick::start first, but also is a future and .await needs to be in a block
+        //  Systick::delay(1000.millis());
+        delay.delay(1000.millis());
         led.off();
 
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
@@ -412,23 +397,20 @@ mod app {
         display.init().unwrap();
 
         show_message("temp-humidity", &mut display);
-        Systick.delay_ms(2000u32);    
+        delay.delay(2000.millis());    
 
         // Start the battery sensor.
 
         let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
-        Systick.delay_ms(15u32);     // Wait for sensor
-        show_message("battery sensor init", &mut display);   // Example name
-        Systick.delay_ms(2000u32);  
+        delay.delay(15.millis());     // Wait for sensor
 
+        show_message("battery sensor init", &mut display);   // Example name
+        delay.delay(2000.millis());  
 
         // Start the temp-humidity sensor.
 
-        //  sensors all need a delay (not systick)
-
-        let delay  = cx.device.TIM2.delay(&clocks);
 
         // shared bus would be like this, but does not work for ath10.
         //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
@@ -455,6 +437,9 @@ mod app {
 
         read_and_display::spawn().unwrap();
         //hprintln!("init done").unwrap();
+
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         return(Shared { led, },   Local {display, ina, sensor });
     }
