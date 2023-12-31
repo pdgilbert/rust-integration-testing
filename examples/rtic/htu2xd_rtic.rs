@@ -147,11 +147,13 @@ mod app {
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
 
-        //let mut led = setup(cx.device);
-        let (i2c1, _i2c2, mut led, mut delay) = i2c1_i2c2_led::setup(cx.device);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
+        let (i2c1, _i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        Systick.delay_ms(1000u32);  
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); // CHANGE x2 for i2c
@@ -169,7 +171,8 @@ mod app {
         Text::with_baseline(   "HTU2XD-rtic", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
         display.flush().unwrap();
-        delay.delay_ms(2000u32);    
+        
+        Systick.delay_ms(2000u32);    
 
         // Start the sensor.
         let mut sensor    = Htu2xd::new();
@@ -178,15 +181,12 @@ mod app {
         //let mut htu_ch = i2c1;                                                           // CHANGE for i2c
 
         sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
-        delay.delay_ms(15u32);     // Wait for the reset to finish
+        Systick.delay_ms(15u32);     // Wait for the reset to finish
 
         //    .read_user_register() does not return and changes something that requires sensot power off/on.
         //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
         //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
-
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
 

@@ -185,7 +185,7 @@ mod app {
     use aht10::AHT10;
 
     #[cfg(feature = "aht10")]
-    type SensorType = AHT10<I2c1Type, DelayType>;
+    type SensorType = AHT10<I2c1Type, Delay2Type>;
 
     #[cfg(feature = "aht10")]
     impl TempHumSensor for SensorType {
@@ -283,12 +283,26 @@ mod app {
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType, DelayNs};
+    //use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType, DelayNs};
+    //use rust_integration_testing_of_examples::led::{LED, LedType};
+    //use rust_integration_testing_of_examples::i2c1_i2c2_led;
+    //use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type, Clocks, MONOCLOCK};
 
-    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type, Clocks, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led::{I2c1Type, I2c2Type};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::delay::{DelayNs};
+
+
+    #[cfg(feature = "stm32f4xx")]   //for delay2 using ole embedded-hal traits
+    use stm32f4xx_hal::{
+        timer::TimerExt,
+        timer::Delay,
+        pac::{TIM2}
+    };
+    #[cfg(feature = "stm32f4xx")]   //for delay2 using ole embedded-hal traits
+    pub type Delay2Type = Delay<TIM2, 1000000_u32>;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -376,18 +390,16 @@ mod app {
         //rtt_init_print!();
         //rprintln!("temp-humidity-display example");
         //hprintln!("temp-humidity-display example").unwrap();
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(cx.device);
 
         // trait DelayNs should work but note SysTimerExt above for stm32f4xx
         //use stm32f4xx_hal::timer::TimerExt;
 
-        //let delay = cx.device.TIM2.delay_ms(&clocks);
-        let delay = Systick::delay;
-
-
         led.on();
-        delay(1000.millis());  
+        Systick::delay(1000.millis());  
         led.off();
 
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
@@ -400,19 +412,23 @@ mod app {
         display.init().unwrap();
 
         show_message("temp-humidity", &mut display);
-        delay.delay_ms(2000u32);    
+        Systick.delay_ms(2000u32);    
 
         // Start the battery sensor.
 
         let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
-        delay.delay_ms(15u32);     // Wait for sensor
+        Systick.delay_ms(15u32);     // Wait for sensor
         show_message("battery sensor init", &mut display);   // Example name
-        delay.delay_ms(2000u32);  
+        Systick.delay_ms(2000u32);  
 
 
         // Start the temp-humidity sensor.
+
+        //  sensors all need a delay (not systick)
+
+        let delay  = cx.device.TIM2.delay(&clocks);
 
         // shared bus would be like this, but does not work for ath10.
         //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
@@ -436,9 +452,6 @@ mod app {
 
         sensor.init().unwrap();
         sensor.init_message(&mut display);
-
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
         //hprintln!("init done").unwrap();

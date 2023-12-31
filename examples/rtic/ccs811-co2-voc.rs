@@ -96,10 +96,10 @@ mod app {
         //rtt_init_print!();
         //rprintln!("CCS811 example");
 
-        let (mut dht, i2c, mut led, mut tx, mut delay) = dht_i2c_led_usart::setup(cx.device);
+        let (mut dht, i2c, mut led, mut tx, _clocks) = dht_i2c_led_usart::setup(cx.device);
    
         led.on(); 
-        delay.delay_ms(1000u32);
+        Systick.delay_ms(1000u32);
         led.off();
 
         // 5 sec systick timer  check
@@ -107,10 +107,10 @@ mod app {
         //led_on::spawn_after(1.secs()).unwrap(); 
         //led_off::spawn_after(6.secs()).unwrap();
 
-        delay.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        Systick.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
         
         // intial dht reading
-        let (temperature, humidity) = match read(&mut delay, &mut dht) {
+        let (temperature, humidity) = match read(&mut delay, &mut dht) {  //NEEDS NON SYSTICK DELAY
             Ok(Reading {temperature, relative_humidity,})
                =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
                     (temperature, relative_humidity)
@@ -154,7 +154,7 @@ mod app {
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {led}, Local {dht, ccs811, tx, delay,})
+        (Shared {led}, Local {dht, ccs811, tx })
     }
 
     #[shared]
@@ -172,7 +172,7 @@ mod app {
         dht: DhtPin,
         ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
-        delay:DelayType,
+        //delay:DelayType,
     }
 
     #[idle(local = [])]
@@ -183,7 +183,7 @@ mod app {
         }
     }
 
-    #[task(shared = [led,], local = [dht, ccs811, delay, tx,], priority=1 )]
+    #[task(shared = [led,], local = [dht, ccs811, tx ], priority=1 )]
     async fn measure(cx: measure::Context) {
 
        // this might be nicer if read could be done by spawn rather than wait for delay

@@ -92,7 +92,8 @@ mod app {
 
     use rust_integration_testing_of_examples::dht_i2c_led_usart;
     use rust_integration_testing_of_examples::dht_i2c_led_usart::{
-        DhtType, I2cType, LED, LedType, DelayType, MONOCLOCK};
+        DhtType, I2cType, MONOCLOCK};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -153,14 +154,13 @@ mod app {
         //rprintln!("blink_rtic example");
         //hprintln!("dht_rtic example").unwrap();
 
-        //let mut led = setup(cx.device);
-        let (dht, i2c, mut led, _usart, mut clocks) = dht_i2c_led_usart::setup(cx.device);
-        
-    use stm32f4xx_hal::timer::Delay;
-        let mut delay = DelayType{}; 
-
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
+        let (dht, i2c, mut led, _usart, _clocks) = dht_i2c_led_usart::setup(cx.device);
+        
+   // use stm32f4xx_hal::timer::Delay;
+    //     let mut delay = DelayType{}; 
   
         // This syntax works with stm32h7xx but not with stm32f4xx, as of eh-rc3
         // let mut delay = Delay::new(cp.SYST, clocks); 
@@ -190,8 +190,8 @@ mod app {
         Text::with_baseline("dht_rtic", Point::zero(), text_style, Baseline::Top, )
           .draw(&mut display).unwrap();
         display.flush().unwrap();
+        
         Systick.delay_ms(2000u32);    
-
 
         // next turn LED for a period of time that can be used to calibrate the delay timer.
         // Ensure that nothing is spawned above. This relies on delay blocking.
@@ -202,7 +202,6 @@ mod app {
         read_and_display::spawn().unwrap();
 
         //hprintln!("exit init").unwrap();
-        //(Shared {dht,  led, delay, text_style, display }, Local {})
         (Shared { led, }, Local {dht, display })
     }
 
@@ -236,7 +235,7 @@ mod app {
            blink::spawn(BLINK_DURATION).ok();
 
         let mut delay = Delay{}; 
-           let z = read(&mut delay, dht);
+           let z = read(&mut delay, dht);   // NEEDS A DELAY DelayMs<u8> OTHER THAN SYSTICK
            let (_temperature, _humidity) = match z {
                Ok(Reading {temperature, relative_humidity,})
                   =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();

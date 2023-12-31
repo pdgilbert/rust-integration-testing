@@ -85,7 +85,8 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led::{ I2c1Type, I2c2Type, LED, LedType, DelayType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led::{ I2c1Type, I2c2Type, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -176,10 +177,13 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let (i2c1, i2c2, mut led, mut delay) = i2c1_i2c2_led::setup(cx.device);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
+        let (i2c1, i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        Systick.delay_ms(1000u32);  
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
@@ -192,23 +196,22 @@ mod app {
         display.init().unwrap();
 
         show_message("AHT10_rtic", &mut display);   // Example name
-        delay.delay_ms(2000u32);  
+        
+        Systick.delay_ms(2000u32);  
 
         // Start the battery sensor.
         let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
-        delay.delay_ms(15u32);     // Wait for sensor
+
+        Systick.delay_ms(15u32);     // Wait for sensor
         show_message("battery sensor init", &mut display);   // Example name
-        delay.delay_ms(2000u32);  
+        Systick.delay_ms(2000u32);  
 
         // aht10 hardware does not allow sharing the bus, so second bus is used.
         //  See example aht10_display for more details
-        let sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+        let sensor = AHT10::new(i2c1, delay).expect("sensor failed"); //NEEDS NON SYSTICK DELAY
         show_message("sensor initialized", &mut display); 
-
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         read_and_display::spawn().unwrap();
 

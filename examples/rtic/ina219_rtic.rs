@@ -143,11 +143,13 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
 
-        //let mut led = setup(cx.device);
-        let (_i2c1, i2c2, mut led, mut delay) = i2c1_i2c2_led::setup(cx.device);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
+        let (_i2c1, i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        Systick.delay_ms(1000u32);  
         led.off();
 
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
@@ -164,16 +166,14 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         Text::with_baseline(   "INA219-rtic", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
         display.flush().unwrap();
-        delay.delay_ms(2000u32);    
+        
+        Systick.delay_ms(2000u32);    
 
         // Start the battery sensor.
         let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap(); // possible change. See the data sheet.
-        delay.delay_ms(15u32);     // Wait for sensor
-
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Systick.delay_ms(15u32);     // Wait for sensor
 
         read_and_display::spawn().unwrap();
 

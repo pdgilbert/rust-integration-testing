@@ -114,10 +114,13 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-        let (i2c1, i2c2, mut led, mut delay) = i2c1_i2c2_led::setup(cx.device);
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
+        let (i2c1, i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
 
         led.on();
-        delay.delay_ms(1000u32);  
+        Systick.delay_ms(1000u32);  
         led.off();
 
         //let managerA: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
@@ -130,7 +133,7 @@ mod app {
         display_a.init().unwrap();
         
         show_message("displayX2_rtic", &mut display_a);   // Example name
-        delay.delay_ms(2000u32);  
+        Systick.delay_ms(2000u32);  
 
         let managerB: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
         let interfaceB = I2CDisplayInterface::new(managerB.acquire_i2c());
@@ -142,10 +145,7 @@ mod app {
         display_b.init().unwrap();
         
         show_message("displayX2_rtic", &mut display_b);   // Example name
-        delay.delay_ms(2000u32);  
-
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Systick.delay_ms(2000u32);  
 
         let count: u16 = 0;
         display_and_display::spawn().unwrap();

@@ -76,12 +76,11 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dp::{Peripherals};
-    use rust_integration_testing_of_examples::cp::{CorePeripherals};
-    use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
-        I2cType, LED, LedType, DelayNs, MONOCLOCK};
-    use rust_integration_testing_of_examples::delay::Delay;
+    use rust_integration_testing_of_examples::i2c_led;
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
+    use rust_integration_testing_of_examples::i2c_led::{I2cType};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::delay::DelayNs;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -151,10 +150,10 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         //hprintln!("temperature-display example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, mut delay) = dht_i2c_led_usart::setup(cx.device);
+        let (i2c, mut led, _clocks) = i2c_led::setup(cx.device);
 
         led.on(); 
-        delay.delay_ms(1000u32);
+        Systick.delay_ms(1000u32);
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
@@ -167,7 +166,7 @@ mod app {
         display.init().unwrap();
 
         show_message("temp-humidity", &mut display);
-        delay.delay_ms(2000u32);    
+        Systick.delay_ms(2000u32);    
 
          
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 

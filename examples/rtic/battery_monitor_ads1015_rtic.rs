@@ -146,10 +146,10 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, mut delay) = dht_i2c_led_usart::setup(cx.device);
+        let (_dht, i2c, mut led, _usart, _clocks) = dht_i2c_led_usart::setup(cx.device);
 
         led.on(); 
-        delay.delay_ms(1000u32);
+        Systick.delay_ms(1000u32);
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
@@ -165,7 +165,8 @@ mod app {
         Text::with_baseline("battery_monitor_ads1015_rtic", Point::zero(), text_style, Baseline::Top, )
            .draw(&mut display).unwrap();
         display.flush().unwrap();
-        delay.delay_ms(2000u32);    
+        
+        Systick.delay_ms(2000u32);    
 
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
         let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
