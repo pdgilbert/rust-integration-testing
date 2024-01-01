@@ -10,8 +10,12 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub mod monoclock;
-pub mod prelude;
+
+pub mod stm32xxx_as_hal;   
+
+pub mod monoclock;// TRY TO GET RID OF THIS
+pub mod prelude;// TRY TO GET RID OF THIS
+
 
 //// pub mod lora_spi_gps_usart; 
 //pub mod i2c_led_delay_buttons_stcint;
