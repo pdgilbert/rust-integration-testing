@@ -44,10 +44,8 @@ use embedded_graphics::{
 };
 
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
-use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::led::{LED};
-use rust_integration_testing_of_examples::delay::Delay;
 
 
 #[entry]
@@ -56,18 +54,9 @@ fn main() -> ! {
     //rprintln!("INA219 example");
     //hprintln!("INA219 example").unwrap();
 
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (i2c, mut led, clocks) = i2c_led::setup(dp);
-    
-    #[cfg(not(feature = "stm32f4xx"))]
-    let mut delay = Delay::new(cp.SYST, clocks); 
-    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
 
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::timer::SysTimerExt;
-    #[cfg(feature = "stm32f4xx")]
-    let mut delay = cp.SYST.delay(&clocks);
+    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(dp);
 
     led.off();
     delay.delay_ms(2000);

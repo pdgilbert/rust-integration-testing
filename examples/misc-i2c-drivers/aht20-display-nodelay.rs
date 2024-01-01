@@ -31,15 +31,19 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
-
+use rust_integration_testing_of_examples::dp::{Peripherals};
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::led::{LED};
+ 
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
     //hprintln!("AHT10 example").unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let dp = Peripherals::take().unwrap();
+
+    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(dp);
 
     let manager = shared_bus::BusManagerSimple::new(i2c);
     let interface = I2CDisplayInterface::new(manager.acquire_i2c());

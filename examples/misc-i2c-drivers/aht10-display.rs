@@ -40,7 +40,7 @@ use rust_integration_testing_of_examples::i2c1_i2c2_led;
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::led::{LED};
-use rust_integration_testing_of_examples::delay::Delay;
+//use rust_integration_testing_of_examples::delay::Delay;
 
 #[entry]
 fn main() -> ! {

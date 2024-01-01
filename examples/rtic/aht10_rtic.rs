@@ -84,9 +84,11 @@ mod app {
     const READ_INTERVAL: u32 = 2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led::{ I2c1Type, I2c2Type, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::delay::{Delay2Type};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -177,13 +179,10 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
-
-        let (i2c1, i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
+        let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup(cx.device);
 
         led.on();
-        Systick.delay_ms(1000u32);  
+        delay.delay(1000.millis());  
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
@@ -197,16 +196,16 @@ mod app {
 
         show_message("AHT10_rtic", &mut display);   // Example name
         
-        Systick.delay_ms(2000u32);  
+        delay.delay(2000.millis());  
 
         // Start the battery sensor.
         let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
 
-        Systick.delay_ms(15u32);     // Wait for sensor
+        delay.delay(15.millis());     // Wait for sensor
         show_message("battery sensor init", &mut display);   // Example name
-        Systick.delay_ms(2000u32);  
+        delay.delay(2000.millis());  
 
         // aht10 hardware does not allow sharing the bus, so second bus is used.
         //  See example aht10_display for more details
@@ -214,6 +213,9 @@ mod app {
         show_message("sensor initialized", &mut display); 
 
         read_and_display::spawn().unwrap();
+
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         (Shared { led, },   Local {display, ina,  sensor })
     }
@@ -233,7 +235,7 @@ mod app {
 
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-        sensor:  AHT10<I2c1Type, DelayType>,
+        sensor:  AHT10<I2c1Type, Delay2Type>,
     }
 
     #[task(shared = [led, ], local = [sensor, display, ina] )]
@@ -245,8 +247,7 @@ mod app {
        loop {
            blink::spawn(BLINK_DURATION).ok();
 
-           //let delay = cx.local.delay;
-           let z = sensor.read();
+            let z = sensor.read();
            // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
            // 10 * deg C to give one decimal place.
            let (h, t) = match z {
