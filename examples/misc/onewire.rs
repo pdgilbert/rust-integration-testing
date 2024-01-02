@@ -24,6 +24,7 @@ use embedded_hal::digital::{InputPin, OutputPin};
 use embedded_hal::delay::DelayNs;
 use onewire;
 
+
 //#[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 //use stm32f1xx_hal::{
 //    timer::SysDelay as Delay,
@@ -62,14 +63,12 @@ use onewire;
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::onewire_i2c_led;
-use rust_integration_testing_of_examples::delay_syst::Delay;
+
+use rust_integration_testing_of_examples::delay::{Delay2Type as Delay};
 
 fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
-    let dp = Peripherals::take().unwrap();
-
-    let (one, _i2c, _led, clocks) = onewire_i2c_led::setup(dp);
-    let mut delay = Delay::new(cp.SYST, clocks); 
+    let (one, _i2c, _led, mut delay, _clocks) = onewire_i2c_led::setup();
 
     delay.delay_ms(1000);
     
@@ -101,7 +100,8 @@ fn main() -> ! {
                 let resolution = ds18b20.measure_temperature(&mut wire, &mut delay).unwrap();
                 
                 // wait for compeltion, depends on resolution 
-                delay.delay_ms(resolution.time_ms());
+                delay.delay_ms(resolution.time_ms().into());
+                //delay.delay(resolution.millis());
                 
                 // read temperature
                 let temperature = ds18b20.read_temperature(&mut wire, &mut delay).unwrap();

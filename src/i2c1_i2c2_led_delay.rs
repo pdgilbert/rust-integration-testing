@@ -1,4 +1,4 @@
-//  compare with i2c1_i2c2_led.rs
+//  compare with onewire_i2c_led.rs
 
 // This returns a non-systick delay as well as clocks. EXPAND
 

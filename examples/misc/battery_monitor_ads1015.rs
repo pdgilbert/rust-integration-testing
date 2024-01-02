@@ -60,7 +60,6 @@ use rust_integration_testing_of_examples::led::{LED};
 use rust_integration_testing_of_examples::i2c_led;
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::delay::{Delay};
 
 
 pub fn read_all<E, A: DynamicOneShot<Error = E>>(

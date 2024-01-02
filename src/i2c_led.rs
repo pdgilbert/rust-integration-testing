@@ -1,5 +1,3 @@
-//  i2c_led_delay setups()  used in many examples BUT NEEDS TO BE CONVERTED TO THIS
-//  which works with dp and has delay separated out.
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -12,10 +10,13 @@ pub use crate::onewire_i2c_led;
 pub use crate::onewire_i2c_led::{I2cType, Clocks};
 pub use crate::led::{setup_led, LED, LedType};
 
+pub use crate::delay::DelayNs;
+pub use crate::delay::{Delay2Type as Delay};
+
 pub fn setup(dp: Peripherals) ->  (I2cType, LedType, Clocks) {    
    // This is a shortcut. 
    // Really should be done as in onewire_i2c_led::setup(dp) but omitting onewire
-   let (_pin, i2c, led, clocks) = onewire_i2c_led::setup(dp);
+   let (_pin, i2c, led, _delay, clocks) = onewire_i2c_led::setup_from_dp(dp);
 
    (i2c, led, clocks)
 }
