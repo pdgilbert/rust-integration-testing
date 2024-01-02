@@ -252,13 +252,13 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Delay,
 
 
 #[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::prelude::*;
-
-#[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::delay::DelayFromCountDownTimer;
+use stm32h7xx_hal::{
+    delay::DelayFromCountDownTimer,
+};
 
 #[cfg(feature = "stm32h7xx")]
 pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
+
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Delay, Clocks) {

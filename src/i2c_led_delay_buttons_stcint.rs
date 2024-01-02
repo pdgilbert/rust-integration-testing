@@ -1,4 +1,6 @@
 // Note this cannot use crate::i2c::setup_i2c1 because the sda pin is handled differently for reset.
+// It is probably a mistake to have a device crate in lib.rs since nothing compiles if lib compile fails.
+// So this should all be moved to the to the example code, but instead is masked in lib.rs for now.
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -469,6 +471,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::delay::DelayFromCountDownTimer;
+
+#[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType, impl LED, DelayType, impl SEEK, PB6<Input>) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
@@ -479,6 +484,9 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType,
     //let mut delay = DelayType::new(_, _);
     //let mut delay = dp.TIM2.delay_us(&clocks);
     //let mut delay = DelayType::new(TIM2, 160.MHz());
+   // CountDownTimer not supported by embedded-hal 1.0.0 ??
+   let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer);
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
 

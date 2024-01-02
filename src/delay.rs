@@ -114,7 +114,7 @@ pub use stm32h7xx_hal::delay::Delay;
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    //timer::CountDownTimer,
+    timer::Timer,
     delay::DelayFromCountDownTimer,
     pac::{TIM2, TIM5}
 };
@@ -128,7 +128,8 @@ pub type Delay1Type = DelayFromCountDownTimer<TIM2>;
 //pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
 
 #[cfg(feature = "stm32h7xx")]
-pub type Delay2Type = DelayFromCountDownTimer<TIM5>;
+pub type Delay2Type = DelayFromCountDownTimer<Timer<TIM5>>;
+//pub type Delay2Type = DelayFromCountDownTimer<TIM5>;
 //pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
 //pub use crate::alt_delay::{AltDelay as Delay2Type};
 //pub type Delay2Type = Delay; //<TIM5, 1000000_u32>;

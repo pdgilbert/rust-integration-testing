@@ -5,7 +5,6 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-
 pub use crate::delay::DelayNs;
 
 pub use crate::led::{setup_led, LED, LedType};
@@ -394,23 +393,20 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
 
 
 #[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::delay::DelayFromCountDownTimer;
-
-#[cfg(feature = "stm32h7xx")]
 pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    pac::{USART2, TIM2, TIM5},
-    prelude::*,
+    pac::{USART2,},
     serial::Tx,
+    delay::DelayFromCountDownTimer,
 };
 
 #[cfg(feature = "stm32h7xx")]
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();

@@ -17,7 +17,11 @@ pub mod monoclock;// TRY TO GET RID OF THIS
 pub mod prelude;// TRY TO GET RID OF THIS
 
 //// pub mod lora_spi_gps_usart; 
+
+//  crate si4703 does not compile with eh-1.0.0 this should probably removed and code put in examples.
+#[cfg(feature = "stm32f4xx")] //si4703
 pub mod i2c_led_delay_buttons_stcint;
+
 pub mod onewire_i2c_led; // TRY TO GET RID OF THIS or consolidate with dht_i2c_led_usart
 
 pub mod i2c1_i2c2_led_delay;
