@@ -75,7 +75,7 @@ pub fn setup(mut dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clock
 use stm32f1xx_hal::{prelude::*};
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    let rcc = dp.RCC.constrain();
    let mut afio = dp.AFIO.constrain();
    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
@@ -106,7 +106,7 @@ pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 use stm32f3xx_hal::{prelude::*,};
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
@@ -153,7 +153,7 @@ pub use stm32f4xx_hal::{
 
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    let gpiob = dp.GPIOB.split();
 
    let rcc = dp.RCC.constrain();
@@ -175,7 +175,7 @@ pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 use stm32f7xx_hal::{prelude::*};
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
@@ -197,7 +197,7 @@ pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 use stm32g0xx_hal::{prelude::* };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 
    let mut rcc = dp.RCC.constrain();
    let gpiob = dp.GPIOB.split(&mut rcc);
@@ -222,7 +222,7 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 
    let mut rcc = dp.RCC.constrain();
 
@@ -257,7 +257,7 @@ use stm32h7xx_hal::delay::DelayFromCountDownTimer;
 pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl DelayNs, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl DelayNs, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -290,7 +290,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    // UNTESTED
    let mut rcc = dp.RCC.freeze(Config::hsi16());
    //let clocks = rcc.clocks;
@@ -314,7 +314,7 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
    let gpiob = dp.GPIOB.split(&mut rcc);
 
@@ -334,7 +334,7 @@ pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
 use stm32l4xx_hal::{prelude::*,};
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);

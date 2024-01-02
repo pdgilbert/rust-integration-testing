@@ -67,9 +67,10 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
+    use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
-        I2cType, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{I2cType};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -146,10 +147,10 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, _clocks) = dht_i2c_led_usart::setup(cx.device);
+        let (_dht, i2c, mut led, _usart, mut delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
 
         led.on(); 
-        Systick.delay_ms(1000u32);
+        delay.delay(1000.millis());
         led.off();
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
@@ -166,7 +167,7 @@ mod app {
            .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        Systick.delay_ms(2000u32);    
+        delay.delay(2000.millis());    
 
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
         let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V

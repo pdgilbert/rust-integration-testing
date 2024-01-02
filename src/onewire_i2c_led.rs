@@ -255,6 +255,9 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Delay,
 use stm32h7xx_hal::prelude::*;
 
 #[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::delay::DelayFromCountDownTimer;
+
+#[cfg(feature = "stm32h7xx")]
 pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 #[cfg(feature = "stm32h7xx")]
@@ -272,6 +275,10 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Delay,
 
    let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+
+   // CountDownTimer not supported by embedded-hal 1.0.0 ??
+   let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer);
 
    (onewire, i2c, led, delay, clocks)
 }

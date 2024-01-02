@@ -98,7 +98,7 @@ mod app {
 
         //let device: Peripherals = cx.device;
 
-        let (_dht, i2c, mut led, mut tx, _clocks) = dht_i2c_led_usart::setup(cx.device);
+        let (_dht, i2c, mut led, mut tx, _delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
 
         led.off();
 

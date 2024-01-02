@@ -46,6 +46,7 @@ use dht_sensor::dht22::{read, Reading};
 use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 
 
+// "stm32xxxx_hal" is used for items that are different in some crates
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -54,24 +55,18 @@ use hal::{
       prelude::*,
 };
 
-// "stm32xxxx_hal" is used for items that are different in some crates
+type DhtType = PA8<Output<OpenDrain>>;
+
+
+// CONSIDER
+// use rust_integration_testing_of_examples::dht_i2c_led_usart;
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
       //timer::Delay,
-      timer::SysTimerExt,
+      timer::SysTimerExt,  // trait
       //rcc::Clocks,
 };
-
-#[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{
-      //delay::Delay,
-      //timer::TimerExt,
-      //rcc::CoreClocks as Clocks,
-};
-
-type DhtType = PA8<Output<OpenDrain>>;
-
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl Delay) {
@@ -88,6 +83,15 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl Delay) {
 
    (dht, delay)
 }
+
+
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+      //delay::Delay,
+      //timer::TimerExt,
+      //rcc::CoreClocks as Clocks,
+};
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {

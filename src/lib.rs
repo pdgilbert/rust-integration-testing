@@ -17,14 +17,14 @@ pub mod monoclock;// TRY TO GET RID OF THIS
 pub mod prelude;// TRY TO GET RID OF THIS
 
 //// pub mod lora_spi_gps_usart; 
-//pub mod i2c_led_delay_buttons_stcint;
-pub mod onewire_i2c_led; // TRY TO GET RID OF THIS
+pub mod i2c_led_delay_buttons_stcint;
+pub mod onewire_i2c_led; // TRY TO GET RID OF THIS or consolidate with dht_i2c_led_usart
 
 pub mod i2c1_i2c2_led_delay;
 
 pub mod i2c1_i2c2_led;  // TRY TO GET RID OF THIS ?
-////pub mod dht_i2c_led_delay;
-pub mod dht_i2c_led_usart; // TRY TO GET RID OF THIS
+////pub mod dht_i2c_led_delay; // TRY TO GET RID OF THIS
+pub mod dht_i2c_led_usart;    // OR THIS
 
 pub mod i2c_led;   
 

@@ -54,7 +54,7 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(dp);
+    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
     
     led.blink(1000_u16, &mut delay); // Blink LED to indicate setup finished.
 

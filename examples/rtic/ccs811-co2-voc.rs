@@ -71,8 +71,6 @@ mod app {
 
     use nb::block;
 
-    use embedded_hal::delay::DelayNs;
-
     // set up for shared bus even though only one i2c device is used here
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -82,16 +80,21 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::{Delay2Type};
 
-    //use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
     use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
-         DhtPin, LED, LedType, 
-         I2cType, TxType, DelayType, MONOCLOCK};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{I2cType, TxType };
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+      //pac::{Peripherals, CorePeripherals},
+      gpio::{gpioa::PA8, Output, OpenDrain},
+      //prelude::*,
+};
+
+type DhtType = PA8<Output<OpenDrain>>;
 
 
     #[init]
@@ -102,10 +105,10 @@ mod app {
         //rtt_init_print!();
         //rprintln!("CCS811 example");
 
-        let (mut dht, i2c, mut led, mut tx, _clocks) = dht_i2c_led_usart::setup(cx.device);
-   
+        let (mut dht, i2c, mut led, mut tx, mut delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
+
         led.on(); 
-        Systick.delay_ms(1000u32);
+        delay.delay(1000.millis());
         led.off();
 
         // 5 sec systick timer  check
@@ -113,7 +116,7 @@ mod app {
         //led_on::spawn_after(1.secs()).unwrap(); 
         //led_off::spawn_after(6.secs()).unwrap();
 
-        Systick.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        delay.delay(2000.millis()); //  2 second delay for dhtsensor initialization
         
         // intial dht reading
         let (temperature, humidity) = match read(&mut delay, &mut dht) {  //NEEDS NON SYSTICK DELAY
@@ -145,7 +148,7 @@ mod app {
         ccs811.software_reset().unwrap();
         hprintln!("_reset").unwrap();
 
-        delay.delay_ms(3000u32);  // Delay while ccs811 resets
+        delay.delay(3000.millis());  // Delay while ccs811 resets
         hprintln!("delay.delay_ms(3000u32)").unwrap();
 
         let mut ccs811 = ccs811.start_application().ok().unwrap();
@@ -160,7 +163,7 @@ mod app {
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
         writeln!(tx, "start\r",).unwrap();
 
-        (Shared {led}, Local {dht, ccs811, tx })
+        (Shared {led}, Local {dht, ccs811, tx, delay })
     }
 
     #[shared]
@@ -175,10 +178,10 @@ mod app {
 
     #[local]
     struct Local {
-        dht: DhtPin,
+        dht: DhtType,
         ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
-        //delay:DelayType,
+        delay:Delay2Type,
     }
 
     #[idle(local = [])]
@@ -189,7 +192,7 @@ mod app {
         }
     }
 
-    #[task(shared = [led,], local = [dht, ccs811, tx ], priority=1 )]
+    #[task(shared = [led,], local = [dht, ccs811, tx, delay ], priority=1 )]
     async fn measure(cx: measure::Context) {
 
        // this might be nicer if read could be done by spawn rather than wait for delay

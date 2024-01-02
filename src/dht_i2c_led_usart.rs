@@ -5,15 +5,37 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use crate::dp::{Peripherals};
 
 pub use crate::delay::DelayNs;
 
-pub use crate::delay::{Delay1Type as DelayType};
-
-pub use crate::dht::{DhtType};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+pub use crate::delay::{Delay2Type as Delay};
+
+pub use crate::monoclock::{MONOCLOCK};
+
+
+// "stm32xxxx_hal" is used for items that are different in some crates
+// "hal" is used for items that are the same in all hal  crates
+
+pub use crate::stm32xxx_as_hal::hal;
+
+pub use hal::{
+      pac::{Peripherals, CorePeripherals},
+      gpio::{gpioa::PA8, Output, OpenDrain},
+      prelude::*,
+};
+
+type DhtType = PA8<Output<OpenDrain>>;
+
+
+pub fn setup() ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {    
+    setup_from_dp(Peripherals::take().unwrap())
+}
+
+
+
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
@@ -25,16 +47,10 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32f0xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f0xx")]
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {    
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -58,7 +74,7 @@ pub fn setup(mut dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks)
 
    let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -75,16 +91,10 @@ use stm32f1xx_hal::{
 
 
 #[cfg(feature = "stm32f1xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32f1xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f1xx")]
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain();
@@ -137,7 +147,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
        &clocks,
     ).split();
 
-    (dht, i2c, led, tx, clocks)
+    (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -154,19 +164,13 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32f3xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f3xx")]
 pub type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
 //pub type TxType = Tx<USART1, impl TxPin<USART1>>;  // impl is unstable in type alias
 // See  https://github.com/stm32-rs/stm32f3xx-hal/issues/288
 //   regarding why it is necessary to specify the concrete pin here.
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) -> (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut flash.acr);
@@ -199,7 +203,7 @@ pub fn setup(dp: Peripherals) -> (DhtPin, I2cType, LedType, TxType, Clocks) {
    )
    .split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -209,25 +213,19 @@ pub use stm32f4xx_hal::rcc::Clocks;
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-    gpio::{OpenDrain, Output,
-           gpioa::PA8,
-    },
+    rcc::{RccExt},
+    timer::TimerExt,
+    gpio::GpioExt,
     pac::USART1,
-    prelude::*,
     serial::{config::Config, Serial, Tx},
 };
 
-#[cfg(feature = "stm32f4xx")]
-pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32f4xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32f4xx")]
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
    let mut dht = gpioa.pa8.into_open_drain_output();
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -240,6 +238,8 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
+   let delay = dp.TIM5.delay(&clocks);
+
    let tx = gpioa.pa9.into_alternate();
    let rx = gpioa.pa10.into_alternate();
    let (tx, _rx) = Serial::new(
@@ -251,7 +251,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    .unwrap()
    .split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -267,16 +267,10 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32f7xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32f7xx")]
 pub type TxType = Tx<pac::USART2>;
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
    let mut dht   = gpioa .pa8.into_open_drain_output();
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -309,7 +303,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
        },
    ).split();
 
-  (dht, i2c, led, tx, clocks)
+  (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -325,16 +319,10 @@ use stm32g0xx_hal::{
 };
 
 #[cfg(feature = "stm32g0xx")]
-pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32g0xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32g0xx")]
 pub type TxType = Tx<USART1, FullConfig>;
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -354,7 +342,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
 
    let delay = dp.TIM2.delay(&mut rcc);
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -371,18 +359,13 @@ use stm32g4xx_hal::{
     serial::{FullConfig, Tx, NoDMA},
 };
 
-#[cfg(feature = "stm32g4xx")]
-pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32g4xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
 
 #[cfg(feature = "stm32g4xx")]
 pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
 //pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -405,34 +388,29 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    let (tx, _rx) = dp.USART1.usart(tx, rx, FullConfig::default().baudrate(115200.bps()),
          &mut rcc).unwrap().split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
+
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::delay::DelayFromCountDownTimer;
 
 #[cfg(feature = "stm32h7xx")]
 pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    gpio::{Output, OpenDrain,
-           gpioa::PA8
-    },
-    pac::{USART2},
+    pac::{USART2, TIM2, TIM5},
     prelude::*,
     serial::Tx,
 };
 
 #[cfg(feature = "stm32h7xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32h7xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32h7xx")]
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -451,6 +429,10 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
    led.off();
 
+   // CountDownTimer not supported by embedded-hal 1.0.0 ??
+   let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer);
+
    let (tx, _rx) = dp
        .USART2
        .serial(
@@ -465,7 +447,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
        .unwrap()
        .split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -481,16 +463,10 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32l0xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l0xx")]
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
    //let clocks = rcc.clocks;
 
@@ -514,7 +490,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    let delay = DelayType{};
    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -535,16 +511,10 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32l1xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l1xx")]
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -568,7 +538,7 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
 
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 
 
@@ -584,16 +554,10 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
-
-#[cfg(feature = "stm32l4xx")]
-pub type DhtPin = PA8<Output<OpenDrain>>;
-
-#[cfg(feature = "stm32l4xx")]
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -630,6 +594,6 @@ pub fn setup(dp: Peripherals) ->  (DhtPin, I2cType, LedType, TxType, Clocks) {
    )
    .split();
 
-   (dht, i2c, led, tx, clocks)
+   (dht, i2c, led, tx, delay, clocks)
 }
 

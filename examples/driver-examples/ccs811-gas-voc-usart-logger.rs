@@ -99,7 +99,7 @@ mod app {
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
 
-        let (_dht, i2c, mut led, mut tx, _clocks) = dht_i2c_led_usart::setup(cx.device);
+        let (_dht, i2c, mut led, mut tx, _delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
 
         led.off();
 

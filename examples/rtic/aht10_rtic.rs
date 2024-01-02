@@ -179,7 +179,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup(cx.device);
+        let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         delay.delay(1000.millis());  

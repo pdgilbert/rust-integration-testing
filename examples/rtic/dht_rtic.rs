@@ -50,11 +50,6 @@ mod app {
     use dht_sensor::dht22::{read, Reading};
     //use dht_sensor::*;
 
-//    use cortex_m::asm::delay; // needed for dht_sensor read     use cortex_m::delay::Delay as DelayMs;
-
-    use rust_integration_testing_of_examples::delay::DelayNs as DelayMs; // needed for dht_sensor read 
-    use rust_integration_testing_of_examples::alt_delay::AltDelay as Delay; // needed for dht_sensor read 
-
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
     //use cortex_m_semihosting::{hprintln};
@@ -90,14 +85,29 @@ mod app {
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
-        DhtType, I2cType, MONOCLOCK};
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
+
+//    use cortex_m::asm::delay; // needed for dht_sensor read     use cortex_m::delay::Delay as DelayMs;
+
+//    use rust_integration_testing_of_examples::delay::DelayNs as DelayMs; // needed for dht_sensor read 
+//    use rust_integration_testing_of_examples::alt_delay::AltDelay as Delay; // needed for dht_sensor read 
+
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::dht_i2c_led_usart;
+    use rust_integration_testing_of_examples::dht_i2c_led_usart::{Delay, I2cType};
+
+    // "hal" is used for items that are the same in all hal  crates
+    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+    use hal::{
+          gpio::{gpioa::PA8, Output, OpenDrain},
+    };
+
+    type DhtType = PA8<Output<OpenDrain>>;
+
+
 
     //#[cfg(any(feature = "stm32f3xx", feature = "stm32l0xx",  feature = "stm32l1xx", feature = "stm32f0xx"))]
     //use embedded_hal::digital::OutputPin;
@@ -154,27 +164,13 @@ mod app {
         //rprintln!("blink_rtic example");
         //hprintln!("dht_rtic example").unwrap();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
-
-        let (dht, i2c, mut led, _usart, _clocks) = dht_i2c_led_usart::setup(cx.device);
+        let (dht, i2c, mut led, _usart, mut delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
         
-   // use stm32f4xx_hal::timer::Delay;
-    //     let mut delay = DelayType{}; 
-  
-        // This syntax works with stm32h7xx but not with stm32f4xx, as of eh-rc3
-        // let mut delay = Delay::new(cp.SYST, clocks); 
-
-        //#[cfg(feature = "stm32f4xx")]
-        //use stm32f4xx_hal::timer::SysTimerExt;
-//
-        //let mut delay = cx.core.SYST.delay(&mut clocks);
-
         led.on();
-        Systick.delay_ms(1000u32);  
+        delay.delay(1000.millis());  
         led.off();
 
-        Systick.delay_ms(2000_u32); //  2 second delay for dhtsensor initialization
+        delay.delay(2000.millis()); //  2 second delay for dhtsensor initialization
 
         let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
@@ -191,18 +187,21 @@ mod app {
           .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        Systick.delay_ms(2000u32);    
+        delay.delay(2000.millis());    
 
         // next turn LED for a period of time that can be used to calibrate the delay timer.
         // Ensure that nothing is spawned above. This relies on delay blocking.
         led.on();
-        Systick.delay_ms(10000u32);  
+        delay.delay(10000.millis());  
         led.off();
-        Systick.delay_ms(1000u32);  
+        delay.delay(1000.millis());  
         read_and_display::spawn().unwrap();
 
+        let mono_token = rtic_monotonics::create_systick_token!();
+        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+
         //hprintln!("exit init").unwrap();
-        (Shared { led, }, Local {dht, display })
+        (Shared { led, }, Local {dht, display, delay })
     }
 
     #[shared]
@@ -222,20 +221,20 @@ mod app {
                           DISPLAYSIZE, 
                           BufferedGraphicsMode<DISPLAYSIZE>>,
 //        text_style: MonoTextStyle<BinaryColor>,
+        delay:   Delay,
     }
 
-    #[task(shared = [led, ], local = [dht, display ] )]
+    #[task(shared = [led, ], local = [dht, display, delay ] )]
     async fn read_and_display(cx: read_and_display::Context) {
 
-       // let delay = cx.local.delay;
+        let delay = cx.local.delay;
         let dht = cx.local.dht;
 
         loop {
            //hprintln!("read_and_display").unwrap();
            blink::spawn(BLINK_DURATION).ok();
 
-        let mut delay = Delay{}; 
-           let z = read(&mut delay, dht);   // NEEDS A DELAY DelayMs<u8> OTHER THAN SYSTICK
+           let z = read(delay, dht);   // needs a delay other than systick
            let (_temperature, _humidity) = match z {
                Ok(Reading {temperature, relative_humidity,})
                   =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();

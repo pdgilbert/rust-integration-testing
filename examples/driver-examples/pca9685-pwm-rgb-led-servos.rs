@@ -42,7 +42,7 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, _led, mut delay, _clock) = i2c1_i2c2_led_delay::setup(dp);
+    let (i2c, _i2c2, _led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     let mut pwm = Pca9685::new(i2c, Address::default()).unwrap();
     pwm.enable().unwrap();

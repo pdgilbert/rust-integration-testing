@@ -50,7 +50,7 @@ fn main() -> ! {
     //rtt_init_print!();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(dp);
+    let (i2c1, i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     //let manager = shared_bus::BusManagerSimple::new(i2c1); 
     //let interface = I2CDisplayInterface::new(manager.acquire_i2c());

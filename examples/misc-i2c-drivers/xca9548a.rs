@@ -53,8 +53,16 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::i2c1_i2c2_led;
-use rust_integration_testing_of_examples::delay::Delay;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::i2c::i2cError;
+
+//DEAL WITH THIS:  This trait is for older eh support in stm32f4xx. 
+//    When other hals use eh-1.0.0 is anything special needed for each hal? 
+//    If so, consider using something like
+//          use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+//      or  use rust_integration_testing_of_examples::delay::Delay;
+
+
 
 fn show_display<S>(
     s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
@@ -114,11 +122,22 @@ where
 
 
 
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+      //timer::Delay,
+      timer::SysTimerExt,  // trait for cp.SYST.delay
+      //rcc::Clocks,
+};
+
+
 #[entry]
 fn main() -> ! {
+    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, clock) = i2c1_i2c2_led::setup(dp);
+    let (i2c1, i2c2, mut led, mut delay1, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+
+    let delay2 = cp.SYST.delay(&clocks);
 
     led.off();
 
@@ -142,7 +161,7 @@ fn main() -> ! {
     Text::with_baseline(   "aht10-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
-    //delay1.delay(2000u32);    
+    //delay.delay1(2000u32);    
 
     led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
     hprintln!("Text::with_baseline").unwrap();

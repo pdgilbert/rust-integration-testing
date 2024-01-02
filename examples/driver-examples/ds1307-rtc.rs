@@ -43,7 +43,7 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup(dp);
+    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     hprintln!("rtc").unwrap();
     let mut rtc = Ds1307::new(i2c);
