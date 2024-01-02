@@ -29,7 +29,7 @@ pub use hal::{
 type DhtType = PA8<Output<OpenDrain>>;
 
 
-pub fn setup() ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {    
+pub fn setup() ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
     setup_from_dp(Peripherals::take().unwrap())
 }
 
@@ -406,7 +406,7 @@ use stm32h7xx_hal::{
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();

@@ -36,7 +36,7 @@ pub use crate::i2c::{setup_i2c2, I2c2Type as I2cType};
 // see src/i2c1_i2c2_led_delay.rs  for comparison and rational
 
 
-pub fn setup() ->  (OneWireType, I2cType, LedType, Delay, Clocks) {    
+pub fn setup() ->  (OneWireType, I2cType, LedType, impl DelayNs, Clocks) {    
     setup_from_dp(Peripherals::take().unwrap())
 }
 
@@ -261,7 +261,7 @@ pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OneWireType, I2cType, LedType, impl DelayNs, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
