@@ -60,7 +60,6 @@ use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::dht_i2c_led_usart;
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::delay::Delay;
 
 fn display<S>(
     dht_temp: i8,

@@ -29,7 +29,11 @@ use embedded_hal::delay::DelayNs;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::pac::{Peripherals};
 
 #[entry]
 fn main() -> ! {
@@ -37,7 +41,9 @@ fn main() -> ! {
     rprintln!("AT24C256 example");
     hprintln!("AT24C256 example").unwrap();
 
-    let (i2c, mut led, mut delay) = setup();
+    let dp = Peripherals::take().unwrap();
+
+    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup(dp);
 
     let mut eeprom = Eeprom24x::new_24x256(i2c, SlaveAddr::default()); //SlaveAddr::Alternative(true, true, true));
     let memory_address = 0x01;

@@ -51,7 +51,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
 use rust_integration_testing_of_examples::dp::{Peripherals};
 use rust_integration_testing_of_examples::cp::{CorePeripherals};
 use rust_integration_testing_of_examples::onewire_i2c_led;
-use rust_integration_testing_of_examples::delay_syst::Delay;
+use rust_integration_testing_of_examples::delay::Delay;
 use rust_integration_testing_of_examples::led::{LED};
 
 // open_drain_output is really input and output
