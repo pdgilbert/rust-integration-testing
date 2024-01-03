@@ -379,7 +379,7 @@ mod app {
         //hprintln!("temp-humidity-display example").unwrap();
 
         //  sensors use this delay (not systick)
-        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup(cx.device);
+        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         //  needs Systick::start first, but also is a future and .await needs to be in a block
@@ -455,7 +455,7 @@ mod app {
 
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-        sensor:  SensorType,
+        sensor:  SensorType,  // error here if feature = "htu2xd" or "aht10" or other not specified
     }
 
     #[task(shared = [led, ], local = [sensor, ina, display ] )]   //htu_ch, 
