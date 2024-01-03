@@ -3,8 +3,7 @@
 
 on:
   push:
-    branches: [ main, dev, eh-1-rc3-h7
-]
+    branches: [ main, dev, eh-1-rc3, eh--1-rc3-dev ]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
