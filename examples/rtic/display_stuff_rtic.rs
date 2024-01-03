@@ -63,7 +63,9 @@ mod app {
     use rtic;
     use rtic_monotonics::systick::Systick;
     use rtic_monotonics::systick::fugit::{ExtU32};
-    
+
+ // use stm32f4xx_hal::i2c::I2c as embedded_hal::i2c::I2c; 
+  // use embedded_hal::i2c::I2c; 
 
     const READ_INTERVAL: u32 = 10;  // used as seconds
 

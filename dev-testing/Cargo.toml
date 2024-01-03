@@ -36,7 +36,8 @@ display-interface-spi = "0.4.1"
 tinybmp = "0.3.1"  # for loading bmp image. could be dev-dependencies
 
 #ssd1306         = ">=0.8.0"   
-ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
+#ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
+ssd1306         = { git = "https://github.com/bugadani/ssd1306", branch = "ehal1"  }  
 #ssd1306         = { git = "https://github.com/pdgilbert/ssd1306", branch = "no_memory.x" } OLD
 #ssd1306         = { path = "/home/paul/githubClones/ssd1306"  } 
 # ssd1306 PREVIOUSLY PROVIDED memory.x.  NEED TO CONFIRM THAT THIS HAS BEEN CHANGED
