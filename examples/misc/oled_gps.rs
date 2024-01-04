@@ -683,7 +683,7 @@ fn main() -> ! {
     //asm::bkpt();
 
     loop {
-        let byte = match block!(rx_gps.read()) {
+        let byte = match block!(rx_gps.read_byte()) {
             Ok(byt) => byt,
             Err(_error) => e,
         };
