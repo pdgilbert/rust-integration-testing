@@ -3,7 +3,7 @@
 
 on:
   push:
-    branches: [ main, dev, eh-1-rc3, eh--1-rc3-dev ]
+    branches: [ main, dev, eh-1-rc3, eh-1-rc3_dual-eh_stm32f4xx-hal-only_DO_NOT_MERGE ]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -458,7 +458,7 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [blackpill-stm32f401, none-stm32h742]  
+        brd: [blackpill-stm32f401 ]  
         #brd: [bluepill, discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
@@ -466,22 +466,6 @@ jobs:
            - brd: "blackpill-stm32f401"
              mcu:  stm32f401
              hal: "stm32f4xx"
-             trg: "thumbv7em-none-eabihf"
-        #   - brd: "bluepill"
-        #     mcu:  stm32f103
-        #     hal: "stm32f1xx"
-        #     trg: "thumbv7m-none-eabi"
-        #   - brd: "discovery-stm32f303"
-        #     mcu:  stm32f303xc
-        #     hal: "stm32f3xx"
-        #     trg: "thumbv7em-none-eabihf"
-        #   - brd: "none-stm32g473"
-        #     mcu:  stm32g473
-        #     hal: "stm32g4xx"
-        #     trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32h742"
-             mcu:  stm32h742             
-             hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
 
     steps:
