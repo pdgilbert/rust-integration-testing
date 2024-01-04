@@ -387,6 +387,10 @@ jobs:
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219_rtic
          # use-cross: true
 
+      - name: Example display_stuff_rtic0
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example display_stuff_rtic0
+         # use-cross: true
+
 #      - name: Example adc_dma
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example adc_dma
 
@@ -445,7 +449,7 @@ jobs:
               lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
               blink_rtic,              schedule,                         resource-user-struct,
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
-              display_stuff_rtic,      ds18b20,
+              display_stuff_rtic0,     display_stuff_rtic,               ds18b20,
               aht10-display,           aht10_rtic,                       aht20-display,       
               hdc1080-display,
               htu2xd-display,          htu2xd_rtic,
