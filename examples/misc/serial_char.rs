@@ -38,6 +38,9 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 use nb::block;
 
+use embedded_hal::delay::DelayNs;
+use embedded_io::Write;
+
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 // 1. Get access to the device specific peripherals
