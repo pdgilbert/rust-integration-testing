@@ -1,5 +1,5 @@
 //! Display "stuff" on OLED with i2c.
-//! Compare display_stuff_rtic0 which does not have shared_bus with display_stuff_rtic which does.
+//! Compare examples display_stuff_rtic which adds shared i2c bus to display_stuff_rtic0.
 //! (Crate shared_bus can cause additional problems.)
 //! Compare also  examples dht_rtic.
 //! Blink (onboard) LED with short pulse very read.
@@ -65,10 +65,6 @@ mod app {
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
-
 
     fn show_display<S>(
         //text: &[heapless::String<32>; 1],
@@ -122,8 +118,7 @@ mod app {
 
        led.on();
 
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c<I2C1> = i2c).unwrap();
-       let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+       let interface = I2CDisplayInterface::new(i2c);
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -153,9 +148,9 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c<I2C1>>>>>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+        display: Ssd1306<I2CInterface<I2c<I2C1>>, 
+                          ssd1306::prelude::DisplaySize128x64 , 
+                          BufferedGraphicsMode<DisplaySize128x64>>
         //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
     }
