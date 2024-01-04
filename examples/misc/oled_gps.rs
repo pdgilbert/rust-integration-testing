@@ -27,6 +27,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
+use embedded_hal::delay::DelayNs;
+use embedded_io::Read;
 
 //use core::fmt::Write;  // for writeln
 use cortex_m_semihosting::hprintln;
@@ -58,7 +60,7 @@ fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
     I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let mut p = Peripherals::take().unwrap();
@@ -101,7 +103,7 @@ fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
     BlockingI2c<I2C2, impl Pins<I2C2>>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -161,7 +163,7 @@ fn setup() -> (
     Tx<USART2, impl TxPin<USART2>>,
     Rx<USART2, impl RxPin<USART2>>,
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -206,7 +208,6 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64, blackpills stm32f401 and stm32f411
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
     i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     prelude::*,
@@ -214,7 +215,7 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, Delay) {
+fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let clocks = p.RCC.constrain().cfgr.freeze();
@@ -265,7 +266,7 @@ fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
     BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -330,7 +331,7 @@ fn setup() -> (
              Tx<USART2, FullConfig>, 
              Rx<USART2, FullConfig>, 
              I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
-             Delay<TIM2>) {
+             impl DelayNs) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
@@ -367,7 +368,7 @@ use stm32g4xx_hal::{
 #[cfg(feature = "stm32g4xx")]
 fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>, 
                I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,  //I2c<I2C2, impl Pins<I2C2>>, 
-               Delay) {
+               impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
@@ -406,7 +407,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C1>, Delay) {
+fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C1>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let pwr = p.PWR.constrain();
@@ -460,7 +461,7 @@ fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
     I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -510,7 +511,7 @@ For simplicity of this example the same setup is used on the Discovery kit stm32
 */
 
 #[cfg(feature = "stm32l1xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, Delay) {
+fn setup() -> (Tx<USART1>, Rx<USART1>, I2c<I2C1, impl Pins<I2C1>>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
@@ -557,7 +558,7 @@ fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
-    Delay,
+    impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -659,7 +660,7 @@ fn main() -> ! {
     line2.draw(&mut display).unwrap();
     display.flush().unwrap();
 
-    delay.delay_ms(2000_u16);
+    delay.delay_ms(2000);
 
     // Would this approach in loop give smaller code? or faster?
     // Need to avoid  mutable/immutable borrow.
@@ -668,7 +669,7 @@ fn main() -> ! {
     line2.text = "zzzz";
     line2.draw(&mut display).unwrap();
     display.flush().unwrap();
-    delay.delay_ms(1000_u16);
+    delay.delay_ms(1000);
 
     // byte buffer length 80
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
@@ -725,7 +726,8 @@ fn main() -> ! {
                 buffer.clear();
                 good = false;
                 //delay.delay(4000.ms());
-                delay.delay_ms(4000_u16);
+                //delay.delay_ms(4000_u16);
+                delay.delay_ms(4000);
             };
         };
     }
