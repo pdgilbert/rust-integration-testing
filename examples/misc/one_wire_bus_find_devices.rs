@@ -63,7 +63,7 @@ fn find_devices<P, E>(
 }
 #[entry]
 fn main() -> ! {
-    let (pin, _i2c, _led, mut delay, _clocks) = onewire_i2c_led::setup();
+    let (pin, _i2c, _led, mut delay, _clocks) = opendrain_i2c_led::setup();
     
     delay.delay_ms(1000);
 

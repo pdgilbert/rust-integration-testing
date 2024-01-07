@@ -52,36 +52,17 @@ use embedded_graphics::{
 use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
 use dht_sensor::dht22::{read, Reading};
-//use dht_sensor::*;
 
-//use embedded_hal::delay::DelayNs;   // delay is for dht_sensor crate which does not yet use DelayNs
-//use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 
 use  ina219::{INA219,};
 
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::dht_i2c_led_usart;
+use rust_integration_testing_of_examples::opendrain_i2c_led;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
       pac::{Peripherals},
 };
-
-
-//use rust_integration_testing_of_examples::dp::{Peripherals};
-//use rust_integration_testing_of_examples::cp::{CorePeripherals};
-//use rust_integration_testing_of_examples::dht_i2c_led_usart;
-//use rust_integration_testing_of_examples::led::LED;
-
-// CONSIDER
-// use rust_integration_testing_of_examples::dht_i2c_led_usart;
-
-//#[cfg(feature = "stm32f4xx")]
-//use stm32f4xx_hal::{
-//      //timer::Delay,
-//      timer::TimerExt,  // trait
-//      //rcc::Clocks,
-//};
 
 
 
@@ -130,7 +111,7 @@ where
 fn main() -> ! {
     //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, _usart, mut delay, _clocks) = dht_i2c_led_usart::setup_from_dp(dp);
+    let (mut dht, i2c, mut led, mut delay, _clocks) = opendrain_i2c_led::setup_from_dp(dp);
     
     led.blink(1000_u16, &mut delay); 
 

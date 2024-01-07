@@ -89,15 +89,11 @@ mod app {
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 
-//    use cortex_m::asm::delay; // needed for dht_sensor read     use cortex_m::delay::Delay as DelayMs;
-
-//    use rust_integration_testing_of_examples::delay::DelayNs as DelayMs; // needed for dht_sensor read 
-//    use rust_integration_testing_of_examples::alt_delay::AltDelay as Delay; // needed for dht_sensor read 
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{Delay, I2cType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{Delay, I2cType};
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -105,7 +101,7 @@ mod app {
           gpio::{gpioa::PA8, Output, OpenDrain},
     };
 
-    type DhtType = PA8<Output<OpenDrain>>;
+    type OpenDrainType = PA8<Output<OpenDrain>>;
 
 
 
@@ -164,7 +160,7 @@ mod app {
         //rprintln!("blink_rtic example");
         //hprintln!("dht_rtic example").unwrap();
 
-        let (dht, i2c, mut led, _usart, mut delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
+        let (dht, i2c, mut led, _usart, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
         
         led.on();
         delay.delay(1000.millis());  
@@ -215,7 +211,7 @@ mod app {
 
     #[local]
     struct Local {
-        dht:   DhtType,
+        dht:   OpenDrainType,
         //display: Ssd1306<impl WriteOnlyDataCommand, DISPLAYSIZE, BufferedGraphicsMode<DISPLAYSIZE>>,
         display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
                           DISPLAYSIZE, 

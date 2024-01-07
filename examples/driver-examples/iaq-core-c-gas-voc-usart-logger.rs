@@ -67,8 +67,8 @@ mod app {
 
     const PERIOD: u32 = 10;  // used as seconds
     
-    use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{
         TxType, I2cType, LED, LedType, MONOCLOCK};
 
 
@@ -98,7 +98,7 @@ mod app {
 
         //let device: Peripherals = cx.device;
 
-        let (_dht, i2c, mut led, mut tx, _delay, _clocks) = dht_i2c_led_usart::setup_from_dp(cx.device);
+        let (_pin, i2c, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
 
         led.off();
 

@@ -79,8 +79,8 @@ mod app {
 
     use rust_integration_testing_of_examples::dp::{Peripherals};
     use rust_integration_testing_of_examples::cp::{CorePeripherals};
-    use rust_integration_testing_of_examples::dht_i2c_led_usart;
-    use rust_integration_testing_of_examples::dht_i2c_led_usart::{
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{
         I2cType, LED, LedType, DelayNs, MONOCLOCK};
     use rust_integration_testing_of_examples::delay::Delay;
 
@@ -175,7 +175,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_dht, i2c, mut led, _usart, mut delay) = dht_i2c_led_usart::setup(cx.device);
+        let (_pin, i2c, mut led, mut delay) = opendrain_i2c_led::setup(cx.device);
 
         led.on(); 
         delay.delay_ms(1000u32);

@@ -26,10 +26,10 @@ pub use hal::{
       prelude::*,
 };
 
-type DhtType = PA8<Output<OpenDrain>>;
+type OpenDrainType = PA8<Output<OpenDrain>>;
 
 
-pub fn setup() ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
+pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
     setup_from_dp(Peripherals::take().unwrap())
 }
 
@@ -49,12 +49,12 @@ use stm32f0xx_hal::{
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {    
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpioa = dp.GPIOA.split(&mut rcc);
 
-   let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
-   dht.set_high().ok();
+   let mut pin = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
+   pin.set_high().ok();
 
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc),  &mut rcc);
 
@@ -73,7 +73,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
 
    let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -93,7 +93,7 @@ use stm32f1xx_hal::{
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain();
@@ -115,8 +115,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
     ////hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
 
     let mut gpioa = dp.GPIOA.split();
-    let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
-    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+    let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
+    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
     let gpiob = dp.GPIOB.split();
 
@@ -146,7 +146,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
        &clocks,
     ).split();
 
-    (dht, i2c, led, tx, delay, clocks)
+    (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -169,14 +169,14 @@ pub type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
 //   regarding why it is necessary to specify the concrete pin here.
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) -> (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
-   let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-   dht.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+   pin.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
 
    let gpiob = dp.GPIOB.split(&mut rcc.ahb);
    let i2c = setup_i2c1(dp.I2C1, gpiob, clocks, rcc.apb1);
@@ -202,7 +202,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (DhtType, I2cType, LedType, TxType, Del
    )
    .split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -224,10 +224,10 @@ use stm32f4xx_hal::{
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
@@ -250,7 +250,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
    .unwrap()
    .split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -269,10 +269,10 @@ use stm32f7xx_hal::{
 pub type TxType = Tx<pac::USART2>;
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
    let mut dht   = gpioa .pa8.into_open_drain_output();
-   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+   pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
@@ -302,7 +302,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
        },
    ).split();
 
-  (dht, i2c, led, tx, delay, clocks)
+  (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -321,12 +321,12 @@ use stm32g0xx_hal::{
 pub type TxType = Tx<USART1, FullConfig>;
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
 
    let gpiob = dp.GPIOB.split(&mut rcc);
 
@@ -341,7 +341,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
 
    let delay = dp.TIM2.delay(&mut rcc);
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -364,14 +364,14 @@ pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
 //pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
    let gpiob = dp.GPIOB.split(&mut rcc);
 
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high().unwrap(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high().unwrap(); // Pull high to avoid confusing the sensor when initializing.
 
    let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
 
@@ -387,7 +387,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
    let (tx, _rx) = dp.USART1.usart(tx, rx, FullConfig::default().baudrate(115200.bps()),
          &mut rcc).unwrap().split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -406,7 +406,7 @@ use stm32h7xx_hal::{
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -415,8 +415,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, im
 
    let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
    let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
@@ -443,7 +443,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, im
        .unwrap()
        .split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -462,7 +462,7 @@ use stm32l0xx_hal::{
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
    //let clocks = rcc.clocks;
 
@@ -476,8 +476,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
     .unwrap()
     .split();
 
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc));
    led.off();
@@ -486,7 +486,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
    let delay = DelayType{};
    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -510,12 +510,12 @@ use embedded_hal::digital::v2::OutputPin;
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
    let gpioa = dp.GPIOA.split(&mut rcc);
-   let mut dht = gpioa.pa8.into_open_drain_output();
-   dht.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output();
+   pin.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
    led.off();
@@ -534,7 +534,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
 
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
 
@@ -553,7 +553,7 @@ use stm32l4xx_hal::{
 pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -565,8 +565,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
         .freeze(&mut flash.acr, &mut pwr);
 
    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
-   let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
-   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+   let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
+   pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
    let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
@@ -590,6 +590,6 @@ pub fn setup_from_dp(dp: Peripherals) ->  (DhtType, I2cType, LedType, TxType, De
    )
    .split();
 
-   (dht, i2c, led, tx, delay, clocks)
+   (pin, i2c, led, tx, delay, clocks)
 }
 
