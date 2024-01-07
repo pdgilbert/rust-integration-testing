@@ -31,12 +31,8 @@ use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWireResult};
 
-
 use ds18b20;
 use ds18b20::{Ds18b20, Resolution};
-
-//use rust_integration_testing_of_examples::delay::{DelayType};
-//use rust_integration_testing_of_examples::onewire::{OneWireType};
 
 use embedded_graphics::{
     //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
@@ -48,7 +44,7 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::opendrain_i2c_led;
 use rust_integration_testing_of_examples::led::{LED};
 
 // open_drain_output is really input and output
@@ -138,7 +134,7 @@ where
 
 #[entry]
 fn main() -> ! {
-    let (pin, i2c, mut led, mut delay, _clocks) = onewire_i2c_led::setup();
+    let (pin, i2c, mut led, mut delay, _clocks) = opendrain_i2c_led::setup();
 
     let mut ow_bus = one_wire_bus::OneWire::new(pin).unwrap();
 

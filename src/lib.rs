@@ -21,7 +21,7 @@ pub mod monoclock;
 #[cfg(feature = "stm32f4xx")] //si4703
 pub mod i2c_led_delay_buttons_stcint;
 
-pub mod onewire_i2c_led; // TRY TO GET RID OF THIS or consolidate with dht_i2c_led_usart
+pub mod opendrain_i2c_led; 
 
 pub mod i2c1_i2c2_led_delay;
 
@@ -38,7 +38,6 @@ pub mod led;
 pub mod i2c;
 ////pub mod usart; separating this does not simplify much
 pub mod dht; // TRY TO GET RID OF THIS and use hal as in example dht
-pub mod onewire;
 ////pub mod spi; move problems need to be figured out for this
 
 // consider putting some real tests here

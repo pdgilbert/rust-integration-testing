@@ -6,8 +6,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 //pub use crate::dp::{Peripherals};
-pub use crate::onewire_i2c_led;
-pub use crate::onewire_i2c_led::{I2cType, Clocks};
+pub use crate::opendrain_i2c_led;
+pub use crate::opendrain_i2c_led::{I2cType, Clocks};
 pub use crate::led::{setup_led, LED, LedType};
 
 pub use crate::delay::DelayNs;
@@ -23,8 +23,8 @@ use hal::{
 
 pub fn setup(dp: Peripherals) ->  (I2cType, LedType, Clocks) {    
    // This is a shortcut. 
-   // Really should be done as in onewire_i2c_led::setup(dp) but omitting onewire
-   let (_pin, i2c, led, _delay, clocks) = onewire_i2c_led::setup_from_dp(dp);
+   // Really should be done as in opendrain_i2c_led::setup(dp) but omitting pin
+   let (_pin, i2c, led, _delay, clocks) = opendrain_i2c_led::setup_from_dp(dp);
 
    (i2c, led, clocks)
 }

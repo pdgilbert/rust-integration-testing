@@ -13,7 +13,7 @@ pub use crate::delay::{Delay1Type, Delay2Type};
 
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1_i2c2, setup_i2c2, I2c1Type, I2c2Type};
-pub use crate::onewire_i2c_led;
+pub use crate::opendrain_i2c_led;
 
 // "hal" is used for items that are the same in all hal  crates
 use crate::stm32xxx_as_hal::hal;

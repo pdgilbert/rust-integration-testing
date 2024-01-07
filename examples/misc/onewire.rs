@@ -60,11 +60,17 @@ use onewire;
 //    )
 //}
 
-use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
-use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::opendrain_i2c_led;
 
 use rust_integration_testing_of_examples::delay::{Delay2Type as Delay};
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::Peripherals,
+      pac::CorePeripherals,
+};
 
 fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();

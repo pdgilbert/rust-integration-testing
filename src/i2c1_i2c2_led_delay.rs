@@ -1,5 +1,3 @@
-//  compare with onewire_i2c_led.rs
-
 // This returns a non-systick delay as well as clocks. EXPAND
 
 // |         let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(cx.device);

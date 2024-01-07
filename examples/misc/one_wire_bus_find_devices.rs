@@ -20,7 +20,7 @@ use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire};   //, DeviceSearch
 
-use rust_integration_testing_of_examples::onewire_i2c_led;
+use rust_integration_testing_of_examples::opendrain_i2c_led;
 
 fn find_devices<P, E>(
     delay: &mut impl DelayNs,
