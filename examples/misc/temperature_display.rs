@@ -67,12 +67,16 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
-use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::led::{LED};
-use rust_integration_testing_of_examples::delay_syst::Delay;
 
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+};
 
 
 fn show_display<S>(
@@ -121,11 +125,10 @@ fn main() -> ! {
     //rprintln!("temperature_display example");
     hprintln!("temperature_display example").unwrap();
 
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (i2c, mut led, clocks) = i2c_led::setup(dp);
+    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let mut delay = Delay::new(cp.SYST, clocks); 
+    //let mut delay = Delay::new(cp.SYST, clocks); 
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

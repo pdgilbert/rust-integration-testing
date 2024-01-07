@@ -58,7 +58,7 @@ use nb::block;
 
 
 use rust_integration_testing_of_examples::led::{LED};
-use rust_integration_testing_of_examples::i2c_led;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -173,7 +173,7 @@ where
 fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (i2c, mut led, mut clocks) = i2c_led::setup(dp);
+    let (i2c, _i2c2, mut led, _delay, mut clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     #[cfg(not(feature = "stm32f4xx"))]
     let mut delay = Delay::new(cp.SYST, clocks); 

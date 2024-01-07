@@ -76,9 +76,9 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c_led;
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c_led::{I2cType};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::DelayNs;
 
@@ -150,7 +150,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         //hprintln!("temperature-display example").unwrap();
 
-        let (i2c, mut led, _clocks) = i2c_led::setup(cx.device);
+        let (i2c, _i2c2, mut led, _delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on(); 
         Systick.delay_ms(1000u32);
