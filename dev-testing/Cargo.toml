@@ -420,8 +420,8 @@ name = "temperature"
 path = "examples/misc/temperature.rs"
 
 [[example]]
-name = "temperature_display"
-path = "examples/misc/temperature_display.rs"
+name = "oled_temperature"
+path = "examples/misc/oled_temperature.rs"
 
 [[example]]
 name = "therm10k_display"
