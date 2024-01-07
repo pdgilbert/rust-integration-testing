@@ -53,7 +53,7 @@ mod app {
     const READ_INTERVAL: u32 = 10;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c1_i2c2_led;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
     use rust_integration_testing_of_examples::led::{LED, LedType};
 
@@ -118,7 +118,7 @@ mod app {
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       let (i2c, _i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
+       let (i2c, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
        led.on();
 

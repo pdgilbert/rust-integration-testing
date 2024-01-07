@@ -92,8 +92,8 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c1_i2c2_led;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led::{ I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{ I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -146,7 +146,7 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (_i2c1, i2c2, mut led, _clock) = i2c1_i2c2_led::setup(cx.device);
+        let (_i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  

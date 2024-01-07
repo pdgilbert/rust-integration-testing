@@ -23,8 +23,6 @@ pub mod opendrain_i2c_led;
 
 pub mod i2c1_i2c2_led_delay;
 
-pub mod i2c1_i2c2_led;  // TRY TO GET RID OF THIS ?
-
 pub mod  opendrain_i2c_led_usart;
 
 pub mod i2c_led;   

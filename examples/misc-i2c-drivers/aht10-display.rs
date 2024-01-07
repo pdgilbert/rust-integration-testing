@@ -36,7 +36,7 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led;
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
 use rust_integration_testing_of_examples::led::{LED};
 
@@ -56,7 +56,7 @@ fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(dp);
+    let (i2c1, i2c2, mut led, _delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
     
     #[cfg(not(feature = "stm32f4xx"))]
     let mut delay = Delay::new(cp.SYST, clocks); 
