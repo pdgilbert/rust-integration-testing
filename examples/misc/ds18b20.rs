@@ -54,7 +54,8 @@ use rust_integration_testing_of_examples::led::{LED};
 // open_drain_output is really input and output
 
 fn get_sensor<P, E>(
-    delay: &mut (impl DelayNs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs<u16>),
+    delay: &mut impl DelayNs,
+    //delay: &mut (impl DelayNs + shared_bus::cortex_m::prelude::_embedded_hal_blocking_delay_DelayMs<u16>),
     ow_bus: &mut one_wire_bus::OneWire<P>,
 ) -> OneWireResult<Ds18b20, E> //Option<Ds18b20>
     where

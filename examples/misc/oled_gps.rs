@@ -28,7 +28,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
-use embedded_io::Read;
+//use embedded_io::Read;
 
 //use core::fmt::Write;  // for writeln
 use cortex_m_semihosting::hprintln;
@@ -683,7 +683,12 @@ fn main() -> ! {
     //asm::bkpt();
 
     loop {
-        let byte = match block!(rx_gps.read_byte()) {
+        #[cfg(feature = "stm32f4xx")]
+        let z = rx_gps.read();
+        #[cfg(not(feature = "stm32f4xx"))]
+        let z = rx_gps.read_byte();
+        let byte = match block!(z) {
+        //let byte = match block!(rx_gps.read_byte()) {
             Ok(byt) => byt,
             Err(_error) => e,
         };

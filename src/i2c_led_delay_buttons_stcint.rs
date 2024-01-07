@@ -8,14 +8,19 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use crate::dp::{Peripherals};
-
 pub use crate::delay::DelayNs;
 
 pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
+
+// "hal" is used for items that are the same in all hal  crates
+use crate::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+};
 
 pub use si4703::{
     reset_and_select_i2c_method1 as reset_si4703, ChannelSpacing, DeEmphasis, 

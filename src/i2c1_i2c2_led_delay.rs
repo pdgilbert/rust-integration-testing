@@ -35,16 +35,21 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 pub use crate::monoclock::{MONOCLOCK};
-pub use crate::prelude::*;
-pub use crate::cp::{CorePeripherals};
-pub use crate::dp::{Peripherals};
 
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1_i2c2, I2c1Type, I2c2Type};
-//pub use crate::i2c::{setup_i2c1_i2c2, setup_i2c2, I2c1Type, I2c2Type};
 
 pub use crate::delay::DelayNs;
 pub use crate::delay::{Delay2Type as Delay};
+
+// "hal" is used for items that are the same in all hal  crates
+use crate::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+      //prelude::*,        // this gives unused warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.         
+};
+
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{

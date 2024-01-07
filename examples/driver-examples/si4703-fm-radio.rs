@@ -32,10 +32,18 @@ use nb::block;
 //use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
-use rust_integration_testing_of_examples::dp::{Peripherals};
+pub use rust_integration_testing_of_examples::led::{LED};
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+};
+
 
 use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
-                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayNs,
+                 setup_i2c_led_delay_buttons_stcint_using_dp, DelayNs,
                  SEEK, ChannelSpacing, 
                  DeEmphasis, SeekDirection, SeekMode, Si4703, Volume};
 

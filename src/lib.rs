@@ -13,8 +13,7 @@ use panic_halt as _;
 
 pub mod stm32xxx_as_hal;   
 
-pub mod monoclock;// TRY TO GET RID OF THIS
-pub mod prelude;// TRY TO GET RID OF THIS
+pub mod monoclock;
 
 //// pub mod lora_spi_gps_usart; 
 
@@ -32,8 +31,6 @@ pub mod dht_i2c_led_usart;    // OR THIS
 
 pub mod i2c_led;   
 
-pub mod dp;
-pub mod cp;
 pub mod delay;
 pub mod delay_syst;
 pub mod alt_delay;

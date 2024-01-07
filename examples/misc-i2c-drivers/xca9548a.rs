@@ -50,11 +50,18 @@ use embedded_graphics::{
 
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
-use rust_integration_testing_of_examples::dp::{Peripherals};
+
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::i2c::i2cError;
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+      pac::{CorePeripherals},
+};
 
 //DEAL WITH THIS:  This trait is for older eh support in stm32f4xx. 
 //    When other hals use eh-1.0.0 is anything special needed for each hal? 

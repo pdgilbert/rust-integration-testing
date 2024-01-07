@@ -37,10 +37,16 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::i2c1_i2c2_led;
-use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
+
 use rust_integration_testing_of_examples::led::{LED};
-//use rust_integration_testing_of_examples::delay::Delay;
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+      pac::{CorePeripherals},
+};
 
 #[entry]
 fn main() -> ! {

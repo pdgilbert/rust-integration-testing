@@ -5,13 +5,21 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use crate::dp::{Peripherals};
+//pub use crate::dp::{Peripherals};
 pub use crate::onewire_i2c_led;
 pub use crate::onewire_i2c_led::{I2cType, Clocks};
 pub use crate::led::{setup_led, LED, LedType};
 
 pub use crate::delay::DelayNs;
 pub use crate::delay::{Delay2Type as Delay};
+
+// "hal" is used for items that are the same in all hal  crates
+use crate::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+};
+
 
 pub fn setup(dp: Peripherals) ->  (I2cType, LedType, Clocks) {    
    // This is a shortcut. 

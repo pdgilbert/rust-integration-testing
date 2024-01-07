@@ -52,10 +52,18 @@ use cortex_m_semihosting::hprintln;
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::dp::{Peripherals};
+pub use rust_integration_testing_of_examples::led::{LED};
+
+// "hal" is used for items that are the same in all hal  crates
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+      pac::{Peripherals},
+};
+
 
 use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
-                 setup_i2c_led_delay_buttons_stcint_using_dp,  LED,  DelayNs,
+                 setup_i2c_led_delay_buttons_stcint_using_dp,  DelayNs,
                  SEEK, ChannelSpacing, 
                  DeEmphasis, SeekDirection, SeekMode, Si4703, Volume, ErrorWithPin};
 

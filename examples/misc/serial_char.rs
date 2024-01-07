@@ -771,6 +771,9 @@ fn main() -> ! {
 
     hprintln!("test write to console ...").unwrap();
     for byte in b"\r\nconsole connect check.\r\n" {
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx1.write(*byte)).ok();
+        #[cfg(not(feature = "stm32f4xx"))]
         block!(tx1.write_byte(*byte)).ok();
     }
 
@@ -780,11 +783,17 @@ fn main() -> ! {
     let send = b'X';
 
     // Write `X` and wait until the write is successful
+    #[cfg(feature = "stm32f4xx")]
+    block!(tx2.write(send)).ok();
+    #[cfg(not(feature = "stm32f4xx"))]
     block!(tx2.write_byte(send)).ok();
 
     hprintln!("   receiving on rx3 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
+    #[cfg(feature = "stm32f4xx")]
+    let received = block!(rx3.read()).unwrap();
+    #[cfg(not(feature = "stm32f4xx"))]
     let received = block!(rx3.read_byte()).unwrap();
 
     hprintln!(
@@ -818,11 +827,19 @@ fn main() -> ! {
 
     for byte in b"\r\ntx2 to rx3 with X\r\n" {
         // iterator fails if string is too long
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx1.write(*byte)).unwrap();
+        #[cfg(not(feature = "stm32f4xx"))]
         block!(tx1.write_byte(*byte)).unwrap();
     }
-    //block!(tx1.write(received)).unwrap();
+    #[cfg(feature = "stm32f4xx")]
+    block!(tx1.write(received)).ok();
+    #[cfg(not(feature = "stm32f4xx"))]
     block!(tx1.write_byte(received)).ok();
     for byte in b"\r\n" {
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx1.write(*byte)).unwrap();
+        #[cfg(not(feature = "stm32f4xx"))]
         block!(tx1.write_byte(*byte)).unwrap();
     }
 
@@ -835,12 +852,18 @@ fn main() -> ! {
     let send = b'Y';
 
     // Write `Y` and wait until the write is successful
+    #[cfg(feature = "stm32f4xx")]
+    block!(tx3.write(send)).ok();
+    #[cfg(not(feature = "stm32f4xx"))]
     block!(tx3.write_byte(send)).ok();
 
     // hprintln here can slow enough that transmition is missed
     //hprintln!("   receiving on rx2 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
+    #[cfg(feature = "stm32f4xx")]
+    let received = block!(rx2.read()).unwrap();
+    #[cfg(not(feature = "stm32f4xx"))]
     let received = block!(rx2.read_byte()).unwrap();
 
     hprintln!(
@@ -864,11 +887,19 @@ fn main() -> ! {
 
     for byte in b"tx3 to rx2 test with Y\r\n" {
         // iterator fails if string is too long
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx1.write(*byte)).unwrap();
+        #[cfg(not(feature = "stm32f4xx"))]
         block!(tx1.write_byte(*byte)).unwrap();
     }
-    //block!(tx1.write(received)).unwrap();
+    #[cfg(feature = "stm32f4xx")]
+    block!(tx1.write(received)).ok();
+    #[cfg(not(feature = "stm32f4xx"))]
     block!(tx1.write_byte(received)).ok();
     for byte in b"\r\n" {
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx1.write(*byte)).unwrap();
+        #[cfg(not(feature = "stm32f4xx"))]
         block!(tx1.write_byte(*byte)).unwrap();
     }
 
