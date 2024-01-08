@@ -51,7 +51,7 @@ use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
       pac::{Peripherals, CorePeripherals},
-      gpio::{gpioa::PA8, Output, OpenDrain},
+      gpio::{gpioa::PA8, Output, OpenDrain, GpioExt},
       prelude::*,
 };
 
@@ -86,12 +86,12 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl Delay) {
 
 
 
-#[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{
-      //delay::Delay,
-      //timer::TimerExt,
-      //rcc::CoreClocks as Clocks,
-};
+//#[cfg(feature = "stm32h7xx")]
+//use stm32h7xx_hal::{
+//      //delay::Delay,
+//      //timer::TimerExt,
+//      //rcc::CoreClocks as Clocks,
+//};
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
@@ -106,8 +106,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
    
    //SysTick: System Timer  delay
-   let delay = Delay::new(cp.SYST, clocks);   //May work with DelayNs
-   //let mut delay = cp.SYST.delay(clocks);
+   //let delay = Delay::new(cp.SYST, clocks);   //May work with DelayNs
+   let delay = cp.SYST.delay(clocks);
 
    (dht, delay)
 }

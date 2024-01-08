@@ -114,9 +114,9 @@ pub use stm32h7xx_hal::delay::Delay;
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    timer::Timer,
-    delay::DelayFromCountDownTimer,
-    pac::{TIM2, TIM5}
+   timer::Timer,
+   delay::DelayFromCountDownTimer,
+   pac::{TIM2, TIM5},
 };
 
 #[cfg(feature = "stm32h7xx")]

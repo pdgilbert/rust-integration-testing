@@ -44,16 +44,20 @@ pub use crate::delay::{Delay2Type as Delay};
 use crate::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
-      //prelude::*,        // this gives unused warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.         
+   pac::{Peripherals},
+   gpio::GpioExt,
+};
+#[cfg(not(feature = "stm32f4xx"))]
+use hal::{
+   prelude::*,        // this gives unused warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.         
 };
 
 
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
-    //delay::Delay,
-    //pac::{CorePeripherals},
-    prelude::*,
+   //delay::Delay,
+   //pac::{CorePeripherals},
+   prelude::*,
 };
 
 #[cfg(feature = "stm32f0xx")]
@@ -151,7 +155,6 @@ pub use stm32f4xx_hal::{
    pac::{TIM2, TIM5},
    //timer::Delay,
    timer::TimerExt,
-   gpio::GpioExt,
 };
 
 

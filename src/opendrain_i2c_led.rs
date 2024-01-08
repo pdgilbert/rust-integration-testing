@@ -20,9 +20,11 @@ use crate::stm32xxx_as_hal::hal;
 
 use hal::{
       pac::{Peripherals},
-      //pac::{CorePeripherals},
       gpio::{gpioa::PA8, Output, OpenDrain},
- //     prelude::*,  // this gives unused warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.             
+};
+#[cfg(not(feature = "stm32f4xx"))]
+use hal::{
+      prelude::*,  // this gives unused warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.             
 };
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
