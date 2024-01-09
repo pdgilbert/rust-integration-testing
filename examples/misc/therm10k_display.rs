@@ -1,3 +1,5 @@
+//  THIS NEEDS WORK. use i2c1_i2c2_led_delay.rs or??  compare projects/temperature-display.rs
+
 //! Measure temperature with 10k thermistor sensor (NTC 3950 10k thermistors probe) and temperature and
 //! humidity from a DHT-11 (or DHT-22) sensor. Display on SSD1306 OLED display.
 //! 
@@ -52,13 +54,6 @@ use core::fmt::Write;
 //use cortex_m_semihosting::hprintln;
 //use rtt_target::{rprintln, rtt_init_print};
 
-// See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
-// DisplaySize128x32:
-//    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-//    &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8  =  4  characters high
-//    FONT_8X13  128 pixels/ 8 per font = 16   characters wide.  32/13 = 2.5 characters high
-//    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.5 characters high
-
 const DISPLAY_LINES: usize = 2; 
 
 use embedded_graphics::{
@@ -76,14 +71,25 @@ use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
 use dht_sensor::dht22::{read, Reading};
 
-use rust_integration_testing_of_examples::dp::{Peripherals};
-use rust_integration_testing_of_examples::cp::{CorePeripherals};
-use rust_integration_testing_of_examples::dht::{DhtType};
-//use rust_integration_testing_of_examples::delay::Delay;
-//use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType};
 use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-use rust_integration_testing_of_examples::i2c::{setup_i2c1, I2c1Type as I2cType,};
+use rust_integration_testing_of_examples::i2c;
+use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
 
+use embedded_hal::delay::DelayNs;   // delay is for dht_sensor crate which does not yet use DelayNs
+use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+    pac::{Peripherals, CorePeripherals},
+    i2c::I2c,
+    gpio::{gpioa::PA8, Output, OpenDrain, GpioExt},
+    prelude::*,  
+    adc::Adc,
+    pac::ADC1,
+    };
+
+type DhtType = PA8<Output<OpenDrain>>;
 
 pub struct Sensor<U, A> { ch: U, adc: A }
 
@@ -94,10 +100,7 @@ pub trait ReadAdc {
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
-    adc::Adc,
     gpio::{Analog, gpioa::{PA1}},
-    //delay::Delay,
-    prelude::*,
 };
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -124,7 +127,7 @@ pub fn setup(mut dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, Del
         fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
      }
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
 
     (sens, dht, i2c, led, delay)
@@ -134,12 +137,8 @@ pub fn setup(mut dp: Peripherals) -> (SensorType, DhtType, I2cType, LedType, Del
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    adc::Adc,
-    gpio::{Analog, gpioa::{PA1},
-    },
-    pac::{ADC1},
-    prelude::*,
-};
+    gpio::{Analog, gpioa::{PA1}},
+    };
 
 #[cfg(feature = "stm32f1xx")]
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
@@ -163,7 +162,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
     let led = setup_led(dp.GPIOC.split());
 
     (sens, dht, i2c, led, delay)
@@ -173,10 +172,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    adc::{Adc, CommonAdc, config::Config},
+    adc::{CommonAdc, config::Config},
     gpio::{Analog, gpioa::{PA1},},
-    pac::{ADC1,},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
@@ -205,7 +202,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb), clocks, rcc.apb1);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb), clocks, rcc.apb1);
     let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
 
     (sens, dht, i2c, led, delay)
@@ -215,23 +212,16 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    //pac::{TIM2, TIM5},
     timer::SysTimerExt,
-    //timer::Delay,
-    //rcc::Clocks,
-    adc::{config::AdcConfig, Adc}, //SampleTime
+    adc::{config::AdcConfig}, //SampleTime
     gpio::{Analog, gpioa::{PA1}, },
-    pac::{ADC1,},
-    prelude::*,
 };
-use embedded_hal::delay::DelayNs;
-use rust_integration_testing_of_examples::delay::Delay;
 
 #[cfg(feature = "stm32f4xx")]
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cType, LedType, Delay) {
+pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cType, LedType, impl DelayNs) {
                 //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze();
@@ -251,7 +241,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(), &clocks);
 
     let led = setup_led(dp.GPIOC.split());
 
@@ -270,11 +260,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    adc::Adc,
     gpio::{Analog, gpioa::{PA1},},
-    pac::{ADC1, },
     rcc::CoreClocks as Clocks,
-    prelude::*,
 };
 
 #[cfg(feature = "stm32f7xx")]
@@ -298,7 +285,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
     let led = setup_led(dp.GPIOC.split());
     let mut delay = dp.TIM2.delay_us(&clocks);
 
@@ -311,7 +298,6 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 use stm32g0xx_hal::{
     analog::adc::{Adc,},  // OversamplingRatio, Precision, SampleTime, VBat},
     gpio::{Analog, gpioa::{PA1}, },
-    prelude::*,
 };
 
 #[cfg(feature = "stm32g0xx")]
@@ -339,7 +325,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     
     let gpiob = dp.GPIOB.split(&mut rcc);
 
-    let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, &mut rcc);
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
 
@@ -355,10 +341,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 use stm32g4xx_hal::{
     timer::Timer,
     delay::DelayFromCountDownTimer,
-    adc::{config::{SampleTime}, Adc, Disabled, AdcClaim, ClockSource},
+    adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
     gpio::{Analog, gpioa::{PA1}, },
-    stm32::{ADC1,},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -397,7 +381,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, &mut rcc);
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
 
@@ -408,12 +392,9 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    delay::Delay,
     adc,
-    adc::{Adc, Enabled, },
+    adc::{Enabled, },
     gpio::{Analog, gpioa::{PA1,}, },
-    pac::{ADC1,},
-    prelude::*,
     //rcc::CoreClocks as Clocks,
 };
 
@@ -421,7 +402,7 @@ use stm32h7xx_hal::{
 type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Enabled>>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cType, LedType, Delay) {
+pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cType, LedType, impl DelayNs) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -452,7 +433,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let i2cx = ccdr.peripheral.I2C1;
 
-    let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx, &clocks);
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
 
     (sens, dht, i2c, led, delay)
@@ -462,10 +443,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    adc::{Adc, Ready},
+    adc::{Ready},
     gpio::{Analog,  gpioa::{PA1}, },
-    //delay::Delay,
-    prelude::*,
     rcc::Config, 
 };
 
@@ -496,7 +475,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
     let gpiob =dp.GPIOB.split(&mut rcc);
     let led = setup_led(dp.GPIOC.split(&mut rcc));
-    let i2c = setup_i2c1(dp.I2C1, gpiob, rcc);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, rcc);
 
     (sens, dht, i2c, led, delay)
 }
@@ -505,11 +484,10 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
-    adc::{Adc, Precision},
+    adc::{Precision},
     gpio::{Analog, 
            gpioa::{PA1},
     },
-    prelude::*,
     rcc, // for ::Config but avoid name conflict with serial
 };
 
@@ -538,7 +516,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     dht.set_high().ok();
 
     let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
     (sens, dht, i2c, led, delay)
 }
@@ -547,10 +525,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    adc::{Adc, AdcCommon},
+    adc::{AdcCommon},
     gpio::{Analog, gpioa::{PA1}},
-    pac::{ADC1},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32l4xx")]
@@ -581,7 +557,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, I2cT
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
 
-    let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
+    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
     let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
 
     (sens, dht, i2c, led, delay)

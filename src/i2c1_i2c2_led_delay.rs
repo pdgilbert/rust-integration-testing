@@ -97,12 +97,6 @@ pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, C
    let gpiob = dp.GPIOB.split();
 
    //afio  needed for i2c1 (PB8, PB9) but not i2c2
-   // Next does not work because of value move problems. Using &mut argument and * deref only gets to
-   // cannot move out of `gpiob.pb8` which is behind a mutable reference.
-   // A better solution to this is need - maybe a config or into method for i2c1 and i2c2 ?
-   //let i2c1 = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
-   //let i2c2 = setup_i2c2(dp.I2C2, gpiob, &clocks);
-   // As work-around combine in setup_i2c1_i2c2.
 
    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, dp.I2C2, gpiob, &mut afio, &clocks);
    

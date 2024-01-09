@@ -1,13 +1,19 @@
 //! Note that i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
-//  May need to consider something like
-//#[cfg(not(feature = "stm32f0xx"))]
-//pub type I2cType = I2c1Type;
-//
-//#[cfg(feature = "stm32f0xx")]
-//pub type I2cType = I2c2Type;
 
+// "hal" is used for items that are the same in all hal  crates
+use crate::stm32xxx_as_hal::hal;
+
+use hal::{
+    i2c::I2c,
+  //  i2c::Error as i2cError,
+    pac::{I2C1, I2C2},
+    prelude::*,
+};
+
+pub type I2c1Type = I2c<I2C1>;
+pub type I2c2Type = I2c<I2C2>;
 
 
 
@@ -16,17 +22,12 @@ use stm32f0xx_hal::{
     gpio::{Alternate, AF1,
            gpiob::{PB7, PB8, PB10, PB11, Parts}, 
     },
-    i2c::{I2c, },
-    pac::{I2C1, I2C2},
     rcc::Rcc,
-    prelude::*,
 };
 
-#[cfg(feature = "stm32f0xx")]
-pub use stm32f0xx_hal::i2c::Error as i2cError;
 
-#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-pub type I2c1Type = I2c<I2C1, PB8<Alternate<AF1>>, PB7<Alternate<AF1>>>;
+//#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
+//pub type I2c1Type = I2c<I2C1, PB8<Alternate<AF1>>, PB7<Alternate<AF1>>>;
 //pub type I2c1Type = I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
 
 
@@ -43,20 +44,20 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: Parts, rcc: &mut Rcc) -> I2c1Type {
 }
 
 
-#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-pub type I2c2Type = I2c<I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
-
-#[cfg(feature = "stm32f0xx")]
-pub fn setup_i2c2(i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> I2c2Type {
-    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
-        (gpiob.pb10.into_alternate_af1(cs),
-         gpiob.pb11.into_alternate_af1(cs),
-        )
-    });
-    let i2c = I2c::i2c2(i2c2, (scl, sda), 400.khz(), rcc);
-
-    i2c
-}
+//#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
+//pub type I2c2Type = I2c<I2C2, PB10<Alternate<AF1>>, PB11<Alternate<AF1>>>;
+//
+//#[cfg(feature = "stm32f0xx")]
+//pub fn setup_i2c2(i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> I2c2Type {
+//    let (scl, sda) = cortex_m::interrupt::free(move |cs| {
+//        (gpiob.pb10.into_alternate_af1(cs),
+//         gpiob.pb11.into_alternate_af1(cs),
+//        )
+//    });
+//    let i2c = I2c::i2c2(i2c2, (scl, sda), 400.khz(), rcc);
+//
+//    i2c
+//}
 
 #[cfg(feature = "stm32f0xx")]
 pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> (I2c1Type, I2c2Type) {
@@ -81,16 +82,12 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    i2c::{BlockingI2c, DutyCycle, Mode},
-    pac::{I2C1, I2C2},
+    i2c::{BlockingI2c, DutyCycle, Mode},   
     gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
     afio::Parts as afioParts,
     rcc::Clocks,
-    prelude::*
 };
 
-#[cfg(feature = "stm32f1xx")]
-pub use stm32f1xx_hal::i2c::Error as i2cError;
 
 #[cfg(feature = "stm32f1xx")]
 pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;   
@@ -119,34 +116,9 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &
     i2c
 }
 
-#[cfg(feature = "stm32f1xx")]
-pub type I2c2Type = BlockingI2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;   
 
-#[cfg(feature = "stm32f1xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks) -> I2c2Type {
-    let i2c = BlockingI2c::i2c2(
-        i2c2,
-        (
-            gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
-            gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
-        ),
-        //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
-        Mode::Fast {
-            frequency: 400_000_u32.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
-
-    i2c
-}
-
-// It would be less code duplication if setup_i2c1 and then setup_i2c2 could be called, then
-// setup_i2c1_i2c2 could be removed, but there is a problem with partial move of dp or of gpiob.
+// It would be nicer if setup_i2c1 and then setup_i2c2 could be called, then
+// setup_i2c1_i2c2 could be removed. But there is a problem with partial move of dp or of gpiob.
 // A method like dp.I2C1.config() or .into()  might help?
 
 #[cfg(feature = "stm32f1xx")]
@@ -193,21 +165,15 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2 , mut gpiob: Parts, afio: &mut afi
 
 #[cfg(feature = "stm32f3xx")]
 use stm32f3xx_hal::{
-    i2c::{I2c,},
     gpio::{OpenDrain, AF4,
            gpioa::{PA9, PA10, Parts as PartsA}, 
            gpiob::{PB6, PB7,  Parts as PartsB}
     },
     rcc::{Clocks, APB1},
-    pac::{I2C1, I2C2},
-    prelude::*,
 };
 
-#[cfg(feature = "stm32f3xx")]
-pub use stm32f3xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32f3xx")]
-pub type I2c1Type = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
+//#[cfg(feature = "stm32f3xx")]
+//pub type I2c1Type = I2c<I2C1, (PB6<AF4<OpenDrain>>, PB7<AF4<OpenDrain>>)>;
 //pub type I2c1Type = I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> ;
 
 #[cfg(feature = "stm32f3xx")]
@@ -222,22 +188,6 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: PartsB, clocks: Clocks, mut apb1: APB1)
     i2c
 }
 
-#[cfg(feature = "stm32f3xx")]
-pub type I2c2Type = I2c<I2C2, (PA9<AF4<OpenDrain>>, PA10<AF4<OpenDrain>>)>;
-//pub type I2c2Type = I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>;   
-
-#[cfg(feature = "stm32f3xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpioa: PartsA, clocks: Clocks, mut apb1: APB1) -> I2c2Type {
-    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS
-    let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-    let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
-    //    // //NOT sure if pull up is needed
-    //    scl.internal_pull_up(&mut gpiob.pupdr, true);
-    //    sda.internal_pull_up(&mut gpiob.pupdr, true);
-    let i2c = I2c::new(i2c2, (scl, sda), 100_000.Hz(), clocks, &mut apb1);
-
-    i2c
-}
 
 #[cfg(feature = "stm32f3xx")]
 pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2,  mut gpioa: PartsA, mut gpiob: PartsB, clocks: Clocks, mut apb1: APB1) -> (I2c1Type, I2c2Type) {
@@ -248,7 +198,6 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2,  mut gpioa: PartsA, mut gpiob: Pa
     //    sda.internal_pull_up(&mut gpiob.pupdr, true);
     let i2c1 = I2c::new(i2c1, (scl, sda), 100_000.Hz(), clocks, &mut apb1);
 
-    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS
     let scl =  gpioa.pa9.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
     let sda = gpioa.pa10.into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
     //    // //NOT sure if pull up is needed
@@ -256,29 +205,16 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2,  mut gpioa: PartsA, mut gpiob: Pa
     //    sda.internal_pull_up(&mut gpiob.pupdr, true);
     let i2c2 = I2c::new(i2c2, (scl, sda), 100_000.Hz(), clocks, &mut apb1);
 
-
     (i2c1, i2c2)
 }
 
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-    i2c::{I2c, },
     //gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}},
     gpio::{gpiob::{Parts as PartsB}},
-    rcc::Clocks,
-    pac::{I2C1, I2C2},
-    prelude::*,
+    rcc::Clocks,   
 };
-
-#[cfg(feature = "stm32f4xx")]
-pub use stm32f4xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32f4xx")]
-pub type I2c1Type = I2c<I2C1>;
-//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>)>;
-//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
-//pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks) -> I2c1Type {
@@ -287,22 +223,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks) -> I2c1Type {
     let sda = gpiob.pb9.into_alternate_open_drain(); 
 
     let i2c = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
-    i2c
-}
-
-#[cfg(feature = "stm32f4xx")]
-pub type I2c2Type = I2c<I2C2>;
-//pub type I2c2Type = I2c<I2C2, (PB10<Alternate<4u8, OpenDrain>>, PB3<Alternate<9u8, OpenDrain>>)>;
-//pub type I2c2Type =   I2c<I2C2, impl Pins<I2C2>>;   
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks) -> I2c2Type {
-    //  (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
-    let scl = gpiob.pb10.into_alternate_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_open_drain(); // sda on PB3
-
-    let i2c = I2c::new(i2c2, (scl, sda), 400.kHz(), &clocks);
-
     i2c
 }
 
@@ -328,16 +248,12 @@ use stm32f7xx_hal::{
     },
     i2c::{BlockingI2c, Mode, },
     rcc::{Clocks, APB1},
-    pac::{I2C1, I2C2},
+    
     prelude::*,
 };
 
-#[cfg(feature = "stm32f7xx")]
-pub use nb::Error as i2cError;
-//pub use stm32f7xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32f7xx")]
-pub type I2c1Type = BlockingI2c<I2C1, PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>>;
+//#[cfg(feature = "stm32f7xx")]
+//pub type I2c1Type = BlockingI2c<I2C1, PB8<Alternate<4u8, OpenDrain>>, PB9<Alternate<4u8, OpenDrain>>>;
 //pub type I2c1Type =  BlockingI2c<I2C1, impl PinScl<I2C1>, impl PinSda<I2C1>>;
 
 #[cfg(feature = "stm32f7xx")]
@@ -348,29 +264,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut AP
 
     let i2c = BlockingI2c::i2c1(
         i2c1,
-        (scl, sda),
-        //400.khz(),
-        Mode::Fast {
-            frequency: 400_000.Hz(),
-        },
-        &clocks,
-        &mut apb1,
-        1000,
-    );
-
-    i2c
-}
-
-#[cfg(feature = "stm32f7xx")]
-pub type I2c2Type = BlockingI2c<I2C2, PB10<Alternate<4u8, OpenDrain>>, PB11<Alternate<4u8, OpenDrain>>>;
-
-#[cfg(feature = "stm32f7xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, &clocks: &Clocks, mut apb1: &mut APB1) -> I2c2Type {
-    let scl = gpiob.pb10.into_alternate_open_drain(); 
-    let sda = gpiob.pb11.into_alternate_open_drain(); 
-
-    let i2c = BlockingI2c::i2c2(
-        i2c2,
         (scl, sda),
         //400.khz(),
         Mode::Fast {
@@ -423,20 +316,11 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, &clocks: &Clocks, 
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    i2c::{I2c, Config as i2cConfig,},
+    i2c::{Config as i2cConfig,},
     gpio::{Output, OpenDrain, gpiob::{PB8, PB9,  PB10, PB11, Parts as PartsB}
     },
     rcc::Rcc,
-    pac::{I2C1, I2C2},
-    prelude::*,
 };
-
-#[cfg(feature = "stm32g0xx")]
-pub use stm32g0xx_hal::i2c::Error as i2cError;
-
-
-#[cfg(feature = "stm32g0xx")]
-pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
 
 #[cfg(feature = "stm32g0xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
@@ -444,19 +328,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
     let sda = gpiob.pb9.into_open_drain_output_in_state(PinState::High); 
     
     let i2c = I2c::i2c1(i2c1,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
-    i2c
-}
-
-#[cfg(feature = "stm32g0xx")]
-pub type I2c2Type = I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>;
-
-#[cfg(feature = "stm32g0xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, rcc: &mut Rcc) -> I2c2Type {
-    let scl = gpiob.pb10.into_open_drain_output_in_state(PinState::High);
-    let sda = gpiob.pb11.into_open_drain_output_in_state(PinState::High);
-
-    let i2c = I2c::i2c2(i2c2,  sda, scl,  i2cConfig::with_timing(0x2020_151b), rcc);
-
     i2c
 }
 
@@ -474,26 +345,16 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, rcc: &mut Rcc) -> 
 }
 
 
+
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    i2c::{I2c, Config},   //SDAPin, SCLPin
+    i2c::{Config},   //SDAPin, SCLPin
     gpio::{AlternateOD,
            gpioa::{PA8, PA9, Parts as PartsA},
            gpiob::{PB8, PB9, Parts as PartsB}
     },
     rcc::Rcc,
-    stm32::{I2C1, I2C2},
-    prelude::*,
 };
-
-#[cfg(feature = "stm32g4xx")]
-pub use stm32g4xx_hal::i2c::Error as i2cError;
-
-
-#[cfg(feature = "stm32g4xx")]
-pub type I2c1Type = I2c<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
-//pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
-//pub type I2c1Type = I2c<I2C1, SDAPin<I2C1>, SCLPin<I2C1>>;  trait objects must include the `dyn` keyword
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
@@ -502,22 +363,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
 
     //let i2c = I2c::new(i2c1, (scl, sda), 400.khz(), &clocks);
     let i2c = i2c1.i2c(sda, scl, Config::new(400.khz()), rcc);
-
-    i2c
-}
-
-#[cfg(feature = "stm32g4xx")]
-pub type I2c2Type = I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
-//pub type I2c2Type = I2c<I2C2, PA8<Output<OpenDrain>>, PA9<Output<OpenDrain>>>;
-//pub type I2c2Type = I2c<I2C2, SDAPin<I2C2>, SCLPin<I2C2>>;
-
-#[cfg(feature = "stm32g4xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpioa: PartsA, rcc: &mut Rcc) -> I2c2Type {
-    let scl = gpioa.pa9.into_alternate_open_drain(); 
-    let sda = gpioa.pa8.into_alternate_open_drain(); 
-
-    //let i2c = I2c::new(i2c2, (scl, sda), 400.khz(), &clocks);
-    let i2c = i2c2.i2c(sda, scl, Config::new(400.khz()), rcc);
 
     i2c
 }
@@ -542,17 +387,8 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpioa: PartsA, gpiob: PartsB, rcc
 use stm32h7xx_hal::{
     gpio::{gpiob::Parts as PartsB,
            gpiof::Parts as PartsF},
-    i2c::I2c,
-    pac::{I2C1, I2C2,},
     rcc::{CoreClocks, rec::I2c1, rec::I2c2},
-    prelude::*, 
 };
-
-#[cfg(feature = "stm32h7xx")]
-pub use stm32h7xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32h7xx")]
-pub type I2c1Type =  I2c<I2C1>;
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx1: I2c1, 
@@ -561,18 +397,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx1: I2c1,
     i2c1.i2c((gpiob.pb8.into_alternate().set_open_drain(), // scl  
               gpiob.pb9.into_alternate().set_open_drain(), // sda
              ), 400.kHz(), i2cx1, &clocks)
-}
-
-#[cfg(feature = "stm32h7xx")]
-pub type I2c2Type =I2c<I2C2> ; 
-
-#[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c2(i2c2: I2C2, gpiof: PartsF, i2cx2: I2c2, 
-                  &clocks: &CoreClocks) -> I2c2Type {
-
-    i2c2.i2c((gpiof.pf1.into_alternate().set_open_drain(), // scl
-              gpiof.pf0.into_alternate().set_open_drain(), // sda
-             ), 400.kHz(), i2cx2, &clocks)
 }
 
 #[cfg(feature = "stm32h7xx")]
@@ -598,18 +422,8 @@ use stm32l0xx_hal::{
         gpiob::{PB8, PB9, PB10, PB11, Parts as PartsB},
         OpenDrain, Output, 
     },
-    i2c::I2c,
-    pac::{I2C1, I2C2},
-    prelude::*,
     rcc::Rcc,
 };
-
-#[cfg(feature = "stm32l0xx")]
-pub use stm32l0xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32l0xx")]
-pub type I2c1Type = I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>;
-                  //I2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
@@ -619,21 +433,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
     let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
     let i2c = i2c1.i2c(sda, scl, 400_000.Hz(), &mut rcc);
-
-    i2c
-}
-
-#[cfg(feature = "stm32l0xx")]
-pub type I2c2Type = I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>;
-
-#[cfg(feature = "stm32l0xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, mut rcc: Rcc) -> I2c2Type {
-
-    // could also have scl on PB6, sda on PB7
-    //BlockingI2c::i2c1(
-    let scl = gpiob.pb10.into_open_drain_output(); 
-    let sda = gpiob.pb11.into_open_drain_output();
-    let i2c = i2c2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     i2c
 }
@@ -655,21 +454,14 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, mut rcc: Rcc) -> (
 
 #[cfg(feature = "stm32l1xx")]
 use stm32l1xx_hal::{
-    i2c::I2c,
     gpio::{Output, OpenDrain, 
            gpiob::{PB8, PB9, PB10, PB11, Parts as PartsB}, 
     },
-    stm32::{I2C1, I2C2},
     rcc::Rcc,
-    prelude::*,
 };
 
-#[cfg(feature = "stm32l1xx")]
-pub use stm32l1xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32l1xx")]
-pub type I2c1Type = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
-//pub type I2c1Type =  I2c<I2C1, impl Pins<I2C1>>;
+//#[cfg(feature = "stm32l1xx")]
+//pub type I2c1Type = I2c<I2C1, (PB8<Output<OpenDrain>>, PB9<Output<OpenDrain>>)>;
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
@@ -682,19 +474,6 @@ pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, mut rcc: Rcc) -> I2c1Type {
     i2c
 }
 
-#[cfg(feature = "stm32l1xx")]
-pub type I2c2Type = I2c<I2C2, (PB10<Output<OpenDrain>>, PB11<Output<OpenDrain>>)>;
-//pub type I2c2Type = I2c<I2C2, impl Pins<I2C2>>;   
-
-#[cfg(feature = "stm32l1xx")]
-pub fn setup_i2c2(i2c2: I2C2 , gpiob: PartsB, mut rcc: Rcc) -> I2c2Type {
-    // NOTE THIS SETUP FUNCTION IS NOT USED, BECAUSE OF MOVE PROBLEMS. 
-    let scl = gpiob.pb10.into_open_drain_output();
-    let sda = gpiob.pb11.into_open_drain_output();
-    let i2c = i2c2.i2c((scl, sda), 400.khz(), &mut rcc);
-
-    i2c
-}
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, mut rcc: Rcc) -> (I2c1Type, I2c2Type) {
@@ -716,17 +495,12 @@ use stm32l4xx_hal::{
     gpio::{OpenDrain, Alternate,
            gpiob::{PB8, PB9, PB10, PB11, Parts},
     },
-    i2c::{Config, I2c},
+    i2c::{Config},
     rcc::{Clocks, APB1R1},
-    pac::{I2C1, I2C2},
-    prelude::*,
 };
 
-#[cfg(feature = "stm32l4xx")]
-pub use stm32l4xx_hal::i2c::Error as i2cError;
-
-#[cfg(feature = "stm32l4xx")]
-pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
+//#[cfg(feature = "stm32l4xx")]
+//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
 //pub type I2c1Type =  I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
 
 #[cfg(feature = "stm32l4xx")]
@@ -738,23 +512,6 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, &clocks: &Clocks, apb1r1: &mut A
     sda.internal_pull_up(&mut gpiob.pupdr, true);
 
     let i2c = I2c::i2c1(i2c1, (scl, sda), Config::new(400_u32.kHz(), clocks), apb1r1 );
-
-    i2c
-}
-
-#[cfg(feature = "stm32l4xx")]
-pub type I2c2Type = I2c<I2C2, (PB10<Alternate<OpenDrain, 4u8>>, PB11<Alternate<OpenDrain, 4u8>>)>;
-//pub type I2c2Type = I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>;   
-
-#[cfg(feature = "stm32l4xx")]
-pub fn setup_i2c2(i2c2: I2C2 , mut gpiob: Parts, &clocks: &Clocks, mut apb1r1: APB1R1) -> I2c2Type {
-    let mut scl = gpiob.pb10.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
-    scl.internal_pull_up(&mut gpiob.pupdr, true);
-
-    let mut sda = gpiob.pb11.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
-    sda.internal_pull_up(&mut gpiob.pupdr, true);
-
-    let i2c = I2c::i2c2(i2c2, (scl, sda), Config::new(400_u32.kHz(), clocks),  &mut apb1r1 );
 
     i2c
 }

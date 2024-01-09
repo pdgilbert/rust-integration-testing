@@ -58,7 +58,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Dela
    let mut pin = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
    pin.set_high().ok();
 
-   let i2c = setup_i2c2(dp.I2C2, dp.GPIOB.split(&mut rcc),  &mut rcc);
+   let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc),  &mut rcc); // possibly only has I2C2 ??
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
    led.off();
