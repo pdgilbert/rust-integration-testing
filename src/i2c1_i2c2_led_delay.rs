@@ -1,26 +1,33 @@
-// This returns a non-systick delay as well as clocks. EXPAND
-
-// |         let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(cx.device);
-// |                                                                  --------- value moved here
-// |         let delay  = cx.device.TIM2.delay(&clocks);
-
-// A delay is used in sensor initialization and read. 
-// Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
-// asm::delay used in AltDelay is not an accurate timer but gives a delay at least 
-//  number of indicated clock cycles.
+// In addition to i2c1, i2c2, and led, this returns a non-systick delay as well as clocks.
+// This allows for use in both rtic and non-rtic code. 
+// Since cp is not an argument, a cp.SYST delay cannot be returned, but the returned clocks
+// can be used to get a systick delay:  Delay::new(cp.SYST, clocks).
+// Returning the delay is useful in rtic code because it avoids the
+// problem caused by i2c1_i2c2_led::setup(cx.device) moving cx.device,
+// and then not being available for cx.device.TIM2.delay(&clocks).
+//
+// A delay is used in some sensor initializations and read operations. Often the sensor crate 
+// requires taking ownership. But Systick is used by monotonic (for spawn), so any delay in 
+// rtic code needs to use a timer other than Systick. For  this purpose the returned delay is useful.
 
 //  Usage    CLEAN UP
 //    let cp = CorePeripherals::take().unwrap();
 //    let dp = Peripherals::take().unwrap();
-//    let (i2c1, i2c2, mut led, clocks) = i2c1_i2c2_led::setup(dp);
+//    let (i2c1, i2c2, mut led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 //
 //    let mut delay1 = Delay::new(cp.SYST, clocks); 
+//    or
+//    let delay1 = dp.TIM2.delay(&clocks);
+//    let delay2 = dp.TIM5.delay(&clocks);
 //    or
 //    let delay1 = dp.TIM2.delay_ms(&clocks);
 //    let delay2 = dp.TIM3.delay_ms(&clocks);
 //    or
 //    let delay1 = dp.TIM2.delay_us(&clocks);
 //    let delay2 = dp.TIM5.delay_us(&clocks);
+//    or
+//    let delay1 = dp.TIM2.delay_ns(&clocks);
+//    let delay2 = dp.TIM5.delay_ns(&clocks);
 //    or ?
 //    let delay = Delay{};
 //    
@@ -61,7 +68,7 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup(mut dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {    
+pub fn setup_from_dp(mut dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpiob = dp.GPIOB.split(&mut rcc);
 

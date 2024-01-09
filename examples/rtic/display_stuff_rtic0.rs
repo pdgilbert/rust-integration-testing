@@ -114,7 +114,7 @@ mod app {
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       let (i2c, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup(cx.device);
+       let (i2c, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
        led.on();
 
