@@ -56,9 +56,9 @@ pub trait LED {
     // default methods
     fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
         self.on();
-        delay.delay_ms(time);
+        delay.delay_ms(time.into());
         self.off();
-        delay.delay_ms(time); //consider delay.delay_ms(500u16);
+        delay.delay_ms(time.into()); 
     }
 }
 
@@ -870,7 +870,7 @@ fn main() -> ! {
 
     let mut max30102 = Max3010x::new_max30102(i2c);
     max30102.reset().unwrap();
-    delay.delay_ms(100_u8);
+    delay.delay_ms(100u32.into());
 
     let mut max30102 = max30102.into_heart_rate().unwrap();
 
@@ -893,7 +893,7 @@ fn main() -> ! {
 
         hprintln!("loop i").unwrap();
         //rprintln!("{}\r", data[i]);   // rprintln requires updated probe??
-        delay.delay_ms(100_u8);
+        delay.delay_ms(100_u32.into());
         let mut data = [0; 16];
         let read = max30102.read_fifo(&mut data).unwrap_or(0);
         for i in 0..read.into() {
@@ -905,6 +905,6 @@ fn main() -> ! {
             block!(tx.write(*byte)).ok();
         }
 
-        delay.delay_ms(3000_u16);
+        delay.delay_ms(3000_u32.into());
     }
 }

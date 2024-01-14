@@ -42,7 +42,10 @@ use dht_sensor::dht22::{read, Reading};
 //Also more in comments in dht-sensor crate file src/lib.rs
 
 
-use embedded_hal::delay::DelayNs;   // delay is for dht_sensor crate which does not yet use DelayNs
+//use embedded_hal::delay::DelayNs;   // delay is for dht_sensor crate which does not yet use DelayNs
+use stm32f4xx_hal::embedded_hal::prelude::_embedded_hal_blocking_delay_DelayMs;
+//use stm32f4xx_hal::blocking::delay::DelayMs;
+//use embedded_hal::blocking::delay::DelayMs;
 use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 
 
