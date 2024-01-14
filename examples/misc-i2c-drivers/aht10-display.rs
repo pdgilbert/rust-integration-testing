@@ -69,8 +69,7 @@ fn main() -> ! {
 
     led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
 
-    let manager = shared_bus::BusManagerSimple::new(i2c2);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c2);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -96,14 +95,9 @@ fn main() -> ! {
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
     // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
-    //   and "No  other devices on the I2C bus".
-    // so use i2c2 bus
-    //let mut sensor = AHT10::new(manager.acquire_i2c(), delay).expect("sensor failed");
+    //   and "No  other devices on the I2C bus". So use i2c2 bus
     let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
     hprintln!("mut sensor").unwrap();
-    // NEED SEPARATE DELAY TO USE BLINK AFTER THIS
-    //let manager2 = shared_bus::BusManagerSimple::new(i2c2);
-    //let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
 
     //let z = sensor.reset();
     //hprintln!("reset()  {:?}", z).unwrap();

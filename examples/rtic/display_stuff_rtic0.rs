@@ -1,7 +1,11 @@
 //! Display "stuff" on OLED with i2c.
-//! Compare examples display_stuff_rtic which adds shared i2c bus to display_stuff_rtic0.
-//! (Crate shared_bus can cause additional problems.)
-//! Compare also  examples dht_rtic.
+//! Compare 
+//!   display_stuff_rtic0 has only the display on the i2c bus and does not share it.
+//!   display_stuff_rtic  has only the display on the i2c bus but uses shared_bus.
+//!   display_stuff_rtic_shared_bus has only the display on the i2c bus but uses shared_bus.
+//! 
+//! Compare also example dht_rtic and soeveral others that read sensors and display results.
+//! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
 //! One main processe is scheduled. It writes to the display and spawns itself to run after an interval.

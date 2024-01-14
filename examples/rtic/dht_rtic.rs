@@ -85,11 +85,6 @@ mod app {
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
-
-
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
@@ -168,9 +163,7 @@ mod app {
 
         delay.delay(2000.millis()); //  2 second delay for dhtsensor initialization
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
-
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        let interface = I2CDisplayInterface::new(i2c);
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
@@ -203,7 +196,6 @@ mod app {
     #[shared]
     struct Shared {
         led:   LedType,      //impl LED, would be nice
-        //manager??? ,  uses i2c:   I2c2Type, or text_style, display ??
     }
 
 // see disply_stuff_rtic and  https://github.com/jamwaffles/ssd1306/issues/164 regarding
@@ -212,11 +204,9 @@ mod app {
     #[local]
     struct Local {
         dht:   OpenDrainType,
-        //display: Ssd1306<impl WriteOnlyDataCommand, DISPLAYSIZE, BufferedGraphicsMode<DISPLAYSIZE>>,
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+        display: Ssd1306<I2CInterface<I2cType>, 
                           DISPLAYSIZE, 
                           BufferedGraphicsMode<DISPLAYSIZE>>,
-//        text_style: MonoTextStyle<BinaryColor>,
         delay:   Delay,
     }
 

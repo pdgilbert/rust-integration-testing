@@ -1,11 +1,15 @@
 //! Display "stuff" on OLED with i2c.
-//! Compare display_stuff_rtic0 which does not have shared_bus with display_stuff_rtic which does.
-//! (Crate shared_bus can cause additional problems.)
-//! Compare also  examples dht_rtic.
+//! Compare 
+//!   display_stuff_rtic0 has only the display on the i2c bus and does not share it.
+//!   display_stuff_rtic  has only the display on the i2c bus but uses shared_bus.
+//!   display_stuff_rtic_shared_bus has only the display on the i2c bus but uses shared_bus.
+//! 
+//! Compare also example dht_rtic and soeveral others that read sensors and display results.
+//! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
-//! One main processe is scheduled. It writes to the display and spawns itself to run after an interval.
-//! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
+//! One main processe is scheduled. It writes to the display and pauses for an interval before re-writing.
+//! The main processe spawns a `blink` process that turns the led on and  another process to turn it off.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -65,7 +69,10 @@ mod app {
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
 
-    use shared_bus::{I2cProxy};
+    //use shared_bus::{I2cProxy};
+    //use embedded-hal_bus;
+    use embedded_hal::i2c::{self, SevenBitAddress, TenBitAddress, I2c, Operation};
+
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
 

@@ -1,6 +1,7 @@
 # Rust Example testing 
 
-(Rust Integration may be an overly ambitious name.)
+(Rust Integration may be an overly ambitious name. And to be clear, this is about using `embedded-hal` programs on
+`stm32` MCUs.)
 
 ##  Contents
 - [Summary](#summary)
@@ -15,7 +16,7 @@ One strategy uses a recent release versions of both HAL crates and driver device
 The  second  uses a recent release versions of HAL crates and github versions of driver crates. 
 The   third  uses  github versions of HAL crates and a recent release versions of driver crates. 
 The  fourth  uses  github versions of both HAL crates and driver crates. 
-(Disabled driver-testing and hal-testing. The 2 stategies dev-testing and release-testing are sufficient for now.)
+(Disabled driver-testing, hal-testing, and release-testing. The dev-testing strategy is sufficient for now.)
 
 The examples themselves are the same for all strategies, with the exception that breaking 
 updates might be accommodated.  However, in general it is not necessary to accommodate

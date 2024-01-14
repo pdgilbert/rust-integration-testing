@@ -61,9 +61,7 @@ fn main() -> ! {
     //    let seekup = gpiob.pb10.into_pull_down_input(&mut gpiob.crh);
     //    reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-
-    let mut radio = Si4703::new(manager.acquire_i2c());
+    let mut radio = Si4703::new(i2c);
     radio.enable_oscillator().unwrap();
     delay.delay_ms(500);
     radio.enable().unwrap();

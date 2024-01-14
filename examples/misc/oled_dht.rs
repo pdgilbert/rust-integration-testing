@@ -119,8 +119,7 @@ fn main() -> ! {
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c);
 
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();

@@ -53,7 +53,6 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-use rust_integration_testing_of_examples::i2c::i2cError;
 
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -61,6 +60,7 @@ use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
       pac::{Peripherals},
       pac::{CorePeripherals},
+      i2c::Error as i2cError,
 };
 
 //DEAL WITH THIS:  This trait is for older eh support in stm32f4xx. 
@@ -150,8 +150,7 @@ fn main() -> ! {
 
     led.blink(2000_u16, &mut delay1); // Blink LED to indicate setup finished.
 
-    let manager = shared_bus::BusManagerSimple::new(i2c2);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c2);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
