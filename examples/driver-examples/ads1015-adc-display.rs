@@ -21,27 +21,52 @@
 #![no_std]
 #![no_main]
 
-use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, ChannelSelection};
- 
-use cortex_m_rt::entry;
-use nb::block;
-
-use core::fmt::Write;
 use rtt_target::{rprintln, rtt_init_print};
 
+use cortex_m_rt::entry;
+
+/////////////////////   ads
+use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+
+/////////////////////   ssd
+use ssd1306::{ prelude::*, I2CDisplayInterface, Ssd1306};
+
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x64 = DisplaySize128x64;
+const VPIX:i32 = 16; // vertical pixels for a line, including space. 12 for 128x32
+
+use core::fmt::Write;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::Text,
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
+
+use embedded_hal::{
+   delay::DelayNs,
+};
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+   pac::{Peripherals},
+   block,
+};
+
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   delay::DelayFromCountDownTimer,
+   //pwr::PwrExt,
+};
 
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::pac::{Peripherals};
 
 #[entry]
 fn main() -> ! {
@@ -50,23 +75,30 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
-    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let adc_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+
+    /////////////////////   ads
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
+    // need to be able to measure [0-5V]
+    adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();
+
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT)
         .text_color(BinaryColor::On)
         .build();
 
-    let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::default());
-    // need to be able to measure [0-5V]
-    adc.set_full_scale_range(FullScaleRange::Within6_144V)
-        .unwrap();
 
     let mut lines: [heapless::String<32>; 4] = [
         heapless::String::new(),
@@ -75,9 +107,10 @@ fn main() -> ! {
         heapless::String::new(),
     ];
 
+    /////////////////////   measure and display in loop
     loop {
-        // Blink LED 0 to check that everything is actually running.
-        // If the LED 0 is off, something went wrong.
+        // Blink LED to check that everything is actually running.
+        // If the LED is off, something went wrong.
         led.blink(50_u16, &mut delay);
 
         // Read voltage in all channels
@@ -89,12 +122,15 @@ fn main() -> ! {
         ];
 
         display.clear_buffer();
+
         for i in 0..values.len() {
             write!(lines[i], "Channel {}: {}", i, values[i]).unwrap();
-            Text::new(&lines[i], Point::new(0, i as i32 * 16), text_style)
+            Text::new(&lines[i], Point::new(0, i as i32 * VPIX), text_style)
                 .draw(&mut display)
                 .unwrap();
         }
         display.flush().unwrap();
+
+        delay.delay_ms(2000); // sleep for 2s
     }
 }
