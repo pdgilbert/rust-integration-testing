@@ -5,13 +5,13 @@ description = "hal integration testing of examples"
 keywords = ["driver", "i2c", "spi", "example"]
 license = "MIT OR Apache-2.0"
 name = "rust-integration-testing-of-examples"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 
 [dependencies]
 
 #  hal versions using git
-                                                      # commentted crate using cortex-m-rt ^0.6 which conflicts
+                                          
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
@@ -93,10 +93,10 @@ aht20           = { git = "https://github.com/nim65s/aht20" }
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } 
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
-ina219           = {  version = "0.1.0" }
+#ina219           = {  version = "0.1.0" }
 #ina219           = { git = "https://github.com/scttnlsn/ina219" }
 #ina219           = { git = "https://github.com/sndnvaps/ina219_rs" }
-##ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-configuration-register" }
+ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-configuration-register" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
 htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
 xca9548a        = { git = "https://github.com/eldruin/xca9548a-rs" }
@@ -134,10 +134,16 @@ fugit = { version = "0.3.3", optional = true }
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
 
+# NB. do not mix release and git versions.
+#     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
+#     Compiler gives error
+#        note: perhaps two different versions of crate `embedded_hal` are being used?
 embedded-hal = "1.0"
-embedded-hal-nb  = { git = "https://github.com/rust-embedded/embedded-hal/" }
-embedded-io      = { git = "https://github.com/rust-embedded/embedded-hal/" }
-embedded-hal-bus = { git = "https://github.com/rust-embedded/embedded-hal/" }  #NB  workspace
+embedded-hal-bus = "0.1.0"
+#embedded-hal     = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-bus = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-nb  = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io      = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-graphics = ">=0.7"
 

@@ -40,44 +40,57 @@
 #![no_std]
 #![no_main]
 
-use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, ChannelSelection};
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayNs;
-use nb::block;
-
-use core::fmt::Write;
-//use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
+/////////////////////   ads
+use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+
+
+/////////////////////   ssd
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
+const DISPLAY_LINES: usize = 3; 
+
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
 // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
 // DisplaySize128x32:
 //    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
 //    &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8  =  4  characters high
 //    FONT_8X13  128 pixels/ 8 per font = 16   characters wide.  32/13 = 2.5 characters high
 
-const DISPLAY_LINES: usize = 3; 
-
+use core::fmt::Write;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder, MonoTextStyle}, 
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
 
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
+
+use embedded_hal::{
+   //i2c::I2c as I2cTrait,
+   delay::DelayNs,
+};
+
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+   pac::{Peripherals},
+   block,
+};
 
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::led::{LED};
 
 
-// "hal" is used for items that are the same in all hal  crates
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-use hal::{
-      pac::{Peripherals},
-};
-
+///////////////////////////////
 
 fn show_display<S>(
     thermistor: i16,
@@ -107,7 +120,7 @@ where
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(
             &lines[i],
-            Point::new(0, i as i32 * 12), //using font 6x10, 12 = 10 high + 2 space
+            Point::new(0, i as i32 * VPIX), //using font 6x10, 12 = 10 high + 2 space
             text_style,
             Baseline::Top,
         )
@@ -126,33 +139,36 @@ fn main() -> ! {
     hprintln!("temperature_display example").unwrap();
 
     let dp = Peripherals::take().unwrap();
-    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    //let mut delay = Delay::new(cp.SYST, clocks); 
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let adc_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd = RefCellDevice::new(&i2cset_ref_cell); 
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    /////////////////////   ads
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
 
-    //let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    // to measure [0-5V] use FullScaleRange::Within6_144V
+    adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();
+    //adc.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+
+
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT)
         .text_color(BinaryColor::On)
         .build();
 
-    //let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::default());
-    let mut adc = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
-    //                                                                           (false, true)); //addr =  V
-
-    // to measure [0-5V] use FullScaleRange::Within6_144V
-    adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();
-    adc.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-
+    ///////////////////// 
     loop {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.

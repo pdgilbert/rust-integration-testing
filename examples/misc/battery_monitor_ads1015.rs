@@ -35,16 +35,18 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use embedded_hal::delay::DelayNs;
+//use embedded_hal::delay::DelayNs;
 
-//use cortex_m_semihosting::{debug, hprintln};
-//use cortex_m_semihosting::{hprintln};
-//use rtt_target::{rprintln, rtt_init_print};
-
+/////////////////////   ads
 use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
 
-use core::fmt::Write;
+/////////////////////   ssd
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
+
+use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{ascii::FONT_8X13, MonoTextStyle, MonoTextStyleBuilder}, //FONT_6X10  FONT_8X13
     pixelcolor::BinaryColor,
@@ -52,23 +54,31 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-use nb::block;
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
 
-
-use rust_integration_testing_of_examples::led::{LED};
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use embedded_hal::{
+   delay::DelayNs,
+};
 
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
-      pac::{CorePeripherals},
+   pac::{Peripherals},
+   block,
 };
 
 
+/////////////////////  
+
+use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;  // setup function
+
+
+/////////////////////  
 
 pub fn read_all<E, A: DynamicOneShot<Error = E>>(
     adc_a: &mut A,
@@ -121,7 +131,7 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(
     (bat_ma, load_ma, temp_c, values_b)
 }
 
-fn display<S>(
+fn show_display<S>(
     bat_mv: i16,
     bat_ma: i16,
     load_ma: i16,
@@ -157,7 +167,7 @@ where
         // start from 0 requires that the top is used for font baseline
         Text::with_baseline(
             &lines[i],
-            Point::new(0, i as i32 * 16),
+            Point::new(0, i as i32 * VPIX),
             text_style,
             Baseline::Top,
         )
@@ -171,27 +181,37 @@ where
 
 #[entry]
 fn main() -> ! {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
-    let (i2c, _i2c2, mut led, _delay, mut clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
-
-    #[cfg(not(feature = "stm32f4xx"))]
-    let mut delay = Delay::new(cp.SYST, clocks); 
-    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
-
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::timer::SysTimerExt;
-    #[cfg(feature = "stm32f4xx")]
-    let mut delay = cp.SYST.delay(&mut clocks);
+    
+    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     led.blink_ok(&mut delay); // blink OK to indicate setup complete and main started.
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let adc_a_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+    let adc_b_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
-    let mut disp = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+    /////////////////////   ads
+    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
+    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Alternative(false, true)); //addr =  V
+
+    // set FullScaleRange to measure expected max voltage.
+    // This is very small for diff across low value shunt resistors
+    //   but up to 5v for single pin with usb power.
+    // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
+    adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+    //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+    adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+    //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
-    disp.init().unwrap();
+    display.init().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_8X13) //.&FONT_6X10  &FONT_8X13
@@ -204,28 +224,10 @@ fn main() -> ! {
         text_style,
         Baseline::Top,
     )
-    .draw(&mut disp)
+    .draw(&mut display)
     .unwrap();
 
-    // For shared_bus::BusManagerSimple the type of next is 
-    //   adc_a: Ads1x1x<I2cInterface<I2cProxy<'static, NullMutex<I2c1Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-    // That changes a bit in rtic examples because BusManagerSimple cannot be used.
-
-    let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
-    let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
-
-    // set FullScaleRange to measure expected max voltage.
-    // This is very small for diff across low value shunt resistors
-    //   but up to 5v for single pin with usb power.
-    // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
-    adc_a
-        .set_full_scale_range(FullScaleRange::Within0_256V)
-        .unwrap();
-    //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
-    adc_b
-        .set_full_scale_range(FullScaleRange::Within4_096V)
-        .unwrap();
-    //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+    /////////////////////
 
     let scale_a = 2; // calibrated to get mV    depends on FullScaleRange
 
@@ -235,24 +237,20 @@ fn main() -> ! {
         // Comment out blinking to calibrate scale.
         led.blink(10_u16, &mut delay);
 
-        adc_a
-            .set_full_scale_range(FullScaleRange::Within4_096V)
-            .unwrap();
+        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+
         //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
         let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0))
             .unwrap_or(8091)
             * scale_a;
-        adc_a
-            .set_full_scale_range(FullScaleRange::Within0_256V)
-            .unwrap();
+
+        adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
         let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
 
         //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
 
-        display(
-            bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut disp,
-        );
+        show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut display);
 
         delay.delay_ms(2000); // sleep for 2s
     }

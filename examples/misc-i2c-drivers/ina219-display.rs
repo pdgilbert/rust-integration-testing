@@ -9,6 +9,8 @@
 #![no_std]
 #![no_main]
 
+//use rtt_target::{rprintln, rtt_init_print};
+
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
 
@@ -16,26 +18,23 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayNs;
+
+
+/////////////////////   ina
+use ina219::{address::{Address, Pin}, 
+             SyncIna219,
+             calibration::UnCalibrated
+};
+
+/////////////////////   ssd
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
+// need more if there is a  function show_display()
+//use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
 
 use core::fmt::Write;
-//use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
-
-use  ina219::{INA219,}; //INA219_ADDR
-
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
-
-//  note that larger font size increases memory and may require building with --release
-//  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-//  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-//  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
-
-//common display sizes are 128x64 and 128x32
-const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
-
-const VPIX:i32 = 16;  // vertical pixels for a line, including space
-
 use embedded_graphics::{
     mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
@@ -43,16 +42,26 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-use rust_integration_testing_of_examples::led::{LED};
 
-// "hal" is used for items that are the same in all hal  crates
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
+
+use embedded_hal::{
+   //i2c::I2c as I2cTrait,
+   delay::DelayNs,
+};
+
+
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
+   pac::{Peripherals},
 };
 
+
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::led::{LED};
 
 #[entry]
 fn main() -> ! {
@@ -62,14 +71,24 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     led.off();
     delay.delay_ms(2000);
     led.blink(1000_u16, &mut delay);
 
-    let manager2 = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let ina_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+
+    /////////////////////   ina
+    let mut ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+    ina.calibrate(UnCalibrated).unwrap();
+    //ina.calibrate(0x0100).unwrap();
+
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
 
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
@@ -81,11 +100,7 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
 
-    let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
-    //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
-
-    ina.calibrate(0x0100).unwrap();
-
+    ///////////////////// 
     led.blink(3000_u16, &mut delay);
 
     loop {
@@ -97,25 +112,27 @@ fn main() -> ! {
         lines[0].clear();
         lines[1].clear();
         
-        let v = match ina.voltage() {
-            Ok(v) => v,
+        let v = match ina.bus_voltage() {
+            Ok(v) => v.voltage_mv(),
             Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
 
         let vs = match ina.shunt_voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+            Ok(v) => v.shunt_voltage_uv(),
+            Err(_e)   => 999i32  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
 
-        let i = match ina.current() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+        let i =  0;  //FAKE
+       // let i = match ina.current() {
+       //     Ok(v) => v,
+       //     Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+       // };
 
-        let p = match ina.power() {  // ina indicated power
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+        let p = 0;  //FAKE
+       // let p = match ina.power() {  // ina indicated power
+       //     Ok(v) => v,
+       //     Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+       // };
         
         // power caclulated by P=IV.  (mA x mV /1000 = mW)
         //If the ina is wired with Vin- to battery and Vin+ to load sign then the

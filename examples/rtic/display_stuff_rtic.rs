@@ -1,8 +1,8 @@
 //! Display "stuff" on OLED with i2c.
 //! Compare 
-//!   display_stuff_rtic0 has only the display on the i2c bus and does not share it.
-//!   display_stuff_rtic  has only the display on the i2c bus but uses shared_bus.
-//!   display_stuff_rtic_shared_bus has only the display on the i2c bus but uses shared_bus.
+//!   display_stuff_rtic0 has only the display on the i2c bus and does not share the bus.
+//!   display_stuff_rtic  has only the display on the i2c bus but is set up to share the bus.
+//!   displayX2_rtic  has two displays on two i2c buses and is set up shares the buses.
 //! 
 //! Compare also example dht_rtic and soeveral others that read sensors and display results.
 //! 
@@ -65,16 +65,14 @@ mod app {
 
     use hal::{
         pac::{I2C1},
-        i2c::I2c,
+        i2c::I2c as I2cType,
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
 
-    //use shared_bus::{I2cProxy};
-    //use embedded-hal_bus;
-    use embedded_hal::i2c::{self, SevenBitAddress, TenBitAddress, I2c, Operation};
-
     use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+
+use embedded_hal::i2c::I2c as I2cTrait; 
+use embedded_hal_bus::i2c::RefCellDevice;
 
 
     fn show_display<S>(
@@ -125,12 +123,14 @@ mod app {
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       let (i2c, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+       let (i2c1, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
        led.on();
 
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c<I2C1> = i2c).unwrap();
-       let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let i2c1_rc   = RefCell::new(i2c1);
+    let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
+    let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -160,12 +160,14 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c<I2C1>>>>>, 
+        //display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c<I2C1>>>>>, 
+        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType<I2C1>>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
         //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
     }
+
 // see https://github.com/jamwaffles/ssd1306/issues/164
 //text_style cannot be in shared Local:
 //(dyn GlyphMapping + 'static)` cannot be shared between threads safely

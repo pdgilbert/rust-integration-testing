@@ -1,8 +1,8 @@
 //! Display "stuff" on OLED with i2c.
 //! Compare 
-//!   display_stuff_rtic0 has only the display on the i2c bus and does not share it.
-//!   display_stuff_rtic  has only the display on the i2c bus but uses shared_bus.
-//!   display_stuff_rtic_shared_bus has only the display on the i2c bus but uses shared_bus.
+//!   display_stuff_rtic0 has only the display on the i2c bus and does not share the bus.
+//!   display_stuff_rtic  has only the display on the i2c bus but is set up to share the bus.
+//!   displayX2_rtic  has two displays on two i2c buses and is set up shares the buses.
 //! 
 //! Compare also example dht_rtic and soeveral others that read sensors and display results.
 //! 

@@ -1,4 +1,9 @@
-//! Feb 6, 2023 - Testing with USB probe and with battery. 
+//! Compare 
+//!   display_stuff_rtic0 has only the display on the i2c bus and does not share the bus.
+//!   display_stuff_rtic  has only the display on the i2c bus but is set up to share the bus.
+//!   displayX2_rtic  has two displays on two i2c buses and is set up shares the buses.
+//! 
+//! Feb 6, 2023 - Testing with USB probe and with battery. Pre embedded-hal 1.0.0.
 //! 
 //!   Run tested on bluepill (scl,sda) i2c1 on (PB8,PB9) and i2c2 on (PB10,PB11). 
 //!             Must be compiled --release to fit flash.
@@ -75,9 +80,11 @@ mod app {
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{ I2c1Type, I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
-    use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
+
+use embedded_hal::i2c::I2c as I2cTrait; 
+use embedded_hal_bus::i2c::RefCellDevice;
 
     fn show_display<S>(
        text: &str,
@@ -117,15 +124,17 @@ mod app {
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup(cx.device);
+        let (i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  
         led.off();
 
-        //let managerA: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-        //let interfaceA = I2CDisplayInterface::new(managerA.acquire_i2c());
-        let interfaceA = I2CDisplayInterface::new(i2c1);                //without shared bus
+    let i2c1_rc = RefCell::new(i2c1);
+    let i2c1_rcd   = RefCellDevice::new(&i2c1_rc); 
+    let interfaceA = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
+    //let interfaceA = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address
+
 
         let mut display_a = Ssd1306::new(interfaceA, DisplaySize128x32, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
@@ -135,9 +144,10 @@ mod app {
         show_message("displayX2_rtic", &mut display_a);   // Example name
         Systick.delay_ms(2000u32);  
 
-        let managerB: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
-        let interfaceB = I2CDisplayInterface::new(managerB.acquire_i2c());
-        //let interfaceB = I2CDisplayInterface::new(i2c2);                //without shared bus
+    let i2c2_rc = RefCell::new(i2c2);
+    let i2c2_rcd   = RefCellDevice::new(&i2c2_rc); 
+    let interfaceB = I2CDisplayInterface::new(i2c2_rcd); //default address 0x3C
+    //let interfaceB = I2CDisplayInterface::new_custom_address(i2c2_rcd,   0x3D);  //alt address
 
         let mut display_b = Ssd1306::new(interfaceB, DisplaySize128x32, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
@@ -161,12 +171,14 @@ mod app {
     struct Local {
         //delay: DelayType,
 
-        display_a:  Ssd1306<I2CInterface<I2c1Type>, 
+//        display_a:  Ssd1306<I2CInterface<I2c1Type>, 
 //        display_a:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, 
+        display_a:  Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
 //        display_b:  Ssd1306<I2CInterface<I2c2Type>, 
-         display_b:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
+//         display_b:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
+        display_b:  Ssd1306<I2CInterface<RefCellDevice<'static, I2c2Type>>, 
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
         count: u16,

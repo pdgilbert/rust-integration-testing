@@ -214,7 +214,7 @@ mod app {
 //        text_style: MonoTextStyle<BinaryColor>,
     }
 
-    #[idle(local = [])]
+    #[idle()]
     fn idle(_cx: idle::Context) -> ! {
         hprintln!("idle with wfi started").unwrap();
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). It may affect debugging.

@@ -89,8 +89,8 @@ use stm32f1xx_hal::{
 };
 
 
-#[cfg(feature = "stm32f1xx")]
-pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;   
+//#[cfg(feature = "stm32f1xx")]
+//pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;   
 // this works in a function signature BlockingI2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32f1xx")]

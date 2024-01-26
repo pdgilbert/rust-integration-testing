@@ -185,7 +185,7 @@ type OpenDrainType = PA8<Output<OpenDrain>>;
         delay:Delay2Type,
     }
 
-    #[idle(local = [])]
+    #[idle()]
     fn idle(_cx: idle::Context) -> ! {
         hprintln!("idle with wfi started").unwrap();
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). It may affect debugging.
