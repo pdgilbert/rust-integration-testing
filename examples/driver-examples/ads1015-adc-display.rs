@@ -58,12 +58,6 @@ use hal::{
 };
 
 
-#[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{
-   delay::DelayFromCountDownTimer,
-   //pwr::PwrExt,
-};
-
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
