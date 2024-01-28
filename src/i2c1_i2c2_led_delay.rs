@@ -86,7 +86,7 @@ pub fn setup_from_dp(mut dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Dela
 
 
 #[cfg(feature = "stm32f1xx")]
-use stm32f1xx_hal::{prelude::*};
+use stm32f1xx_hal::{rcc::Clocks};
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {

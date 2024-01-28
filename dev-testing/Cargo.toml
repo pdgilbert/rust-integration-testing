@@ -87,8 +87,11 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 # examples/misc-i2c-drivers/
 #aht10           = { git = "https://github.com/heyitsanthony/aht10" }
 aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
+#aht10-async           = { git = "https://github.com/jneem/aht10-async" }  # needs update from rc1
 #aht20           = { git = "https://github.com/mythmon/aht20" } # this appears to not be actively updated
-aht20           = { git = "https://github.com/nim65s/aht20" } 
+#aht20           = { git = "https://github.com/nim65s/aht20" } 
+#aht20-async     = "1.0.0"
+aht20-async        = { git = "https://github.com/fmckeogh/aht20-async" } 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  This one needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } 
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
@@ -140,15 +143,17 @@ fugit = { version = "0.3.3", optional = true }
 #        note: perhaps two different versions of crate `embedded_hal` are being used?
 embedded-hal = "1.0"
 embedded-hal-bus = "0.1.0"
-#embedded-hal     = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-hal-bus = { git = "https://github.com/rust-embedded/embedded-hal/" }
+embedded-hal-async = "1.0.0"
+#embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-nb  = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-io      = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-graphics = ">=0.7"
 
 #shared-bus = { version = "0.2.2", features = ["cortex-m"] } 
-shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } 
+#shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } 
 # next not really rc3 yet (Jan 3, 2024 )
 #shared-bus = {  git = "https://github.com/TeyKey1/shared-bus", features = ["cortex-m", "embedded-hal-alpha"] } 
 heapless = "0.7"

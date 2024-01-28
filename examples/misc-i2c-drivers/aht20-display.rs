@@ -1,4 +1,6 @@
-//! Continuously read temperature from AHT10 and display on SSD1306 OLED.
+//! Continuously read temperature from AHT20 and display on SSD1306 OLED.
+//!
+//!  Sharing i2c bus.
 //!
 //!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
@@ -9,7 +11,7 @@
 #![no_std]
 #![no_main]
 
-use aht20::Aht20;
+use aht20_async::Aht20;
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -19,52 +21,66 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use core::fmt::Write;
-//use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
+/////////////////////   ssd
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
+
+use core::fmt::Write;
 use embedded_graphics::{
     mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-use rust_integration_testing_of_examples::led::{LED};
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
 
-// "hal" is used for items that are the same in all hal  crates
+use embedded_hal::{
+   i2c::I2c as I2cTrait,
+   delay::DelayNs,
+};
+
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
       pac::{Peripherals},
 };
 
+///////////////////// 
+
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::led::{LED};
+
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
     //hprintln!("AHT10 example").unwrap();
+
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     // Blink LED to indicate initializing.
     led.blink(1000_u16, &mut delay);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let aht_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
-    //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
+
     display.init().unwrap();
     display.flush().unwrap();
-    //  note that larger font size increases memory and may require building with --release
-    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
@@ -72,12 +88,15 @@ fn main() -> ! {
     Text::with_baseline(   "aht20-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
-    //delay.delay(2000u32);    
+   
+    delay.delay_ms(2000);    
+
+    /////////////////////   aht
 
     // Start the sensor.
-    // hardware may not allow sharing the bus 
-    let mut device = Aht20::new(manager.acquire_i2c(), delay).unwrap();  //.expect("device failed")
-    //let mut device = Aht20::new(i2c, delay).unwrap();
+    // NB. hardware may not allow sharing the bus 
+    let mut aht = Aht20::new(&mut aht_rcd, &mut delay).await.unwrap();  //.expect("aht device failed")
+    //let mut aht = Aht20NoDelay::new(i2c2).unwrap();
 
     loop {
         //rprintln!("loop i");
@@ -87,6 +106,7 @@ fn main() -> ! {
 
         // Read humidity and temperature.
         let (h, t) = device.read().unwrap();
+        //let (h, t) = device.end_read().unwrap();
 
         lines[0].clear();
         lines[1].clear();
@@ -97,7 +117,7 @@ fn main() -> ! {
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,
-                Point::new(0, i as i32 * 16),
+                Point::new(0, i as i32 * VPIX),
                 text_style,
                 Baseline::Top,
             )

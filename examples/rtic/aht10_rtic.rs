@@ -50,7 +50,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use aht10::AHT10;
+    use aht10::AHT10;  //or aht10-async
     use ina219::{INA219,}; //INA219_ADDR
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.

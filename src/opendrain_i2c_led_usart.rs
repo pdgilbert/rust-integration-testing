@@ -39,9 +39,7 @@ pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clock
 #[cfg(feature = "stm32f0xx")]
 use stm32f0xx_hal::{
     //delay::Delay,
-    gpio::{gpioa::PA8, OpenDrain, Output},
     pac::{USART1},
-    prelude::*,
     serial::{Serial, Tx},
 };
 
@@ -79,11 +77,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    device::USART1,
-    gpio::{OpenDrain, Output,
-        gpioa::{PA8},
-    },
-    prelude::*,
+    pac::USART1,
+    rcc::Clocks,
     serial::{Config, Serial, Tx},
 };
 
@@ -153,12 +148,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
-    gpio::{
-        gpioa::{PA8, PA9},
-        OpenDrain, Output, PushPull, AF7,
-    },
+    gpio::{gpioa::{PA9}, PushPull, AF7 },
     pac::{USART1},
-    prelude::*,
     serial::{Serial, Tx},
 };
 
@@ -257,11 +248,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
-    gpio::{Output, OpenDrain,
-        gpioa::PA8,
-    },
     pac,
-    prelude::*,
     serial::{Config, Oversampling, Serial, Tx, DataBits, Parity},
 };
 
@@ -309,11 +296,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    gpio::{OpenDrain, Output,
-           gpioa::PA8,
-    },
     pac::USART1,
-    prelude::*,
     serial::{FullConfig, Tx},
 };
 
@@ -350,11 +333,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 use stm32g4xx_hal::{
     timer::Timer,
     delay::DelayFromCountDownTimer,
-    gpio::{OpenDrain, Output, Alternate,
-           gpioa::{PA8, PA9},
-    },
-    stm32::{USART1}, //I2C1
-    prelude::*,
+    gpio::{ Alternate, gpioa::{ PA9} },
+    pac::{USART1}, //I2C1
     serial::{FullConfig, Tx, NoDMA},
 };
 
@@ -450,10 +430,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    gpio::{Output, OpenDrain, gpioa::PA8},
     //delay::Delay,
     pac::{USART1},
-    prelude::*,
     rcc, // for ::Config but note name conflict with serial
     serial::{Config, Serial1Ext, Tx},
 };
@@ -493,10 +471,6 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
-    gpio::{OpenDrain, Output,
-           gpioa::PA8,
-    },
-    prelude::*,
     rcc::Config as rccConfig,
     serial::{Config, SerialExt, Tx},
     stm32::{USART1},
@@ -541,11 +515,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    gpio::{OpenDrain, Output,
-        gpioa::PA8,
-    },
     pac::{USART2},
-    prelude::*,
     serial::{Config as serialConfig, Serial, Tx},
 };
 

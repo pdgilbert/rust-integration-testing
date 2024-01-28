@@ -75,10 +75,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Dela
 
 
 #[cfg(feature = "stm32f1xx")]
-use stm32f1xx_hal::{prelude::*,};
-
-#[cfg(feature = "stm32f1xx")]
-pub use stm32f1xx_hal::Clocks;
+pub use stm32f1xx_hal::rcc::Clocks;
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Delay, Clocks) {

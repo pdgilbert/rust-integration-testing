@@ -13,13 +13,6 @@
 #![no_std]
 #![no_main]
 
-use htu2xd::{Htu2xd, Reading};   //, Resolution
-
-//use embedded_hal::blocking::delay::DelayNs;
-
-// use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
-
-
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
 
@@ -27,30 +20,41 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use cortex_m_rt::entry;
-use embedded_hal::delay::DelayNs;
+
+/////////////////////   htu2xd
+use htu2xd::{Htu2xd, Reading};   //, Resolution
+
+/////////////////////   ssd
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
 
 use core::fmt::Write;
-//use rtt_target::{rprintln, rtt_init_print};
-//use cortex_m_semihosting::hprintln;
-
 use embedded_graphics::{
     mono_font::{ascii::FONT_10X20 as FONT, MonoTextStyleBuilder},   //FONT_5X8   FONT_10X20
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
 
-use rust_integration_testing_of_examples::led::{LED};
+use embedded_hal::{
+   i2c::I2c as I2cTrait,
+   delay::DelayNs,
+};
 
-// "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
       pac::{Peripherals},
 };
+
+use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::led::{LED};
 
 
 #[entry]
@@ -61,16 +65,21 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
     
     led.blink(1000_u16, &mut delay); // Blink LED to indicate setup finished.
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let htu_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
-    //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface,DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
+
     display.init().unwrap();
     display.flush().unwrap();
 
@@ -79,20 +88,22 @@ fn main() -> ! {
 
     Text::with_baseline(    "HTU2XD-display",Point::zero(), text_style, Baseline::Top )
         .draw(&mut display).unwrap();
+
     display.flush().unwrap();
-    delay.delay_ms(2000u32);
+    delay.delay_ms(2000);
 
     led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
 
+    /////////////////////   htu
     // Start the sensor.
     let mut htu    = Htu2xd::new();
-    let mut htu_ch = manager.acquire_i2c();
+    let mut htu_ch = htu_rcd;
 
     //htu.soft_reset(i2c)?;
     htu.soft_reset(&mut htu_ch).expect("sensor reset failed");
 
     // Wait for the reset to finish
-    delay.delay_ms(15u32);
+    delay.delay_ms(15);
 
     //    .read_user_register() dos not return and changes something that requires sensot power off/on.
     //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
@@ -147,7 +158,7 @@ fn main() -> ! {
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(
                 line,
-                Point::new(0, i as i32 * 16),
+                Point::new(0, i as i32 * VPIX),
                 text_style,
                 Baseline::Top,
             )
@@ -155,6 +166,7 @@ fn main() -> ! {
             .unwrap();
         }
         display.flush().unwrap();
-    delay.delay_ms(1000u32);
+
+        delay.delay_ms(1000u32);
     }
 }

@@ -24,29 +24,51 @@
 #![no_std]
 #![no_main]
 
-use embedded_ccs811::{prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode, SlaveAddr};
-
-use cortex_m_rt::entry;
-use embedded_hal::delay::DelayNs;
-use heapless::String;
-use nb::block;
-
-use core::fmt::Write;
 use rtt_target::{rprintln, rtt_init_print};
 
+use cortex_m_rt::entry;
+
+/////////////////////   ccs
+use embedded_ccs811::{prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode, SlaveAddr};
+
+
+/////////////////////   ssd
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+
+const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+const VPIX:i32 = 12; // vertical pixels for a line, including space
+
+use core::fmt::Write;
 use embedded_graphics::{
-    mono_font::{ascii::FONT_6X10, MonoTextStyleBuilder},
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
-use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};  // prelude has DisplaySize128x32,  DisplaySize128x64 
+
+
+/////////////////////   hals
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
+
+use embedded_hal::{
+   i2c::I2c as I2cTrait,
+   delay::DelayNs,
+};
+
+use heapless::String;
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+
+use hal::{
+   pac::Peripherals,
+   block,
+};
+
+/////////////////////  
 
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::pac::{Peripherals};
 
 #[entry]
 fn main() -> ! {
@@ -55,21 +77,29 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    let i2cset_ref_cell = RefCell::new(i2cset);
+    let ccs_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+
+    /////////////////////   ssd
+    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
+
     display.init().unwrap();
-    display.flush().unwrap();
+    //display.flush().unwrap();
 
     let text_style = MonoTextStyleBuilder::new()
-        .font(&FONT_6X10)
+        .font(&FONT)
         .text_color(BinaryColor::On)
         .build();
 
-    let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), SlaveAddr::default());
+    /////////////////////   ccs
+    let mut ccs811 = Ccs811Awake::new(ccs_rcd, SlaveAddr::default());
     ccs811.software_reset().unwrap();
     delay.delay_ms(10);
     let mut lines: [String<32>; 2] = [String::new(), String::new()];
@@ -88,6 +118,8 @@ fn main() -> ! {
         raw_current: 255,
         raw_voltage: 9999,
     };
+
+    /////////////////////    measure and display in loop
     loop {
         // Blink LED 0 to check that everything is actually running.
         // If the LED 0 is off, something went wrong.

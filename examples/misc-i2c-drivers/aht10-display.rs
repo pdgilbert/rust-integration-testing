@@ -15,6 +15,7 @@
 #![no_main]
 
 use aht10::AHT10;
+//use aht10_async::AHT10;
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
