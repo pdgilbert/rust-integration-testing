@@ -23,18 +23,11 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-//use cortex_m::asm;
-
-//use eg_stm_hal::to_str;
-
 use cortex_m_rt::entry;
-//use core::fmt::Write;  // for writeln
 use cortex_m_semihosting::hprintln;
 //use core::str;
 //use core::ascii;
 use nb::block;
-
-//use eg_stm_hal::to_str;
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -47,11 +40,10 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let mut p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let mut rcc = dp.RCC.configure().sysclk(48.mhz()).freeze(&mut dp.FLASH);
 
-    let gpioa = p.GPIOA.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
     let (tx1, rx1, tx2, rx2) = cortex_m::interrupt::free(move |cs| {
         (
@@ -78,16 +70,16 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
     let mut afio = p.AFIO.constrain();
-    let mut gpioa = p.GPIOA.split();
+    let mut gpioa = dp.GPIOA.split();
 
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     let (tx1, rx1) = Serial::new(
-        p.USART1,
+        dp.USART1,
         (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9   for console
             gpioa.pa10,
@@ -127,21 +119,20 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (
+fn setup_from_dp(dp: Peripherals) -> (
     Tx<USART1, impl TxPin<USART1>>,
     Rx<USART1, impl RxPin<USART1>>,
     Tx<USART2, impl TxPin<USART2>>,
     Rx<USART2, impl RxPin<USART2>>,
 ) {
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
+    let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
     //Why does next need arg, there is only one possibility?
-    let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
 
     let (tx1, rx1) = Serial::new(
-        p.USART1,
+        dp.USART1,
         (
             gpioa
                 .pa9
@@ -157,7 +148,7 @@ fn setup() -> (
     .split();
 
     let (tx2, rx2) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
             gpioa
                 .pa2
@@ -186,12 +177,11 @@ use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.freeze();
-    let gpioa = p.GPIOA.split();
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let clocks = dp.RCC.constrain().cfgr.freeze();
+    let gpioa = dp.GPIOA.split();
     let (tx1, rx1) = Serial::new(
-        p.USART1,
+        dp.USART1,
         (
             gpioa.pa9.into_alternate(),  //tx pa9   for console
             gpioa.pa10.into_alternate(), //rx pa10  for console
@@ -205,7 +195,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     // this probably needs fix here. rx2.read() stalls and does not return.
     //p.USART2.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
     let (tx2, rx2) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
             gpioa.pa2.into_alternate(), //tx pa2  for GPS
             gpioa.pa3.into_alternate(), //rx pa3  for GPS
@@ -230,14 +220,13 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
-    let gpioa = p.GPIOA.split();
+    let gpioa = dp.GPIOA.split();
 
     let (tx1, rx1) = Serial::new(
-        p.USART1,
+        dp.USART1,
         (
             gpioa.pa9.into_alternate(), //tx pa9   for console
             gpioa.pa10.into_alternate(),
@@ -255,7 +244,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     .split();
 
     let (tx2, rx2) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
             gpioa.pa2.into_alternate(), //tx pa2  for GPS
             gpioa.pa3.into_alternate(),
@@ -286,8 +275,7 @@ use stm32g0xx_hal::{
 };
 
 #[cfg(feature = "stm32g0xx")]
-fn setup() -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>, Tx<USART2, FullConfig>, Rx<USART2, FullConfig>) {
-    let dp = Peripherals::take().unwrap();
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>, Tx<USART2, FullConfig>, Rx<USART2, FullConfig>) {
     let mut rcc = dp.RCC.constrain();
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -315,9 +303,8 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
                Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>) {
-    let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -345,18 +332,15 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let p = Peripherals::take().unwrap();
-    let pwr = p.PWR.constrain();
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
-    let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &p.SYSCFG);
+    let rcc = dp.RCC.constrain();
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
-    let gpioa = p.GPIOA.split(ccdr.peripheral.GPIOA);
+    let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
-    let (tx1, rx1) = p
-        .USART1
-        .serial(
+    let (tx1, rx1) = dp.USART1.serial(
             (
                 gpioa.pa9.into_alternate(), //tx pa9
                 gpioa.pa10.into_alternate(),
@@ -368,9 +352,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         .unwrap()
         .split();
 
-    let (tx2, rx2) = p
-        .USART2
-        .serial(
+    let (tx2, rx2) = dp.USART2.serial(
             (
                 gpioa.pa2.into_alternate(), //tx pa2
                 gpioa.pa3.into_alternate(),
@@ -395,15 +377,12 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
 
-    let gpioa = p.GPIOA.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
-    let (tx1, rx1) = p
-        .USART1
-        .usart(
+    let (tx1, rx1) = dp.USART1.usart(
             gpioa.pa9,  //tx pa9  for console
             gpioa.pa10, //rx pa10 for console
             Config::default().baudrate(9600.Bd()),
@@ -412,9 +391,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         .unwrap()
         .split();
 
-    let (tx2, rx2) = p
-        .USART2
-        .usart(
+    let (tx2, rx2) = dp.USART2.usart(
             gpioa.pa2, //tx pa2  for GPS
             gpioa.pa3, //rx pa3  for GPS
             Config::default().baudrate(9600.Bd()),
@@ -443,16 +420,13 @@ use stm32l1xx_hal::{
 // For simplicity of this example the same setup is used on the Discovery kit stm32l100.
 
 #[cfg(feature = "stm32l1xx")]
-fn setup() -> (Tx<USART2>, Rx<USART2>, Tx<USART1>, Rx<USART1>) {
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART2>, Rx<USART2>, Tx<USART1>, Rx<USART1>) {
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
     //let clocks  = rcc.cfgr.freeze();
 
-    let gpioa = p.GPIOA.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
-    let (txc, rxc) = p
-        .USART2
-        .usart(
+    let (txc, rxc) = dp.USART2.usart(
             (
                 gpioa.pa2, //tx pa2   for console
                 gpioa.pa3,
@@ -463,9 +437,7 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, Tx<USART1>, Rx<USART1>) {
         .unwrap()
         .split();
 
-    let (txg, rxg) = p
-        .USART1
-        .usart(
+    let (txg, rxg) = dp.USART1.usart(
             (
                 gpioa.pa9, //tx pa9  for GPS rx
                 gpioa.pa10,
@@ -488,11 +460,10 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let p = Peripherals::take().unwrap();
-    let mut flash = p.FLASH.constrain();
-    let mut rcc = p.RCC.constrain();
-    let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
+fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+    let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
+    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
         .sysclk(80.MHz())
@@ -500,10 +471,10 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
         .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
 
     let (tx1, rx1) = Serial::usart1(
-        p.USART1,
+        dp.USART1,
         (
             gpioa
                 .pa9
@@ -519,7 +490,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
     .split();
 
     let (tx2, rx2) = Serial::usart2(
-        p.USART2,
+        dp.USART2,
         (
             gpioa
                 .pa2
@@ -579,7 +550,8 @@ fn main() -> ! {
     hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
     buffer.clear();
 
-    let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup(); // console, GPS
+    let dp = Peripherals::take().unwrap();
+    let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup_from_dp(dp); // console, GPS
 
     writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
     writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
