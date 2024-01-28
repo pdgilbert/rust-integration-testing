@@ -46,8 +46,6 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use iaq_core::{IaqCore, Measurement};
-
     //use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
                        //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
@@ -61,9 +59,23 @@ mod app {
     use nb::block;
     use rtt_target::{rprintln, rtt_init_print};
 
-    use shared_bus::{I2cProxy};
+/////////////////////   iaq
+    use iaq_core::{IaqCore, Measurement};
+
+
+/////////////////////   hals
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
+
+use embedded_hal::{
+   i2c::I2c as I2cTrait,
+   delay::DelayNs,
+
+};
+
+use embedded_hal_serial::{
+   Write,
+};
 
     const PERIOD: u32 = 10;  // used as seconds
     
@@ -76,8 +88,8 @@ mod app {
     struct Shared {
         led: LedType,
         //sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
-        sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>>,
-        //sensor: IaqCore<I2cType>,
+        //sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>>,
+        sensor: IaqCore<I2cType>,
         tx: TxType,
     }
 
@@ -96,13 +108,11 @@ mod app {
         rtt_init_print!();
         rprintln!("iAQ-Core-C example");
 
-        //let device: Peripherals = cx.device;
-
-        let (_pin, i2c, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (_pin, i2cset, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
 
         led.off();
-
         let led_state: bool = false;
+
         let index: usize = 0;
         let measurements: [Measurement; 2400] = [Measurement {
             co2: 0,
@@ -111,13 +121,19 @@ mod app {
         }; 2400];
 
         // rtic needs task sharing not provided by BusManagerSimple: 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
+        // let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
-        let sensor = IaqCore::new(manager.acquire_i2c());
+        let sensor = IaqCore::new(i2cset);
 
         measure::spawn().unwrap();
 
-        writeln!(tx, "start\r",).unwrap();
+        //writeln!(tx, "start\r",).unwrap();
+    for byte in b"\r\nstart\r\n" {
+        #[cfg(feature = "stm32f4xx")]
+        block!(tx.write(*byte)).ok();
+        #[cfg(not(feature = "stm32f4xx"))]
+        block!(tx.write_byte(*byte)).ok();
+    }
 
         (Shared {led, sensor, tx}, Local {led_state, index, measurements})
     }
@@ -152,10 +168,10 @@ mod app {
            for i in 0..*cx.local.index {
                let data = cx.local.measurements[i];
                //writeln!(cx.resources.tx,"{},{},{},{}\r",i, data.co2, data.tvoc, data.resistance).unwrap();
-               cx.shared
-                   .tx
-                   .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
-                   .unwrap();
+//               cx.shared
+//                   .tx
+//                   .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
+//                   .unwrap();
            }
        }
     }

@@ -8,8 +8,8 @@
 //! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
-//! One main processe is scheduled. It writes to the display and pauses for an interval before re-writing.
-//! The main processe spawns a `blink` process that turns the led on and  another process to turn it off.
+//! One main process is scheduled. It writes to the display and pauses for an interval before re-writing.
+//! The main process spawns a `blink` process that turns the led on and  another process to turn it off.
 
 #![deny(unsafe_code)]
 #![no_std]

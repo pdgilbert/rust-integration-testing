@@ -182,7 +182,7 @@ use stm32f4xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
+    serial::{config::Config, Rx, Serial, Tx, Error},
 };
 
 #[cfg(feature = "stm32f4xx")]
@@ -341,7 +341,7 @@ use stm32h7xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2},
     prelude::*,
-    serial::{Rx, Tx},
+    serial::{Rx, Tx, Error},
 };
 
 #[cfg(feature = "stm32h7xx")]
@@ -539,29 +539,53 @@ fn setup() -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
 
 // End of hal/MCU specific setup. Following should be generic code.
 
+fn writeln(con: &mut Tx<USART1>, buf: &str) -> () {
+    for byte in buf.bytes() {write_b(con, byte)};
+()
+}
+
+fn write_b(con: &mut Tx<USART1>, b: u8) -> () {
+        #[cfg(feature = "stm32f4xx")]
+        block!(con.write(b)).ok();
+        #[cfg(not(feature = "stm32f4xx"))]
+        block!(con.write_byte(b)).ok();
+()
+}
+
+fn read_b<E>(con: &mut Rx<USART2>) -> Result<u8, Error> {
+        #[cfg(feature = "stm32f4xx")]
+        let b = block!(con.read());
+        #[cfg(not(feature = "stm32f4xx"))]
+        let b = block!(con.read_byte());
+b
+}
+
+//something like this moght also work
+//fn read_b(con: &mut Rx<USART2>) -> Result<u8, Error> {
+//        #[cfg(feature = "stm32f4xx")]
+//        let b = con.read();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        let b = con.read_byte();
+//b
+//}
+
+
 #[entry]
 
 fn main() -> ! {
-    //hprintln!("{}", to_str("just checking to_str".as_bytes())).expect("hprintln error.");
-    //hprintln!("{:?}",      "just checking to_str".as_bytes()).expect("hprintln error.");
-
-    let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup(); // console, GPS
-
-    //writeln!(tx_con, "\r\nconsole connect check.\r\n").unwrap();
-    for byte in b"\r\nconsole connect check.\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx_con.write(*byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx_con.write_byte(*byte)).ok();
-    }
-
-    // read gps on usart2
-    hprintln!("about to read GPS").unwrap();
 
     // byte buffer up to 80  u8 elements on stack
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
     hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
     buffer.clear();
+
+    let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup(); // console, GPS
+
+    writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
+    writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
+
+    // read gps on usart2
+    hprintln!("about to read GPS").unwrap();
 
     //    while (i < r.len()) && !buffer.push(r[i]).is_err() {
     hprintln!("going into write/read loop ^C to exit ...").unwrap();
@@ -570,18 +594,12 @@ fn main() -> ! {
     let e: u8 = 9;
     let mut good = false;
     loop {
-        #[cfg(feature = "stm32f4xx")]
-        let z = rx_gps.read();
-        #[cfg(not(feature = "stm32f4xx"))]
-        let z = rx_gps.read_byte();
-        let byte = match block!(z) {
+//        let byte = match block!(read_b(&mut rx_gps)) { //something like this moght also work
+        let byte = match read_b::<Error>(&mut rx_gps) {
             Ok(byt) => byt,
             Err(_error) => e,
         };
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx_con.write(byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx_con.write_byte(byte)).ok();
+        write_b(&mut tx_con, byte);
         if byte == 36 {
             //  $ is 36. start of a line
             buffer.clear();
@@ -590,13 +608,7 @@ fn main() -> ! {
         if good {
             if buffer.push(byte).is_err() || byte == 13 {
                 //  \r is 13, \n is 10
-                //writeln!(tx_con, "{}", to_str(&buffer)).unwrap();
-                for byte in &buffer {
-                    #[cfg(feature = "stm32f4xx")]
-                    block!(tx_con.write(*byte)).ok();
-                    #[cfg(not(feature = "stm32f4xx"))]
-                    block!(tx_con.write_byte(*byte)).ok();
-               }
+                for byte in &buffer {write_b(&mut tx_con, *byte)};
                 //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();
                 buffer.clear();
                 good = false;

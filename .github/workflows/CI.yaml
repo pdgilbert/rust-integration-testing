@@ -453,7 +453,7 @@ jobs:
               lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
               blink_rtic,              schedule,                         resource-user-struct,
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
-              display_stuff_rtic0,     display_stuff_rtic,               display_stuff_rtic_shared_bus,
+              display_stuff_rtic0,     display_stuff_rtic,               
               aht10-display,           aht10_rtic,                       aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          htu2xd_rtic,
