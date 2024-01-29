@@ -468,6 +468,10 @@ name = "blink_rtic"
 path = "examples/rtic/blink_rtic.rs"
 
 [[example]]
+name = "gps_rw_rtic"
+path = "examples/rtic/gps_rw_rtic.rs"
+
+[[example]]
 name = "schedule"
 path = "examples/rtic/schedule.rs"
 

@@ -340,6 +340,10 @@ jobs:
 
       #####  rtic examples   #####
 
+      - name: Example gps_rw_rtic
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example gps_rw_rtic
+
       - name: Example iaq-core-c-gas-voc-usart-logger
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq-core-c-gas-voc-usart-logger
