@@ -464,7 +464,7 @@ jobs:
               aht10-display,           aht10_rtic,                       aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          htu2xd_rtic,
-              vl53lox-display,         air_quality,                      ens160-co2-voc-iaq-display
+              vl53lox-display,         air_quality,                      ens160-co2-voc-iaq-display,
               ina219-display,          ina219_rtic,                      gps_rw_rtic
               xca9548a,                one_wire_bus_find_devices,        onewire
              ]
