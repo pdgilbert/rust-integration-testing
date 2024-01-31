@@ -298,6 +298,9 @@ jobs:
       - name: Example ens160-co2-voc-iaq-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ens160-co2-voc-iaq-display
 
+      - name: Example ads_ina_ssd
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ads_ina_ssd
+
       - name: Example htu2xd-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd-display
 
@@ -461,6 +464,7 @@ jobs:
               blink_rtic,              schedule,                         resource-user-struct,
               dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
               display_stuff_rtic0,     display_stuff_rtic,               
+              ads_ina_ssd,             ads_ina_ssd_rtic,
               aht10-display,           aht10_rtic,                       aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          htu2xd_rtic,

@@ -447,6 +447,8 @@ path = "examples/misc/oled_gps.rs"
 name = "spi"
 path = "examples/misc/spi.rs"
 
+# considerable overlap between battery_monitor_ads1015 and /misc-i2c-drivers/ads_ina_ssd
+# and also rtic versions. Consider removing one.
 [[example]]
 name = "battery_monitor_ads1015"
 path = "examples/misc/battery_monitor_ads1015.rs"
@@ -519,6 +521,10 @@ name = "battery_monitor_ads1015_rtic_dma"
 path = "examples/rtic/battery_monitor_ads1015_rtic_dma.rs"
 
 [[example]]
+name = "ads_ina_ssd_rtic"
+path = "examples/rtic/ads_ina_ssd_rtic.rs"
+
+[[example]]
 name = "ina219_rtic"
 path = "examples/rtic/ina219_rtic.rs"
 
@@ -536,6 +542,12 @@ path = "examples/rtic/serial-dma.rs"
 [[example]]
 name = "ens160-co2-voc-iaq-display"
 path = "examples/misc-i2c-drivers/ens160-co2-voc-iaq-display.rs"
+
+# considerable overlap between /misc/battery_monitor_ads1015 and /misc-i2c-drivers/ads_ina_ssd
+# and also rtic versions. Consider removing one.
+[[example]]
+name = "ads_ina_ssd"
+path = "examples/misc-i2c-drivers/ads_ina_ssd.rs"
 
 [[example]]
 name = "htu2xd-display"
