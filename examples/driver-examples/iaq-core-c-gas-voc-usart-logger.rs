@@ -46,51 +46,50 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
-                       //delay_ms could be used but needs to use a timer other than Systick
-                       //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
-
-    use core::fmt::Write;
-    
     use rtic;
     use rtic_monotonics::systick::Systick;
     use rtic_monotonics::systick::fugit::{ExtU32};
 
     use nb::block;
-    use rtt_target::{rprintln, rtt_init_print};
+    use cortex_m_semihosting::{hprintln};
+    //use rtt_target::{rprintln, rtt_init_print};
 
-/////////////////////   iaq
+    /////////////////////   iaq
     use iaq_core::{IaqCore, Measurement};
 
 
-/////////////////////   hals
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+    /////////////////////   hals
 
-use embedded_hal::{
-   i2c::I2c as I2cTrait,
-   delay::DelayNs,
+    use embedded_hal::{
+       i2c::I2c as I2cTrait,
+       delay::DelayNs,
+    };
 
-};
+    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+    pub use hal::{
+        pac::{I2C1},
+        pac::Peripherals,
+        pac::{USART1},
+        serial::{Serial, Tx, Rx, Error},
+        i2c::I2c as I2cType,
+        prelude::*,
+    };
 
-use embedded_hal_serial::{
-   Write,
-};
+    /////////////////////   boards
+    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+
+
+    /////////////////////  
 
     const PERIOD: u32 = 10;  // used as seconds
     
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{
-        TxType, I2cType, LED, LedType, MONOCLOCK};
-
-
     #[shared]
     struct Shared {
         led: LedType,
-        //sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
-        //sensor:  IaqCore<I2cProxy<'static,   Mutex<RefCell<I2cType>>>>,
-        sensor: IaqCore<I2cType>,
-        tx: TxType,
+        sensor: IaqCore<I2cType<I2C1>>,
+        tx: Tx<USART1>,
     }
 
     #[local]
@@ -105,8 +104,9 @@ use embedded_hal_serial::{
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        rtt_init_print!();
-        rprintln!("iAQ-Core-C example");
+        //rtt_init_print!();
+        //rprintln!("example");
+        hprintln!("iaq-core-c-gas-voc... example").unwrap();
 
         let (_pin, i2cset, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
 
@@ -119,9 +119,6 @@ use embedded_hal_serial::{
             tvoc: 0,
             resistance: 0,
         }; 2400];
-
-        // rtic needs task sharing not provided by BusManagerSimple: 
-        // let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
         let sensor = IaqCore::new(i2cset);
 

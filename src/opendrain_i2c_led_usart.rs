@@ -21,13 +21,16 @@ pub use crate::monoclock::{MONOCLOCK};
 pub use crate::stm32xxx_as_hal::hal;
 
 pub use hal::{
-      pac::{Peripherals, CorePeripherals},
+      pac::{Peripherals, CorePeripherals, USART1},
+      serial::{Serial, Tx, Error},
       gpio::{gpioa::PA8, Output, OpenDrain},
       prelude::*,
 };
 
-type OpenDrainType = PA8<Output<OpenDrain>>;
+#[cfg(not(feature = "stm32f3xx"))] 
+pub type TxType = Tx<USART1>;
 
+pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
 pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
     setup_from_dp(Peripherals::take().unwrap())
@@ -36,12 +39,8 @@ pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clock
 
 
 
-#[cfg(feature = "stm32f0xx")]
-use stm32f0xx_hal::{
-    //delay::Delay,
-    pac::{USART1},
-    serial::{Serial, Tx},
-};
+//#[cfg(feature = "stm32f0xx")]
+//use stm32f0xx_hal::{};
 
 #[cfg(feature = "stm32f0xx")]
 pub type TxType = Tx<USART1>;
@@ -77,15 +76,9 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    pac::USART1,
     rcc::Clocks,
-    serial::{Config, Serial, Tx},
+    serial::{Config},
 };
-
-
-
-#[cfg(feature = "stm32f1xx")]
-pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -149,8 +142,6 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
     gpio::{gpioa::{PA9}, PushPull, AF7 },
-    pac::{USART1},
-    serial::{Serial, Tx},
 };
 
 #[cfg(feature = "stm32f3xx")]
@@ -206,13 +197,9 @@ use stm32f4xx_hal::{
     rcc::{RccExt},
     timer::TimerExt,
     gpio::GpioExt,
-    pac::USART1,
-    serial::{config::Config, Serial, Tx},
+    serial::{config::Config},
 };
 
-
-#[cfg(feature = "stm32f4xx")]
-pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -249,11 +236,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
     pac,
-    serial::{Config, Oversampling, Serial, Tx, DataBits, Parity},
+    serial::{Config, Oversampling, DataBits, Parity},
 };
-
-#[cfg(feature = "stm32f7xx")]
-pub type TxType = Tx<pac::USART2>;
 
 #[cfg(feature = "stm32f7xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -273,21 +257,22 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
    let delay = dp.TIM2.delay_us(&clocks);
 
    let (tx, _rx) = Serial::new(
-       dp.USART2,
-       (
-           gpioa.pa2.into_alternate(),
-           gpioa.pa3.into_alternate(),
-       ),
-       &clocks,
-       Config {
-           baud_rate: 115200.bps(),
-           data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
-           parity: Parity::ParityEven,
-           oversampling: Oversampling::By16,
-           character_match: None,
-           sysclock: false,
-       },
-   ).split();
+        dp.USART1,
+        (
+            gpioa.pa9.into_alternate(), //tx pa9   for console
+            gpioa.pa10.into_alternate(),
+        ), //rx pa10  for console
+        &clocks,
+        Config {
+            baud_rate: 115200.bps(),
+            data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+            parity: Parity::ParityEven,
+            oversampling: Oversampling::By16,
+            character_match: None,
+            sysclock: false,
+        },
+   )
+   .split();
 
   (pin, i2c, led, tx, delay, clocks)
 }
@@ -296,12 +281,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32g0xx")]
 use stm32g0xx_hal::{
-    pac::USART1,
-    serial::{FullConfig, Tx},
+    serial::{FullConfig},
 };
-
-#[cfg(feature = "stm32g0xx")]
-pub type TxType = Tx<USART1, FullConfig>;
 
 #[cfg(feature = "stm32g0xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -334,8 +315,7 @@ use stm32g4xx_hal::{
     timer::Timer,
     delay::DelayFromCountDownTimer,
     gpio::{ Alternate, gpioa::{ PA9} },
-    pac::{USART1}, //I2C1
-    serial::{FullConfig, Tx, NoDMA},
+    serial::{FullConfig, NoDMA},
 };
 
 
@@ -377,13 +357,8 @@ pub use stm32h7xx_hal::rcc::CoreClocks as Clocks;
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    pac::{USART2,},
-    serial::Tx,
     delay::DelayFromCountDownTimer,
 };
-
-#[cfg(feature = "stm32h7xx")]
-pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
@@ -409,19 +384,18 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
    let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
    let delay = DelayFromCountDownTimer::new(timer);
 
-   let (tx, _rx) = dp
-       .USART2
-       .serial(
-           (
-               gpioa.pa2.into_alternate(),
-               gpioa.pa3.into_alternate(),
-           ),
-           115200.bps(),
-           ccdr.peripheral.USART2,
-           &clocks,
-       )
-       .unwrap()
-       .split();
+   let (tx, _rx) = dp.USART1.serial(
+            (
+                gpioa.pa9.into_alternate(), //tx pa9
+                gpioa.pa10.into_alternate(),
+            ), //rx pa10
+            115200.bps(),
+            ccdr.peripheral.USART1,
+            &clocks,
+        )
+        .unwrap()
+        .split();
+
 
    (pin, i2c, led, tx, delay, clocks)
 }
@@ -430,14 +404,9 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32l0xx")]
 use stm32l0xx_hal::{
-    //delay::Delay,
-    pac::{USART1},
     rcc, // for ::Config but note name conflict with serial
-    serial::{Config, Serial1Ext, Tx},
+    serial::{Config, Serial1Ext, },
 };
-
-#[cfg(feature = "stm32l0xx")]
-pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l0xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -472,16 +441,12 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
 use stm32l1xx_hal::{
     rcc::Config as rccConfig,
-    serial::{Config, SerialExt, Tx},
-    stm32::{USART1},
+    serial::{Config, SerialExt, },
     //serial::{Config, Rx, Serial1Ext, Serial2Ext, Serial4Ext, Tx},
 };
 
 #[cfg(feature = "stm32l1xx")]
 use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32l1xx")]
-pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -515,12 +480,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
 #[cfg(feature = "stm32l4xx")]
 use stm32l4xx_hal::{
-    pac::{USART2},
-    serial::{Config as serialConfig, Serial, Tx},
+    serial::{Config as serialConfig, },
 };
-
-#[cfg(feature = "stm32l4xx")]
-pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32l4xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
@@ -544,19 +505,19 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
 
    let delay = DelayType{};
 
-   let (tx, _rx) = Serial::usart2(
-       dp.USART2,
-       (
-           gpioa
-               .pa2
-               .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
-           gpioa
-               .pa3
-               .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
-       ),
-       serialConfig::default().baudrate(115200.bps()),
-       clocks,
-       &mut rcc.apb1r1,
+   let (tx, _rx) = Serial::usart1(
+        dp.USART1,
+        (
+            gpioa
+                .pa9
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9  for console
+            gpioa
+                .pa10
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10 for console
+        ),
+        Config::default().baudrate(115200.bps()),
+        clocks,
+        &mut rcc.apb2,
    )
    .split();
 

@@ -102,7 +102,9 @@ vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-configuration-register" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
 htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
-xca9548a        = { git = "https://github.com/eldruin/xca9548a-rs" }
+xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
+#ens160           = { git = "https://github.com/teamplayer3/ens160", features = ["no-std"], default-features = false }
+ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
 
 
 rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
@@ -141,9 +143,10 @@ fugit = { version = "0.3.3", optional = true }
 #     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
 #     Compiler gives error
 #        note: perhaps two different versions of crate `embedded_hal` are being used?
-embedded-hal = "1.0"
-embedded-hal-bus = "0.1.0"
-embedded-hal-async = "1.0.0"
+embedded-hal        = "1.0"
+embedded-hal-bus    = "0.1.0"
+embedded-hal-async  = "1.0.0"
+#embedded-hal-io     = ""
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
@@ -529,6 +532,10 @@ path = "examples/rtic/serial-dma.rs"
 
 
 # examples/misc-i2c-drivers
+
+[[example]]
+name = "ens160-co2-voc-iaq-display"
+path = "examples/misc-i2c-drivers/ens160-co2-voc-iaq-display.rs"
 
 [[example]]
 name = "htu2xd-display"
