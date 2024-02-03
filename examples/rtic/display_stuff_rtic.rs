@@ -22,6 +22,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
+
 use rtic::app;
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
@@ -50,6 +51,7 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
+    use core::mem::MaybeUninit;
     use rtic;
     use rtic_monotonics::systick::Systick;
     use rtic_monotonics::systick::fugit::{ExtU32};
@@ -69,10 +71,10 @@ mod app {
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
 
-    use core::cell::RefCell;
+//    use embedded_hal::i2c::I2c as I2cTrait; 
 
-use embedded_hal::i2c::I2c as I2cTrait; 
-use embedded_hal_bus::i2c::RefCellDevice;
+    use core::cell::RefCell;
+    use embedded_hal_bus::i2c::RefCellDevice;
 
 
     fn show_display<S>(
@@ -113,7 +115,30 @@ use embedded_hal_bus::i2c::RefCellDevice;
     }
 
 
-    #[init]
+    #[shared]
+    struct Shared {
+        led: LedType,
+    }
+
+    #[local]
+    struct Local {
+        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType< I2C1>>>, 
+                          ssd1306::prelude::DisplaySize128x64, 
+                          BufferedGraphicsMode<DisplaySize128x64>>,
+        //i2c: &'static mut I2CBus,
+        //text_style: TextStyle,
+        //text_style: MonoTextStyle<'static, BinaryColor>,
+        // see https://github.com/jamwaffles/ssd1306/issues/164
+    }
+
+
+    //#[init]
+    #[init(local=[
+        // Task local initialized resources are static
+        // Here we use MaybeUninit to allow for initialization in init()
+        // This enables its usage in driver initialization
+        i2c1_rc: MaybeUninit<RefCell<I2cType< I2C1>>> = MaybeUninit::uninit()
+    ])]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
        let mono_token = rtic_monotonics::create_systick_token!();
@@ -127,10 +152,11 @@ use embedded_hal_bus::i2c::RefCellDevice;
 
        led.on();
 
-    let i2c1_rc   = RefCell::new(i2c1);
-    let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
-    let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
-    //let interface = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address
+       //let i2c1_rc: RefCell<'static, I2cType<I2C1>>   = RefCell::new(i2c1);
+       let i2c1_rc   = RefCell::new(i2c1);
+       let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
+       let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
+       //let interface = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -152,32 +178,6 @@ use embedded_hal_bus::i2c::RefCellDevice;
        (Shared { led }, Local { display })
     }
 
-    #[shared]
-    struct Shared {
-        led: LedType,
-    }
- 
-
-    #[local]
-    struct Local {
-        //display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c<I2C1>>>>>, 
-        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType<I2C1>>>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
-        //text_style: TextStyle,
-        //text_style: MonoTextStyle<'static, BinaryColor>,
-    }
-
-// see https://github.com/jamwaffles/ssd1306/issues/164
-//text_style cannot be in shared Local:
-//(dyn GlyphMapping + 'static)` cannot be shared between threads safely
-//    |
-//    = help: within `MonoFont<'static>`, the trait `core::marker::Sync` is not implemented for `(dyn GlyphMapping + 'static)`
-//    = note: required because it appears within the type `&'static (dyn GlyphMapping + 'static)`
-//    = note: required because it appears within the type `MonoFont<'static>`
-//    = note: required because of the requirements on the impl of `Send` for `&'static MonoFont<'static>`
-//    = note: required because it appears within the type `embedded_graphics::mono_font::MonoTextStyle<'static, embedded_graphics::pixelcolor::BinaryColor>`
-//note: required by a bound in `assert_send`
 
     #[task(shared = [ led, ], local = [ display, ] )]
     async fn display_stuff(cx: display_stuff::Context) {

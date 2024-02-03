@@ -8,8 +8,8 @@
 //! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
-//! One main processe is scheduled. It writes to the display and spawns itself to run after an interval.
-//! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
+//! One main process is scheduled. It writes to the display and pauses for an interval before re-writing.
+//! The main process spawns a `blink` process that turns the led on and  another process to turn it off.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -21,6 +21,7 @@ use panic_semihosting as _;
 
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
+
 
 use rtic::app;
 
@@ -65,9 +66,11 @@ mod app {
 
     use hal::{
         pac::{I2C1},
-        i2c::I2c,
+        i2c::I2c as I2cType,
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
+
+//    use embedded_hal::i2c::I2c as I2cTrait; 
 
 
     fn show_display<S>(
@@ -108,6 +111,22 @@ mod app {
     }
 
 
+    #[shared]
+    struct Shared {
+        led: LedType,
+    }
+
+    #[local]
+    struct Local {
+        display: Ssd1306<I2CInterface<I2cType<I2C1>>, 
+                          ssd1306::prelude::DisplaySize128x64, 
+                          BufferedGraphicsMode<DisplaySize128x64>>,
+        //text_style: TextStyle,
+        //text_style: MonoTextStyle<'static, BinaryColor>,
+        // see https://github.com/jamwaffles/ssd1306/issues/164
+    }
+
+
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
@@ -118,11 +137,12 @@ mod app {
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       let (i2c, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+       let (i2c1, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
        led.on();
 
-       let interface = I2CDisplayInterface::new(i2c);
+       let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
+       //let interface = I2CDisplayInterface::new_custom_address(i2c1,   0x3D);  //alt address
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -144,30 +164,6 @@ mod app {
        (Shared { led }, Local { display })
     }
 
-    #[shared]
-    struct Shared {
-        led: LedType,
-    }
- 
-
-    #[local]
-    struct Local {
-        display: Ssd1306<I2CInterface<I2c<I2C1>>, 
-                          ssd1306::prelude::DisplaySize128x64 , 
-                          BufferedGraphicsMode<DisplaySize128x64>>
-        //text_style: TextStyle,
-        //text_style: MonoTextStyle<'static, BinaryColor>,
-    }
-// see https://github.com/jamwaffles/ssd1306/issues/164
-//text_style cannot be in shared Local:
-//(dyn GlyphMapping + 'static)` cannot be shared between threads safely
-//    |
-//    = help: within `MonoFont<'static>`, the trait `core::marker::Sync` is not implemented for `(dyn GlyphMapping + 'static)`
-//    = note: required because it appears within the type `&'static (dyn GlyphMapping + 'static)`
-//    = note: required because it appears within the type `MonoFont<'static>`
-//    = note: required because of the requirements on the impl of `Send` for `&'static MonoFont<'static>`
-//    = note: required because it appears within the type `embedded_graphics::mono_font::MonoTextStyle<'static, embedded_graphics::pixelcolor::BinaryColor>`
-//note: required by a bound in `assert_send`
 
     #[task(shared = [ led, ], local = [ display, ] )]
     async fn display_stuff(cx: display_stuff::Context) {

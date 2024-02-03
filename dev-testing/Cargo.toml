@@ -33,7 +33,7 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 
 # for fiddling with ssd1306 rtic testing
 display-interface-spi = "0.4.1"
-tinybmp = "0.3.1"  # for loading bmp image. could be dev-dependencies
+#tinybmp = "0.3.1"  # for loading bmp image. could be dev-dependencies
 
 #ssd1306         = ">=0.8.0"   
 # NB ehal1  WORKS WITH stm32h7xx BUT BREAKS stm32f4xx IN shared_bus EXAMPLES.   <************************
@@ -103,13 +103,18 @@ ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-con
 ##ina219           = { git = "https://github.com/youduda/ina219" }
 htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
 xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
-#ens160           = { git = "https://github.com/teamplayer3/ens160", features = ["no-std"], default-features = false }
-ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
+ens160           = { git = "https://github.com/teamplayer3/ens160", default-features = false }
+#ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
 
 
-rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
-#  NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
-rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
+rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
+rtic-sync =  { version = "1.2.0", features = [ "unstable"], optional = true }
+
+#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+## NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
+#rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
+#rtic-sync = { git = "https://github.com/rtic-rs/rtic", features = [ "unstable" ], optional = true }
 
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
 
@@ -200,11 +205,11 @@ stm32f0xx = ["stm32f0xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32f1xx = ["stm32f1xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32f3xx = ["stm32f3xx-hal/rt", "rtic", "rtic-monotonics" ]
 #stm32f4xx = ["stm32f4xx-hal/rt", "rtic", "dwt-systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics" ]  # rtic2 ?
+stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics", "rtic-sync" ]  # rtic2 ?
 stm32f7xx = ["stm32f7xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32g0xx = ["stm32g0xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32g4xx = ["stm32g4xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32h7xx = ["stm32h7xx-hal/rt", "rtic", "rtic-monotonics" ]
+stm32h7xx = ["stm32h7xx-hal/rt", "rtic", "rtic-monotonics", "rtic-sync" ]
 stm32l0xx = ["stm32l0xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32l1xx = ["stm32l1xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32l4xx = ["stm32l4xx-hal/rt", "rtic", "rtic-monotonics" ]
