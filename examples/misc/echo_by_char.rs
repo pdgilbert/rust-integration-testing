@@ -27,10 +27,9 @@ use cortex_m_rt::entry;
 //use embedded_hal::serial::{Write, Read};
 //use embedded_hal::serial::{Write};
 
-//use embedded_io::{Read, Write};
+use embedded_io::{Read, Write};
 
-use core::str::from_utf8;
-use nb::block;
+//use core::str::from_utf8;
 
 //use embedded_hal::serial;
 
@@ -386,35 +385,49 @@ fn main() -> ! {
     hprintln!("test write to console ...").unwrap();
     //rprintln!("test write to console ...");
 
-    for byte in b"\r\nconsole connect check.\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).ok();
-    }
+    tx1.write(b"\r\nconsole connect check.\r\n").ok();
+
+//    for byte in b"\r\nconsole connect check.\r\n" {
+//        #[cfg(not(feature = "stm32h7xx"))]
+//        block!(tx1.write(*byte)).ok();
+//        #[cfg(feature = "stm32h7xx")]
+//        block!(tx1.write_byte(*byte)).ok();
+//    }
 
     hprintln!("test read and write by char. Please type into the console ...").unwrap();
+
+    tx1.write(b"test read and write by char. Please type into the console ...").ok();
+
     //rprintln!("test read and write by char. Please type into the console ...");
     //writeln!(tx1, "\r\nPlease type (slowly) into the console below:\r\n").unwrap();
-    for byte in b"\r\nType (slowly) below:\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).ok();
-    }
+//    for byte in b"\r\nType (slowly) below:\r\n" {
+//        #[cfg(not(feature = "stm32h7xx"))]
+//        block!(tx1.write(*byte)).ok();
+//        #[cfg(feature = "stm32h7xx")]
+//        block!(tx1.write_byte(*byte)).ok();
+//    }
+
+    let mut buffer: [u8; 5] = [0; 5];  // could be length 1 for a byte
 
     loop {
         // Read a byte and write
-        #[cfg(feature = "stm32f4xx")]
-        let received = block!(rx1.read()).unwrap();
-        #[cfg(not(feature = "stm32f4xx"))]
-        let received = block!(rx1.read_byte()).unwrap();
-        hprintln!("received").unwrap();
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(received)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(received)).ok();
-        hprintln!("{}", from_utf8(&[received]).unwrap()).unwrap();
-        //rprintln!("{}", from_utf8(&[received]).unwrap());
+        let _len = rx1.read(&mut buffer);
+
+//        #[cfg(not(feature = "stm32h7xx"))]
+//        let received = block!(rx1.read()).unwrap();
+//        #[cfg(feature = "stm32h7xx")]
+//        let received = block!(rx1.read_byte()).unwrap();
+
+        //hprintln!("received").unwrap();  // for debugging
+
+        tx1.write(&buffer).ok();
+
+//        #[cfg(not(feature = "stm32h7xx"))]
+//        block!(tx1.write(received)).ok();
+//        #[cfg(feature = "stm32h7xx")]
+//        block!(tx1.write_byte(received)).ok();
+
+        hprintln!("{:?}", &buffer).unwrap();
+        //rprintln!("{}", from_utf8(&[buffer]).unwrap());
     }
 }

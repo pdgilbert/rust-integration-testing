@@ -282,15 +282,17 @@ pub fn setup() -> (impl LED, impl DelayNs) {
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    delay::Delay,
+ //   delay::Delay,
+    time::{ExtU32},
+    timer::{Timer},
+    delay::DelayFromCountDownTimer,
     gpio::{gpioc::PC13, Output, PushPull},
     prelude::*,
-    stm32::{CorePeripherals, Peripherals},   //TIM2, 
+    stm32::{Peripherals }, // TIM2
 };
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup() -> (impl LED, impl DelayNs) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
@@ -307,10 +309,11 @@ pub fn setup() -> (impl LED, impl DelayNs) {
         }
     }
     
-    //this requires Delay<TIM2> in blink so trait LED then need generic ... which I have not figured out.
-    //let delay = dp.TIM2.delay(&mut rcc); this requires Delay<TIM2> in blink so 
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
     
-    let delay = cp.SYST.delay(&mut rcc.clocks);
+    //let cp = CorePeripherals::take().unwrap();
+    //let delay = cp.SYST.delay(&mut rcc.clocks);
  
     (led, delay)
 }

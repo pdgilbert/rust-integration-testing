@@ -14,7 +14,7 @@ use crate::stm32xxx_as_hal::hal;
 use hal::{
     gpio::{Output, PushPull},
     prelude::*,
-    pac::Peripherals,
+    stm32::Peripherals,
 };
 
 // impl LED would work in function signature but does not work in rtic share

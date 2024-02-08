@@ -2,8 +2,7 @@
 use crate::stm32xxx_as_hal::hal;
 
 pub use hal::{
-    pac::Peripherals,
-    pac::{USART1, USART2},
+    stm32::{Peripherals, USART1, USART2},
     serial::{Serial, Tx, Rx, Error},
     prelude::*,
 };

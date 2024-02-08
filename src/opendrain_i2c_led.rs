@@ -19,7 +19,7 @@ pub use crate::delay::{Delay2Type as Delay};
 use crate::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
+      stm32::{Peripherals},
       gpio::{gpioa::PA8, Output, OpenDrain},
 };
 #[cfg(not(feature = "stm32f4xx"))]
@@ -225,6 +225,8 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Dela
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
+    rcc::{Clocks},
+    time::ExtU32,
     timer::Timer,
     delay::DelayFromCountDownTimer,
     prelude::*,
@@ -244,6 +246,11 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Dela
 
    let mut led = setup_led(gpioc); 
    led.off();
+
+   let clocks = rcc.clocks;  // not sure if this is right
+
+   let timer1 = Timer::new(dp.TIM3, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer1.start_count_down(100.millis()));
 
    (pin, i2c, led, delay, clocks)
 }

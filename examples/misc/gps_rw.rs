@@ -298,13 +298,15 @@ use stm32g4xx_hal::{
     stm32::Peripherals,
     stm32::{USART1, USART2},
     prelude::*,
-    serial::{FullConfig, Rx, Tx, NoDMA},
+    serial::{FullConfig, Rx, Tx, NoDMA, Error},
     gpio::{Alternate, gpioa::{PA2, PA3, PA9, PA10}},
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
-               Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>) {
+fn setup_from_dp(dp: Peripherals) -> (
+               Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
+               Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>,  NoDMA>
+) {
     let mut rcc = dp.RCC.constrain();
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -510,35 +512,9 @@ fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USA
 
 // End of hal/MCU specific setup. Following should be generic code.
 
-fn writeln(con: &mut Tx<USART1>, buf: &str) -> () {
-    for byte in buf.bytes() {write_b(con, byte)};
-()
-}
 
-fn write_b(con: &mut Tx<USART1>, b: u8) -> () {
-        #[cfg(feature = "stm32f4xx")]
-        block!(con.write(b)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(con.write_byte(b)).ok();
-()
-}
 
-fn read_b<E>(con: &mut Rx<USART2>) -> Result<u8, Error> {
-        #[cfg(feature = "stm32f4xx")]
-        let b = block!(con.read());
-        #[cfg(not(feature = "stm32f4xx"))]
-        let b = block!(con.read_byte());
-b
-}
-
-//something like this moght also work
-//fn read_b(con: &mut Rx<USART2>) -> Result<u8, Error> {
-//        #[cfg(feature = "stm32f4xx")]
-//        let b = con.read();
-//        #[cfg(not(feature = "stm32f4xx"))]
-//        let b = con.read_byte();
-//b
-//}
+use embedded_io::{Read, Write};
 
 
 #[entry]
@@ -546,6 +522,7 @@ b
 fn main() -> ! {
 
     // byte buffer up to 80  u8 elements on stack
+    let mut buffer_r: [u8; 80] = [0; 80];
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
     hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
     buffer.clear();
@@ -553,8 +530,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup_from_dp(dp); // console, GPS
 
-    writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
-    writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
+    tx_con.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?
 
     // read gps on usart2
     hprintln!("about to read GPS").unwrap();
@@ -563,15 +539,25 @@ fn main() -> ! {
     hprintln!("going into write/read loop ^C to exit ...").unwrap();
 
     // note that putting hprintln! in loop slows it too much and loses data.
-    let e: u8 = 9;
+    
+    // CLEANUP
+    let _e: u8 = 9;
     let mut good = false;
+   
     loop {
-//        let byte = match block!(read_b(&mut rx_gps)) { //something like this moght also work
-        let byte = match read_b::<Error>(&mut rx_gps) {
-            Ok(byt) => byt,
-            Err(_error) => e,
-        };
-        write_b(&mut tx_con, byte);
+        // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
+        let _len = rx_gps.read(&mut buffer_r);
+        // compare len and buf.len()  ?  AND HANDLE 0
+        // previously this was byte by byte
+        //let byte = match read_b::<Error>(&mut rx_gps) {
+        //   Ok(byt) => byt,
+        //    Err(_error) => e,
+        //};
+
+        tx_con.write(&buffer_r).unwrap();  // echo everything to console
+
+//  THE LOGIC OF THIS NEEDS TO BE FIXED
+let byte= 35;  //fake
         if byte == 36 {
             //  $ is 36. start of a line
             buffer.clear();
@@ -580,8 +566,7 @@ fn main() -> ! {
         if good {
             if buffer.push(byte).is_err() || byte == 13 {
                 //  \r is 13, \n is 10
-                for byte in &buffer {write_b(&mut tx_con, *byte)};
-                //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();
+                tx_con.write(&buffer).unwrap();
                 buffer.clear();
                 good = false;
                 //break;

@@ -8,11 +8,14 @@ use crate::stm32xxx_as_hal::hal;
 use hal::{
     i2c::I2c as I2cType,
   //  i2c::Error as i2cError,
-    pac::{I2C1, I2C2},
+    stm32::{I2C1, I2C2},
     prelude::*,
 };
 
+#[cfg(not(feature = "stm32g4xx"))] 
 pub type I2c1Type = I2cType<I2C1>;
+
+#[cfg(not(feature = "stm32g4xx"))] 
 pub type I2c2Type = I2cType<I2C2>;
 
 
@@ -344,25 +347,33 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, rcc: &mut Rcc) -> 
     (i2c1, i2c2)
 }
 
-
-
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    i2c::{Config},   //SDAPin, SCLPin
+    i2c::{Config},// SDAPin, SCLPin},
     gpio::{AlternateOD,
            gpioa::{PA8, PA9, Parts as PartsA},
            gpiob::{PB8, PB9, Parts as PartsB}
     },
     rcc::Rcc,
+    time::{ExtU32, RateExtU32},
 };
 
 #[cfg(feature = "stm32g4xx")]
+pub type I2c1Type = I2cType<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
+//pub type I2c1Type = I2c<I2C1, impl SCLPin<I2C1>, impl SDAPin<I2C1>>;
+
+#[cfg(feature = "stm32g4xx")]
+pub type I2c2Type = I2cType<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
+//pub type I2c2Type = I2c<I2C2, impl SCLPin<I2C2>, impl SDAPin<I2C2>>;
+
+#[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c1Type {
+//pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, rcc: &mut Rcc) -> I2c<I2C1, impl SCLPin<I2C1>, impl SDAPin<I2C1>> {
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     let sda = gpiob.pb9.into_alternate_open_drain(); 
 
-    //let i2c = I2c::new(i2c1, (scl, sda), 400.khz(), &clocks);
-    let i2c = i2c1.i2c(sda, scl, Config::new(400.khz()), rcc);
+    //let i2c = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
+    let i2c = i2c1.i2c(sda, scl, Config::new(400.kHz()), rcc);
 
     i2c
 }
@@ -373,11 +384,11 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpioa: PartsA, gpiob: PartsB, rcc
        -> (I2c1Type, I2c2Type) {
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     let sda = gpiob.pb9.into_alternate_open_drain(); 
-    let i2c1 = i2c1.i2c(sda, scl, Config::new(400.khz()), rcc);
+    let i2c1 = i2c1.i2c(sda, scl, Config::new(400.kHz()), rcc);
 
     let scl = gpioa.pa9.into_alternate_open_drain();
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let i2c2 = i2c2.i2c(sda, scl, Config::new(400.khz()), rcc);
+    let i2c2 = i2c2.i2c(sda, scl, Config::new(400.kHz()), rcc);
 
     (i2c1, i2c2)
 }

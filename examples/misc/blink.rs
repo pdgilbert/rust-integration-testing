@@ -262,6 +262,7 @@ pub fn setup() -> (PC13<Output<PushPull>>, Delay<TIM2>) {//NOT SURE WHAT PIN THI
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
+    time::{ExtU32},
     timer::{Timer, CountDownTimer},
     delay::DelayFromCountDownTimer,
     gpio::{gpioc::PC13, Output, PushPull},
@@ -291,7 +292,7 @@ pub fn setup() -> (PC13<Output<PushPull>>, DelayFromCountDownTimer<CountDownTime
     }
     
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
-    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     //let cp = CorePeripherals::take().unwrap();
     //let delay = cp.SYST.delay(&rcc.clocks);

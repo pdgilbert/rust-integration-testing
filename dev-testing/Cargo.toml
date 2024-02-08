@@ -19,7 +19,8 @@ stm32f4xx-hal = { version = "0.20.0", optional = true }
 #stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true } 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
-stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
+#stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
+stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true, branch = "hal-1" }
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
@@ -151,7 +152,7 @@ fugit = { version = "0.3.3", optional = true }
 embedded-hal        = "1.0"
 embedded-hal-bus    = "0.1.0"
 embedded-hal-async  = "1.0.0"
-#embedded-hal-io     = ""
+embedded-io         = "0.6.1"
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
@@ -205,10 +206,10 @@ stm32f0xx = ["stm32f0xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32f1xx = ["stm32f1xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32f3xx = ["stm32f3xx-hal/rt", "rtic", "rtic-monotonics" ]
 #stm32f4xx = ["stm32f4xx-hal/rt", "rtic", "dwt-systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics", "rtic-sync" ]  # rtic2 ?
+stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics", "rtic-sync" ] 
 stm32f7xx = ["stm32f7xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32g0xx = ["stm32g0xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32g4xx = ["stm32g4xx-hal/rt", "rtic", "rtic-monotonics" ]
+stm32g4xx = ["stm32g4xx-hal/rt", "rtic", "rtic-monotonics", "rtic-sync" ]
 stm32h7xx = ["stm32h7xx-hal/rt", "rtic", "rtic-monotonics", "rtic-sync" ]
 stm32l0xx = ["stm32l0xx-hal/rt", "rtic", "rtic-monotonics" ]
 stm32l1xx = ["stm32l1xx-hal/rt", "rtic", "rtic-monotonics" ]
@@ -227,6 +228,7 @@ stm32f722     = ["stm32f7xx-hal/stm32f722"  ] # no adc in hall yet
 stm32f769     = ["stm32f7xx-hal/stm32f769"  ] # this has adc support but no access to internal channel for mcu temperature
 stm32g081     = ["stm32g0xx-hal/stm32g081"  ]
 stm32g473     = ["stm32g4xx-hal/stm32g473"  ]
+stm32g474     = ["stm32g4xx-hal/stm32g474"  ]
 stm32h742     = ["stm32h7xx-hal/stm32h742"  ]
 # see https://www.st.com/resource/en/datasheet/stm32l072v8.pdf  p12 for some MCU variants
 #stm32l0x2     =    ["stm32l0xx-hal/stm32l0x2",  "stm32l0xx-hal/mcu-STM32L072KZTx"]
