@@ -61,6 +61,14 @@ use hal::{
 //   gpio::GpioExt,
 //};
 
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::Timer,
+    time::{ExtU32, RateExtU32},
+    i2c::Config,
+    delay::DelayFromCountDownTimer,
+};
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
    delay::DelayFromCountDownTimer,
@@ -85,6 +93,27 @@ pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { /
 
    (i2c, delay)
 }
+
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_from_dp(dp: Peripherals) ->  (impl I2cTrait<u8>, impl DelayNs,) {
+   let mut rcc = dp.RCC.constrain();
+
+   let gpiob = dp.GPIOB.split(&mut rcc);
+
+   let scl = gpiob.pb8.into_alternate_open_drain(); 
+   let sda = gpiob.pb9.into_alternate_open_drain(); 
+
+   let i2c = dp.I2C1.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
+
+   let clocks = rcc.clocks;  // not sure if this is right
+
+   let timer1 = Timer::new(dp.TIM3, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer1.start_count_down(100.millis()));
+
+   (i2c, delay)
+}
+
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?

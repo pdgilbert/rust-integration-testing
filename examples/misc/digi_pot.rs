@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //! Based on example  https://github.com/eldruin/driver-examples/stm32f3-discovery/examples/mcp42x-f3.rs
 //!  which runs on the STM32F3 Discovery board using SPI1. On that board the harware configuration is
 //!
@@ -38,7 +40,6 @@ use cortex_m_rt::entry;
 use mcp4x;
 
 use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType};
 // need to resolve move problem to get this to work
 //use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 
@@ -64,7 +65,7 @@ fn setup() -> (
     Spi<SPI1, PA5<Alternate<AF0>>, PA6<Alternate<AF0>>, PA7<Alternate<AF0>>, EightBit>,
     PA1<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     //fn setup() -> (Spi<SPI1, impl SckPin<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>>) {
     //fn setup() -> (Spi<SPI1, impl Pins<SPI1>, MisoPin<SPI1>, MosiPin<SPI1>, EightBit>, PA1<Output<PushPull>> ) {
@@ -111,7 +112,7 @@ fn setup() -> (
     Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
     PA4<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -162,7 +163,7 @@ fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,
     PB5<Output<PushPull>>,
     LedType,   //impl LED,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -222,7 +223,7 @@ fn setup() -> (
     Spi<SPI1, TransferModeNormal>,
     PA1<Output<PushPull>>,
     LedType,   //impl LED,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -252,7 +253,7 @@ fn setup() -> (
     let led = setup_led(dp.GPIOC.split());
 
     //let delay = cp.SYST.delay(&clocks);
-    let delay = dp.TIM2.delay(&clocks);
+    let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
 
     (spi, cs, led, delay)
 }
@@ -273,7 +274,7 @@ fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>, Enabled<u8>>,
     PA1<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
@@ -319,7 +320,7 @@ fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA1<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -346,9 +347,10 @@ fn setup() -> (
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     timer::Timer,
+    time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
     gpio::{gpioa::PA8, Output, PushPull},
-    stm32::{Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, MODE_0},
 };
@@ -358,7 +360,7 @@ fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA8<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
 
@@ -372,7 +374,7 @@ fn setup() -> (
              gpioa.pa7.into_alternate(), // mosi  on PA7
             ),
         MODE_0,
-        400.khz(),
+        400.kHz(),
         &mut rcc,
     );
 
@@ -383,10 +385,12 @@ fn setup() -> (
 
     //let delay = cp.SYST.delay(&mut rcc.clocks);
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
-    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     (spi, cs, led, delay)
 }
+
+pub use embedded_hal::delay::DelayNs;
 
 
 
@@ -395,11 +399,12 @@ use stm32h7xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Enabled, Spi},
+    spi::{Enabled, Spi, Config, Mode},
+    delay::DelayFromCountDownTimer,
 };
 
 #[cfg(feature = "stm32h7xx")]
-fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
+fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, impl DelayNs) {
     let dp = Peripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
@@ -425,7 +430,9 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, DelayType) {
     cs.set_high();
 
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
-    let delay = DelayType{};
+
+    let timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &clocks);
+    let delay = DelayFromCountDownTimer::new(timer);
 
     (spi, cs, led, delay)
 }
@@ -447,7 +454,7 @@ fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA1<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
@@ -497,7 +504,7 @@ fn setup() -> (
     Spi<SPI1, impl Pins<SPI1>>,
     PA4<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
@@ -540,7 +547,7 @@ fn setup() -> (
     Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>)>,
     PA1<Output<PushPull>>,
     LedType,
-    DelayType,
+    impl DelayNs,
 ) {
     let dp = Peripherals::take().unwrap();
     let mut flash = dp.FLASH.constrain();

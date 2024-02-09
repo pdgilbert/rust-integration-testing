@@ -19,7 +19,7 @@ pub use crate::delay::{Delay2Type as Delay};
 use crate::stm32xxx_as_hal::hal;
 
 use hal::{
-      stm32::{Peripherals},
+      pac::{Peripherals},
       gpio::{gpioa::PA8, Output, OpenDrain},
 };
 #[cfg(not(feature = "stm32f4xx"))]
@@ -229,7 +229,6 @@ use stm32g4xx_hal::{
     time::ExtU32,
     timer::Timer,
     delay::DelayFromCountDownTimer,
-    prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]

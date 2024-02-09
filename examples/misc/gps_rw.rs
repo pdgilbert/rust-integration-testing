@@ -1,3 +1,4 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Serial interface read GPS one usart and write on another usart to USB-TTL console (minicom).
 //!
 //! usart1 connect the Tx pin pa9  to the Rx pin of a serial-usb converter
@@ -27,7 +28,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 //use core::str;
 //use core::ascii;
-use nb::block;
+//use nb::block;
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -295,10 +296,9 @@ fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, FullConfig>, Rx<USART1, FullCon
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    stm32::Peripherals,
-    stm32::{USART1, USART2},
+    pac::{Peripherals, USART1, USART2},
     prelude::*,
-    serial::{FullConfig, Rx, Tx, NoDMA, Error},
+    serial::{FullConfig, Rx, Tx, NoDMA},
     gpio::{Alternate, gpioa::{PA2, PA3, PA9, PA10}},
 };
 
@@ -330,7 +330,7 @@ use stm32h7xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2},
     prelude::*,
-    serial::{Rx, Tx, Error},
+    serial::{Rx, Tx},
 };
 
 #[cfg(feature = "stm32h7xx")]

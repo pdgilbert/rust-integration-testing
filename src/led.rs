@@ -12,9 +12,9 @@ use crate::stm32xxx_as_hal::hal;
 
 //#[cfg(not(feature = "stm32f4xx"))] //if giving warning with stm32f4xx but IS NEEDED for stm32h7xx to resolve some traits.
 use hal::{
+    pac::Peripherals,
     gpio::{Output, PushPull},
     prelude::*,
-    stm32::Peripherals,
 };
 
 // impl LED would work in function signature but does not work in rtic share

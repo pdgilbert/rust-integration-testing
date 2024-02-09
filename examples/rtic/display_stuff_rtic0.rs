@@ -31,10 +31,10 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::stm32,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
@@ -66,11 +66,24 @@ mod app {
 
     use hal::{
         pac::{I2C1},
-        i2c::I2c as I2cType,
+        i2c::I2c as halI2c,
         //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
     };
 
 //    use embedded_hal::i2c::I2c as I2cTrait; 
+
+    #[cfg(not(feature = "stm32g4xx"))]
+    type I2cType = halI2c<I2C1>;
+
+    #[cfg(feature = "stm32g4xx")]
+    use stm32g4xx_hal::{
+        gpio::{AlternateOD, gpiob::{PB8, PB9}},
+    };
+
+    #[cfg(feature = "stm32g4xx")]
+    type I2cType = halI2c<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
+    //type I2cType  = halI2c<I2C1, impl SCLPin<I2C1>, impl SDAPin<I2C1>>;
+
 
 
     fn show_display<S>(
@@ -118,7 +131,7 @@ mod app {
 
     #[local]
     struct Local {
-        display: Ssd1306<I2CInterface<I2cType<I2C1>>, 
+        display: Ssd1306<I2CInterface<I2cType>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
         //text_style: TextStyle,

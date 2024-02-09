@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
 //!  
 //!  Measure the temperature and humidity from a DHT11 or DHT22 on data pin (A8) and display on OLED with i2c.

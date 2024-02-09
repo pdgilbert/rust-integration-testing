@@ -21,14 +21,15 @@ pub use crate::monoclock::{MONOCLOCK};
 pub use crate::stm32xxx_as_hal::hal;
 
 pub use hal::{
-      stm32::{Peripherals, CorePeripherals, USART1},
+      pac::{Peripherals, CorePeripherals, USART1},
       serial::{Serial, Tx, Error},
       gpio::{gpioa::PA8, Output, OpenDrain},
       prelude::*,
 };
 
-#[cfg(not(feature = "stm32f3xx"))] 
+#[cfg(any(feature = "stm32f4xx", feature = "stm32h7xx"))] 
 pub type TxType = Tx<USART1>;
+
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
@@ -318,8 +319,8 @@ use stm32g4xx_hal::{
 };
 
 
-//#[cfg(feature = "stm32g4xx")]
-//pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
+#[cfg(feature = "stm32g4xx")]
+pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
 //pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]

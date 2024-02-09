@@ -21,10 +21,9 @@ use stm32g0xx_hal::timer::delay::Delay;
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    timer::{Timer, CountDownTimer},
+    pac::{TIM2},
+    timer::{CountDownTimer},
     delay::DelayFromCountDownTimer,
-    stm32::{TIM2, Peripherals},
-    prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]

@@ -368,7 +368,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     //let mut delay = cp.SYST.delay(&rcc.clocks);
    
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
-    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
+    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     let gpioa = dp.GPIOA.split(&mut rcc);
     let pin = gpioa.pa1.into_analog();

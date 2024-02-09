@@ -597,18 +597,20 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc>) {
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     timer::Timer,
+    time::{ExtU32},
     delay::DelayFromCountDownTimer,
-    adc::{config::{SampleTime, Continuous, Sequence}, 
+    adc::{config::{SampleTime, Continuous, Sequence, Resolution}, 
           Adc, Active, Disabled, AdcClaim, ClockSource, Temperature, Vref},
     gpio::{gpioa::{PA0, PA4}, Analog},
-    stm32::{Peripherals, ADC1, ADC2},
+    pac::{Peripherals, ADC1, ADC2},
     prelude::*,
 };
 
 #[cfg(feature = "stm32g4xx")]
 fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
 
-    // compare https://github.com/stm32-rs/stm32g4xx-hal/blob/master/examples/adc-continious.rs
+    // see https://github.com/stm32-rs/stm32g4xx-hal/blob/main/src/adc.rs
+    //     https://github.com/stm32-rs/stm32g4xx-hal/blob/master/examples/adc-continious.rs
     type McuTemperatureType = PA0<Analog>;
 
     let dp = Peripherals::take().unwrap();
@@ -618,7 +620,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
     //let mut delay = cp.SYST.delay(&rcc.clocks);
    
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
-    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.ms()));
+    let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -655,7 +657,8 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
         fn read_tempC(&mut self, a: &mut AdcsType) -> i32 {
            let z = &mut a.ad_1st;
           //z = z.wait_for_conversion_sequence().unwrap_active();
-          Temperature::temperature_to_degrees_centigrade(z.current_sample()) as i32  //  NOT CHECKED
+          // ref voltage 3.2v ?  resolution? see https://github.com/stm32-rs/stm32g4xx-hal/blob/main/src/adc.rs
+          Temperature::temperature_to_degrees_centigrade(z.current_sample(), 3.2, Resolution::Eight) as i32  //  NOT CHECKED
         }
     }
 

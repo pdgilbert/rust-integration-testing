@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //! Read GPS on usart serial interface and display on OLED with i2c.
 //! GPS longitude and latitude in 100ths of a degree (taken as characters
 //! from GPS messages without any conversion).
@@ -28,11 +30,10 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
-//use embedded_io::Read;
+use embedded_io::Read;
 
 //use core::fmt::Write;  // for writeln
 use cortex_m_semihosting::hprintln;
-use nb::block;
 
 //builtin include FONT_6X10, FONT_8X13, ....
 use embedded_graphics::{
@@ -356,9 +357,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g4xx")] 
 use stm32g4xx_hal::{
-    delay::Delay,
+    timer::Timer,
+    time::{ExtU32, RateExtU32},
+    delay::DelayFromCountDownTimer,
     i2c::{I2c, Config},
-    stm32::{CorePeripherals, Peripherals, I2C2, USART2},
+    pac::{Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
     gpio::{Alternate, AlternateOD, gpioa::{PA2, PA3, PA8, PA9}},
@@ -369,12 +372,11 @@ use stm32g4xx_hal::{
 fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>, 
                I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,  //I2c<I2C2, impl Pins<I2C2>>, 
                impl DelayNs) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
     let gpioa = dp.GPIOA.split(&mut rcc);
-    let gpiob = dp.GPIOB.split(&mut rcc);
+    //let gpiob = dp.GPIOB.split(&mut rcc);
 
     let (tx2, rx2) = dp.USART2.usart(   //tx, rx  for GPS
         gpioa.pa2.into_alternate(), 
@@ -383,9 +385,11 @@ fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate
 
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
 
-    let delay = cp.SYST.delay(&mut rcc.clocks);
+    //let delay = cp.SYST.delay(&mut rcc.clocks);
+    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     (
         tx2,
@@ -676,23 +680,18 @@ fn main() -> ! {
     //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
     buffer.clear();
 
-    let e: u8 = 9;
     let mut good = false;
-    //let mut size: usize = 0;
 
     //asm::bkpt();
 
     loop {
-        #[cfg(feature = "stm32f4xx")]
-        let z = rx_gps.read();
-        #[cfg(not(feature = "stm32f4xx"))]
-        let z = rx_gps.read_byte();
-        let byte = match block!(z) {
-        //let byte = match block!(rx_gps.read_byte()) {
-            Ok(byt) => byt,
-            Err(_error) => e,
-        };
-        //hprintln!("{}", byte).unwrap();
+        // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
+        let _len = rx_gps.read(&mut buffer);
+        //hprintln!("{}", buffer).unwrap();
+        //tx_con.write(&buffer).unwrap();  // echo everything to console
+
+//  THE LOGIC OF THIS NEEDS TO BE FIXED
+let byte= 35;  //fake
         if byte == 36 {
             //  $ is 36. start of a line
             buffer.clear();

@@ -6,9 +6,9 @@
 use crate::stm32xxx_as_hal::hal;
 
 use hal::{
+    pac::{I2C1, I2C2},
     i2c::I2c as I2cType,
   //  i2c::Error as i2cError,
-    stm32::{I2C1, I2C2},
     prelude::*,
 };
 
@@ -355,7 +355,7 @@ use stm32g4xx_hal::{
            gpiob::{PB8, PB9, Parts as PartsB}
     },
     rcc::Rcc,
-    time::{ExtU32, RateExtU32},
+    time::{RateExtU32},
 };
 
 #[cfg(feature = "stm32g4xx")]
