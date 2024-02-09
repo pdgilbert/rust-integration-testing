@@ -477,7 +477,7 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [blackpill-stm32f401, none-stm32h742]  
+        brd: [blackpill-stm32f401, none-stm32g474, none-stm32h742]  
         #brd: [bluepill, discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
@@ -494,10 +494,10 @@ jobs:
         #     mcu:  stm32f303xc
         #     hal: "stm32f3xx"
         #     trg: "thumbv7em-none-eabihf"
-        #   - brd: "none-stm32g473"
-        #     mcu:  stm32g473
-        #     hal: "stm32g4xx"
-        #     trg: "thumbv7em-none-eabihf"
+           - brd: "none-stm32g474"
+             mcu:  stm32g474
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32h742"
              mcu:  stm32h742             
              hal: "stm32h7xx"
