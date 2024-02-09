@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
 //!  
 //!  Measure the temperature and humidity from a DHT11 sensor and print with hprintln (to
@@ -59,18 +61,19 @@ use hal::{
 type DhtType = PA8<Output<OpenDrain>>;
 
 
-// CONSIDER
-// use rust_integration_testing_of_examples::dht_i2c_led_usart;
-
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-      //timer::Delay,
-      timer::SysTimerExt,  // trait
-      //rcc::Clocks,
+    pac::TIM2,
+    timer::Delay as halDelay,
+    //timer::SysTimerExt,  // trait
+    //rcc::Clocks,
 };
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
+type DelayMsType =  halDelay<TIM2, 1000000_u32>;
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType) {
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
 
@@ -78,24 +81,61 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
    let mut dht = gpioa.pa8.into_open_drain_output();
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-   //SysTick: System Timer  delay
-   //let delay = Delay::new(cp.SYST, clocks);
-   let delay = cp.SYST.delay(&clocks);
+   //let delay = cp.SYST.delay(&clocks);  //SysDelay  System Timer  delay (SysTick)
+   let delay = dp.TIM2.delay(&clocks);
+
+   (dht, delay)
+}
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    pac::TIM2,
+    //delay::Delay as DelayMsType,
+    time::ExtU32,
+    timer::{Timer, CountDownTimer},
+    delay::DelayFromCountDownTimer,
+};
+
+// A DelayMs type is needed for dht read (as of Jan 2024).  impl DelayNs does not work.
+// This does work, but possbly should not.
+#[cfg(feature = "stm32g4xx")]
+pub type DelayMsType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType ) {
+   let mut rcc = dp.RCC.constrain();
+
+   let gpioa = dp.GPIOA.split(&mut rcc);
+   let mut dht = gpioa.pa8.into_open_drain_output();
+   let _ = dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+
+   let clocks = rcc.clocks; 
+
+   let timer1 = Timer::new(dp.TIM2, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer1.start_count_down(100.millis()));
+   //let delay = cp.SYST.delay(&clocks);
 
    (dht, delay)
 }
 
 
 
-//#[cfg(feature = "stm32h7xx")]
-//use stm32h7xx_hal::{
-//      //delay::Delay,
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+    pac::TIM2,
+    timer::{Timer,},
+    //delay::Delay as DelayMsType,
+    delay::DelayFromCountDownTimer,
 //      //timer::TimerExt,
 //      //rcc::CoreClocks as Clocks,
-//};
+};
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
+type DelayMsType = DelayFromCountDownTimer<Timer<TIM2>>;
+
+#[cfg(feature = "stm32h7xx")]
+pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, DelayMsType) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -106,9 +146,9 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, impl DelayNs) {
    let mut dht = gpioa.pa8.into_open_drain_output();
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
    
-   //SysTick: System Timer  delay
-   //let delay = Delay::new(cp.SYST, clocks);   //May work with DelayNs
-   let delay = cp.SYST.delay(clocks);
+   //let delay = cp.SYST.delay(clocks);  //SysDelay  System Timer  delay (SysTick)
+   let timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &clocks);
+   let delay = DelayFromCountDownTimer::new(timer);
 
    (dht, delay)
 }
