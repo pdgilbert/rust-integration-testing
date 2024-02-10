@@ -46,7 +46,7 @@ use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
       pac::{Peripherals},
-      pac::{CorePeripherals},
+      //pac::{CorePeripherals},
 };
 
 #[entry]
@@ -54,19 +54,19 @@ fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
     //hprintln!("AHT10 example").unwrap();
-    let cp = CorePeripherals::take().unwrap();
+    //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, _delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
     
-    #[cfg(not(feature = "stm32f4xx"))]
-    let mut delay = Delay::new(cp.SYST, clocks); 
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    let mut delay = Delay::new(cp.SYST, clocks); 
     // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
 
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::timer::SysTimerExt;
-    #[cfg(feature = "stm32f4xx")]
-    let mut delay = cp.SYST.delay(&clocks);
+//    #[cfg(feature = "stm32f4xx")]
+//    use stm32f4xx_hal::timer::SysTimerExt;
+//    #[cfg(feature = "stm32f4xx")]
+//    let mut delay = cp.SYST.delay(&clocks);
 
     led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
 

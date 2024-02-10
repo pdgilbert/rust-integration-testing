@@ -1,6 +1,9 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
 //! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
 //! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for version using dma.
+     THIS REQUIRES SHARING THE BUS
 
 #![deny(unsafe_code)]
 #![no_std]

@@ -1,20 +1,22 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!     COMPILING BUT SOME VALUES ARE FAKE  Feb 10, 2024.
+//!
 //! Jan, 2023 - This is working with USB probe and with battery. Run tested on blackpill.
 //!       Note that battery current will only be non-zero when running on battery.
 //!       It is zero when running on the probe.             
 //! 
 //!       This example has a  workaround for SSD1306  text_style.
 //! 
-//! Measure battery current and display on OLED with shared bus on i2c2. With minor changes
-//! this also works on i2c1. Some sensor only work
-//! on i2c1 so other example need this to be on i2c2 and it is used here of consistency.
 //! This example monitors the current to/from the battery. Using something like a TP5000 module,
 //! configured for battery chemistry, a solar panel or usb charger can be attached to the
 //! 
-
-//! The SSD1306 display and the ina219 battery monitoring are the same 12cbus.
+//! Measure battery current using ina219 on i2c2 and display on OLED ssd1306 on i2c1. 
+//! These are on different buses in this example in order to test ina219 and avoid
+//! complications of bus sharing. Most other examples have ina219 and ssd1306 on a shared bus
+//! because some sensors cannot share a bus.
 //! (Temp/humidity sensor htu21d's  humidity reading seems to conflict with ina219 (error reading 
 //! humidity) and AHT10 does not work with anything else on the same i2c bus so having display and
-//! ina219 together on one bus is for future considerations.)
+//! ina219 together on one bus is useful.)
 
 //! Compare examples ina219-display, htu2xd_rtic, temp-humidity-display. 
 //! See data sheet at https://www.ti.com/product/INA219
@@ -49,7 +51,13 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use  ina219::{INA219,}; //INA219_ADDR
+
+    /////////////////////   ina
+    use ina219::{address::{Address, Pin}, 
+             SyncIna219,
+             calibration::UnCalibrated
+    };
+
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
@@ -70,12 +78,12 @@ mod app {
     //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
-type  DisplayType = ssd1306::prelude::DisplaySize128x32;
+    type  DisplayType = ssd1306::prelude::DisplaySize128x32;
 
-//common display sizes are 128x64 and 128x32
-const DISPLAYSIZE: DisplayType = DisplaySize128x32;
+    //common display sizes are 128x64 and 128x32
+    const DISPLAYSIZE: DisplayType = DisplaySize128x32;
 
-const VPIX:i32 = 16;  // vertical pixels for a line, including space
+    const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     use embedded_graphics::{
         mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
@@ -93,13 +101,9 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{ I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{ I2c1Type, I2c2Type, LED, LedType, DelayNs, MONOCLOCK};
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
-
-    fn show_display<S>(v: u16,  vs: i16,  i: i16,  p: i16, 
+    fn show_display<S>(v: u16,  vs: i32,  i: i16,  p: i16, pc: i32,
         //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
@@ -112,11 +116,6 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
     
        let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
   
-       // power caclulated by P=IV.  (mA x mV /1000 = mW)
-       //If the ina is wired with Vin- to battery and Vin+ to load sign then the
-       // display will show "+" for battery charging and "-" for discharging.
-       let pc = i as i32 * v as i32 / 1000_i32;
-
        write!(lines[0], "V: {}mv Vs: {}mV", v, vs).unwrap();
        write!(lines[1], "I: {}mA P:{}mW [{}mW]", i,  p, pc).unwrap();
 
@@ -146,14 +145,13 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (_i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  
         led.off();
 
-        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
-        let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
+        let interface = I2CDisplayInterface::new(i2c1);
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
@@ -170,9 +168,11 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
         Systick.delay_ms(2000u32);    
 
         // Start the battery sensor.
-        let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
+        let mut ina = SyncIna219::new( i2c2, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+        ina.calibrate(UnCalibrated).unwrap();
+
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
-        ina.calibrate(0x0100).unwrap(); // possible change. See the data sheet.
+
         Systick.delay_ms(15u32);     // Wait for sensor
 
         read_and_display::spawn().unwrap();
@@ -187,9 +187,10 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
-                             DisplayType, BufferedGraphicsMode<DisplayType>>,
-        ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
+        display:  Ssd1306<I2CInterface<I2c1Type>, DisplayType, BufferedGraphicsMode<DisplayType>>,
+
+        ina:  SyncIna219<I2c2Type, UnCalibrated>,
+        //ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
     }
 
     #[task(shared = [led, ], local = [ina, display ] )]
@@ -200,28 +201,36 @@ const VPIX:i32 = 16;  // vertical pixels for a line, including space
        loop { 
            blink::spawn(BLINK_DURATION).ok();
 
-           let v = match ina.voltage() {
-               Ok(v) => v,
+        
+           let v = match ina.bus_voltage() {
+               Ok(v) => v.voltage_mv(),
                Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
            };
 
            let vs = match ina.shunt_voltage() {
-               Ok(v) => v,
-               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+               Ok(v) => v.shunt_voltage_uv(),
+               Err(_e)   => 999i32  //write!(lines[0], "Err: {:?}", e).unwrap()
            };
 
-           let i = match ina.current() {
-               Ok(v) => v,
-               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-           };
+           let i =  0;  //FAKE
+          // let i = match ina.current() {
+          //     Ok(v) => v,
+          //     Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+          // };
 
-           let p = match ina.power() {  // ina indicated power
-               Ok(v) => v,
-               Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-           };
+           let p = 0;  //FAKE
+          // let p = match ina.power() {  // ina indicated power
+          //     Ok(v) => v,
+          //     Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+          // };
            
+           // power caclulated by P=IV.  (mA x mV /1000 = mW)
+           //If the ina is wired with Vin- to battery and Vin+ to load sign then the
+           // display will show "+" for battery charging and "-" for discharging.
+           let pc = i as i32 * v as i32 / 1000_i32;
+         
 
-           show_display(v, vs, i, p, cx.local.display);
+           show_display(v, vs, i, p, pc, cx.local.display);
            
            Systick::delay(READ_INTERVAL.secs()).await;
        }

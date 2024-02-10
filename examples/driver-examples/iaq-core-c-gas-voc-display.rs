@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //! Continuously measure the CO2 and TVOC equivalents in the air with an
 //! iAQ-Core-C module and print the values to an SSD1306 OLED display.
 //!

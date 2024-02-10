@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //! Feb 6, 2023 - This is working with USB probe and with battery. 
 //!              Run tested on bluepill  (scl,sda) i2c1 on (PB8,PB9) and i2c2 on (PB10,PB11).
 //!                    with aht10 on i2c1 and ssd1306 on i2c2.
@@ -14,7 +16,10 @@
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 //! 
-//! Measure the temperature and humidity from an AHT10 on data pin i2c2 and display on OLED with i2c1.
+//! Measure the temperature and humidity from an AHT10 on i2c2.
+//! Measure the battery with ina219 on i2c1 and display on OLED with ssd1306 on i2c1.
+     THIS REQUIRES SHARING THE BUS
+//!     
 //! Compare examples dht_rtic, aht10_displau.
 //! Blink (onboard) LED with short pulse evry read.
 //! On startup the LED is set on for a second in the init process.

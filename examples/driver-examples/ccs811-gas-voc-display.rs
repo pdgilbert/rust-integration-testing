@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!
 //! Continuously measure the eCO2 and eTVOC in the air and print it to an SSD1306 OLED display.
 //! This uses constant temperature and humidity rather than measuring. 
 //!

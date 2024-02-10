@@ -137,7 +137,10 @@ type OpenDrainType = PA8<Output<OpenDrain>>;
         //let measurements: [AlgorithmResult; 1200] = [AlgorithmResult {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
-//  SHARED BUS WORKS HERE on stm32f4xx  (WITH Ccs811Awake NOT I2CDisplayInterface) Jan 2024
+//  SHARED BUS COMPILES HERE on stm32f4xx  (WITH Ccs811Awake NOT I2CDisplayInterface) Jan 2024
+//  shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } // compiles Feb 10, 2024
+//  shared-bus = { version = "0.2.2", features = ["cortex-m"] }                            // compiles Feb 10, 2024
+//  shared-bus = { version = "0.3.1", features = ["cortex-m"] }                            // compiles Feb 10, 2024
        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
 
 //    let interface = I2CDisplayInterface::new(manager.acquire_i2c());

@@ -7,6 +7,7 @@
 //!  The DHT11 data pin is connectted to pin A8 on the MCU board and has
 //!  a pull up resistor. (18K ohms used in some testing.)
 //!
+     THIS REQUIRES SHARING THE BUS
 
 #![deny(unsafe_code)]
 #![no_std]
