@@ -13,7 +13,16 @@ pub use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32f0xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32f0xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32f0xx")]
+pub type Rx2Type = Rx<USART2>;
+
+#[cfg(feature = "stm32f0xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let mut rcc = dp.RCC.configure().sysclk(48.mhz()).freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -40,7 +49,16 @@ pub use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32f1xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32f1xx")]
+pub type Tx2Type = Tx<USART3>;  // NB 3 not 2
+#[cfg(feature = "stm32f1xx")]
+pub type Rx2Type = Rx<USART3>;
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let p = Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
@@ -84,6 +102,21 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx
 pub use stm32f3xx_hal::{
     serial::{RxPin, TxPin},
 };
+
+// THIS WILL FAIL IF USED, but stm32f3xx is not yet eh-1 ready
+#[cfg(feature = "stm32f3xx")]
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32f3xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32f3xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32f3xx")]
+pub type Rx2Type = Rx<USART2>;
+
+//pub type Tx1Type = Tx<USART1, impl TxPin<USART1>>;
+//pub type Rx1Type = Rx<USART1, impl RxPin<USART1>>;
+//pub type Tx2Type = Tx<USART2, impl TxPin<USART2>; 
+//pub type Rx2Type = Rx<USART2, impl RxPin<USART2>>;
 
 #[cfg(feature = "stm32f3xx")]
 pub fn setup_from_dp(dp: Peripherals) -> (
@@ -141,7 +174,16 @@ pub use stm32f4xx_hal::{
 };
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32f4xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32f4xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32f4xx")]
+pub type Rx2Type = Rx<USART2>;
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let clocks = dp.RCC.constrain().cfgr.freeze();
     let gpioa = dp.GPIOA.split();
     let (tx1, rx1) = Serial::new(
@@ -181,7 +223,16 @@ pub use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32f7xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32f7xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32f7xx")]
+pub type Rx2Type = Rx<USART2>;
+
+#[cfg(feature = "stm32f7xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let clocks = dp.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
@@ -233,7 +284,16 @@ pub use stm32g0xx_hal::{
 };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, FullConfig>, Rx<USART1, FullConfig>, Tx<USART2, FullConfig>, Rx<USART2, FullConfig>) {
+pub type Tx1Type = Tx<USART1, FullConfig>;
+#[cfg(feature = "stm32g0xx")]
+pub type Rx1Type = Rx<USART1, FullConfig>;
+#[cfg(feature = "stm32g0xx")]
+pub type Tx2Type = Tx<USART2, FullConfig>; 
+#[cfg(feature = "stm32g0xx")]
+pub type Rx2Type = Rx<USART2, FullConfig>;
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let mut rcc = dp.RCC.constrain();
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -258,8 +318,16 @@ pub use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>, Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>,
-               Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>) {
+pub type Tx1Type = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>;
+#[cfg(feature = "stm32g4xx")]
+pub type Rx1Type = Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>;
+#[cfg(feature = "stm32g4xx")]
+pub type Tx2Type = Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>; 
+#[cfg(feature = "stm32g4xx")]
+pub type Rx2Type = Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>;
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let mut rcc = dp.RCC.constrain();
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -278,9 +346,18 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1, PA9<Alternate<7_u8>>, NoDMA
 
 
 
+#[cfg(feature = "stm32h7xx")]
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32h7xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32h7xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32h7xx")]
+pub type Rx2Type = Rx<USART2>;
+
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -322,7 +399,16 @@ pub use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32l0xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32l0xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32l0xx")]
+pub type Rx2Type = Rx<USART2>;
+
+#[cfg(feature = "stm32l0xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -353,6 +439,15 @@ pub use stm32l1xx_hal::{
     rcc, // for ::Config but note name conflict with next
     serial::{Config, SerialExt,},
 };
+
+#[cfg(feature = "stm32l1xx")]
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32l1xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32l1xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32l1xx")]
+pub type Rx2Type = Rx<USART2>;
 
 // The Heltec lora_node 151 uses USART2 and USART3 pins for on board LoRa connections and power
 // detection. See
@@ -399,7 +494,16 @@ pub use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
+pub type Tx1Type = Tx<USART1>;
+#[cfg(feature = "stm32l4xx")]
+pub type Rx1Type = Rx<USART1>;
+#[cfg(feature = "stm32l4xx")]
+pub type Tx2Type = Tx<USART2>; 
+#[cfg(feature = "stm32l4xx")]
+pub type Rx2Type = Rx<USART2>;
+
+#[cfg(feature = "stm32l4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);

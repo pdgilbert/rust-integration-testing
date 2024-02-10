@@ -30,6 +30,8 @@ use cortex_m_semihosting::hprintln;
 //use core::ascii;
 //use nb::block;
 
+use embedded_io::{Read, Write};
+
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] // eg stm32f030xc  stm32f042
@@ -512,9 +514,6 @@ fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USA
 
 // End of hal/MCU specific setup. Following should be generic code.
 
-
-
-use embedded_io::{Read, Write};
 
 
 #[entry]
