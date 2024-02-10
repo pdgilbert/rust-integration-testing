@@ -5,13 +5,15 @@
 //!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!
-//!  On "BluePill" (stm32f1xx_hal) using I2C1.
+//!  On "BlackPill" (stm32f4xx_hal) using I2C1 and I2C2. See file src/i2c.rs for pin settings.
 //! ```
-//! BP   <-> MLX90614 <-> Display
-//! GND  <-> GND      <-> GND
-//! 3.3V <-> VCC      <-> VDD
-//! PB8  <-> SCL      <-> SCL
-//! PB9  <-> SDA      <-> SDA
+//! BP   <-> iAQ-Core-C <-> Display
+//! GND  <-> GND        <-> GND
+//! 3.3V <-> VCC        <-> VDD
+//! PB8  <->            <-> SCL1
+//! PB9  <->            <-> SDA1
+//! PB10 <-> SCL      
+//! PB3  <-> SDA       
 //! ```
 
 #![deny(unsafe_code)]
@@ -47,10 +49,9 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c1);
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -61,7 +62,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut sensor = Mlx9061x::new_mlx90614(manager.acquire_i2c(), SlaveAddr::default(), 5).unwrap();
+    let mut sensor = Mlx9061x::new_mlx90614(i2c2, SlaveAddr::default(), 5).unwrap();
 
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
     loop {
