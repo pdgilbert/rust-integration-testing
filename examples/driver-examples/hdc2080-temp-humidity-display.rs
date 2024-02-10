@@ -20,8 +20,9 @@
 
 use hdc20xx::{Hdc20xx, SlaveAddr};
 
-use core::fmt::Write;
 use embedded_hal::delay::DelayNs;
+//use embedded_io::{Read, Write};
+use core::fmt::Write;
 use cortex_m_rt::entry;
 use nb::block;
 
@@ -48,10 +49,9 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    let interface = I2CDisplayInterface::new(i2c1);
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -62,7 +62,7 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let mut sensor = Hdc20xx::new(manager.acquire_i2c(), SlaveAddr::default());
+    let mut sensor = Hdc20xx::new(i2c2, SlaveAddr::default());
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
     loop {
         // Blink LED 0 to check that everything is actually running.
@@ -70,7 +70,7 @@ fn main() -> ! {
         led.blink(50_u16, &mut delay);
         delay.delay_ms(50);
 
-        let data = block!(sensor.read()).unwrap();
+        let data = block!(sensor.read()).unwrap();  // does this need to block?
 
         lines[0].clear();
         lines[1].clear();
