@@ -1,8 +1,12 @@
+//! FAILS TO COMPILE WITH stm32f4xx_hal. See
+//! https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+
 //!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Serial interface read GPS one usart and write on another usart to USB-TTL console (minicom).
 //!
 //! usart1 connect the Tx pin pa9  to the Rx pin of a serial-usb converter
 //! usart1 connect the Rx pin pa10 to the Tx pin of a serial-usb converter
+
 //! Set up the serial console (e.g. minicom) with the same settings used here.
 //! (Using 9600bps, could be higher but needs serial console to be the same.)
 //!

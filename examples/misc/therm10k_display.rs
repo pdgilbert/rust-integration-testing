@@ -71,10 +71,10 @@ use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
 use dht_sensor::dht22::{read, Reading};
 
-use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
-use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+use rust_integration_testing_of_examples::led::{setup_led, LED }; //LedType
+//use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
 
-use dht_sensor::Delay;  // trait, whereas timer::Delay is a type does not yet use DelayNs
+//use dht_sensor::Delay;  // trait, whereas timer::Delay is a type does not yet use DelayNs
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
@@ -355,13 +355,20 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 
 #[cfg(feature = "stm32g4xx")] 
 use stm32g4xx_hal::{
-    timer::Timer,
+    pac::{TIM2},
+    timer::{Timer, CountDownTimer},
+    time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
     adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
+    i2c::{Config},
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, impl DelayNs) {
+type DelayMsType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+// impl DelayNs does not work dht11::read which needs DelayUs
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, DelayMsType) {
     let mut rcc = dp.RCC.constrain();
 
     //let cp = CorePeripherals::take().unwrap();
@@ -393,7 +400,11 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
     let gpiob = dp.GPIOB.split(&mut rcc);
-    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, &mut rcc);
+    let sda = gpiob.pb9.into_alternate_open_drain(); 
+    let scl = gpiob.pb8.into_alternate_open_drain(); 
+    //let i2c = i2c1.i2c(sda, scl, Config::new(400.kHz()), rcc);
+    //let i2c = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
+    let i2c = dp.I2C1.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
 
     let led = setup_led(dp.GPIOC.split(&mut rcc));
 
