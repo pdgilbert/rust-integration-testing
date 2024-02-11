@@ -1,4 +1,6 @@
-//  THIS NEEDS WORK AND DHT  FOR EH-1. use i2c1_i2c2_led_delay.rs or NOT ??  compare projects/temperature-display.rs
+// THIS NEEDS WORK. compare projects/temperature-display.rs
+// NOTE THAT impl DelayNs does not work dht11::read as of Feb 2024.
+//    It still needs DelayUs which is called DelayUsType below.
 
 //! Measure temperature with 10k thermistor sensor (NTC 3950 10k thermistors probe) and temperature and
 //! humidity from a DHT-11 (or DHT-22) sensor. Display on SSD1306 OLED display.
@@ -42,7 +44,6 @@
 #![no_main]
 
 use cortex_m_rt::entry;
-//use embedded_hal::delay::DelayNs;
 
 //use embedded_hal::adc::OneShot;
 //use nb::block;
@@ -235,13 +236,15 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
+    timer::SysDelay as DelayUsType,
     timer::SysTimerExt,
     adc::{config::AdcConfig}, //SampleTime
     //gpio::{Alternate, OpenDrain, gpiob::{PB8, PB9,  PB10, PB3, Parts as PartsB}},
+    i2c::{I2c},
 };
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, impl DelayNs) {
+pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, DelayUsType) {
                 //(SensorType, I2c<I2C1, impl Pins<I2C1>>, LedType, DelayType) {
     let rcc = dp.RCC.constrain();
     let mut clocks = rcc.cfgr.freeze();
@@ -265,17 +268,17 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     let sda = gpiob.pb9.into_alternate_open_drain(); 
 
-    let i2c = I2cType::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+    let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
 
     let led = setup_led(dp.GPIOC.split());
 
     // let mut delay = Delay::new(cp.SYST, clocks); 
     // Delay::new() works with DelayNs but needs older delay for dht sensor crate
 
-    //let mut delay = cp.SYST.delay(&clocks);  // needs timer::SysTimerExt needs DelayNs 
-    //let mut delay = dp.TIM2.delay(&clocks);  // needs timer::TimerExt and type SysDelay
+    //let delay = cp.SYST.delay(&clocks);  // needs timer::SysTimerExt needs DelayNs 
+    //let delay = dp.TIM2.delay(&clocks);  // needs timer::TimerExt and type SysDelay
 
-    let mut delay = cp.SYST.delay(&mut clocks);  // works in dht.rs but fails here, multiple `delay_ms` found??
+    let delay = cp.SYST.delay(&mut clocks); 
 
     (sens, dht, i2c, led, delay)
 }
@@ -364,11 +367,11 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-type DelayMsType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+type DelayUsType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 // impl DelayNs does not work dht11::read which needs DelayUs
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, DelayMsType) {
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, DelayUsType) {
     let mut rcc = dp.RCC.constrain();
 
     //let cp = CorePeripherals::take().unwrap();
@@ -418,10 +421,16 @@ use stm32h7xx_hal::{
     adc,
     adc::{Enabled, },
     //rcc::CoreClocks as Clocks,
+    pac::TIM2,
+    timer::Timer,
+    delay::DelayFromCountDownTimer,
 };
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, impl DelayNs) {
+type DelayUsType = DelayFromCountDownTimer<Timer<TIM2>>;
+
+#[cfg(feature = "stm32h7xx")]
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, impl I2cTrait, impl LED, DelayUsType) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -430,8 +439,10 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 
     //let mut delay = DelayType{};
     //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
-    let mut delay = Delay::new(cp.SYST, clocks); 
-  
+    //let mut delay = DelayUsType::new(cp.SYST, clocks); 
+     let timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &clocks);
+     let mut delay = DelayFromCountDownTimer::new(timer);
+
     let mut adc1 = Adc::adc1(dp.ADC1, 4.MHz(), &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
     adc1.set_resolution(adc::Resolution::SixteenBit);
     let adc1 = adc1.enable();
@@ -450,9 +461,14 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     dht.set_high();
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-    let i2cx = ccdr.peripheral.I2C1;
+    //let i2cx = ccdr.peripheral.I2C1;
 
-    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx, &clocks);
+    //let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx, &clocks);
+
+    let scl = gpiob.pb8.into_alternate().set_open_drain();
+    let sda = gpiob.pb9.into_alternate().set_open_drain();
+    let i2c = dp.I2C1.i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
+
     let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
 
     (sens, dht, i2c, led, delay)

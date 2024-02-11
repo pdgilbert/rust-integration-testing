@@ -33,9 +33,9 @@ pub type TxType = Tx<USART1>;
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
-pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
-    setup_from_dp(Peripherals::take().unwrap())
-}
+//pub fn setup() ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {    
+//    setup_from_dp(Peripherals::take().unwrap())
+//}
 
 
 
@@ -342,6 +342,9 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
    
    let timer2 = Timer::new(dp.TIM3, &clocks);
    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
+   //let timer2 = Timer::new(dp.TIM2, &clocks);
+   //let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
+
 
    let tx = gpioa.pa9.into_alternate();
    let rx = gpioa.pa10.into_alternate();

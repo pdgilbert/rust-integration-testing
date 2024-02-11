@@ -249,7 +249,11 @@ fn setup() -> I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>> {   //im
 
 
 #[cfg(feature = "stm32h7xx")]
-use stm32h7xx_hal::{i2c::I2c, pac::Peripherals, pac::I2C1, prelude::*};
+use stm32h7xx_hal::{
+   i2c::I2c,
+   pac::{Peripherals, I2C1},
+   prelude::*
+};
 
 #[cfg(feature = "stm32h7xx")]
 fn setup() -> I2c<I2C1> {

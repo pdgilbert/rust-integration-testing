@@ -145,6 +145,10 @@ jobs:
         #--manifest-path to find Caro.toml.      
         run: cargo  tree   --manifest-path ${{ matrix.stg }}/Cargo.toml 
 
+      - name: old_hal_tree
+        #--manifest-path to find Caro.toml.      
+        run: cargo  tree   --manifest-path ${{ matrix.stg }}/Cargo.toml  -i embedded-hal@0.2.7
+
       - name: Build
         run: cargo build   --manifest-path ${{ matrix.stg }}/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
 
