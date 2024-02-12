@@ -90,10 +90,10 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay::{I2c1Type, I2c2Type};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::{Delay2Type};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
