@@ -10,9 +10,9 @@ use panic_halt as _;
 
 pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay1Type as DelayType};
-pub use crate::led::{setup_led, LED};
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
+use crate::delay::{Delay1Type as DelayType};
+use crate::led::{setup_led, LED};
+use crate::i2c::{I2c1Type as I2cType,};
 
 
 // "hal" is used for items that are the same in all hal  crates

@@ -77,10 +77,11 @@ mod app {
 
     const PERIOD: u32 = 10;  // used as seconds
     
+    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{
-        I2cType, TxType, MONOCLOCK};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
 
     // cortex_m::asm  delay is only used in init. 
     // See other examples for the case when a shared delay is needed.

@@ -87,8 +87,9 @@ mod app {
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::delay::{Delay2Type};
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{Delay, I2cType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{I2cType};
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -207,7 +208,7 @@ mod app {
         display: Ssd1306<I2CInterface<I2cType>, 
                           DISPLAYSIZE, 
                           BufferedGraphicsMode<DISPLAYSIZE>>,
-        delay:   Delay,
+        delay:   Delay2Type,
     }
 
     #[task(shared = [led, ], local = [dht, display, delay ] )]

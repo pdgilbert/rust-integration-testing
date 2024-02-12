@@ -2,11 +2,6 @@ pub use embedded_hal::delay::DelayNs;
 
 // TRY TO CLEANUP OR REMOVE SOME TYPES IF EH-1.0  AND impl Delay HELP
 
-//#[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-//use stm32f0xx_hal::{
-//    delay::Delay,
-//    pac::{TIM1, TIM3},
-//};
 
 #[cfg(feature = "stm32f0xx")]
 pub use crate::alt_delay::{AltDelay as Delay1Type};
@@ -37,7 +32,6 @@ use stm32f3xx_hal::{
     delay::Delay,
     pac::{TIM2, TIM3}
 };
-//pub use crate::alt_delay::{AltDelay as DelayType};
 
 #[cfg(feature = "stm32f3xx")]
 pub use crate::alt_delay::{AltDelay as Delay1Type};
@@ -50,10 +44,10 @@ pub use crate::alt_delay::{AltDelay as Delay2Type};
 
 
 #[cfg(feature = "stm32f4xx")]
-use stm32f4xx_hal::pac::{TIM2, TIM5};
-
-#[cfg(feature = "stm32f4xx")]
-pub use stm32f4xx_hal::timer::Delay; 
+use stm32f4xx_hal::{
+    pac::{TIM2, TIM5},
+    timer::Delay, 
+};
 
 #[cfg(feature = "stm32f4xx")]
 pub type Delay1Type = Delay<TIM2, 1000000_u32>;
@@ -68,7 +62,6 @@ use stm32f7xx_hal::{
     timer::Delay,
     pac::{TIM2, TIM5}
 };
-//pub use crate::alt_delay::{AltDelay as DelayType};
 
 #[cfg(feature = "stm32f7xx")]
 pub type Delay1Type = Delay<TIM2, 1000000_u32>;
@@ -98,7 +91,7 @@ use stm32g4xx_hal::{
     delay::DelayFromCountDownTimer,
     //delay::Delay,
     //timer::SysDelay as Delay,
-    stm32::{TIM2, TIM3}, 
+    pac::{TIM2, TIM3}, 
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -110,11 +103,9 @@ pub type Delay2Type = DelayFromCountDownTimer<CountDownTimer<TIM3>>;
 
 
 #[cfg(feature = "stm32h7xx")]
-pub use stm32h7xx_hal::delay::Delay;
-
-#[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
    timer::Timer,
+   //delay::Delay,
    delay::DelayFromCountDownTimer,
    pac::{TIM2, TIM5},
 };
@@ -158,7 +149,7 @@ pub use crate::alt_delay::{AltDelay as Delay2Type};
 //pub type Delay2Type = Delay<>;
 
 
-//#[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
+//#[cfg(feature = "stm32l1xx")] 
 //use stm32l1xx_hal::{
 //    delay::Delay,
 //    stm32::{TIM2, TIM5}

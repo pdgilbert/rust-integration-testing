@@ -5,14 +5,10 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use embedded_hal::delay::DelayNs;
-
-pub use crate::led::{setup_led, LED, LedType};
+use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
-pub use crate::delay::{Delay2Type as Delay};
-
-pub use crate::monoclock::{MONOCLOCK};
+use crate::delay::{Delay2Type as Delay};
 
 
 // "stm32xxxx_hal" is used for items that are different in some crates
@@ -366,7 +362,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, impl DelayNs, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();

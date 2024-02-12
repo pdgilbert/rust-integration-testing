@@ -4,9 +4,6 @@ use embedded_hal::delay::DelayNs;
 use embedded_hal::digital::OutputPin;
 use embedded_hal;
 
-pub use crate::delay::{Delay1Type as DelayType};
-
-
 // "hal" is used for items that are the same in all hal  crates
 use crate::stm32xxx_as_hal::hal;
 

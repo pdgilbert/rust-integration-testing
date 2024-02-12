@@ -63,13 +63,6 @@ use hal::{
       i2c::Error as i2cError,
 };
 
-//DEAL WITH THIS:  This trait is for older eh support in stm32f4xx. 
-//    When other hals use eh-1.0.0 is anything special needed for each hal? 
-//    If so, consider using something like
-//          use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-//      or  use rust_integration_testing_of_examples::delay::Delay;
-
-
 
 fn show_display<S>(
     s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
