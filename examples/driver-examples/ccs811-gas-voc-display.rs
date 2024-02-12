@@ -35,7 +35,7 @@ use embedded_ccs811::{prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
 
 
 /////////////////////   ssd
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306}; //mode::BufferedGraphicsMode, 
 
 const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
 const VPIX:i32 = 12; // vertical pixels for a line, including space
@@ -50,11 +50,8 @@ use embedded_graphics::{
 
 
 /////////////////////   hals
-use core::cell::RefCell;
-use embedded_hal_bus::i2c::RefCellDevice;
 
 use embedded_hal::{
-   i2c::I2c as I2cTrait,
    delay::DelayNs,
 };
 
@@ -79,15 +76,11 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2cset, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
-
-    let i2cset_ref_cell = RefCell::new(i2cset);
-    let ccs_rcd = RefCellDevice::new(&i2cset_ref_cell); 
-    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     /////////////////////   ssd
-    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
-    //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
+    let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
+    //let interface = I2CDisplayInterface::new_custom_address(i2c1,   0x3D);  //alt address
 
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
@@ -101,7 +94,7 @@ fn main() -> ! {
         .build();
 
     /////////////////////   ccs
-    let mut ccs811 = Ccs811Awake::new(ccs_rcd, SlaveAddr::default());
+    let mut ccs811 = Ccs811Awake::new(i2c2, SlaveAddr::default());
     ccs811.software_reset().unwrap();
     delay.delay_ms(10);
     let mut lines: [String<32>; 2] = [String::new(), String::new()];
@@ -138,7 +131,7 @@ fn main() -> ! {
         display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             //with font 6x10, 12 = 10 high + 2 space
-            Text::with_baseline(line, Point::new(0, i as i32 * 12), text_style, Baseline::Top,)
+            Text::with_baseline(line, Point::new(0, i as i32 * VPIX), text_style, Baseline::Top,)
                 .draw(&mut display)
                 .unwrap();
         }

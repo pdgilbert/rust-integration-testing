@@ -39,10 +39,8 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use crate::monoclock::{MONOCLOCK};
-
 use crate::led::{setup_led, LED, LedType};
-pub use crate::i2c::{setup_i2c1_i2c2, I2c1Type, I2c2Type};
+use crate::i2c::{setup_i2c1_i2c2, I2c1Type, I2c2Type};
 
 use crate::delay::{Delay2Type as Delay};
 
@@ -282,7 +280,9 @@ pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, C
 
    let (i2c1, i2c2) = setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx1,  dp.I2C2, gpiof, i2cx2, &clocks);
 
-   let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+   let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+   led.off();
+
    // CountDownTimer not supported by embedded-hal 1.0.0 ??
    let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
    let delay = DelayFromCountDownTimer::new(timer);

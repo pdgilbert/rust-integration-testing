@@ -51,6 +51,7 @@ use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::pac::{Peripherals};
 
+
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
@@ -58,10 +59,13 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let manager = shared_bus::BusManagerSimple::new(i2c);
-    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+    // Note that (as of Feb 2024) I2CDisplayInterface::new(i2c1) does not work with shared_bus
+    //  so interface needs one i2c and sensor share the other one.
+
+    let interface = I2CDisplayInterface::new(i2c1);
+
     let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
@@ -71,6 +75,11 @@ fn main() -> ! {
         .font(&FONT_6X10)
         .text_color(BinaryColor::On)
         .build();
+
+    let manager = shared_bus::BusManagerSimple::new(i2c2);
+    // rtic needs task sharing not provided by BusManagerSimple: 
+    // use rust_integration_testing_of_examples::i2c::{I2c2Type};
+    //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
     let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
     let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());

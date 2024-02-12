@@ -175,17 +175,8 @@ jobs:
       - name: Example digi_pot
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example digi_pot
 
-      - name: Example echo_by_char
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_by_char
-
 #      - name: Example echo_string
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_string
-
-      - name: Example gps_rw
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example gps_rw
-
-      - name: Example oled_gps
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example oled_gps
 
 #      - name: Example serial_string
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_string
@@ -430,6 +421,17 @@ jobs:
 
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
+
+# these require require solving eh-1 Read/Write issue on stm32f4xx
+
+      - name: Example echo_by_char
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_by_char
+
+      - name: Example gps_rw
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example gps_rw
+
+      - name: Example oled_gps
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example oled_gps
 
 # this requires 3 USARTs and  fails using stm32f042 which has only 2
 
