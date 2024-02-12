@@ -8,7 +8,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use crate::delay::DelayNs;
+pub use embedded_hal::delay::DelayNs;
 
 pub use crate::delay::{Delay1Type as DelayType};
 pub use crate::led::{setup_led, LED};

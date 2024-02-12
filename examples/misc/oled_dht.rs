@@ -60,7 +60,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::opendrain_i2c_led;
+use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -117,7 +117,7 @@ fn main() -> ! {
     //hprintln!("oled_dht example").unwrap();
 
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, mut delay, _clocks) = opendrain_i2c_led::setup_from_dp(dp);
+    let (mut dht, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(dp);
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

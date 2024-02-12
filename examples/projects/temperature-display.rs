@@ -80,7 +80,7 @@ mod app {
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::DelayNs;
+    use embedded_hal::delay::DelayNs;
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;

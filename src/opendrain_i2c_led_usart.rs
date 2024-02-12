@@ -5,7 +5,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub use crate::delay::DelayNs;
+pub use embedded_hal::delay::DelayNs;
 
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};

@@ -44,7 +44,7 @@ pub use crate::monoclock::{MONOCLOCK};
 pub use crate::led::{setup_led, LED, LedType};
 pub use crate::i2c::{setup_i2c1_i2c2, I2c1Type, I2c2Type};
 
-pub use crate::delay::DelayNs;
+pub use embedded_hal::delay::DelayNs;
 pub use crate::delay::{Delay2Type as Delay};
 
 // "hal" is used for items that are the same in all hal  crates

@@ -44,8 +44,13 @@ use embedded_graphics::{
 
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode};
 
-use rust_integration_testing_of_examples::opendrain_i2c_led;
+use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
 use rust_integration_testing_of_examples::led::{LED};
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+      pac::{Peripherals},
+};
 
 // open_drain_output is really input and output
 
@@ -134,7 +139,8 @@ where
 
 #[entry]
 fn main() -> ! {
-    let (pin, i2c, mut led, mut delay, _clocks) = opendrain_i2c_led::setup();
+    let dp = Peripherals::take().unwrap();
+    let (pin, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(dp);
 
     let mut ow_bus = one_wire_bus::OneWire::new(pin).unwrap();
 

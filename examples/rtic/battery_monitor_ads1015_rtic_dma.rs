@@ -176,7 +176,7 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_pin, i2c, mut led, mut delay) = opendrain_i2c_led::setup(cx.device);
+        let (_pin, i2c, mut led, _tx, mut delay _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
 
         led.on(); 
         delay.delay_ms(1000u32);

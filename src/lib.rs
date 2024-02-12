@@ -21,8 +21,6 @@ pub mod i2c_led_delay_buttons_stcint;
 
 pub mod tx1_rx1_tx2_rx2;
 
-pub mod opendrain_i2c_led; 
-
 pub mod i2c1_i2c2_led_delay;
 
 pub mod  opendrain_i2c_led_usart;
