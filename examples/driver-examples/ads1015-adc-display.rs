@@ -76,7 +76,7 @@ fn main() -> ! {
     let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ads
-    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::default()); //addr = Gnd
     // need to be able to measure [0-5V]
     adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();
 

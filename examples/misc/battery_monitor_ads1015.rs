@@ -193,15 +193,21 @@ fn main() -> ! {
     let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ads
-    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
-    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Alternative(false, true)); //addr =  V
+
+    //let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::default()); //addr = GND
+    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
+    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
+    //let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Sda);
+    //let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Scl);
 
     // set FullScaleRange to measure expected max voltage.
     // This is very small for diff across low value shunt resistors
     //   but up to 5v for single pin with usb power.
     // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
+
     adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
     //adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+
     adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
     //adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 

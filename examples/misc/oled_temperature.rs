@@ -148,7 +148,7 @@ fn main() -> ! {
     led.blink(500_u16, &mut delay);  // to confirm startup
 
     /////////////////////   ads
-    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::default()); //addr = Gnd
 
     // to measure [0-5V] use FullScaleRange::Within6_144V
     adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();

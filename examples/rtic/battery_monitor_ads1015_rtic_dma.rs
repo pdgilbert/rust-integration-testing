@@ -198,8 +198,8 @@ mod app {
         Text::with_baseline("Display initialized ...", Point::zero(), text_style, Baseline::Top, )
            .draw(&mut display).unwrap();
 
-        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
-        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true)); //addr =  V
+        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
+        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small for diff across low value shunt resistors for current

@@ -191,8 +191,8 @@ fn main() -> ! {
     let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ads
-    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
-    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Alternative(false, true)); //addr =  V
+    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
+    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
 
     // set FullScaleRange to measure expected max voltage.
     adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();

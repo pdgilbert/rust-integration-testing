@@ -166,13 +166,13 @@ mod app {
         //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
 
 
-    let i2c1_ref_cell = RefCell::new(i2c1);
-    let adc_a_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    let adc_b_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    let adc_c_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    let adc_d_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    //let ina_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    let ssd_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
+       let i2c1_ref_cell = RefCell::new(i2c1);
+       let adc_a_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+       let adc_b_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+       let adc_c_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+       let adc_d_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+       //let ina_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+       let ssd_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
 
         let interface = I2CDisplayInterface::new(ssd_rcd);
 
@@ -188,15 +188,15 @@ mod app {
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
-        //let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
-        //let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true )); //addr =  V
-        //let mut adc_c = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  false)); //addr =  SDA
-        //let mut adc_d = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  true )); //addr =  SCL
+        //let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
+        //let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
+        //let mut adc_c = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Sda);
+        //let mut adc_d = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Scl);
 
-    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
-    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Alternative(false, true));  //addr =  V
-    let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Alternative(true,  false)); //addr =  SDA
-    let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Alternative(true,  true));  //addr =  SCL
+        let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
+        let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
+        let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Sda);
+        let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Scl);
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small if measuring diff across low value shunt resistors for current
