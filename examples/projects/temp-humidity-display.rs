@@ -89,7 +89,32 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use  ina219::{INA219,}; //INA219_ADDR
+
+    // Note that hprintln is for debugging with usb probe and semihosting. 
+    // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
+    //use cortex_m_semihosting::{debug, hprintln};
+    //use cortex_m_semihosting::{hprintln};
+    
+    use core::fmt::Write;
+
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
+
+    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
+
+
+    /////////////////////   ina
+
+    //use  ina219::{INA219,}; //INA219_ADDR
+    use ina219::{address::{Address, Pin}, 
+                measurements::BusVoltage, 
+                SyncIna219, 
+                calibration::UnCalibrated,
+    };
+   
+
+    /////////////////////   TempHumSensor
 
     // The TempHumSensor trait and methods provide a wrapper so different sensors can be used 
     //  with the same application code.
@@ -116,13 +141,16 @@ mod app {
     //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
 
     #[cfg(feature = "hdc1080")]
+    type  SensorRcdType = embedded_hdc1080_rs::Hdc1080<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+
+    #[cfg(feature = "hdc1080")]
     impl TempHumSensor for SensorType {
         fn read_th(&mut self) -> (i32, u8) {
-        let (t, rh) = match self.read() {
-            Ok((t, rh))     =>((10.0 * t) as i32, rh as u8),
-            Err(_e)        => ( -4090, 255)  //supply default values that should be clearly bad
-        };
-         (t, rh)
+           let (t, rh) = match self.read() {
+               Ok((t, rh))     =>((10.0 * t) as i32, rh as u8),
+               Err(_e)        => ( -4090, 255)  //supply default values that should be clearly bad
+           };
+           (t, rh)
         }
         fn init(&mut self) -> Result<(),()> {
            self.init().unwrap();              // CONSIDER HANDLING OR RETURN ERROR HERE
@@ -146,6 +174,7 @@ mod app {
 
     #[cfg(feature = "htu2xd")]
     pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: Delay2Type}
+
 
     #[cfg(feature = "htu2xd")]
     impl TempHumSensor for SensorType {
@@ -190,6 +219,9 @@ mod app {
     type SensorType = AHT10<I2c1Type, Delay2Type>;
 
     #[cfg(feature = "aht10")]
+    type  SensorRcdType = AHT10<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+
+    #[cfg(feature = "aht10")]
     impl TempHumSensor for SensorType {
         fn read_th(&mut self) -> (i32, u8) {
             // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
@@ -217,6 +249,9 @@ mod app {
     type SensorType = Aht20<I2c1Type, Delay2Type>;
 
     #[cfg(feature = "aht20")]
+    type  SensorRcdType = AHT20<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+
+    #[cfg(feature = "aht20")]
     impl TempHumSensor for SensorType {
         fn read_th(&mut self) -> (i32, u8) {
             // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
@@ -240,19 +275,7 @@ mod app {
     }
 
 
-    // Note that hprintln is for debugging with usb probe and semihosting. 
-    // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
-    //use cortex_m_semihosting::{debug, hprintln};
-    //use cortex_m_semihosting::{hprintln};
-    
-    use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
+    /////////////////////  ssd
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -264,8 +287,6 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
     
     type  DisplaySize = ssd1306::prelude::DisplaySize128x32;
-    type  DisplayType = ssd1306::Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
-                             DisplaySize, BufferedGraphicsMode<DisplaySize>>;
 
     //common display sizes are 128x64 and 128x32
     const DISPLAYSIZE: DisplaySize = DisplaySize128x32;
@@ -281,6 +302,10 @@ mod app {
 
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
+
+
+    /////////////////////   constants and types
+
     const READ_INTERVAL: u32 = 2;  // used as seconds
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
@@ -291,14 +316,32 @@ mod app {
     use rust_integration_testing_of_examples::delay::{Delay2Type};
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-    use shared_bus::{I2cProxy};
+    //use shared_bus::{I2cProxy};
+    //use cortex_m::interrupt::Mutex;
     use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+    use embedded_hal_bus::i2c::RefCellDevice;
+
+    //type  InaType = INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>;
+    //
+    //type  DisplayType = ssd1306::Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
+    //                         DisplaySize, BufferedGraphicsMode<DisplaySize>>;
+
+    type  InaType = SyncIna219<RefCellDevice<'static, I2c1Type>, UnCalibrated>;
+
+    type  DisplayType = Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
+                                 ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
+
+
+    //////////////////////////////////////////////////////////////////
 
     fn show_display<S>(
         temperature: i32,   // deci-degrees = 10 * deg C so integer gives one decimal place
         relative_humidity: u8,
-        v: u16,  _vs: i16,  i: i16,  p: i16, 
+        v: u16,  
+        vs: i32,  
+        i: i32,  
+        p: i32, 
+        pc: i32, 
         //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
@@ -307,13 +350,10 @@ mod app {
     {
        let mut line: heapless::String<64> = heapless::String::new();
              
-       // power calculated by P=IV.  (mA x mV /1000 = mW)
+       //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
+       // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
        //If the ina is wired with Vin- to battery and Vin+ to load sign then the
        // display will show "+" for battery charging and "-" for discharging.
-       let pc = i as i32 * v as i32 / 1000_i32;
-       
-       //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
-      // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
       
        // Consider handling error in next. If line is too short then attempt to write it crashes
        write!(line, "{:3}.{:1}°C {:3}%RH\n{:2}.{:1}V {}mA {}mW [{}mW]", 
@@ -344,33 +384,47 @@ mod app {
        ()
     }
 
-    fn read_ina(ina: &mut INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>
-          ) -> (u16, i16, i16, i16)
-       {
-
-        let v = match ina.voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+    fn read_ina(ina: &mut InaType ) -> (u16, i32, i32, i32)
+       {     
+        let v = match ina.bus_voltage() {
+            Ok(v) => v.voltage_mv(),
+            Err(_e)   => 999u16  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
 
         let vs = match ina.shunt_voltage() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
+            Ok(v) => v.shunt_voltage_uv(),
+            Err(_e)   => 999i32  //write!(lines[0], "Err: {:?}", e).unwrap()
         };
 
-        let i = match ina.current() {
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
+        let i =  0;  //FAKE
+        //let i = match ina.current_raw() {
+        //    Ok(v) => v.current_ma(),
+        //    Err(_e)   => 999i32  //write!(lines[0], "Err: {:?}", e).unwrap()
+        //};
 
-        let p = match ina.power() {  // ina indicated power
-            Ok(v) => v,
-            Err(_e)   => 999  //write!(lines[0], "Err: {:?}", e).unwrap()
-        };
-                 
+        let p = 0;  //FAKE
+         //  let p = match ina.power_raw() {  // ina indicated power
+         //     Ok(v) => v.power(),
+         //     Err(_e)   => 999i32  //write!(lines[0], "Err: {:?}", e).unwrap()
+         //  };
+                       
         (v, vs, i, p)
        }
 
+
+    #[shared]
+    struct Shared {
+        led:   LedType,      //impl LED, would be nice
+    }
+
+    #[local]
+    struct Local {
+        display:  DisplayType,
+
+        ina:  InaType,
+
+        sensor:  SensorRcdType  // error here if feature = "htu2xd" or "aht10" or other not specified
+    }
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
@@ -387,8 +441,19 @@ mod app {
         delay.delay(1000.millis());
         led.off();
 
-        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
-        let interface = I2CDisplayInterface::new(manager2.acquire_i2c());
+        // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
+        // Using embedded-bus instead, but it might be possible to put ssd on i2c1 and shared-bus ads's on i2c2
+        //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+
+
+    let i2c1_ref_cell = RefCell::new(i2c1);
+    let sens_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    let ina_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
+    let ssd_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
+
+        /////////////////////   ssd
+
+        let interface = I2CDisplayInterface::new(ssd_rcd);
 
         //common display sizes are 128x64 and 128x32
         let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -399,18 +464,21 @@ mod app {
         show_message("temp-humidity", &mut display);
         delay.delay(2000.millis());    
 
-        // Start the battery sensor.
 
-        let mut ina = INA219::new(manager2.acquire_i2c(), 0x40);
+        /////////////////////   ina   Start the battery sensor.
+       
+       let ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+
+        //let mut ina = INA219::new(ina_rcd, 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
-        ina.calibrate(0x0100).unwrap();
+        ina.calibrate(UnCalibrated).unwrap();
         delay.delay(15.millis());     // Wait for sensor
 
         show_message("battery sensor init", &mut display);   // Example name
         delay.delay(2000.millis());  
 
-        // Start the temp-humidity sensor.
 
+        /////////////////////   sens    Start the temp-humidity sensor.
 
         // shared bus would be like this, but does not work for ath10.
         //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
@@ -420,17 +488,17 @@ mod app {
         sensor; // sensor feature must be specified. eg --features $MCU,$HAL,aht10".  COMPILING STOPPED
 
         #[cfg(feature = "hdc1080")]
-        let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
+        let mut sensor = Hdc1080::new(sens_rcd, delay).unwrap();
 
         #[cfg(feature = "htu2xd")]
-        let mut sensor  = SensorType {dev: Htu2xd::new(), ch: i2c1, delay};
+        let mut sensor  = SensorType {dev: Htu2xd::new(), ch: sens_rcd, delay};
 
         #[cfg(feature = "aht10")]
-        let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+        let mut sensor = AHT10::new(sens_rcd, delay).expect("sensor failed");
 
         #[cfg(feature = "aht20")]
-        let mut sensor = Aht20::new(i2c1, delay).expect("sensor failed");
-        //let mut sensor = TempHumSensor::<SensorType>::new(i2c1, delay).expect("sensor failed");
+        let mut sensor = Aht20::new(sens_rcd, delay).expect("sensor failed");
+        //let mut sensor = TempHumSensor::<SensorType>::new(sens_rcd, delay).expect("sensor failed");
 
         sensor.init().unwrap();
         sensor.init_message(&mut display);
@@ -442,20 +510,6 @@ mod app {
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
         return(Shared { led, },   Local {display, ina, sensor });
-    }
-
-    #[shared]
-    struct Shared {
-        led:   LedType,      //impl LED, would be nice
-    }
-
-    #[local]
-    struct Local {
-        display:  DisplayType,
-
-        ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
-
-        sensor:  SensorType,  // error here if feature = "htu2xd" or "aht10" or other not specified
     }
 
     #[task(shared = [led, ], local = [sensor, ina, display ] )]   //htu_ch, 
@@ -472,7 +526,10 @@ mod app {
 
           let (v, vs, i, p) = read_ina(cx.local.ina);
 
-          show_display(t, h,  v, vs, i, p,  cx.local.display);
+          // power calculated by P=IV.  (mA x mV /1000 = mW)
+          let pc = i as i32 * v as i32 / 1000_i32;     
+ 
+          show_display(t, h,  v, vs, i, p, pc,  cx.local.display);
        }
    }
 

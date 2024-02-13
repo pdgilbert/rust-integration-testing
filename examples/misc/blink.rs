@@ -267,7 +267,7 @@ use stm32g4xx_hal::{
     delay::DelayFromCountDownTimer,
     gpio::{gpioc::PC13, Output, PushPull},
     prelude::*,
-    stm32::{TIM2, Peripherals},
+    pac::{TIM2, Peripherals},
 };
 
 #[cfg(feature = "stm32g4xx")]

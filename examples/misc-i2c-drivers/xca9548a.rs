@@ -1,10 +1,11 @@
 //! Continuously read temperature from multiple AHT10s and display on SSD1306 OLED.
-//! The AHT10s are multiplexed on i2c1 using  xca9548a.
+//! The AHT10s are multiplexed on i2c2 using  xca9548a.
 //! 
 //! requires two i2c buses. Note also using
 //! "https://github.com/andy31415/aht10", branch = "fix_status_check"
 //! 
 //!  Beware that i2c1parts.i2c2 is the second multiplexed device on i2c1, whereas i2c2 is the MCU's second i2c.
+//!  Beware that i2c2parts.i2c1 is the first multiplexed device on i2c2,  whereas i2c1 is the MCU's first  i2c.
 //! 
 //!  The setup() functions make the application code common. They are in src/.
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
@@ -51,18 +52,31 @@ use embedded_graphics::{
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
 
+///////////////////////////////////////////////////////////////
+
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-// "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
 use hal::{
       pac::{Peripherals},
       pac::{CorePeripherals},
       i2c::Error as i2cError,
 };
 
+
+
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{   timer::SysTimerExt };  // trait for cp.SYST.delay
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
+
+#[cfg(feature = "stm32h7xx")]
+use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
+
+
+///////////////////////////////////////////////////////////////
 
 fn show_display<S>(
     s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
@@ -121,15 +135,6 @@ where
 }
 
 
-
-#[cfg(feature = "stm32f4xx")]
-use stm32f4xx_hal::{
-      //timer::Delay,
-      timer::SysTimerExt,  // trait for cp.SYST.delay
-      //rcc::Clocks,
-};
-
-
 #[entry]
 fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
@@ -143,7 +148,7 @@ fn main() -> ! {
 
     led.blink(2000_u16, &mut delay1); // Blink LED to indicate setup finished.
 
-    let interface = I2CDisplayInterface::new(i2c2);
+    let interface = I2CDisplayInterface::new(i2c1);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -165,12 +170,12 @@ fn main() -> ! {
     led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
     hprintln!("Text::with_baseline").unwrap();
 
-    // now multiple devices on i2c1 bus
+    // now multiple devices on i2c2 bus
     
     let slave_address = 0b010_0000; // example slave address
     let write_data = [0b0101_0101, 0b1010_1010]; // some data to be sent
 
-    let mut i2c1switch = Xca9548a::new(i2c1, SlaveAddr::default());
+    let mut i2c1switch = Xca9548a::new(i2c2, SlaveAddr::default());
 
     // Enable channel 0
     i2c1switch.select_channels(0b0000_0001).unwrap();

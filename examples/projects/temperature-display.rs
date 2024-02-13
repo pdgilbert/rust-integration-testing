@@ -28,18 +28,20 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::stm32,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
-                  ChannelSelection,
-                  ic::{Ads1015, Resolution12Bit},
-                  interface::I2cInterface};
+//    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
+//                  ChannelSelection,
+//                  ic::{Ads1015, Resolution12Bit},
+//                  interface::I2cInterface};
     
+    use ads1x1x::{Ads1x1x, Ads1015, Resolution12Bit, channel, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+
 
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
@@ -77,14 +79,17 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+
     use embedded_hal::delay::DelayNs;
 
-    use shared_bus::{I2cProxy};
+
     use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+    use embedded_hal_bus::i2c::RefCellDevice;
+    //use shared_bus::{I2cProxy};
+    //use cortex_m::interrupt::Mutex;
 
     use nb::block;
 
@@ -150,15 +155,26 @@ mod app {
         //rprintln!("battery_monitor_ads1015_rtic example");
         //hprintln!("temperature-display example").unwrap();
 
-        let (i2c, _i2c2, mut led, _delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, _i2c2, mut led, _delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on(); 
         Systick.delay_ms(1000u32);
         led.off();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
+        // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
+        // Using embedded-bus instead, but it might be possible to put ssd on i2c1 and shared-bus ads's on i2c2
+        //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
 
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+
+    let i2c1_ref_cell = RefCell::new(i2c1);
+    let adc_a_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    let adc_b_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    let adc_c_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    let adc_d_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    //let ina_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+    let ssd_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
+
+        let interface = I2CDisplayInterface::new(ssd_rcd);
 
         let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
@@ -172,10 +188,15 @@ mod app {
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
-        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
-        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true )); //addr =  V
-        let mut adc_c = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  false)); //addr =  SDA
-        let mut adc_d = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  true )); //addr =  SCL
+        //let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, false)); //addr = GND
+        //let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(false, true )); //addr =  V
+        //let mut adc_c = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  false)); //addr =  SDA
+        //let mut adc_d = Ads1x1x::new_ads1015(manager.acquire_i2c(), SlaveAddr::Alternative(true,  true )); //addr =  SCL
+
+    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Alternative(false, false)); //addr = GND
+    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Alternative(false, true));  //addr =  V
+    let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Alternative(true,  false)); //addr =  SDA
+    let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Alternative(true,  true));  //addr =  SCL
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small if measuring diff across low value shunt resistors for current
@@ -225,11 +246,19 @@ mod app {
 
     #[local]
     struct Local {
-       adc_a:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_b:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_c:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_d:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+       //adc_a:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //adc_b:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //adc_c:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //adc_d:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+       //                   ssd1306::prelude::DisplaySize128x64, 
+       //                   BufferedGraphicsMode<DisplaySize128x64>>,
+
+       adc_a:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_b:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_c:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_d:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       display: Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
     }

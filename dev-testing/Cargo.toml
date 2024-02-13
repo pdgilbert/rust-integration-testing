@@ -198,7 +198,7 @@ cortex-m-semihosting = { version = "0.3.7" }
 panic-semihosting    = { version = ">=0.5.2" }
 panic-reset          = { version = ">=0.1.0" }
 panic-halt           = { version = ">=0.2.0" }
-void                 = { version = ">=1.0.2", default-features = false } # err return values in some hals
+#void                 = { version = ">=1.0.2", default-features = false } # err return values in some hals
 
 
 [features]
