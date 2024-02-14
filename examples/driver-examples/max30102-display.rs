@@ -1,3 +1,4 @@
+       IN PROGRESS, NOT WORKING
 //! This example continuously reads the samples from a MAX30102 heart-rate
 //! and pulse oximeter (SpO2) sensor in heart-rate mode and displays the
 //! values in an SSD1306 OLED display.
@@ -19,7 +20,7 @@
 //! PB6   <-> SCL      <-> SCL
 //! ```
 //! Run with:
-//! `cargo run --example max30102-display-f3 --target thumbv7em-none-eabihf`
+//! `cargo run --example max30102-display --target thumbv7em-none-eabihf`
 
 #![deny(unsafe_code)]
 #![no_std]
