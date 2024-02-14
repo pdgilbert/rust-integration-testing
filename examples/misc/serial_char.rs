@@ -1,3 +1,6 @@
+//! FAILS TO COMPILE WITH stm32f4xx_hal. See
+//! https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+
 //! Serial interface test writing a single character between two usarts and
 //! echo to the computer consol connected by usb-ttl dongle on another usart.
 //!
@@ -36,7 +39,10 @@ use panic_halt as _;
 use core::str::from_utf8;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
-use nb::block;
+//use nb::block;
+
+use embedded_io::{Read, Write};
+
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -767,15 +773,19 @@ fn main() -> ! {
     //see  examples/echo_by_char.rs for additional comments.
     hprintln!("initializing ...").unwrap();
 
+    let mut received: [u8; 80] = [0; 80];
+    let rec_byte: u8 = 0;
+
     let (mut tx1, _rx1, mut tx2, mut rx2, mut tx3, mut rx3) = setup();
 
     hprintln!("test write to console ...").unwrap();
-    for byte in b"\r\nconsole connect check.\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).ok();
-    }
+    tx1.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?
+//    for byte in b"\r\nconsole connect check.\r\n" {
+//        #[cfg(feature = "stm32f4xx")]
+//        block!(tx1.write(*byte)).ok();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        block!(tx1.write_byte(*byte)).ok();
+//    }
 
     hprintln!("testing  tx2 to rx3").unwrap();
     hprintln!("   sending on tx2 ...").unwrap();
@@ -783,32 +793,27 @@ fn main() -> ! {
     let send = b'X';
 
     // Write `X` and wait until the write is successful
-    #[cfg(feature = "stm32f4xx")]
-    block!(tx2.write(send)).ok();
-    #[cfg(not(feature = "stm32f4xx"))]
-    block!(tx2.write_byte(send)).ok();
+    tx2.write(&[send]).unwrap(); 
+//    #[cfg(feature = "stm32f4xx")]
+//    block!(tx2.write(send)).ok();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    block!(tx2.write_byte(send)).ok();
 
     hprintln!("   receiving on rx3 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
-    #[cfg(feature = "stm32f4xx")]
-    let received = block!(rx3.read()).unwrap();
-    #[cfg(not(feature = "stm32f4xx"))]
-    let received = block!(rx3.read_byte()).unwrap();
+    // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
+    let _len = rx3.read(&mut [rec_byte]);
+//    #[cfg(feature = "stm32f4xx")]
+//    let received = block!(rx3.read()).unwrap();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    let received = block!(rx3.read_byte()).unwrap();
 
-    hprintln!(
-        "   checking tx2 to rx3 received = send,  {} = {} byte",
-        received,
-        send
-    )
-    .unwrap();
+    hprintln!("   checking tx2 to rx3 rec_byte = send,  {:?} = {:?} byte",
+        rec_byte, send ).unwrap();
 
     // The send byte should be the one received
-    assert_eq!(
-        received, send,
-        "testing received = send,  {} = {}",
-        received, send
-    );
+    assert_eq!( rec_byte, send,   "testing rec_byte = send,  {} = {}", rec_byte, send );
 
     // PUT A TEST HERE THAT WILL SHOW FAILURE. ASSERT SEEMS TO PANIC HALT SO ...
 
@@ -818,30 +823,35 @@ fn main() -> ! {
 
     hprintln!(
         "   tx2 to rx3  characters,  {} = {}",
-        from_utf8(&[received]).unwrap(),
+        from_utf8(&[rec_byte]).unwrap(),
         from_utf8(&[send]).unwrap()
     )
     .unwrap();
 
     hprintln!("   sending received to console on tx1 ...").unwrap();
 
-    for byte in b"\r\ntx2 to rx3 with X\r\n" {
-        // iterator fails if string is too long
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).unwrap();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).unwrap();
-    }
-    #[cfg(feature = "stm32f4xx")]
-    block!(tx1.write(received)).ok();
-    #[cfg(not(feature = "stm32f4xx"))]
-    block!(tx1.write_byte(received)).ok();
-    for byte in b"\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).unwrap();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).unwrap();
-    }
+    tx1.write("\r\ntx2 to rx3 with X\r\n".as_bytes()).unwrap();
+//    for byte in b"\r\ntx2 to rx3 with X\r\n" {
+//        // iterator fails if string is too long
+//        #[cfg(feature = "stm32f4xx")]
+//        block!(tx1.write(*byte)).unwrap();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        block!(tx1.write_byte(*byte)).unwrap();
+//    }
+
+    tx1.write(&received).unwrap();
+//    #[cfg(feature = "stm32f4xx")]
+//    block!(tx1.write(received)).ok();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    block!(tx1.write_byte(received)).ok();
+
+    tx1.write("\r\n".as_bytes()).unwrap();
+//    for byte in b"\r\n" {
+//        #[cfg(feature = "stm32f4xx")]
+//        block!(tx1.write(*byte)).unwrap();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        block!(tx1.write_byte(*byte)).unwrap();
+//    }
 
     // Trigger a breakpoint
     // asm::bkpt();
@@ -852,22 +862,26 @@ fn main() -> ! {
     let send = b'Y';
 
     // Write `Y` and wait until the write is successful
-    #[cfg(feature = "stm32f4xx")]
-    block!(tx3.write(send)).ok();
-    #[cfg(not(feature = "stm32f4xx"))]
-    block!(tx3.write_byte(send)).ok();
+
+    tx3.write(&[send]).unwrap();
+//    #[cfg(feature = "stm32f4xx")]
+//    block!(tx3.write(send)).ok();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    block!(tx3.write_byte(send)).ok();
 
     // hprintln here can slow enough that transmition is missed
     //hprintln!("   receiving on rx2 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
-    #[cfg(feature = "stm32f4xx")]
-    let received = block!(rx2.read()).unwrap();
-    #[cfg(not(feature = "stm32f4xx"))]
-    let received = block!(rx2.read_byte()).unwrap();
+
+    let _len = rx2.read(&mut received);
+//    #[cfg(feature = "stm32f4xx")]
+//    let received = block!(rx2.read()).unwrap();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    let received = block!(rx2.read_byte()).unwrap();
 
     hprintln!(
-        "    checking tx3 to rx2  received = send,  {} = {} byte",
+        "    checking tx3 to rx2  received = send,  {:?} = {:?} byte",
         received,
         send
     )
@@ -876,32 +890,32 @@ fn main() -> ! {
     // The send byte should be the one received
     //assert_eq!(received, send, "testing received = send,  {} = {}", received, send);
 
-    hprintln!(
-        "   tx3 to rx2  characters,  {} = {}",
-        from_utf8(&[received]).unwrap_or(&"!"),
-        from_utf8(&[send]).unwrap_or(&"!")
-    )
-    .unwrap();
+    hprintln!("   tx3 to rx2  characters,  {:?} = {:?}", received,  send ).unwrap();
 
     hprintln!("   sending received from rx2  to console on tx1 ...").unwrap();
 
-    for byte in b"tx3 to rx2 test with Y\r\n" {
-        // iterator fails if string is too long
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).unwrap();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).unwrap();
-    }
-    #[cfg(feature = "stm32f4xx")]
-    block!(tx1.write(received)).ok();
-    #[cfg(not(feature = "stm32f4xx"))]
-    block!(tx1.write_byte(received)).ok();
-    for byte in b"\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx1.write(*byte)).unwrap();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx1.write_byte(*byte)).unwrap();
-    }
+    tx1.write(b"tx3 to rx2 test with Y\r\n").unwrap();
+//    for byte in b"tx3 to rx2 test with Y\r\n" {
+//        // iterator fails if string is too long
+//        #[cfg(feature = "stm32f4xx")]
+//        block!(tx1.write(*byte)).unwrap();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        block!(tx1.write_byte(*byte)).unwrap();
+//    }
+
+    tx1.write(&received).unwrap();
+//    #[cfg(feature = "stm32f4xx")]
+//    block!(tx1.write(received)).ok();
+//    #[cfg(not(feature = "stm32f4xx"))]
+//    block!(tx1.write_byte(received)).ok();
+
+    tx1.write(b"\r\n").unwrap();
+//    for byte in b"\r\n" {
+//        #[cfg(feature = "stm32f4xx")]
+//        block!(tx1.write(*byte)).unwrap();
+//        #[cfg(not(feature = "stm32f4xx"))]
+//        block!(tx1.write_byte(*byte)).unwrap();
+//    }
 
     // Trigger a breakpoint to inspect the values
     //asm::bkpt();
