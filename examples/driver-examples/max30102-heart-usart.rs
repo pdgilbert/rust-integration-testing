@@ -1,3 +1,7 @@
+//! FAILS TO COMPILE WITH stm32f4xx_hal. See
+//! https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Continuously read the heart data and send it through USART.
 //!
 //! This example is runs on the STM32F103 "Bluepill" board using I2C1 and USART1.
