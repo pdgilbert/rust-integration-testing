@@ -31,7 +31,7 @@
 #![no_std]
 #![no_main]
 
-use core::fmt::Write as Writeln;  // for writeln!
+//use core::fmt::Write;
 use cortex_m_rt::entry;
 use max3010x::{Led, LedPulseWidth, Max3010x, SampleAveraging, SamplingRate};
 #[cfg(debug_assertions)]
@@ -45,7 +45,11 @@ use panic_halt as _;
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-use nb::block;
+//use nb::block;
+
+use embedded_io::{Write};
+
+/////////////////////////////////////////////////////////////////////
 
 pub trait LED {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
@@ -509,6 +513,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
+    time::{RateExtU32},
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Config},
@@ -536,7 +541,7 @@ fn setup() -> (
 
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.khz()), &mut rcc);
+    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
 
     let delay = cp.SYST.delay(&mut rcc.clocks);
 
@@ -864,9 +869,11 @@ fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("test write to console ...");
     hprintln!("test write to console ...").unwrap();
-    for byte in b"\r\nconsole connect check.\r\n" {
-        block!(tx.write(*byte)).ok();
-    }
+
+    tx.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap(); 
+//    for byte in b"\r\nconsole connect check.\r\n" {
+//        block!(tx.write(*byte)).ok();
+//    }
 
     let mut max30102 = Max3010x::new_max30102(i2c);
     max30102.reset().unwrap();
@@ -882,28 +889,38 @@ fn main() -> ! {
 
     max30102.clear_fifo().unwrap();
 
-    //writeln!(tx, "hr\r").unwrap();
-    for byte in b"\r\n" {
-        block!(tx.write(*byte)).unwrap();
-    }
+    tx.write(b"\r\n").unwrap(); 
+//    for byte in b"\r\n" { block!(tx.write(*byte)).unwrap(); }
+
+    let mut data = [0_u32; 16];
+    //let mut buf: [u8; 20];
+    //let mut buf: [heapless::String<32>; 1] = [
+    //    heapless::String::new(),
+    //];
 
     loop {
         // Blink LED to check that loop is arunning.
         led.blink(50_u16, &mut delay);
 
-        hprintln!("loop i").unwrap();
+        //hprintln!("loop i").unwrap();
         //rprintln!("{}\r", data[i]);   // rprintln requires updated probe??
         delay.delay_ms(100_u32.into());
-        let mut data = [0; 16];
         let read = max30102.read_fifo(&mut data).unwrap_or(0);
+
+        hprintln!("read {:?}", read).unwrap();
+        hprintln!("data {:?}", data).unwrap();
+
         for i in 0..read.into() {
               hprintln!("data {}", data[i]).unwrap();
-              writeln!(tx, "{}\r", data[i],).unwrap();  
+              tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
+              //write!(buf, "data[i] {}\r", data[i]);  // but no luck let with this
+              //tx.write(&buf).unwrap();  
+              //writeln!(tx, "{}\r", data[i],).unwrap();  
               //block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
         }
-        for byte in b"\r\n" {
-            block!(tx.write(*byte)).ok();
-        }
+
+        tx.write(b"\r\n").unwrap(); 
+//        for byte in b"\r\n" { block!(tx.write(*byte)).ok(); }
 
         delay.delay_ms(3000_u32.into());
     }
