@@ -54,34 +54,24 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use embedded_ccs811::{
-        mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
-        SlaveAddr as Ccs811SlaveAddr,
-    };
-
-    use hdc20xx::{mode as Hdc20xxMode, Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
-
-    //uuse cortex_m_semihosting::{hprintln};
+    use rtic;
+    use rtic_monotonics::systick::Systick;
+    use rtic_monotonics::systick::fugit::{ExtU32};
+    //use cortex_m_semihosting::{hprintln};
     use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write; 
     use nb::block;
 
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
+    /////////////////////  embedded_ccs811
+    use embedded_ccs811::{
+        mode as Ccs811Mode, prelude::*, AlgorithmResult, Ccs811Awake, MeasurementMode,
+        SlaveAddr as Ccs811SlaveAddr,
+    };
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
-    use cortex_m::interrupt::Mutex;
+    /////////////////////  hdc20xx
+    use hdc20xx::{mode as Hdc20xxMode, Hdc20xx, SlaveAddr as Hdc20xxSlaveAddr};
 
-    const PERIOD: u32 = 10;  // used as seconds
-    
-    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
 
     // cortex_m::asm  delay is only used in init. 
     // See other examples for the case when a shared delay is needed.
@@ -90,6 +80,43 @@ mod app {
                        //use embedded_hal::blocking::delay; //delay::delay_ms(N:u32) blocks the program for N ms.
 
 
+    /////////////////////   hals
+
+    /////////////////////  bus sharing
+  
+    use shared_bus::{I2cProxy};
+    use core::cell::RefCell;
+    use cortex_m::interrupt::Mutex;
+
+    /////////////////////   boards
+    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
+    use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+
+
+    /////////////////////  
+
+    const PERIOD: u32 = 10;  // used as seconds
+
+    #[shared]
+    struct Shared {
+        led: LedType,
+        ccs811:  Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
+        hdc2080:     Hdc20xx<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Hdc20xxMode::OneShot>,
+        tx: TxType,
+    }
+
+    #[local]
+    struct Local {
+        led_state: bool,
+        env: [(f32, f32); 1200],
+        index: usize,
+        measurements: [AlgorithmResult; 1200],
+    }
+
+    /////////////////////  
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
@@ -145,23 +172,6 @@ mod app {
 
         (Shared {led, ccs811, hdc2080, tx}, Local {led_state, env, index, measurements})
     }
-
-    #[shared]
-    struct Shared {
-        led: LedType,
-        ccs811:  Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
-        hdc2080:     Hdc20xx<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Hdc20xxMode::OneShot>,
-        tx: TxType,
-    }
-
-    #[local]
-    struct Local {
-        led_state: bool,
-        env: [(f32, f32); 1200],
-        index: usize,
-        measurements: [AlgorithmResult; 1200],
-    }
-
 
     #[task(shared = [led, ccs811, hdc2080, tx], local = [led_state, env, index, measurements])]
     async fn measure(mut cx: measure::Context) {

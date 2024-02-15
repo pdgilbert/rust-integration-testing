@@ -39,45 +39,40 @@ use rtic::app;
 #[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::stm32,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::stm32, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
     use rtic;
     use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
-
-    use nb::block;
     use cortex_m_semihosting::{hprintln};
     //use rtt_target::{rprintln, rtt_init_print};
+    use rtic_monotonics::systick::fugit::{ExtU32};
+
+    use core::fmt::Write; 
+    use nb::block;
 
     /////////////////////   iaq
     use iaq_core::{IaqCore, Measurement};
 
-
     /////////////////////   hals
 
-    use embedded_hal::{
-       i2c::I2c as I2cTrait,
-       delay::DelayNs,
-    };
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    pub use hal::{
-        pac::{I2C1},
-        pac::Peripherals,
-        pac::{USART1},
-        serial::{Serial, Tx, Rx, Error},
-        i2c::I2c as I2cType,
-        prelude::*,
-    };
+    /////////////////////  bus sharing
+  
+    //use shared_bus::{I2cProxy};
+    //use core::cell::RefCell;
+    //use cortex_m::interrupt::Mutex;
+
 
     /////////////////////   boards
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
 
 
@@ -88,8 +83,8 @@ mod app {
     #[shared]
     struct Shared {
         led: LedType,
-        sensor: IaqCore<I2cType<I2C1>>,
-        tx: Tx<USART1>,
+        sensor: IaqCore<I2cType>,
+        tx: TxType,
     }
 
     #[local]
@@ -98,6 +93,8 @@ mod app {
         index: usize,
         measurements: [Measurement; 2400],
     }
+
+    /////////////////////  
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
@@ -124,18 +121,18 @@ mod app {
 
         measure::spawn().unwrap();
 
-        //writeln!(tx, "start\r",).unwrap();
-    for byte in b"\r\nstart\r\n" {
-        #[cfg(feature = "stm32f4xx")]
-        block!(tx.write(*byte)).ok();
-        #[cfg(not(feature = "stm32f4xx"))]
-        block!(tx.write_byte(*byte)).ok();
-    }
+        writeln!(tx, "start\r",).unwrap();
+//      for byte in b"\r\nstart\r\n" {
+//          #[cfg(feature = "stm32f4xx")]
+//          block!(tx.write(*byte)).ok();
+//          #[cfg(not(feature = "stm32f4xx"))]
+//          block!(tx.write_byte(*byte)).ok();
+//      }
 
         (Shared {led, sensor, tx}, Local {led_state, index, measurements})
     }
 
-    #[task(shared = [led, sensor, tx], local = [led_state, index, measurements,])]
+    #[task(shared = [led, sensor, tx], local = [led_state, index, measurements])]
     async fn measure(mut cx: measure::Context) {
        loop {
            Systick::delay(PERIOD.secs()).await;
@@ -164,11 +161,11 @@ mod app {
            }
            for i in 0..*cx.local.index {
                let data = cx.local.measurements[i];
-               //writeln!(cx.resources.tx,"{},{},{},{}\r",i, data.co2, data.tvoc, data.resistance).unwrap();
-//               cx.shared
-//                   .tx
-//                   .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
-//                   .unwrap();
+               //writeln!(cx.shared.tx,"{},{},{},{}\r",i, data.co2, data.tvoc, data.resistance).unwrap();
+               cx.shared
+                   .tx
+                   .lock(|tx| writeln!(tx, "{},{},{},{}\r", i, data.co2, data.tvoc, data.resistance))
+                   .unwrap();
            }
        }
     }
