@@ -101,8 +101,10 @@ mod app {
    //   //pwr::PwrExt,
    //};
    
-   
+   use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
+   use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
+// THESE ARE NO LONGER USED
    #[cfg(feature = "stm32f4xx")]            
    pub fn setup_from_dp(dp: Peripherals) ->  ( I2cType<I2C1>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
       let rcc = dp.RCC.constrain();
@@ -143,6 +145,26 @@ mod app {
    
 ///////////////////////////////////////////////////////////////////////////////////////////
 
+       #[shared]
+       struct Shared {
+           led: u8,  //LedType,
+       }
+    
+
+       #[local]
+       struct Local {
+           display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
+                             DisplaySizeType, 
+                             BufferedGraphicsMode<DisplaySizeType>>,
+           //text_style: TextStyle,
+           text_style: MonoTextStyle<'static, BinaryColor>,
+
+           ina:    SyncIna219<RefCellDevice<'static, I2c1Type>, UnCalibrated>,
+//          adc_a:  Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+//          adc_b:  Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       }
+
+////////////////////////////////////////////////////////////////////////////////
 
    fn show_display<S>(
        voltage: BusVoltage,
@@ -188,9 +210,11 @@ mod app {
        let mono_token = rtic_monotonics::create_systick_token!();
        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-       let (i2cset, _delay) = setup_from_dp(cx.device);
+       //let (i2cset, _delay) = setup_from_dp(cx.device);
+       let (i21, i2c2, _led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
-       let i2cset_ref_cell = RefCell::new(i2cset);
+       //let i2cset_ref_cell: 'static + RefCell<I2c1Type> = RefCell::new(i21);
+       let i2cset_ref_cell: RefCell<I2c1Type> = RefCell::new(i21);
        let adc_a_rcd = RefCellDevice::new(&i2cset_ref_cell); 
        let adc_b_rcd = RefCellDevice::new(&i2cset_ref_cell); 
        let ina_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
@@ -231,25 +255,6 @@ mod app {
 
        let led:u8 = 8;
           (Shared {led}, Local { ina, display, text_style })  //, adc_a, adc_b
-       }
-
-       #[shared]
-       struct Shared {
-           led: u8,  //LedType,
-       }
-    
-
-       #[local]
-       struct Local {
-           display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType<I2C1>>>, 
-                             DisplaySizeType, 
-                             BufferedGraphicsMode<DisplaySizeType>>,
-           //text_style: TextStyle,
-           text_style: MonoTextStyle<'static, BinaryColor>,
-
-           ina:    SyncIna219<RefCellDevice<'static, I2cType<I2C1>>, UnCalibrated>,
-//          adc_a:  Ads1x1x<RefCellDevice<'static, I2cType<I2C1>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-//          adc_b:  Ads1x1x<RefCellDevice<'static, I2cType<I2C1>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
        }
 
        /////////////////////   measure and display 

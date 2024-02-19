@@ -1,4 +1,5 @@
-//  THIS COULD BE CLEANED UP AS IN i2c1_i2c2_led_delay.rs
+//  THIS COULD BE CLEANED UP AS IN i2c1_i2c2_led_delay.rs at lease for adding another i2c
+// BUT NOT THAT  reset_si4703 uses sda before it is consumed by setup of i2c.
 
 // see https://github.com/eldruin/driver-examples/issues/2
 // and si4703-fm-radio-display.rs is more developed but also not working

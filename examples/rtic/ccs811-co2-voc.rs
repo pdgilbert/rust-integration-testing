@@ -91,7 +91,7 @@ mod app {
     use hal::{
        //pac::{Peripherals, CorePeripherals},
        gpio::{gpioa::PA8, Output, OpenDrain},
-       //prelude::*,
+       prelude::*,
     };
 
     type OpenDrainType = PA8<Output<OpenDrain>>;
@@ -108,7 +108,7 @@ mod app {
         let (mut dht, i2c, mut led, mut tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
 
         led.on(); 
-        delay.delay(1000.millis());
+        delay.delay_ms(1000);
         led.off();
 
         // 5 sec systick timer  check
@@ -116,7 +116,7 @@ mod app {
         //led_on::spawn_after(1.secs()).unwrap(); 
         //led_off::spawn_after(6.secs()).unwrap();
 
-        delay.delay(2000.millis()); //  2 second delay for dhtsensor initialization
+        delay.delay_ms(2000); //  2 second delay for dhtsensor initialization
         
         // intial dht reading
         let (temperature, humidity) = match read(&mut delay, &mut dht) {  //NEEDS NON SYSTICK DELAY
@@ -152,7 +152,7 @@ mod app {
         ccs811.software_reset().unwrap();
         hprintln!("_reset").unwrap();
 
-        delay.delay(3000.millis());  // Delay while ccs811 resets
+        delay.delay_ms(3000);  // Delay while ccs811 resets
         hprintln!("delay.delay_ms(3000u32)").unwrap();
 
         let mut ccs811 = ccs811.start_application().ok().unwrap();

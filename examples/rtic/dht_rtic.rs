@@ -39,7 +39,7 @@ use rtic::app;
 #[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
@@ -60,15 +60,10 @@ mod app {
     use rtic_monotonics::systick::Systick;
     use rtic_monotonics::systick::fugit::{ExtU32};
 
-    // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
-    // DisplaySize128x32:
-    //    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //    &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8  =  4  characters high
-    //    FONT_8X13  128 pixels/ 8 per font = 16   characters wide.  32/13 = 2.5 characters high
-    //    FONT_9X15  128 pixels/ 9 per font = 14.2 characters wide.  32/15 = 2.  characters high
-    //    FONT_9X18  128 pixels/ 9 per font = 14.2 characters wide.  32/18 = 1.7 characters high
-    //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
-    
+   
+    const READ_INTERVAL: u32 = 10;  // used as seconds
+    const BLINK_DURATION: u32 = 20;  // used as milliseconds
+
     use embedded_graphics::{
         //mono_font::{ascii::FONT_10X20 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
         //mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
@@ -81,20 +76,18 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306,
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
-    const READ_INTERVAL: u32 = 10;  // used as seconds
-
-    const BLINK_DURATION: u32 = 20;  // used as milliseconds
-
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::{Delay2Type};
+
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
     use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{I2cType};
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
     use hal::{
-          gpio::{gpioa::PA8, Output, OpenDrain},
+       gpio::{gpioa::PA8, Output, OpenDrain},
+       prelude::*,
     };
 
     type OpenDrainType = PA8<Output<OpenDrain>>;
@@ -157,12 +150,12 @@ mod app {
         //hprintln!("dht_rtic example").unwrap();
 
         let (dht, i2c, mut led, _usart, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
-        
+
         led.on();
-        delay.delay(1000.millis());  
+        delay.delay_ms(1000);  
         led.off();
 
-        delay.delay(2000.millis()); //  2 second delay for dhtsensor initialization
+        delay.delay_ms(2000); //  2 second delay for dhtsensor initialization
 
         let interface = I2CDisplayInterface::new(i2c);
 
@@ -177,14 +170,14 @@ mod app {
           .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        delay.delay(2000.millis());    
+        delay.delay_ms(2000);    
 
         // next turn LED for a period of time that can be used to calibrate the delay timer.
         // Ensure that nothing is spawned above. This relies on delay blocking.
         led.on();
-        delay.delay(10000.millis());  
+        delay.delay_ms(10000);  
         led.off();
-        delay.delay(1000.millis());  
+        delay.delay_ms(1000);  
         read_and_display::spawn().unwrap();
 
         let mono_token = rtic_monotonics::create_systick_token!();

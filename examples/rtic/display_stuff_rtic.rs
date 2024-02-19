@@ -59,19 +59,18 @@ mod app {
     const READ_INTERVAL: u32 = 10;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
     use rust_integration_testing_of_examples::led::{LED, LedType};
+    use rust_integration_testing_of_examples::i2c::I2c1Type as I2cType;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+    //use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+    //use hal::{
+    //    //i2c::I2c as I2cType,
+    //    //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
+    //};
 
-    use hal::{
-        pac::{I2C1},
-        i2c::I2c as I2cType,
-        //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
-    };
-
-//    use embedded_hal::i2c::I2c as I2cTrait; 
+    // use embedded_hal::i2c::I2c as I2cTrait; 
 
     use core::cell::RefCell;
     use embedded_hal_bus::i2c::RefCellDevice;
@@ -122,7 +121,7 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType< I2C1>>>, 
+        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
         //i2c: &'static mut I2CBus,
@@ -137,7 +136,7 @@ mod app {
         // Task local initialized resources are static
         // Here we use MaybeUninit to allow for initialization in init()
         // This enables its usage in driver initialization
-        i2c1_rc: MaybeUninit<RefCell<I2cType< I2C1>>> = MaybeUninit::uninit()
+        i2c1_rc: MaybeUninit<RefCell<I2cType>> = MaybeUninit::uninit()
     ])]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
