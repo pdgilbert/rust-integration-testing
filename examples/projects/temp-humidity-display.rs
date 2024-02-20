@@ -1,5 +1,9 @@
 //  THIS IS NOT USING DelayNs yet
 
+//  Consider splitting into separate versions for each sensor
+
+//  Compare xca9548a which is not rtic
+
 //! Compile with feature hdc1080, or aht10, or aht20, or htu2xd.
 //! eg build
 //!   cargo build --no-default-features --target $TARGET --features $MCU,$HAL,aht10 --example temp-humidity-display
@@ -50,7 +54,7 @@
 //! reading humidity) and AHT10 does not work with anything else on the same i2c bus so having display
 //! and ina219 together on one bus is for future considerations.)
 
-//! Compare examples aht10_rtic, ina219-display, hdc1080-display, htu2xd_rtic. 
+//! Compare examples aht10_rtic, ina219-display, hdc1080-display, htu2xd_rtic, xca9548a. 
 //! Blink (onboard) LED with short pulse every read.
 //! On startup the LED is set on for a second in the init process.
 //! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
@@ -99,7 +103,6 @@ mod app {
 
     use rtic;
     use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
 
@@ -222,7 +225,7 @@ mod app {
     type  SensorRcdType = AHT10<RefCellDevice<'static, I2c1Type>, Delay2Type>;
 
     #[cfg(feature = "aht10")]
-    impl TempHumSensor for SensorType {
+    impl TempHumSensor for SensorRcdType {
         fn read_th(&mut self) -> (i32, u8) {
             // sensor returns f32 with several decimal places but f32 makes code too large to load on bluepill.
             // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
@@ -313,13 +316,25 @@ mod app {
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{Delay2Type};
+    use rust_integration_testing_of_examples::delay::{Delay1Type, Delay2Type};
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-    //use shared_bus::{I2cProxy};
-    //use cortex_m::interrupt::Mutex;
-    use core::cell::RefCell;
-    use embedded_hal_bus::i2c::RefCellDevice;
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+      pac::{Peripherals},
+      i2c::Error as i2cError,
+      prelude::*,
+      prelude::DelayNs,
+};
+
+//use embedded_hal_async::delay::DelayNs;
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    timer::Timer,
+    time::{ExtU32, RateExtU32},
+    delay::DelayFromCountDownTimer,
+};
 
     //type  InaType = INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>;
     //
@@ -330,6 +345,12 @@ mod app {
 
     type  DisplayType = Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
                                  ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
+
+
+    //use shared_bus::{I2cProxy};
+    //use cortex_m::interrupt::Mutex;
+    use core::cell::RefCell;
+    use embedded_hal_bus::i2c::RefCellDevice;
 
 
     //////////////////////////////////////////////////////////////////
@@ -438,11 +459,11 @@ mod app {
         led.on();
         //  needs Systick::start first, but also is a future and .await needs to be in a block
         //  Systick::delay(1000.millis());
-        delay.delay(1000.millis());
+        delay.delay_ms(1000);
         led.off();
 
         // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
-        // Using embedded-bus instead, but it might be possible to put ssd on i2c1 and shared-bus ads's on i2c2
+        // Trying embedded-bus instead, but it might be possible to put ssd on i2c1 and shared-bus ads's on i2c2
         //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
 
@@ -462,7 +483,7 @@ mod app {
         display.init().unwrap();
 
         show_message("temp-humidity", &mut display);
-        delay.delay(2000.millis());    
+        delay.delay_ms(2000);    
 
 
         /////////////////////   ina   Start the battery sensor.
@@ -472,10 +493,10 @@ mod app {
         //let mut ina = INA219::new(ina_rcd, 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
         ina.calibrate(UnCalibrated).unwrap();
-        delay.delay(15.millis());     // Wait for sensor
+        delay.delay_ms(15);     // Wait for sensor
 
         show_message("battery sensor init", &mut display);   // Example name
-        delay.delay(2000.millis());  
+        delay.delay_ms(2000);  
 
 
         /////////////////////   sens    Start the temp-humidity sensor.

@@ -1,3 +1,6 @@
+     THIS REQUIRES SHARING THE BUS ina canshare but aht10 hardware wants it's own bus and
+     ssd is not working with shared_bus, so cannot work without ssd fixed (or 3 i2c's)
+     
 //!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //!
 //! Feb 6, 2023 - This is working with USB probe and with battery. 
@@ -18,7 +21,6 @@
 //! 
 //! Measure the temperature and humidity from an AHT10 on i2c2.
 //! Measure the battery with ina219 on i2c1 and display on OLED with ssd1306 on i2c1.
-     THIS REQUIRES SHARING THE BUS
 //!     
 //! Compare examples dht_rtic, aht10_displau.
 //! Blink (onboard) LED with short pulse evry read.

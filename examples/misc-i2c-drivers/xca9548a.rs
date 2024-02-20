@@ -143,6 +143,8 @@ fn main() -> ! {
     let (i2c1, i2c2, mut led, mut delay1, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     let delay2 = cp.SYST.delay(&clocks);
+    //let () = delay1; opaque type impl DelayNs  does not work for AHT10, in AHT10::new()
+    //let () = delay2;  type `Delay`
 
     led.off();
 

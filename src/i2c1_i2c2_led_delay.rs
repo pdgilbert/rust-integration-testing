@@ -42,7 +42,6 @@ use panic_halt as _;
 use crate::led::{setup_led, LED, LedType};
 use crate::i2c::{setup_i2c1_i2c2, I2c1Type, I2c2Type};
 
-use crate::delay::{Delay2Type as Delay};
 
 // "hal" is used for items that are the same in all hal  crates
 use crate::stm32xxx_as_hal::hal;
@@ -156,6 +155,8 @@ pub use stm32f4xx_hal::{
    timer::TimerExt,
 };
 
+#[cfg(feature = "stm32f4xx")]
+use crate::delay::{Delay2Type as Delay};
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
@@ -228,7 +229,7 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl DelayNs, Clocks) {
 
    let mut rcc = dp.RCC.constrain();
 
