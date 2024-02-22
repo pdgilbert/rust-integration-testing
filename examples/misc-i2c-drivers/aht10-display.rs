@@ -1,3 +1,4 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Continuously read temperature from AHT10 and display on SSD1306 OLED.
 //! The AHT10 does not work with other devices on the i2c bus 
 //! (see https://www.electroschematics.com/temperature-sensor) so this example
@@ -45,32 +46,43 @@ use rust_integration_testing_of_examples::led::{LED};
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
-      //pac::{CorePeripherals},
+      pac::{Peripherals, CorePeripherals},
 };
+
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+    timer::SysTimerExt,
+};
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    delay::SYSTDelayExt,
+};
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   timer::Timer,
+   delay::DelayFromCountDownTimer,
+   pac::{TIM2, TIM5},
+};
+
 
 #[entry]
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
     //hprintln!("AHT10 example").unwrap();
-    //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
+    let cp = CorePeripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let delay2 = cp.SYST.delay(&clocks); // this DelayMs works with non-eh-1 sensor crate
+
+    // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re manager)
     
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    let mut delay = Delay::new(cp.SYST, clocks); 
-    // Delay::new() works with DelayNs but seem to need older trait for stm32f4xx
-
-//    #[cfg(feature = "stm32f4xx")]
-//    use stm32f4xx_hal::timer::SysTimerExt;
-//    #[cfg(feature = "stm32f4xx")]
-//    let mut delay = cp.SYST.delay(&clocks);
-
     led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
 
-    let interface = I2CDisplayInterface::new(i2c2);
+    let interface = I2CDisplayInterface::new(i2c1);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
@@ -97,7 +109,7 @@ fn main() -> ! {
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
     // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
     //   and "No  other devices on the I2C bus". So use i2c2 bus
-    let mut sensor = AHT10::new(i2c1, delay).expect("sensor failed");
+    let mut sensor = AHT10::new(i2c2, delay2).expect("sensor failed");
     hprintln!("mut sensor").unwrap();
 
     //let z = sensor.reset();
