@@ -110,7 +110,9 @@ vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #ina219           = { git = "https://github.com/sndnvaps/ina219_rs" }
 ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-configuration-register" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
-htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
+#htu2xd           = { git = "https://github.com/samcrow/HTU2XD" }
+htu21df-sensor     = "0.1.4"
+#htu21df-sensor     = { git = "https://gitlab.com/phgsng/htu21df-sensor" }
 xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
 ens160           = { git = "https://github.com/teamplayer3/ens160", default-features = false }
 #ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
@@ -166,6 +168,8 @@ embedded-io         = "0.6.1"
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-nb  = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-io      = { git = "https://github.com/rust-embedded/embedded-hal/" }
+
+embedded-hal-02 = { package = "embedded-hal", version = "0.2.7", features = ["unproven"] }
 
 embedded-graphics = ">=0.7"
 
