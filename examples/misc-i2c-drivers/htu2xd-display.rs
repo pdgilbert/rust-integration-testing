@@ -72,12 +72,6 @@ use stm32g4xx_hal::{
     //pac::{TIM2, TIM3}, 
 };
 
-//#[cfg(feature = "stm32g4xx")]
-//use embedded_hal_02::{
-//   blocking::delay::DelayMs,    
-//};
-
-
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
    timer::Timer,
@@ -99,7 +93,6 @@ fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
 
     let (i2c1, i2c2, mut led,  mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
-    //let mut delayms: DelayMs<u32> = OldDelayType{};
     let mut delay2 = cp.SYST.delay(&clocks);
 
     /////////////// Note on Delay Type  /////////////////////////////
@@ -110,10 +103,10 @@ fn main() -> ! {
     // Only delay2 works for htu, with both  stm32f4xx and stm32g4xx.
     //    (trait `DelayMs<u16>` is not implemented)
     // It should be possible to replace delay2 with AltDelay but need trait `DelayMs<u16>`
-    //  and this is because  htu crate is not yet eh-1, so just temporary.
+    //  but this is because  htu crate is not yet eh-1, so need for DelayMs is temporary.
     //
     // Note also that crate htu2xd consumes the delay. Crate htu21df-sensor does not, so
-    //  calls to measure need the delay passed. This has a big advantage if there are  multiple
+    //  htu.measure needs the delay passed. This has a big advantage if there are multiple
     //  sensors (each needing its own delay is a problem). It may also be better with rtic.
     //
     ////////////////////////////////////////////////////////////////

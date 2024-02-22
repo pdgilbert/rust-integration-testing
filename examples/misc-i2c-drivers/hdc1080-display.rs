@@ -1,3 +1,5 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//! 
 //! Feb 2023. tested to work on both bluepill and blackpill stm32f401
 //!                         with display on i2c1 and sensor on i2c2
 //!                         and with display on i2c2 and sensor on i21
@@ -47,8 +49,32 @@ use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
+      pac::{Peripherals, CorePeripherals},
 };
+
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+    timer::SysTimerExt,
+};
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    //timer::CountDownTimer,
+    //delay::DelayFromCountDownTimer,
+    //delay::Delay,
+    //timer::SysDelay,
+    delay::SYSTDelayExt,
+    //pac::{TIM2, TIM3}, 
+};
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   timer::Timer,
+   //delay::Delay,
+   delay::DelayFromCountDownTimer,
+   pac::{TIM2, TIM5},
+};
+
 
 
 
@@ -56,8 +82,12 @@ use hal::{
 fn main() -> ! {
     //rtt_init_print!();
     let dp = Peripherals::take().unwrap();
+    let cp = CorePeripherals::take().unwrap();
 
-    let (i2c1, i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, _led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let delay2 = cp.SYST.delay(&clocks); // this DelayMs works with non-eh-1 sensor crate
+
+    // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re manager)
 
     //let manager = shared_bus::BusManagerSimple::new(i2c1); 
     //let interface = I2CDisplayInterface::new(manager.acquire_i2c());
@@ -77,8 +107,8 @@ fn main() -> ! {
     delay.delay_ms(2000_u32);
 
     // Start the sensor.
-    //let mut sensor = Hdc1080::new(manager.acquire_i2c(), delay).unwrap();
-    let mut sensor = Hdc1080::new(i2c1, delay).unwrap();
+    //let mut sensor = Hdc1080::new(manager.acquire_i2c(), delay2).unwrap();
+    let mut sensor = Hdc1080::new(i2c1, delay2).unwrap();
 
     sensor.init().unwrap();
     //delay.delay_ms(500_u16);
