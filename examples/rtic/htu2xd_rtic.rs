@@ -53,7 +53,8 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    use htu2xd::{Htu2xd, Reading};   //, Resolution
+    use htu21df_sensor::{Sensor}; 
+    //use htu2xd::{Htu2xd, Reading};   //, Resolution
 
     // Note that hprintln is for debugging with usb probe and semihosting. It causes battery operation to stall.
     //use cortex_m_semihosting::{debug, hprintln};
@@ -90,7 +91,7 @@ mod app {
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::i2c::I2c1Type;
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     
     use embedded_hal::delay::DelayNs;
@@ -98,6 +99,31 @@ mod app {
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
+
+    #[cfg(feature = "stm32f4xx")]
+    use stm32f4xx_hal::{
+       pac::TIM5,
+       timer::Delay,
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////
+    #[shared]
+    struct Shared {
+        led:   LedType,      //impl LED, would be nice
+    }
+
+    #[local]
+    struct Local {
+        //display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>,
+        display:  Ssd1306<I2CInterface<I2c1Type>,                                   
+                          ssd1306::prelude::DisplaySize128x32, 
+                          BufferedGraphicsMode<DisplaySize128x32>>,
+
+        sensor:  htu21df_sensor::Sensor<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
+        delay:  Delay<TIM5, 1000000_u32>, 
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+
 
     fn show_display<S>(
         temperature: f32,   // 10 * deg C to give one decimal place
@@ -154,15 +180,17 @@ mod app {
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (i2c1, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  
         led.off();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); // CHANGE x2 for i2c
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
-        //let interface = I2CDisplayInterface::new(i2c2);
+        let manager2 = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>>::new(i2c2);
+        //let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
+    
+        /////////////////////   ssd
+        let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 
@@ -178,66 +206,47 @@ mod app {
         
         Systick.delay_ms(2000u32);    
 
+        /////////////////////   htu
         // Start the sensor.
-        let mut sensor    = Htu2xd::new();
-        //let managerx: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); // CHANGE x2 for i2c
-        let mut htu_ch = manager.acquire_i2c();
-        //let mut htu_ch = i2c1;                                                           // CHANGE for i2c
-
-        sensor.soft_reset(&mut htu_ch).expect("sensor reset failed");
-        Systick.delay_ms(15u32);     // Wait for the reset to finish
-
-        //    .read_user_register() does not return and changes something that requires sensot power off/on.
-        //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
-        //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
-        //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
+         // delay or Systick::delay ?  Neither WILL WORK. Need DelayMs<u16>
+         //  and being able to .await would ne nice
+         let mut sensor = Sensor::new(manager2.acquire_i2c(), Some(&mut delay)).expect("sensor init");
+        //                                                  ^^^^^^^^^^^^^^^^ the trait `DelayMs<u16>` is not implemented for `impl embedded_hal::delay::DelayNs`
+        Systick.delay_ms(15u32);     // Wait for the reset to finish // needed?
 
         read_and_display::spawn().unwrap();
 
-        (Shared { led, },   Local {display, sensor, htu_ch })
+        (Shared { led, },   Local {display, sensor, delay})
     }
 
-    #[shared]
-    struct Shared {
-        led:   LedType,      //impl LED, would be nice
-    }
+    ////////////////////////////////////////////////////////////////////////////////////
 
-    #[local]
-    struct Local {
-        //display:  Ssd1306<I2CInterface<I2c2Type>,                                          // CHANGE for i2c
-        display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>,         // CHANGE for i2c
-                          ssd1306::prelude::DisplaySize128x32, 
-                          BufferedGraphicsMode<DisplaySize128x32>>,
-        sensor:  htu2xd::Htu2xd<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>, // CHANGE for i2c
-        htu_ch:  I2cProxy<'static, Mutex<RefCell<I2c1Type>>>,                              // CHANGE for i2c
-        //sensor:  htu2xd::Htu2xd<I2c1Type>,                                                   // CHANGE for i2c
-        //htu_ch:  I2c1Type,                                                                   // CHANGE for i2c
-    }
-
-    //#[task(shared = [led, delay, dht, text_style, display] )]
-    #[task(shared = [led, ], local = [sensor, display, htu_ch ] )]
+    #[task(shared = [led, ], local = [display, sensor, delay] )]
     async fn read_and_display(cx: read_and_display::Context) {
        let sensor = cx.local.sensor;
-       let htu_ch = cx.local.htu_ch;
+       let delay = cx.local.delay;
 
        loop {
           blink::spawn(BLINK_DURATION).ok();
 
-          let z = sensor.read_temperature_blocking(htu_ch);
-          let t = match z {
-              Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
-              Ok(Reading::ErrorLow)  => 409.0,
-              Ok(Reading::ErrorHigh) => 409.1,
-              Err(_)                 => 409.2,
-          };
+     //     let z = sensor.read_temperature_blocking(htu_ch);
+          // delay2 or Systick::delay?   NOT SURE IF THIS WILLL WORK. .await?
+          let t = sensor.measure_temperature(&mut delay).unwrap().value();
+     //     let t = match z {
+     //         Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
+     //         Ok(Reading::ErrorLow)  => 409.0,
+     //         Ok(Reading::ErrorHigh) => 409.1,
+     //         Err(_)                 => 409.2,
+     //     };
 
-          let z = sensor.read_humidity_blocking(htu_ch);
-          let h = match z {
-              Ok(Reading::Ok(t))     => t.as_percent_relative(),
-              Ok(Reading::ErrorLow)  => 409.0,
-              Ok(Reading::ErrorHigh) => 409.1,
-              Err(_)                 => 409.,
-          };
+     //     let z = sensor.read_humidity_blocking(htu_ch);
+          let h = sensor.measure_humidity(&mut delay).unwrap().value();
+     //     let h = match z {
+     //         Ok(Reading::Ok(t))     => t.as_percent_relative(),
+     //         Ok(Reading::ErrorLow)  => 409.0,
+     //         Ok(Reading::ErrorHigh) => 409.1,
+     //         Err(_)                 => 409.,
+     //     };
 
           show_display(t, h, cx.local.display);
           

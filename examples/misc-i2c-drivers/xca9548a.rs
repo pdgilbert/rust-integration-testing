@@ -1,9 +1,9 @@
 //! Continuously read temperature from multiple AHT10s and display on SSD1306 OLED.
 //! The AHT10s are multiplexed on i2c2 using  xca9548a.
-
- TWO  AHT10s EACH CONSUME A DelayMs so more old delays are needed.
- ALSO, for more sensors it would be better to not consume delay. See htu2xd-display
-
+//!
+//! TWO  AHT10s EACH CONSUME a DelayMs so more old delays are needed with eh-1 only stm32g4xx
+//! ALSO, for more sensors it would be better to not consume delay. See htu2xd-display.
+//! So with two sensors the two delays work
 //! 
 //! requires two i2c buses. Note also using
 //! "https://github.com/andy31415/aht10", branch = "fix_status_check"

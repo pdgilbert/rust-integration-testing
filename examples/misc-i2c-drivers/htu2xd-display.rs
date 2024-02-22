@@ -147,7 +147,7 @@ fn main() -> ! {
     /////////////////////   htu
     // Start the sensor.
     let mut htu = Sensor::new(manager2.acquire_i2c(), Some(&mut delay2)).expect("sensor init");
-    //delay.delay_ms(15);  // needed?
+    delay.delay_ms(15);  // needed?
     //let mut htu = Sensor::new(htu_rcd, Some(&mut delay2)).expect("sensor init");
     //let mut htu = Sensor::new(i2c2, Some(&mut delay2)).expect("sensor init");
 
