@@ -102,12 +102,21 @@ fn main() -> ! {
     //let mut delayms: DelayMs<u32> = OldDelayType{};
     let mut delay2 = cp.SYST.delay(&clocks);
 
-    /////////////// Note on Delay Type
+    /////////////// Note on Delay Type  /////////////////////////////
+    // 
     // let () = delay;    // type `impl embedded_hal::delay::DelayNs`
     // let () = delay2;   // type `SysDelay` with stm32f4xx;  type `Delay` with stm32g4xx
     // Either works for blink with stm32f4xx but only delay with stm32g4xx.
     // Only delay2 works for htu, with both  stm32f4xx and stm32g4xx.
     //    (trait `DelayMs<u16>` is not implemented)
+    // It should be possible to replace delay2 with AltDelay but need trait `DelayMs<u16>`
+    //  and this is because  htu crate is not yet eh-1, so just temporary.
+    //
+    // Note also that crate htu2xd consumes the delay. Crate htu21df-sensor does not, so
+    //  calls to measure need the delay passed. This has a big advantage if there are  multiple
+    //  sensors (each needing its own delay is a problem). It may also be better with rtic.
+    //
+    ////////////////////////////////////////////////////////////////
 
     led.blink(1000_u16, &mut delay); // Blink LED to indicate setup finished.
 
@@ -115,7 +124,7 @@ fn main() -> ! {
     //let manager2 = shared_bus::BusManagerSimple::new(i2c2); 
     let manager2 = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>>::new(i2c2);
 
-    // have not got this to compile yet
+    // embedded-bus / RefCellDevice  not compiling yet
     //let i2c1_ref_cell = RefCell::new(i2c2);
     //let htu_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
     //let ssd_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
@@ -145,20 +154,21 @@ fn main() -> ! {
     /////////////////////   htu
     // Start the sensor.
     let mut htu = Sensor::new(manager2.acquire_i2c(), Some(&mut delay2)).expect("sensor init");
+    //delay.delay_ms(15);  // needed?
     //let mut htu = Sensor::new(htu_rcd, Some(&mut delay2)).expect("sensor init");
     //let mut htu = Sensor::new(i2c2, Some(&mut delay2)).expect("sensor init");
 
-
+    //////    crate htu2xd  //////
+    //
     //let mut htu    = Htu2xd::new();
     //let mut htu_ch = htu_rcd;
-
     //htu.soft_reset(i2c)?;
     //htu.soft_reset(&mut htu_ch).expect("sensor reset failed");
-
     // Wait for the reset to finish
-    delay.delay_ms(15);
+    //delay.delay_ms(15);
 
-    //    .read_user_register() dos not return and changes something that requires sensot power off/on.
+    //////    crate htu2xd ?? //////
+    //    .read_user_register() does not return and changes something that requires sensot power off/on.
     //    let mut register = htu.read_user_register(&mut htu_ch).expect("htu.read_user_register failed");
     //    register.set_resolution(Resolution::Humidity10Temperature13);   //.expect("set_resolution failed");
     //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
@@ -166,26 +176,28 @@ fn main() -> ! {
     loop {
         //rprintln!("loop i");
         //hprintln!("loop i").unwrap();
+
         // Blink LED to indicate looping.
         led.blink(10_u16, &mut delay);
 
         lines[0].clear();
         lines[1].clear();
 
-        // using crate htu21df-sensor. commented out crate htu2xd.
-        // Note that crate htu2xd consumes the delay. Crate htu21df-sensor does not, so
-        //  calls to measure need the delay passed.
+        // using crate htu21df-sensor.
 
-        let humidity: f32 = htu.measure_humidity(&mut delay2).expect("humidity").value();
-        let temperature: f32 = htu.measure_temperature(&mut delay2).expect("temperature").value();
+        //   `Result<Measurement<f32, 50, 243>, htu21df_sensor::Error<i2c::Error>>`
+        match htu.measure_temperature(&mut delay2) {
+            Ok(v)     => write!(lines[0], "  {:.1} C? ", v.value()).unwrap(),
+            Err(_)    => write!(lines[0], "Error reading temperature").unwrap(),
+        }
 
-        write!(lines[0], "  {:.1} C", temperature).unwrap();
-        write!(lines[1], "  {:.1} RH", humidity).unwrap();
-        //let z = htu.measure_temperature(&mut delay2);
-        //let () = z;
+        match htu.measure_humidity(&mut delay2) {
+            Ok(v)     => write!(lines[1], "  {:.1} %RH? ", v.value()).unwrap(),
+            Err(_)    => write!(lines[1], "Error reading humidity").unwrap(),
+        }
 
+        //////    crate htu2xd  //////
         //let z = htu.read_temperature_blocking(&mut htu_ch);
-        //hprintln!("{:?}", z).unwrap();
         //  there is a double wrapping:  Ok(Ok(Temperature(24624)))
 
 //        match z {
