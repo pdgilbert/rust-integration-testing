@@ -11,7 +11,7 @@
 #![no_std]
 #![no_main]
 
-use aht20_async::Aht20;
+use aht20_async::{Aht20};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -37,7 +37,10 @@ use embedded_graphics::{
 
 /////////////////////   hals
 use core::cell::RefCell;
-use embedded_hal_bus::i2c::RefCellDevice;
+use embedded_hal_bus::{
+   i2c::RefCellDevice,
+   spi::NoDelay,
+};
 
 use embedded_hal::{
    i2c::I2c as I2cTrait,
@@ -63,17 +66,18 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
     // Blink LED to indicate initializing.
     led.blink(1000_u16, &mut delay);
 
-    let i2cset_ref_cell = RefCell::new(i2cset);
-    let aht_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
-    let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    //let i2c1_ref_cell = RefCell::new(i2c1);
+    //let aht_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+    //let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ssd
-    let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+    let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
+    //let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
     //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
 
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -94,8 +98,8 @@ fn main() -> ! {
     /////////////////////   aht
 
     // Start the sensor.
-    // NB. hardware may not allow sharing the bus 
-    let mut aht = Aht20::new(&mut aht_rcd, &mut delay).await.unwrap();  //.expect("aht device failed")
+    let mut aht = Aht20::new(&mut i2c2, &mut delay).unwrap();  //.expect("aht device failed")
+    //let mut aht = Aht20::new(&mut aht_rcd, &mut delay).unwrap();  //.expect("aht device failed")
     //let mut aht = Aht20NoDelay::new(i2c2).unwrap();
 
     loop {
@@ -105,8 +109,8 @@ fn main() -> ! {
         //led.blink(20_u16, &mut delay);
 
         // Read humidity and temperature.
-        let (h, t) = device.read().unwrap();
-        //let (h, t) = device.end_read().unwrap();
+        let (h, t) = aht.read().unwrap();
+        //let (h, t) = aht.end_read().unwrap();
 
         lines[0].clear();
         lines[1].clear();
@@ -125,5 +129,7 @@ fn main() -> ! {
             .unwrap();
         }
         display.flush().unwrap();
+
+        delay.delay_ms(5000);    
     }
 }

@@ -92,6 +92,7 @@ mod app {
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
+    use rust_integration_testing_of_examples::delay::Delay2Type;
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     
     use embedded_hal::delay::DelayNs;
@@ -120,7 +121,7 @@ mod app {
                           BufferedGraphicsMode<DisplaySize128x32>>,
 
         sensor:  htu21df_sensor::Sensor<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
-        delay:  Delay<TIM5, 1000000_u32>, 
+        delay:  Delay2Type,   //Delay<TIM5, 1000000_u32>, for stm32f4xx
     }
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -232,6 +233,8 @@ mod app {
      //     let z = sensor.read_temperature_blocking(htu_ch);
           // delay2 or Systick::delay?   NOT SURE IF THIS WILLL WORK. .await?
           let t = sensor.measure_temperature(&mut delay).unwrap().value();
+
+     //   See htu2xd-display for error handling
      //     let t = match z {
      //         Ok(Reading::Ok(t))     => t.as_degrees_celsius(),
      //         Ok(Reading::ErrorLow)  => 409.0,

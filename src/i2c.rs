@@ -236,8 +236,8 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: PartsB, &clocks: &Clocks )
     let sda = gpiob.pb9.into_alternate_open_drain(); 
     let i2c1 = I2cType::new(i2c1, (scl, sda), 400.kHz(), &clocks);
 
-    let scl = gpiob.pb10.into_alternate_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate_open_drain(); // sda on PB3
+    let scl = gpiob.pb10.into_alternate_open_drain();
+    let sda = gpiob.pb3.into_alternate_open_drain();
     let i2c2 = I2cType::new(i2c2, (scl, sda), 400.kHz(), &clocks);
 
     (i2c1, i2c2)
