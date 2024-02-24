@@ -28,7 +28,7 @@
 //!               i2c1 (scl, sda)= (pb8,  pb9)
 //!               i2c2 (scl, sda)= (pb10, pb3)
 
-//! Compare examples aht10-display, aht10_rtic, dht_rtic, oled_dht, and blink_rtic.
+//! Compare examples aht20-display, aht10-display, aht10_rtic, dht_rtic, oled_dht, and blink_rtic.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -53,6 +53,9 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 use core::fmt::Write;
+
+// Need to run with debug console if printing is uncommented. 
+// Running standalone stalls waiting to print.
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
@@ -71,28 +74,38 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 
 ///////////////////////////////////////////////////////////////
 
+use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
 use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
+use embedded_hal::delay::DelayNs;
+
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
-      pac::{Peripherals, CorePeripherals, I2C2},
-      i2c::Error as i2cError,
+      pac::{Peripherals, I2C2},
+      i2c::{I2c, Error as i2cError},
 };
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    gpio::{AlternateOD, gpioa::{PA8, PA9}},
+    //delay::SYSTDelayExt }; // trait for cp.SYST.delay
+};
+
+//#[cfg(feature = "stm32h7xx")]
+//use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
 
 
 
 #[cfg(feature = "stm32f4xx")]
-use stm32f4xx_hal::{
-   timer::SysTimerExt,  // trait for cp.SYST.delay
-   timer::SysDelay,
-};
+type I2cType = I2c<I2C2>;
 
 #[cfg(feature = "stm32g4xx")]
-use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
+type I2cType = I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
 
-#[cfg(feature = "stm32h7xx")]
-use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
+
+type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2cType>, I2cType>, AltDelay>;
 
 
 ///////////////////////////////////////////////////////////////
@@ -110,10 +123,10 @@ where
          
    match s1 {
         Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                      write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
+                      write!(line, "s2 {:.1}°C{:.0}%RH", t.celsius(), h.rh()).unwrap();
                      },
         Err(e)    => {hprintln!("Error {:?}", e).unwrap();
-                      write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
+                      write!(line, "S2 read error. Resetting.code {:?}", e).unwrap();
                      }
     };
          
@@ -156,14 +169,37 @@ where
 
 #[entry]
 fn main() -> ! {
-    let cp = CorePeripherals::take().unwrap();
+    //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay1, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay1, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
-    let delay2 = cp.SYST.delay(&clocks);
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //  delay2  from SYST.delay and clocks not used here but is done something like this
+    //#[cfg(feature = "stm32f4xx")]
+    //use stm32f4xx_hal::{
+    //   timer::SysTimerExt,  // trait for cp.SYST.delay
+    //   timer::SysDelay,
+    //   timer::Delay, 
+    //};
+    //type Delay = Delay<TIM5, 1000000_u32>;
+    //let delay2 = cp.SYST.delay(&clocks);
     //let () = delay1; opaque type impl DelayNs  does not work for AHT10, in AHT10::new()
     //let () = delay2;  type `Delay`
+    // may need
+    //use embedded_hal_02::blocking::delay::DelayMs;
+    //////////////////////////////////////////////////////////////////////////////////
+
+    /////////////////////////////////////////////////////////
+    //  AltDelay{} is used further below to generate a DelayMs for each AHT10.
+    // It can also be used like this
+    //let mut delayx  = AltDelay{};
+    // //If there is no need to disambuguate it can be used like this
+    // //   delayx.delay_ms(1000);
+    // //But to disambuguate or to give DelayMs or DelayNs
+    //DelayMs::delay_ms(&mut delayx, 1000);
+    //DelayNs::delay_ms(&mut delayx, 1000);
 
     led.off();
 
@@ -225,23 +261,21 @@ fn main() -> ! {
     // Start the sensors.
 
     /////////////////////  AHT10
-    type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<stm32f4xx_hal::i2c::I2c<I2C2>>, stm32f4xx_hal::i2c::I2c<I2C2>>, SysDelay>;
-    const SENSITER: Option::<SensType> = None;
-
+    const SENSITER: Option::<SensType> = None;      //const gives this `static lifetime
     let mut sensors: [Option<SensType>; 16] = [SENSITER; 16];
 
     // Split the device and pass the virtual I2C devices to AHT10 driver
     let i2c1parts = i2c1switch.split();
     hprintln!("done i2c1parts").unwrap();
 
-    // possible  to iter() over this, but need multiple delays  TRY ALT DELAY
+    // possible  to iter() over this, but need multiple delay
     //let parts1 = [i2c1parts.i2c0, i2c1parts.i2c1];
 
-    let mut sensor0 = AHT10::new(i2c1parts.i2c0, delay1).expect("sensor0 failed");
+    let mut sensor0 = AHT10::new(i2c1parts.i2c0, AltDelay{}).expect("sensor0 failed");
     sensor0.reset().expect("sensor00 reset failed");
     hprintln!("done sensor0.reset()").unwrap();
 
-    let z = AHT10::new(i2c1parts.i2c1, delay2);
+    let z = AHT10::new(i2c1parts.i2c1, AltDelay{});
     match z {
         Ok(mut v) => {
                     v.reset().expect("sensor01 reset failed");  //should handle this 
@@ -272,10 +306,11 @@ fn main() -> ! {
         };
                
         // Read humidity and temperature.   Sensor 2
-     //   let s2 = sensor2.read();
-     //   if s2.is_err() { sensor2.reset().unwrap()};    //need delay here
+        //   let s2 = sensor2.read();
+        //   if s2.is_err() { sensor2.reset().unwrap()};    //need delay here
 
-        //need delay here
+        delay1.delay_ms(5000);
+
         //show_display(s0, s1, &mut display);
     
     }

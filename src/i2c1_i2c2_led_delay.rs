@@ -39,7 +39,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-#[cfg(not(feature = "stm32f4xx"))]
+//#[cfg(not(feature = "stm32f4xx"))]
 use embedded_hal::{delay::DelayNs};  // see note below re DelayNs for stm32f4xx
 
 use crate::led::{setup_led, LED, LedType};
@@ -158,14 +158,11 @@ pub use stm32f4xx_hal::{
    timer::TimerExt,
 };
 
-#[cfg(feature = "stm32f4xx")]
-use crate::delay::{Delay2Type as Delay};
-
-//impl DelayNs would be better in next but example misc-i2c-drivers/xca9548a.rs needs
-// two DelayMs for two AHT10s - which is being used in a blackpill hardware test.
+// If  Delay for DelayMs is really needed in place of DelayNs then add timer::Delay above and
+//   Delay<TIM5, 1000000_u32>
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay, Clocks) {
+pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl DelayNs, Clocks) {
    let gpiob = dp.GPIOB.split();
 
    let rcc = dp.RCC.constrain();
