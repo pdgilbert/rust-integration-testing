@@ -8,8 +8,7 @@
 //! requires two i2c buses. Note also using
 //! "https://github.com/andy31415/aht10", branch = "fix_status_check"
 //! 
-//!  Beware that i2c1parts.i2c2 is the second multiplexed device on i2c1, whereas i2c2 is the MCU's second i2c.
-//!  Beware that i2c2parts.i2c1 is the first multiplexed device on i2c2,  whereas i2c1 is the MCU's first  i2c.
+//!  Beware that switch1parts.i2c2 is the second multiplexed device on the i2c.
 //! 
 //!  The setup() functions make the application code common. They are in src/.
 //!  The specific setup() function used will depend on the HAL feature specified (see HAL in README.md).
@@ -71,6 +70,11 @@ use embedded_graphics::{
 
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
+const DISPLAY_LINES: usize = 3;     // in characters
+const DISPLAY_COLUMNS: usize = 32;  // in characters
+const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
+type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
+
 
 ///////////////////////////////////////////////////////////////
 
@@ -110,44 +114,9 @@ type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2cType>, I2cType>, AltDelay>;
 
 ///////////////////////////////////////////////////////////////
 
-fn show_display<S>(
-    s1: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
-    //s2: Result<(Humidity, Temperature), aht10Error<xca9548aError<i2cError>>>, 
-    //text_style: MonoTextStyle<BinaryColor>,
-    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-) -> ()
-where
-    S: ssd1306::size::DisplaySize,  //trait
-{
-   let mut line: heapless::String<64> = heapless::String::new();
-         
-   match s1 {
-        Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                      write!(line, "s2 {:.1}°C{:.0}%RH", t.celsius(), h.rh()).unwrap();
-                     },
-        Err(e)    => {hprintln!("Error {:?}", e).unwrap();
-                      write!(line, "S2 read error. Resetting.code {:?}", e).unwrap();
-                     }
-    };
-         
-//   match s2 {
-//        Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-//                      write!(line, "Sensor 2: {}C\nRH: {:3}%", t.celsius(), h.rh()).unwrap();
-//                     },
-//        Err(e)    => {hprintln!("Error {:?}", e).unwrap();
-//                      write!(line, "Sensor 2 read error. Resetting.code {:?}", e).unwrap();
-//                     }
-//    };
-   
-   //write!(lines[0], "{:.1}°C {:.0}% RH", temperature, relative_humidity).unwrap();
-   // write!(lines[1], "{:.1}V {}mA {}mW [{}mW]", v as f32/1000.0, i,  p, pc).unwrap();
-  
-   show_message(&line, disp);
-   ()
-}
-
 fn show_message<S>(
-    text: &str,   //text_style: MonoTextStyle<BinaryColor>,
+    text: &str,   
+    //text_style: MonoTextStyle<BinaryColor>,
     disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
 ) -> ()
 where
@@ -166,10 +135,35 @@ where
    ()
 }
 
+fn show_screen<S>(
+    screen: &ScreenType,   
+    //text_style: MonoTextStyle<BinaryColor>,
+    disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+) -> ()
+where
+    S: ssd1306::size::DisplaySize,  //trait
+{
+   
+   // workaround. build here because text_style cannot be shared
+   let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
+
+   hprintln!("in show_screen, screen={:?}", screen).unwrap();
+   disp.clear_buffer();
+   for  i in 0..2 {  // 3  DISPLAY_LINES
+      if 0 != screen[i].len() {                         // 12 point per char verticle
+         Text::with_baseline( &screen[i], Point::new(0, (i*12).try_into().unwrap()), text_style, Baseline::Top)
+              .draw(&mut *disp)
+              .unwrap();
+      };
+   };
+
+   disp.flush().unwrap();
+   ()
+}
+
 
 #[entry]
 fn main() -> ! {
-    //let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let (i2c1, i2c2, mut led, mut delay1, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
@@ -200,6 +194,7 @@ fn main() -> ! {
     // //But to disambuguate or to give DelayMs or DelayNs
     //DelayMs::delay_ms(&mut delayx, 1000);
     //DelayNs::delay_ms(&mut delayx, 1000);
+    /////////////////////////////////////////////////////////
 
     led.off();
 
@@ -223,95 +218,103 @@ fn main() -> ! {
     Text::with_baseline(   "xca5948a \n aht10-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
-    //delay.delay1(2000u32);    
 
     led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
     hprintln!("Text::with_baseline").unwrap();
 
-    // now multiple devices on i2c2 bus
+    let mut screen: ScreenType = [R_VAL; DISPLAY_LINES];
+
     
-    /////////////////////  xca
+    /////////////////////  xca   multiple devices on i2c2 bus
     let slave_address = 0b010_0000; // example slave address
     let write_data = [0b0101_0101, 0b1010_1010]; // some data to be sent
 
-    let mut i2c1switch = Xca9548a::new(i2c2, SlaveAddr::default());
+    let mut switch1 = Xca9548a::new(i2c2, SlaveAddr::default());
 
     // Enable channel 0
-    i2c1switch.select_channels(0b0000_0001).unwrap();
+    switch1.select_channels(0b0000_0001).unwrap();
 
     // write to device connected to channel 0 using the I2C switch
-    if i2c1switch.write(slave_address, &write_data).is_err() {
+    if switch1.write(slave_address, &write_data).is_err() {
         hprintln!("Error write channel 0!").unwrap();
     }
 
     // read from device connected to channel 0 using the I2C switch
     let mut read_data = [0; 2];
-    if i2c1switch.read(slave_address, &mut read_data).is_err() {
+    if switch1.read(slave_address, &mut read_data).is_err() {
         hprintln!("Error read channel 0!").unwrap();
     }
 
     // write_read from device connected to channel 0 using the I2C switch
-    if i2c1switch
+    if switch1
         .write_read(slave_address, &write_data, &mut read_data)
         .is_err()
     {
         hprintln!("Error write_read!").unwrap();
     }
 
-    // Start the sensors.
+    show_message(&"AHT10s on xca", &mut display);
 
-    /////////////////////  AHT10
+    /////////////////////  AHT10s on xca    // Start the sensors.
+    
     const SENSITER: Option::<SensType> = None;      //const gives this `static lifetime
     let mut sensors: [Option<SensType>; 16] = [SENSITER; 16];
 
     // Split the device and pass the virtual I2C devices to AHT10 driver
-    let i2c1parts = i2c1switch.split();
-    hprintln!("done i2c1parts").unwrap();
+    let switch1parts = switch1.split();
 
-    // possible  to iter() over this, but need multiple delay
-    //let parts1 = [i2c1parts.i2c0, i2c1parts.i2c1];
+    let parts  = [switch1parts.i2c0, switch1parts.i2c1, switch1parts.i2c2, switch1parts.i2c3,
+                  switch1parts.i2c4, switch1parts.i2c5, switch1parts.i2c6, switch1parts.i2c7];
+                //  switch2parts.i2c0, switch2parts.i2c1, switch2parts.i2c2, switch2parts.i2c3,
+                //  switch2parts.i2c4, switch2parts.i2c5, switch2parts.i2c6, switch2parts.i2c7];
 
-    let mut sensor0 = AHT10::new(i2c1parts.i2c0, AltDelay{}).expect("sensor0 failed");
-    sensor0.reset().expect("sensor00 reset failed");
-    hprintln!("done sensor0.reset()").unwrap();
-
-    let z = AHT10::new(i2c1parts.i2c1, AltDelay{});
-    match z {
-        Ok(mut v) => {
-                    v.reset().expect("sensor01 reset failed");  //should handle this 
-                    sensors[1] = Some(v);
-                    hprintln!("done sensor1.reset()").unwrap();
-                   },
-        Err(_e)    => hprintln!("1 not available").unwrap(),
-    }
-
-
-  //  let mut sensor2 = AHT10::new(i2c1parts.i2c2, delay2).expect("sensor2 failed");
-  //  sensor2.reset().expect("sensor02 reset failed");
-
-    loop {
-        // Read humidity and temperature.   Sensor 0
-        let s = sensor0.read();
-        if s.is_err() { sensor0.reset().unwrap()};    //need delay here
-        show_display(s, &mut display);
+    let mut i = 0;  // not very elegant
+    for  prt in parts {
+       let z = AHT10::new(prt, AltDelay{});
+       screen[0].clear();
+       match z {
+           Ok(mut v) => {v.reset().expect("sensor01 reset failed");  //should handle this 
+                         sensors[i] = Some(v);
+                         hprintln!("sensor J{} in use", i).unwrap();
+                         write!(screen[0], "J{} in use", i).unwrap();
+                       },
+           Err(_e)   => {hprintln!("J{} unused", i).unwrap();
+                         write!(screen[0], "J{} unused", i).unwrap();
+                        },
+       }
+       hprintln!("screen {:?}", screen).unwrap();
+       show_screen(&screen, &mut display);
+       delay1.delay_ms(200);
        
-        // Read humidity and temperature.   Sensor 1
-        match   &mut sensors[1] {
-            None       => {},  //skip
+       i += 1;
+    };
 
-            Some(sens) => {let s = sens.read();
-                                if s.is_err() { sens.reset().unwrap()};
-                                show_display(s, &mut display);
-                               },
-        };
-               
-        // Read humidity and temperature.   Sensor 2
-        //   let s2 = sensor2.read();
-        //   if s2.is_err() { sensor2.reset().unwrap()};    //need delay here
+    let mut ln = 0;  // screen line to write. rolls inside loop
 
-        delay1.delay_ms(5000);
-
-        //show_display(s0, s1, &mut display);
-    
+    loop {   // Read humidity and temperature.
+       for  i in 0..7 {
+          match   &mut sensors[i] {
+               None       => {},  //skip
+   
+               Some(sens) => {screen[ln].clear();
+                              match sens.read() {
+                                   Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                                                 write!(screen[ln], "J{} {:.1}C {:.0}%RH", i, t.celsius(), h.rh()).unwrap();
+                                                },
+                                   Err(e)    => {sens.reset().unwrap();
+                                                 hprintln!("read error {:?}", e).unwrap();
+                                                 write!(screen[ln], "J{} read error. Reset{:?}", i, e).unwrap();
+                                                }
+                                   };
+                              show_screen(&screen, &mut display);
+                              ln += 1;
+                              ln = ln % DISPLAY_LINES;
+                              hprintln!("ln+={} screen={:?}", ln, screen).unwrap();
+                              delay1.delay_ms(500);
+                              },
+           };          
+       };
+       delay1.delay_ms(5000);
     }
 }
+ 
