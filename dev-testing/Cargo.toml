@@ -99,8 +99,9 @@ aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_st
 #aht10-async           = { git = "https://github.com/jneem/aht10-async" }  # needs update from rc1
 #aht20           = { git = "https://github.com/mythmon/aht20" } # this appears to not be actively updated
 #aht20           = { git = "https://github.com/nim65s/aht20" } 
+aht20           = { git = "https://github.com/blueluna/aht20" } 
 #aht20-async     = "1.0.0"
-aht20-async        = { git = "https://github.com/fmckeogh/aht20-async" } 
+#aht20-async        = { git = "https://github.com/fmckeogh/aht20-async" } 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  This one needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } 
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }

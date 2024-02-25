@@ -11,7 +11,8 @@
 #![no_std]
 #![no_main]
 
-use aht20_async::{Aht20};
+//use aht20_async::{Aht20};   consider async, but need one that is working
+use aht20::{Aht20};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -22,7 +23,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   ssd
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
 const VPIX:i32 = 12; // vertical pixels for a line, including space
@@ -36,22 +37,35 @@ use embedded_graphics::{
 };
 
 /////////////////////   hals
-use core::cell::RefCell;
-use embedded_hal_bus::{
-   i2c::RefCellDevice,
-   spi::NoDelay,
-};
 
 use embedded_hal::{
-   i2c::I2c as I2cTrait,
    delay::DelayNs,
 };
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 
 use hal::{
-      pac::{Peripherals},
+      pac::{Peripherals, CorePeripherals},
 };
+
+
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+    timer::SysTimerExt,
+};
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    delay::SYSTDelayExt,
+};
+
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   timer::Timer,
+   delay::DelayFromCountDownTimer,
+   pac::{TIM2, TIM5},
+};
+
 
 ///////////////////// 
 
@@ -65,8 +79,10 @@ fn main() -> ! {
     //hprintln!("AHT10 example").unwrap();
 
     let dp = Peripherals::take().unwrap();
+    let cp = CorePeripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, mut i2c2, mut led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let mut delay2 = cp.SYST.delay(&clocks); 
 
     // Blink LED to indicate initializing.
     led.blink(1000_u16, &mut delay);
@@ -98,7 +114,7 @@ fn main() -> ! {
     /////////////////////   aht
 
     // Start the sensor.
-    let mut aht = Aht20::new(&mut i2c2, &mut delay).unwrap();  //.expect("aht device failed")
+    let mut aht = Aht20::new(&mut i2c2, &mut delay);
     //let mut aht = Aht20::new(&mut aht_rcd, &mut delay).unwrap();  //.expect("aht device failed")
     //let mut aht = Aht20NoDelay::new(i2c2).unwrap();
 
@@ -130,6 +146,6 @@ fn main() -> ! {
         }
         display.flush().unwrap();
 
-        delay.delay_ms(5000);    
+        delay2.delay_ms(5000); 
     }
 }
