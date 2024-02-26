@@ -56,20 +56,28 @@ use core::fmt::Write;
 // Need to run with debug console if printing is uncommented. 
 // Running standalone stalls waiting to print.
 //use rtt_target::{rprintln, rtt_init_print};
-use cortex_m_semihosting::hprintln;
+//use cortex_m_semihosting::hprintln;
+
+use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
 use embedded_graphics::{
     //mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
-    //mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
+    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
-    mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
+    //mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
 
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+    //  note that larger font size increases memory and may require building with --release
+    //  &FONT_9X15 128 pixels/ 9 per font = 14.2 characters wide.  32/15 = 2.1 characters high
+    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
+
+const PPC: usize = 12;  // verticle pixels per character plus space 
 const DISPLAY_LINES: usize = 3;     // in characters
 const DISPLAY_COLUMNS: usize = 32;  // in characters
 const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
@@ -147,11 +155,10 @@ where
    // workaround. build here because text_style cannot be shared
    let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-   hprintln!("in show_screen, screen={:?}", screen).unwrap();
    disp.clear_buffer();
-   for  i in 0..2 {  // 3  DISPLAY_LINES
+   for  i in 0..DISPLAY_LINES {  // 0..2 is [0, 1] ;  0..=2 is [0, 1, 2]
       if 0 != screen[i].len() {                         // 12 point per char verticle
-         Text::with_baseline( &screen[i], Point::new(0, (i*12).try_into().unwrap()), text_style, Baseline::Top)
+         Text::with_baseline( &screen[i], Point::new(0, (i*PPC).try_into().unwrap()), text_style, Baseline::Top)
               .draw(&mut *disp)
               .unwrap();
       };
@@ -208,11 +215,6 @@ fn main() -> ! {
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
-    //  note that larger font size increases memory and may require building with --release
-    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
-
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
     Text::with_baseline(   "xca5948a \n aht10-display", Point::zero(), text_style, Baseline::Top )
@@ -220,7 +222,7 @@ fn main() -> ! {
     display.flush().unwrap();
 
     led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
-    hprintln!("Text::with_baseline").unwrap();
+    //hprintln!("Text::with_baseline").unwrap();
 
     let mut screen: ScreenType = [R_VAL; DISPLAY_LINES];
 
@@ -236,13 +238,13 @@ fn main() -> ! {
 
     // write to device connected to channel 0 using the I2C switch
     if switch1.write(slave_address, &write_data).is_err() {
-        hprintln!("Error write channel 0!").unwrap();
+        //hprintln!("Error write channel 0!").unwrap();
     }
 
     // read from device connected to channel 0 using the I2C switch
     let mut read_data = [0; 2];
     if switch1.read(slave_address, &mut read_data).is_err() {
-        hprintln!("Error read channel 0!").unwrap();
+        //hprintln!("Error read channel 0!").unwrap();
     }
 
     // write_read from device connected to channel 0 using the I2C switch
@@ -250,7 +252,7 @@ fn main() -> ! {
         .write_read(slave_address, &write_data, &mut read_data)
         .is_err()
     {
-        hprintln!("Error write_read!").unwrap();
+        //hprintln!("Error write_read!").unwrap();
     }
 
     show_message(&"AHT10s on xca", &mut display);
@@ -275,14 +277,14 @@ fn main() -> ! {
        match z {
            Ok(mut v) => {v.reset().expect("sensor01 reset failed");  //should handle this 
                          sensors[i] = Some(v);
-                         hprintln!("sensor J{} in use", i).unwrap();
+                         //hprintln!("sensor J{} in use", i).unwrap();
                          write!(screen[0], "J{} in use", i).unwrap();
                        },
-           Err(_e)   => {hprintln!("J{} unused", i).unwrap();
+           Err(_e)   => {//hprintln!("J{} unused", i).unwrap();
                          write!(screen[0], "J{} unused", i).unwrap();
                         },
        }
-       hprintln!("screen {:?}", screen).unwrap();
+       //hprintln!("screen {:?}", screen).unwrap();
        show_screen(&screen, &mut display);
        delay1.delay_ms(200);
        
@@ -298,18 +300,18 @@ fn main() -> ! {
    
                Some(sens) => {screen[ln].clear();
                               match sens.read() {
-                                   Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                                   Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
                                                  write!(screen[ln], "J{} {:.1}C {:.0}%RH", i, t.celsius(), h.rh()).unwrap();
                                                 },
                                    Err(e)    => {sens.reset().unwrap();
-                                                 hprintln!("read error {:?}", e).unwrap();
+                                                 //hprintln!("read error {:?}", e).unwrap();
                                                  write!(screen[ln], "J{} read error. Reset{:?}", i, e).unwrap();
                                                 }
                                    };
                               show_screen(&screen, &mut display);
                               ln += 1;
                               ln = ln % DISPLAY_LINES;
-                              hprintln!("ln+={} screen={:?}", ln, screen).unwrap();
+                              //hprintln!("ln+={} screen={:?}", ln, screen).unwrap();
                               delay1.delay_ms(500);
                               },
            };          

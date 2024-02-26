@@ -91,7 +91,7 @@ fn main() -> ! {
     /////////////////////   aht
 
     // Start the sensor.
-    let mut aht = Aht20::new(i2c2, delay).unwrap();  //.expect("aht device failed")
+    let mut aht = Aht20::new(i2c2, delay);
 
     loop {
         //rprintln!("loop i");
