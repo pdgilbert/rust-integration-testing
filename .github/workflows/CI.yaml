@@ -42,9 +42,9 @@ jobs:
     #fail-fast: false
     strategy:
       matrix:        
-        brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
-              none-stm32f769, none-stm32g081,      
-              weact-stm32h731, none-stm32h742,  none-stm32g473, weact-stm32g474, none-stm32h742,
+        brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, none-stm32f769, 
+              none-stm32g081, weact-stm32g431, none-stm32g473, weact-stm32g474, 
+              none-stm32h742,
               none-stm32l0x2,      discovery-stm32l100, heltec-lora-node151,  none-stm32l422,
               none-stm32f100, none-stm32f101,      none-stm32f030,      ]
         #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
@@ -101,11 +101,7 @@ jobs:
              hal: "stm32g0xx"
              trg: "thumbv6m-none-eabi"
            - brd: "weact-stm32g431"
-             mcu:  stm32g473
-             hal: "stm32g4xx"
-             trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32g472"
-             mcu:  stm32g472
+             mcu:  stm32g431
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32g473"
