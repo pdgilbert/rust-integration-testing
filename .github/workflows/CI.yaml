@@ -101,7 +101,7 @@ jobs:
              hal: "stm32g0xx"
              trg: "thumbv6m-none-eabi"
            - brd: "weact-stm32g431"
-             mcu:  stm32g431
+             mcu:  stm32g431xB
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32g473"
@@ -109,7 +109,7 @@ jobs:
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "weact-stm32g474"
-             mcu:  stm32g474
+             mcu:  stm32g474xE
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32h742"
