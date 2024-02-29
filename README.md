@@ -81,8 +81,9 @@ The examples can be built manually by setting one of these lines:
   export HAL=stm32f7xx MCU=stm32f769   TARGET=thumbv7em-none-eabihf PROC=stm32f7x  CHIP=STM32F7x  # none-stm32f769      Cortex-M7
   (                    MCU=stm32f722    no adc breaks some examples  }
   export HAL=stm32g0xx MCU=stm32g081   TARGET=thumbv6m-none-eabi    PROC=stm32g0   CHIP=STM32G071 # none-stm32g071      Cortex-M0
+  export HAL=stm32g4xx MCU=stm32g431xB TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # weact-stm32g431CBU6 Cortex-M4
   #export HAL=stm32g4xx MCU=stm32g473   TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # none-stm32g473      Cortex-M4
-  export HAL=stm32g4xx MCU=stm32g474   TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # none-stm32g474      Cortex-M4
+  export HAL=stm32g4xx MCU=stm32g474xE TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # weact-stm32g474CEU6 Cortex-M4
   export HAL=stm32h7xx MCU=stm32h742   TARGET=thumbv7em-none-eabihf PROC=          CHIP=          # none-stm32h742      Cortex-M7
   #export HAL=stm32l0xx MCU=stm32l042     TARGET=thumbv6m-none-eabi    PROC=stm32l0   CHIP=STM32L0   # none-stm32l042      Cortex-M0
   export  HAL=stm32l0xx MCU=stm32l0x2kztx TARGET=thumbv6m-none-eabi    PROC=stm32l0   CHIP=STM32L072KZTx # none-stm32l072  Cortex-M0

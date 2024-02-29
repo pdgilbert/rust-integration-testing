@@ -241,8 +241,9 @@ stm32f411     = ["stm32f4xx-hal/stm32f411"  ]
 stm32f722     = ["stm32f7xx-hal/stm32f722"  ] # no adc in hall yet
 stm32f769     = ["stm32f7xx-hal/stm32f769"  ] # this has adc support but no access to internal channel for mcu temperature
 stm32g081     = ["stm32g0xx-hal/stm32g081"  ]
+stm32g431xB   = ["stm32g4xx-hal/stm32g431"  ]
 stm32g473     = ["stm32g4xx-hal/stm32g473"  ]
-stm32g474     = ["stm32g4xx-hal/stm32g474"  ]
+stm32g474xE   = ["stm32g4xx-hal/stm32g474"  ]
 stm32h742     = ["stm32h7xx-hal/stm32h742"  ]
 # see https://www.st.com/resource/en/datasheet/stm32l072v8.pdf  p12 for some MCU variants
 #stm32l0x2     =    ["stm32l0xx-hal/stm32l0x2",  "stm32l0xx-hal/mcu-STM32L072KZTx"]
