@@ -314,12 +314,6 @@ jobs:
       - name: Example aht20-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display
 
-      - name: Example aht20-display-nodelay
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
-
-      - name: Example air_quality
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example air_quality
-
       - name: Example ina219-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219-display
 
@@ -381,21 +375,9 @@ jobs:
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example dht_rtic
 
-      - name: Example aht10_rtic
-        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10_rtic
-
-      - name: Example htu2xd_rtic
-        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd_rtic
-
       - name: Example ccs811-co2-voc
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-co2-voc
-
-      - name: Example battery_monitor_ads1015_rtic
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example battery_monitor_ads1015_rtic
-         # use-cross: true
 
       - name: Example ina219_rtic
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219_rtic
@@ -403,10 +385,6 @@ jobs:
 
       - name: Example display_stuff_rtic0
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example display_stuff_rtic0
-         # use-cross: true
-
-      - name: Example display_stuff_rtic
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example display_stuff_rtic
          # use-cross: true
 
 #      - name: Example adc_dma
@@ -429,6 +407,8 @@ jobs:
 
 
 #################################################################################################
+
+#################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
 
 # these require require solving eh-1 Read/Write issue on stm32f4xx
@@ -447,6 +427,30 @@ jobs:
       - name: Example serial_char
         if: ${{ matrix.mcu != 'stm32f042'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example serial_char
+
+#####  examples that should be working, but not yet working with embedded-hal 1.0
+
+      - name: Example aht10_rtic
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10_rtic
+
+      - name: Example aht20-display-nodelay
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
+
+      - name: Example air_quality
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example air_quality
+
+      - name: Example htu2xd_rtic
+        #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd_rtic
+
+      - name: Example display_stuff_rtic
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example display_stuff_rtic
+         # use-cross: true
+
+      - name: Example battery_monitor_ads1015_rtic
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example battery_monitor_ads1015_rtic
+         # use-cross: true
 
 #################################################################################################
 #################################################################################################
