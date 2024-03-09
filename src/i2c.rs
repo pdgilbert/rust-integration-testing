@@ -2,9 +2,7 @@
 //! despite the cfg feature flags suggesting it may be for a HAL.
 
 
-// "hal" is used for items that are the same in all hal  crates
 use crate::stm32xxx_as_hal::hal;
-
 use hal::{
     pac::{I2C1, I2C2},
     i2c::I2c as I2cType,
@@ -12,13 +10,7 @@ use hal::{
     prelude::*,
 };
 
-#[cfg(not(feature = "stm32g4xx"))] 
-pub type I2c1Type = I2cType<I2C1>;
-
-#[cfg(not(feature = "stm32g4xx"))] 
-pub type I2c2Type = I2cType<I2C2>;
-
-
+//  /////////////////////////////////////////////////////
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
@@ -85,7 +77,7 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    i2c::{BlockingI2c, DutyCycle, Mode},   
+    i2c::{BlockingI2c, DutyCycle, Mode, Pins},   
     gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
     afio::Parts as afioParts,
     rcc::Clocks,
@@ -95,6 +87,14 @@ use stm32f1xx_hal::{
 //#[cfg(feature = "stm32f1xx")]
 //pub type I2c1Type = BlockingI2c<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;   
 // this works in a function signature BlockingI2c<I2C1, impl Pins<I2C1>>;
+
+#[cfg(feature = "stm32f1xx")]
+pub type I2c1Type = I2cType<I2C1, impl Pins<I2C1> >;
+//pub type I2c1Type = I2cType<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
+
+#[cfg(feature = "stm32f1xx")]
+pub type I2c2Type = I2cType<I2C2, impl Pins<I2C2> >;
+//pub type I2c2Type = I2cType<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &Clocks) -> I2c1Type {
@@ -218,6 +218,12 @@ use stm32f4xx_hal::{
     gpio::{gpiob::{Parts as PartsB}},
     rcc::Clocks,   
 };
+
+#[cfg(feature = "stm32f4xx")]
+pub type I2c1Type = I2cType<I2C1>;
+
+#[cfg(feature = "stm32f4xx")]
+pub type I2c2Type = I2cType<I2C2>;
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, &clocks: &Clocks) -> I2c1Type {
@@ -400,6 +406,13 @@ use stm32h7xx_hal::{
            gpiof::Parts as PartsF},
     rcc::{CoreClocks, rec::I2c1, rec::I2c2},
 };
+
+#[cfg(feature = "stm32h7xx")]
+pub type I2c1Type = I2cType<I2C1>;
+
+#[cfg(feature = "stm32h7xx")]
+pub type I2c2Type = I2cType<I2C2>;
+
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c1(i2c1: I2C1, gpiob: PartsB, i2cx1: I2c1, 

@@ -78,6 +78,9 @@ use stm32f1xx_hal::{
 };
 
 #[cfg(feature = "stm32f1xx")]
+pub type TxType = Tx<USART1>;
+
+#[cfg(feature = "stm32f1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
@@ -112,7 +115,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
     led.off();
 
     //let delay = DelayType{};
-    let delay = dp.TIM2.delay_us(&clocks);
+    let delay = dp.TIM5.delay_us(&clocks);
 
     // NOTE, try to figure out the proper way to deal with this:
     // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.

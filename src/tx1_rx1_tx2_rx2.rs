@@ -45,6 +45,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 pub use stm32f1xx_hal::{
+    pac::USART3,
     serial::{Config, StopBits},
 };
 
