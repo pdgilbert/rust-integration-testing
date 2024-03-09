@@ -513,7 +513,7 @@ jobs:
         #     mcu:  stm32f303xc
         #     hal: "stm32f3xx"
         #     trg: "thumbv7em-none-eabihf"
-          - brd: "weact-stm32g474"
+           - brd: "weact-stm32g474"
              mcu:  stm32g474xE
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
