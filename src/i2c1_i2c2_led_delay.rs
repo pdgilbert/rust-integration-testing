@@ -86,7 +86,12 @@ pub fn setup_from_dp(mut dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl
 
 
 #[cfg(feature = "stm32f1xx")]
-use stm32f1xx_hal::{rcc::Clocks};
+use stm32f1xx_hal::{
+   rcc::Clocks,
+   timer::Instance,
+   timer::TimerExt,
+   prelude::*,
+};
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl DelayNs, Clocks) {
@@ -103,7 +108,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl Del
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
-   let delay = dp.TIM2.delay_us(&clocks);
+   let delay = dp.TIM2.delay(&clocks);
 
    (i2c1, i2c2, led, delay, clocks)
    }

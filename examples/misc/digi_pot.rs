@@ -43,6 +43,7 @@ use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
 // need to resolve move problem to get this to work
 //use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 
+pub use embedded_hal::delay::DelayNs;
 
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -389,8 +390,6 @@ fn setup() -> (
 
     (spi, cs, led, delay)
 }
-
-pub use embedded_hal::delay::DelayNs;
 
 
 

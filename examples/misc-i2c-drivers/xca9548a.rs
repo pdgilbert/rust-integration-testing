@@ -91,6 +91,7 @@ use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
 use embedded_hal::delay::DelayNs;
+//use embedded_io;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -105,8 +106,11 @@ use stm32g4xx_hal::{
     //delay::SYSTDelayExt }; // trait for cp.SYST.delay
 };
 
-//#[cfg(feature = "stm32h7xx")]
-//use stm32g4xx_hal::{   delay::SYSTDelayExt }; // trait for cp.SYST.delay
+#[cfg(feature = "stm32h7xx")]
+use stm32h7xx_hal::{
+   delay::SYSTDelayExt,    //trait for cp.SYST.delay
+   prelude::*
+}; 
 
 
 
@@ -115,6 +119,9 @@ type I2cType = I2c<I2C2>;
 
 #[cfg(feature = "stm32g4xx")]
 type I2cType = I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
+
+#[cfg(feature = "stm32h7xx")]
+type I2cType = I2c<I2C2>;
 
 
 type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2cType>, I2cType>, AltDelay>;

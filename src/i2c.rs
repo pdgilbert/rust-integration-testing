@@ -77,7 +77,7 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},   
+    i2c::{I2c, DutyCycle, Mode, Pins},   //BlockingI2c
     gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
     afio::Parts as afioParts,
     rcc::Clocks,
@@ -89,19 +89,19 @@ use stm32f1xx_hal::{
 // this works in a function signature BlockingI2c<I2C1, impl Pins<I2C1>>;
 
 #[cfg(feature = "stm32f1xx")]
-pub type I2c1Type = I2cType<I2C1, impl Pins<I2C1> >;
-//pub type I2c1Type = I2cType<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
+pub type I2c1Type = I2cType<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
+//pub type I2c1Type = I2cType<I2C1, impl Pins<I2C1> >;
 
 #[cfg(feature = "stm32f1xx")]
-pub type I2c2Type = I2cType<I2C2, impl Pins<I2C2> >;
-//pub type I2c2Type = I2cType<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
+pub type I2c2Type = I2cType<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
+//pub type I2c2Type = I2cType<I2C2, impl Pins<I2C2> >;
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &Clocks) -> I2c1Type {
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
 
-    let i2c = BlockingI2c::i2c1(
+    let i2c = I2c::i2c1(
         i2c1,
         (scl, sda),
         &mut afio.mapr,
@@ -110,10 +110,10 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        1000,
-        10,
-        1000,
-        1000,
+        //1000,
+        //10,
+        //1000,
+        //1000,
     );
 
     i2c
@@ -126,7 +126,7 @@ pub fn setup_i2c1(i2c1: I2C1, mut gpiob: Parts, afio: &mut afioParts, &clocks: &
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2 , mut gpiob: Parts, afio: &mut afioParts, &clocks: &Clocks) -> (I2c1Type, I2c2Type) {
-    let i2c1 = BlockingI2c::i2c1(
+    let i2c1 = I2c::i2c1(
         i2c1,
         (gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh), 
          gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)
@@ -137,13 +137,13 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2 , mut gpiob: Parts, afio: &mut afi
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        1000,
-        10,
-        1000,
-        1000,
+        //1000,
+        //10,
+        //1000,
+        //1000,
     );
 
-    let i2c2 = BlockingI2c::i2c2(
+    let i2c2 = I2c::i2c2(
         i2c2,
         (
             gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
@@ -155,10 +155,10 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2 , mut gpiob: Parts, afio: &mut afi
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
-        1000,
-        10,
-        1000,
-        1000,
+        //1000,
+        //10,
+        //1000,
+        //1000,
     );
 
     (i2c1, i2c2)

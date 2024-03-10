@@ -135,7 +135,7 @@ use stm32h7xx_hal::{
 type DelayMsType = DelayFromCountDownTimer<Timer<TIM2>>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup(dp: Peripherals, cp: CorePeripherals) ->  (DhtType, DelayMsType) {
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();

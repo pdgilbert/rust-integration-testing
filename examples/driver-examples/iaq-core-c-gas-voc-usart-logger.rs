@@ -52,14 +52,17 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
     use rtic_monotonics::systick::fugit::{ExtU32};
 
-    use core::fmt::Write; 
+   // use core::fmt::Write; 
     use nb::block;
 
     /////////////////////   iaq
     use iaq_core::{IaqCore, Measurement};
 
     /////////////////////   hals
+    use core::fmt::Write; 
 
+    //#[cfg(feature = "stm32h7xx")]
+    //use embedded_io::Write;
 
     /////////////////////  bus sharing
   

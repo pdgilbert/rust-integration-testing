@@ -115,7 +115,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxTy
     led.off();
 
     //let delay = DelayType{};
-    let delay = dp.TIM5.delay_us(&clocks);
+    let delay = dp.TIM5.delay(&clocks);
 
     // NOTE, try to figure out the proper way to deal with this:
     // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.
