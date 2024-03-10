@@ -14,12 +14,11 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-# One job (examples named eg) is only with dev-testing on bluepill, discovery-stm32f303, and others to run all examples 
-# in development. It goes by example so they are all attempted. 
-# The job does not stop at the first example to fail. This is nice for 
+# One job (named eg) runs all examples on a subset of "boards". It goes by example so 
+# they are all attempted, and  does not stop at the first example to fail. This is nice for 
 # identifying problems in the examples, but is slow because of rebuild for each example.
 # (It would be faster if I could get caching to work.)
-# The other job (boards named CI) runs a matrix of strategies x all "boards".
+# The other job (named CI) runs a matrix of strategies x on all "boards".
 # For each matrix point all examples are run with a single build. This is faster but
 # terminates on the first example failure so examples that are known to fail are omitted.
 
@@ -464,10 +463,6 @@ jobs:
     strategy:
       matrix:
 
-        brd: [blackpill-stm32f401, weact-stm32g474, none-stm32h742]  
-        #brd: [bluepill, discovery-stm32f303]  
-
-
         eg:  [blink3,                  blink_impl,                   blink,     dht,   
               echo_by_char,            echo_string,                      gps_rw,        
               oled_gps,                serial_char,                      serial_string,        
@@ -499,6 +494,10 @@ jobs:
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
+
+        brd: [blackpill-stm32f401, weact-stm32g474, none-stm32h742]  
+        #brd: [bluepill, discovery-stm32f303]  
+
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
            - brd: "blackpill-stm32f401"
