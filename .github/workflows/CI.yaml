@@ -423,9 +423,6 @@ jobs:
       - name: Example aht20-display-nodelay
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
 
-      - name: Example air_quality
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example air_quality
-
       - name: Example htu2xd_rtic
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example htu2xd_rtic
@@ -486,7 +483,7 @@ jobs:
               aht10-display,           aht10_rtic,                       aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          htu2xd_rtic,
-              vl53lox-display,         air_quality,                      ens160-co2-voc-iaq-display,
+              vl53lox-display,         ens160-co2-voc-iaq-display,
               ina219-display,          ina219_rtic,                      gps_rw_rtic,
               xca9548a,                one_wire_bus_find_devices,        onewire
              ]

@@ -94,12 +94,11 @@ mod app {
    //};
    
 
-   // may need this
-   //#[cfg(feature = "stm32h7xx")]
-   //use stm32h7xx_hal::{
-   //   delay::DelayFromCountDownTimer,
-   //   //pwr::PwrExt,
-   //};
+   #[cfg(feature = "stm32h7xx")]
+   use stm32h7xx_hal::{
+      delay::DelayFromCountDownTimer,
+      //pwr::PwrExt,
+   };
    
    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;

@@ -4,7 +4,7 @@
 //!   display_stuff_rtic  has only the display on the i2c bus but is set up to share the bus.
 //!   displayX2_rtic  has two displays on two i2c buses and is set up shares the buses.
 //! 
-//! Compare also example dht_rtic and soeveral others that read sensors and display results.
+//! Compare also example dht_rtic and several others that read sensors and display results.
 //! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
@@ -121,7 +121,7 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2cType>>, 
+        display:  Ssd1306<I2CInterface<RefCellDevice<I2cType>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
         //i2c: &'static mut I2CBus,
@@ -136,7 +136,7 @@ mod app {
         // Task local initialized resources are static
         // Here we use MaybeUninit to allow for initialization in init()
         // This enables its usage in driver initialization
-        i2c1_rc: MaybeUninit<RefCell<I2cType>> = MaybeUninit::uninit()
+        i2c1_rcd: MaybeUninit<RefCellDevice<I2cType>> = MaybeUninit::uninit()
     ])]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
@@ -147,11 +147,11 @@ mod app {
        //rprintln!("isplay_stuff_rtic example");
        hprintln!("display_stuff_rtic example").unwrap();
 
-       let (i2c1, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+       let ( i2c1, _i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
        led.on();
 
-       //let i2c1_rc: RefCell<'static, I2cType<I2C1>>   = RefCell::new(i2c1);
+       //let i2c1_rc: RefCell<'static, I2cType>   = RefCell::new(i2c1);
        let i2c1_rc   = RefCell::new(i2c1);
        let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
        let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C

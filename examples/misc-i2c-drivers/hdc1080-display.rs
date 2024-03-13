@@ -72,6 +72,7 @@ use stm32h7xx_hal::{
    timer::Timer,
    //delay::Delay,
    delay::DelayFromCountDownTimer,
+   delay::DelayExt,
    pac::{TIM2, TIM5},
 };
 

@@ -398,8 +398,11 @@ use stm32h7xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Enabled, Spi, Config, Mode},
+    spi::{Enabled, Pins, Spi, Config, MODE_0, SpiExt, Error },
     delay::DelayFromCountDownTimer,
+    pac, 
+    prelude::*, 
+    spi
 };
 
 #[cfg(feature = "stm32h7xx")]
@@ -419,7 +422,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, impl DelayNs)
             gpioa.pa6.into_alternate(), // miso  on PA6
             gpioa.pa7.into_alternate(), // mosi  on PA7
         ),
-        mcp4x::MODE,
+        MODE_0,  //mcp4x::MODE,
         8.MHz(),
         ccdr.peripheral.SPI1,
         &clocks,

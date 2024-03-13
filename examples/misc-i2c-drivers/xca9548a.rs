@@ -33,7 +33,7 @@
 #![no_std]
 #![no_main]
 
-use aht10::{AHT10, Humidity, Temperature, Error as aht10Error};
+use aht10::{AHT10};  //, Humidity, Temperature, Error as aht10Error};
 
 //use embedded_hal::i2c::Operation::{Read, Write};   // WriteRead, , Write
 //use embedded_hal::prelude::_embedded_hal_blocking_i2c_Write;  // need trait for switch.write
@@ -41,7 +41,10 @@ use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Read;
 use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
 use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
 
-use xca9548a::{Error as xca9548aError, SlaveAddr, Xca9548a, I2cSlave};
+//use embedded_io;
+//use embedded_io::{Read, Write, WriteRead};
+
+use xca9548a::{SlaveAddr, Xca9548a, I2cSlave};   //Error as xca9548aError, 
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -91,12 +94,11 @@ use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
 use embedded_hal::delay::DelayNs;
-//use embedded_io;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
       pac::{Peripherals, I2C2},
-      i2c::{I2c, Error as i2cError},
+      i2c::I2c,   //Error as i2cError},
 };
 
 
@@ -108,8 +110,9 @@ use stm32g4xx_hal::{
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-   delay::SYSTDelayExt,    //trait for cp.SYST.delay
-   prelude::*
+   delay::DelayExt,   
+   prelude::*,
+   i2c::{Error},
 }; 
 
 
