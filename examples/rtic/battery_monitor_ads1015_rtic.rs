@@ -1,9 +1,9 @@
-    THIS REQUIRES SHARING THE BUS but display could be moved by adding a second i2c
-    ALSO NEEDS pub  Ads1015, Resolution12Bit in  use ads1x1x
 //!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //!
-//!  CLEANUP DESCRIPTION. DISPLAY OR LOG???
-//! See examples/misc/battery_monitor_ads1015.rs (not rtic) for details on wiring.
+//! This uses analogue to digital chips to measure the battery (2 ads1x1x share the i2c bus).
+//! (See ina219 examples for a better way to measure the battery.)
+//! It also has an oled ssd display on ??
+
 //! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for version using dma.
 
 #![deny(unsafe_code)]
@@ -48,7 +48,9 @@ mod app {
     //                  ic::{Ads1015, Resolution12Bit},
     //                  interface::I2cInterface};
     
-    use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+    use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr,
+                  ic::{Ads1015, Resolution12Bit},
+    };
 
     /////////////////////   ssd
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
@@ -82,13 +84,16 @@ mod app {
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{I2cType};
+    //use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type };
 
     use core::cell::RefCell;
     use shared_bus::{I2cProxy};
     use cortex_m::interrupt::Mutex;
 use embedded_hal_bus::i2c::RefCellDevice;
+
+    use embedded_hal::delay::DelayNs;
 
     use nb::block;
 
@@ -112,9 +117,12 @@ use embedded_hal_bus::i2c::RefCellDevice;
 
     #[local]
     struct Local {    // NB I2CInterface  renamed I2cInterface ??
-       adc_a:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2cType>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_b:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2cType>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+//       adc_a:   Ads1x1x<I2c2Type, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_a:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+//       adc_b:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+
+       //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
+       display: Ssd1306<I2CInterface<I2c1Type>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>,
        //text_style: MonoTextStyle<BinaryColor>,
@@ -182,15 +190,16 @@ use embedded_hal_bus::i2c::RefCellDevice;
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (_pin, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        //let (_pin, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on(); 
-        delay.delay(1000.millis());
+        delay.delay_ms(1000);
         led.off();
 
-        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
-
-        let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        //////////////////////////////////  ssd
+        
+        let interface = I2CDisplayInterface::new(i2c1);
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
@@ -202,36 +211,43 @@ use embedded_hal_bus::i2c::RefCellDevice;
            .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        delay.delay(2000.millis());    
+        delay.delay_ms(2000);    
 
+        //////////////////////////////////  ads
+        
+        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+
+//        let mut adc_a = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Gnd);
         let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
-        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
+//        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
 
         // FullScaleRange is very small for diff across low value shunt resistors for current
         //   but up to 5v when measuring usb power.
         // Set FullScaleRange to measure expected max voltage.
         // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
 
+        let z = adc_a.set_full_scale_range(FullScaleRange::Within0_256V);
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
-        match adc_a.set_full_scale_range(FullScaleRange::Within0_256V) {
+        match z {
             Ok(())   =>  (),
             Err(e) =>  {hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                         panic!("panic")
                        },
         };
 
-        match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
-            Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_2.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
-                        panic!("panic")
-                       },
-        };
+//        match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
+//            Ok(())   =>  (),
+//            Err(e) =>  {hprintln!("Error {:?} in adc_2.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+//                        panic!("panic")
+//                       },
+//        };
 
         read_and_display::spawn().unwrap();
 
         hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
-        (Shared {led}, Local {adc_a, adc_b, display} )
+//        (Shared {led}, Local {adc_a, adc_b, display} )
+        (Shared {led}, Local {adc_a, display} )
     }
 
     #[idle()]
@@ -242,35 +258,43 @@ use embedded_hal_bus::i2c::RefCellDevice;
         }
     }
 
-    #[task(shared = [led], local = [adc_a, adc_b, display], priority=1 )]
+//    #[task(shared = [led], local = [adc_a, adc_b, display], priority=1 )]
+    #[task(shared = [led], local = [adc_a, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
+       //let adc_a = *cx.local.adc_a.borrow_mut(); // extract from proxy
+       let adc_a = cx.local.adc_a;
+       let () = adc_a ;
+       //type `&mut Ads1x1x<I2cProxy<'static, cortex_m::interrupt::Mutex<RefCell<I2c<I2C2, PA8<AlternateOD<4>>, PA9<AlternateOD<4>>>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>`
        loop {
           Systick::delay(READ_INTERVAL.secs()).await;
           //hprintln!("measure").unwrap();
           blink::spawn(BLINK_DURATION).ok();
 
-          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-          let bat_mv = block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
-          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+          adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
+          let bat_mv = block!(DynamicOneShot::read(adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
+          adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
           //first adc  Note that readings will be zero using USB power (ie while programming) 
           // but not when using battery.
 
           let bat_ma =
-              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+              block!(DynamicOneShot::read(adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
           let load_ma =
-              block!(DynamicOneShot::read(cx.local.adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+              block!(DynamicOneShot::read(adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
-          // second adc
-          let values_b = [
-              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
-              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
-              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
-          ];
+//          // second adc
+//          let values_b = [
+//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
+//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
+//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
+//          ];
+//
+//          let temp_c =
+//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
 
-          let temp_c =
-              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
+           let temp_c = 0;   // FAKE
+           let values_b = [0, 0, 0 ];   // FAKE
 
            show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, &mut cx.local.display);
            

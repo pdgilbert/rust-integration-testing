@@ -120,14 +120,15 @@ ens160           = { git = "https://github.com/teamplayer3/ens160", default-feat
 #ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
 
 
-rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
-rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
-rtic-sync =  { version = "1.2.0", features = [ "unstable"], optional = true }
-
-#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
 ## NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
-#rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
-#rtic-sync = { git = "https://github.com/rtic-rs/rtic", features = [ "unstable" ], optional = true }
+#rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+
+#rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
+rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
+
+#rtic-sync =  { version = "1.2.0", features = [ "unstable"], optional = true }
+rtic-sync = { git = "https://github.com/rtic-rs/rtic",  optional = true }
 
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
 

@@ -1,12 +1,10 @@
 //! Continuously read temperature from multiple AHT10s and display on SSD1306 OLED.
-//! The AHT10s are multiplexed on i2c2 using  xca9548a.
+//! The display is on i2c1 and the AHT10s are multiplexed on i2c2 using  xca9548a.
 //!
-//! TWO  AHT10s EACH CONSUME a DelayMs so more old delays are needed with eh-1 only stm32g4xx
-//! ALSO, for more sensors it would be better to not consume delay. See htu2xd-display.
-//! So with two sensors the two delays work
+//! Each  AHT10 consumes a DelayMs so these (old) delays are generated with AltDelay.
+//! It would be better to not consume delay. See htu2xd-display.
 //! 
-//! requires two i2c buses. Note also using
-//! "https://github.com/andy31415/aht10", branch = "fix_status_check"
+//! Note also using  "https://github.com/andy31415/aht10", branch = "fix_status_check"
 //! 
 //!  Beware that switch1parts.i2c2 is the second multiplexed device on the i2c.
 //! 
@@ -26,6 +24,10 @@
 //!   -  For feature stm32f4xx setup_i2c1_i2c2 in src/i2c.rs sets i2c pins, possibly
 //!               i2c1 (scl, sda)= (pb8,  pb9)
 //!               i2c2 (scl, sda)= (pb10, pb3)
+//!
+//!  As of March 17, 2024 this compiles and runs on blackpill stm32f401 both with and without --release
+//!    using up to 4 AHT10s all on the first xca9548a.
+//!    Testing was with DisplaySize128x32 but about to test with DisplaySize128x64. 
 
 //! Compare examples aht20-display, aht10-display, aht10_rtic, dht_rtic, oled_dht, and blink_rtic.
 
@@ -80,10 +82,19 @@ use embedded_graphics::{
     //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
 
-const PPC: usize = 12;  // verticle pixels per character plus space 
-const DISPLAY_LINES: usize = 3;     // in characters
+type DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
+const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
+
+//type DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
+//const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
+
+const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
+const DISPLAY_LINES: usize = 3;     // in characters for 128x32
+//const DISPLAY_LINES: usize = 6;     // in characters for 128x64
+
 const DISPLAY_COLUMNS: usize = 32;  // in characters
 const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
+
 type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
 
 
@@ -221,7 +232,7 @@ fn main() -> ! {
     let interface = I2CDisplayInterface::new(i2c1);
 
     //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
@@ -296,7 +307,7 @@ fn main() -> ! {
        }
        //hprintln!("screen {:?}", screen).unwrap();
        show_screen(&screen, &mut display);
-       delay1.delay_ms(200);
+       delay1.delay_ms(500);
        
        i += 1;
     };

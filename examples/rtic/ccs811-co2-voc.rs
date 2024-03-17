@@ -137,15 +137,16 @@ mod app {
         //let measurements: [AlgorithmResult; 1200] = [AlgorithmResult {
         //    eco2: 0, etvoc: 0, raw_current: 0, raw_voltage: 0, }; 1200];
 
-       //  SHARED BUS COMPILES HERE on stm32f4xx  (WITH Ccs811Awake NOT I2CDisplayInterface) Jan 2024
-       //  shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } // compiles Feb 10, 2024
-       //  shared-bus = { version = "0.2.2", features = ["cortex-m"] }                            // compiles Feb 10, 2024
-       //  shared-bus = { version = "0.3.1", features = ["cortex-m"] }                            // compiles Feb 10, 2024
-       let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
+        //  SHARED BUS COMPILES HERE on stm32f4xx  (WITH Ccs811Awake NOT I2CDisplayInterface) Jan 2024
+        //  shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } // compiles Feb 10, 2024
+        //  shared-bus = { version = "0.2.2", features = ["cortex-m"] }                            // compiles Feb 10, 2024
+        //  shared-bus = { version = "0.3.1", features = ["cortex-m"] }                            // compiles Feb 10, 2024
 
-       //    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
-       //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
-       //        .into_buffered_graphics_mode();
+        let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c).unwrap();
+
+        //    let interface = I2CDisplayInterface::new(manager.acquire_i2c());
+        //    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+        //        .into_buffered_graphics_mode();
 
         let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
         hprintln!("let mut ccs811 = Ccs811Awake::new(").unwrap();

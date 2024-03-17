@@ -25,6 +25,13 @@ use rtic::app;
 
 mod app {
 
+   use core::mem::MaybeUninit;
+   use rtic_sync::arbiter::{i2c::ArbiterDevice, Arbiter};
+
+    // Instantiate an Arbiter with a static lifetime.
+    static ARBITER: Arbiter<u32> = Arbiter::new(32);
+// THIS HAS THE SAME PROBLEM AS   https://github.com/rtic-rs/rtic/issues/886
+
    use rtic;
    use rtic_monotonics::systick::Systick;
    use rtic_monotonics::systick::fugit::{ExtU32};
@@ -152,15 +159,17 @@ mod app {
 
        #[local]
        struct Local {
-           display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
+//           display:  Ssd1306<I2CInterface<RefCellDevice<'static, I2c2Type>>,   //EVERYTHING ON 2
+           display:  Ssd1306<I2CInterface<ArbiterDevice<'static, I2c2Type>>,   //EVERYTHING ON 2
                              DisplaySizeType, 
                              BufferedGraphicsMode<DisplaySizeType>>,
            //text_style: TextStyle,
            text_style: MonoTextStyle<'static, BinaryColor>,
 
-           ina:    SyncIna219<RefCellDevice<'static, I2c1Type>, UnCalibrated>,
-//          adc_a:  Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-//          adc_b:  Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+           ina:    SyncIna219<ArbiterDevice<'static, I2c2Type>, UnCalibrated>,
+//           ina:    SyncIna219<RefCellDevice<'static, I2c2Type>, UnCalibrated>,
+//          adc_a:  Ads1x1x<RefCellDevice<'static, I2c2Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+//          adc_b:  Ads1x1x<RefCellDevice<'static, I2c2Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
        }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -203,34 +212,51 @@ mod app {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-   #[init]
+    #[init(local = [
+        i2c_arbiter: MaybeUninit<Arbiter<I2c2Type>> = MaybeUninit::uninit(),
+    ])]
    fn init(cx: init::Context) -> (Shared, Local ) {
 
        let mono_token = rtic_monotonics::create_systick_token!();
        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
        //let (i2cset, _delay) = setup_from_dp(cx.device);
-       let (i21, i2c2, _led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+       let (i2c1, i2c2, _led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
-       //let i2cset_ref_cell: 'static + RefCell<I2c1Type> = RefCell::new(i21);
-       let i2cset_ref_cell: RefCell<I2c1Type> = RefCell::new(i21);
-       let adc_a_rcd = RefCellDevice::new(&i2cset_ref_cell); 
-       let adc_b_rcd = RefCellDevice::new(&i2cset_ref_cell); 
-       let ina_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
-       let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+       // let i2c = I2c::new(cx.device.I2C1);
+       // let i2c_arbiter = cx.local.i2c_arbiter.write(Arbiter::new(i2c));
+       // let ens160 = Ens160::new(ArbiterDevice::new(i2c_arbiter), 0x52);
+
+       let i2c_arbiter = cx.local.i2c_arbiter.write(Arbiter::new(i2c2)); // with MaybeUninit above
+
+//       let i2cset_ref_cell: &'static _ = &RefCell::new(i2c2);
+//    //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+//       //let i2cset_ref_cell: RefCell<I2c1Type> = RefCell::new(i2c1);
+//       let adc_a_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+//       let adc_b_rcd = RefCellDevice::new(&i2cset_ref_cell); 
+//       let ina_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
+//       let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
        /////////////////////   ads
-       let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd,  SlaveAddr::Gnd);
-       let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd,  SlaveAddr::Vdd);
+//       let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd,  SlaveAddr::Gnd);
+//       let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd,  SlaveAddr::Vdd);
+//       // set FullScaleRange to measure expected max voltage.
+//       adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+//       adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
+
+       let mut adc_a = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  SlaveAddr::Gnd);
+       let mut adc_b = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  SlaveAddr::Vdd);
        // set FullScaleRange to measure expected max voltage.
        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
        adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 
        /////////////////////   ina
-       let ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+       //let ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+       let ina = SyncIna219::new(ArbiterDevice::new(i2c_arbiter), Address::from_pins(Pin::Gnd, Pin::Gnd));
 
        /////////////////////   ssd
-       let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
+       let interface = I2CDisplayInterface::new(ArbiterDevice::new(i2c_arbiter)); //default address 0x3C
+       //let interface = I2CDisplayInterface::new(ssd_rcd); //default address 0x3C
        //let interface = I2CDisplayInterface::new_custom_address(ssd_rcd,   0x3D);  //alt address
 
        let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)

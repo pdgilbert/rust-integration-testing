@@ -40,7 +40,8 @@ mod app {
 //                  ic::{Ads1015, Resolution12Bit},
 //                  interface::I2cInterface};
     
-    use ads1x1x::{Ads1x1x, Ads1015, Resolution12Bit, channel, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+    use ads1x1x::{Ads1x1x, ic::Ads1015, ic::Resolution12Bit, channel, ChannelSelection, 
+                  DynamicOneShot, FullScaleRange, SlaveAddr};
 
 
     //use cortex_m_semihosting::{debug, hprintln};

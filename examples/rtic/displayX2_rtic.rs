@@ -122,7 +122,14 @@ use embedded_hal_bus::i2c::RefCellDevice;
        ()
     }
 
-
+    // try something like this:  
+    // static REFCELL: RefCell<u32> = RefCell::new(32);
+    // 
+    // use core::mem::MaybeUninit;
+    // 
+    // #[init(local = [
+    //      i2c1_rc: MaybeUninit<RefCell<I2c2Type>> = MaybeUninit::uninit(),
+    // ])]
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         let mono_token = rtic_monotonics::create_systick_token!();
@@ -134,7 +141,7 @@ use embedded_hal_bus::i2c::RefCellDevice;
         Systick.delay_ms(1000u32);  
         led.off();
 
-    let i2c1_rc = RefCell::new(i2c1);
+    let i2c1_rc    = RefCell::new(i2c1);
     let i2c1_rcd   = RefCellDevice::new(&i2c1_rc); 
     let interfaceA = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
     //let interfaceA = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address

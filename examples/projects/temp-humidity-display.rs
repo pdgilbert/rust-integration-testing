@@ -4,7 +4,7 @@
 
 //  Compare xca9548a which is not rtic
 
-//! Compile with feature hdc1080, or aht10, or aht20, or htu2xd.
+//! Compile with feature hdc1080, or aht10, or aht20, or htu2.
 //! eg build
 //!   cargo build --no-default-features --target $TARGET --features $MCU,$HAL,aht10 --example temp-humidity-display
 //! 
@@ -136,6 +136,9 @@ mod app {
         fn init_message(&mut self, disp: &mut DisplayType) -> ();  
     }
 
+    //////////////////////////////////////////////////////////////////
+
+
     #[cfg(feature = "hdc1080")]
     use embedded_hdc1080_rs::{Hdc1080}; 
 
@@ -146,17 +149,20 @@ mod app {
     #[cfg(feature = "hdc1080")]
     type  SensorRcdType = embedded_hdc1080_rs::Hdc1080<RefCellDevice<'static, I2c1Type>, Delay2Type>;
 
+//SENSOR AND INA USE SAME I2C WHICH THUS NEEDS TO BE IN A REFCELL
+use core::borrow::BorrowMut;  // bring trait is in scope
+
     #[cfg(feature = "hdc1080")]
-    impl TempHumSensor for SensorType {
+    impl TempHumSensor for SensorRcdType {   // for  SensorType ?
         fn read_th(&mut self) -> (i32, u8) {
-           let (t, rh) = match self.read() {
+           let (t, rh) = match self.borrow_mut().read() {  // .borrow_mut() extracts from RefCell
                Ok((t, rh))     =>((10.0 * t) as i32, rh as u8),
                Err(_e)        => ( -4090, 255)  //supply default values that should be clearly bad
            };
            (t, rh)
         }
         fn init(&mut self) -> Result<(),()> {
-           self.init().unwrap();              // CONSIDER HANDLING OR RETURN ERROR HERE
+           self.borrow_mut().init().unwrap();              // CONSIDER HANDLING OR RETURN ERROR HERE
            Ok(())
         } 
 
@@ -167,19 +173,20 @@ mod app {
 
 
 
-    #[cfg(feature = "htu2xd")]
-    use htu2xd::{Htu2xd, Reading};   //, Resolution
+    #[cfg(feature = "htu2")]
+    use htu21df_sensor::{Sensor}; 
+    //use htu2xd::{Htu2xd, Reading};   //, Resolution
 
-    #[cfg(feature = "htu2xd")]
+    #[cfg(feature = "htu2")]
     type SensorDev =  htu2xd::Htu2xd<I2c1Type>;
     
     //Workaround. This needs a new struct because channel is not part of the Htu2xd structure
 
-    #[cfg(feature = "htu2xd")]
+    #[cfg(feature = "htu2")]
     pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: Delay2Type}
 
 
-    #[cfg(feature = "htu2xd")]
+    #[cfg(feature = "htu2")]
     impl TempHumSensor for SensorType {
         fn read_th(&mut self) -> (i32, u8) {
             let t = match self.dev.read_temperature_blocking(&mut self.ch){
@@ -210,7 +217,7 @@ mod app {
         //    htu.write_user_register(&mut htu_ch, register).expect("write_user_register failed");
 
         fn init_message(&mut self, display: & mut DisplayType) -> () {
-           show_message("temp-humidity \nhtu2xd", display)
+           show_message("temp-humidity \nhtu2", display)
         } 
     }
 
@@ -252,7 +259,7 @@ mod app {
     type SensorType = Aht20<I2c1Type, Delay2Type>;
 
     #[cfg(feature = "aht20")]
-    type  SensorRcdType = AHT20<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+    type  SensorRcdType = Aht20<RefCellDevice<'static, I2c1Type>, Delay2Type>;
 
     #[cfg(feature = "aht20")]
     impl TempHumSensor for SensorType {
@@ -319,29 +326,29 @@ mod app {
     use rust_integration_testing_of_examples::delay::{Delay1Type, Delay2Type};
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
+    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+    use hal::{
       pac::{Peripherals},
       i2c::Error as i2cError,
       prelude::*,
       prelude::DelayNs,
-};
+    };
 
-//use embedded_hal_async::delay::DelayNs;
+    //use embedded_hal_async::delay::DelayNs;
 
-#[cfg(feature = "stm32g4xx")]
-use stm32g4xx_hal::{
-    timer::Timer,
-    time::{ExtU32, RateExtU32},
-    delay::DelayFromCountDownTimer,
-};
+    #[cfg(feature = "stm32g4xx")]
+    use stm32g4xx_hal::{
+        timer::Timer,
+        time::{ExtU32, RateExtU32},
+        delay::DelayFromCountDownTimer,
+    };
 
     //type  InaType = INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>;
     //
     //type  DisplayType = ssd1306::Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
     //                         DisplaySize, BufferedGraphicsMode<DisplaySize>>;
 
-    type  InaType = SyncIna219<RefCellDevice<'static, I2c1Type>, UnCalibrated>;
+    type  InaType = SyncIna219<RefCellDevice<'static, I2c2Type>, UnCalibrated>;
 
     type  DisplayType = Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
                                  ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
@@ -444,7 +451,7 @@ use stm32g4xx_hal::{
 
         ina:  InaType,
 
-        sensor:  SensorRcdType  // error here if feature = "htu2xd" or "aht10" or other not specified
+        sensor:  SensorRcdType  // error here if feature = "htu2" or "aht10" or other not specified
     }
 
     #[init]
@@ -463,18 +470,22 @@ use stm32g4xx_hal::{
         led.off();
 
         // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
-        // Trying embedded-bus instead, but it might be possible to put ssd on i2c1 and shared-bus ads's on i2c2
-        //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+        // This means ssd cannot share i2c bus - unless something other than shared_bus, eg embedded-bus, is used.
+        // Best would be for ssd and ina on one i2c bus and the sensor on another
+        // because aht10 hardware cannot share bus (without xca9548a or like).
 
+        // Trying embedded-bus
+        //    let i2c1_ref_cell = RefCell::new(i2c1);
+        //    let sens_rcd = RefCellDevice::new(&i2c1_ref_cell); 
+        //    let ina_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
+        //    let ssd_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
 
-    let i2c1_ref_cell = RefCell::new(i2c1);
-    let sens_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-    let ina_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
-    let ssd_rcd  = RefCellDevice::new(&i2c1_ref_cell); 
+        //put ssd on i2c1 and shared-bus ina and sensor on i2c2 (will not work for aht10).
+        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
         /////////////////////   ssd
 
-        let interface = I2CDisplayInterface::new(ssd_rcd);
+        let interface = I2CDisplayInterface::new(i2c1);
 
         //common display sizes are 128x64 and 128x32
         let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -488,10 +499,12 @@ use stm32g4xx_hal::{
 
         /////////////////////   ina   Start the battery sensor.
        
-       let ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+        //let ina = SyncIna219::new( ina_rcd, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
+        let ina = SyncIna219::new(manager2.acquire_i2c(), Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
 
         //let mut ina = INA219::new(ina_rcd, 0x40);
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+
         ina.calibrate(UnCalibrated).unwrap();
         delay.delay_ms(15);     // Wait for sensor
 
@@ -501,24 +514,25 @@ use stm32g4xx_hal::{
 
         /////////////////////   sens    Start the temp-humidity sensor.
 
-        // shared bus would be like this, but does not work for ath10.
-        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-        //let mut sensor = Hdc1080::new(manager1.acquire_i2c(), delay).unwrap();
-
-        #[cfg(not(any(feature = "hdc1080", feature = "htu2xd", feature = "aht10", feature = "aht20")))]
+        #[cfg(not(any(feature = "hdc1080", feature = "htu2", feature = "aht10", feature = "aht20")))]
         sensor; // sensor feature must be specified. eg --features $MCU,$HAL,aht10".  COMPILING STOPPED
 
         #[cfg(feature = "hdc1080")]
-        let mut sensor = Hdc1080::new(sens_rcd, delay).unwrap();
+        let mut sensor = Hdc1080::new(manager2.acquire_i2c(), delay).unwrap();
+        //let mut sensor = Hdc1080::new(sens_rcd, delay).unwrap();
 
-        #[cfg(feature = "htu2xd")]
+        #[cfg(feature = "htu2")]
         let mut sensor  = SensorType {dev: Htu2xd::new(), ch: sens_rcd, delay};
 
         #[cfg(feature = "aht10")]
-        let mut sensor = AHT10::new(sens_rcd, delay).expect("sensor failed");
+        let mut sensor = AHT10::new(manager2.acquire_i2c(), delay).expect("sensor failed");
+        // shared bus would be like this, but does not work for ath10.
+        //let mut sensor = AHT10::new(sens_rcd, delay).expect("sensor failed");
 
         #[cfg(feature = "aht20")]
-        let mut sensor = Aht20::new(sens_rcd, delay).expect("sensor failed");
+        let mut sensor = Aht20::new(manager2.acquire_i2c(), delay).expect("sensor failed");
+        //let mut sensor = Aht20::new(sens_rcd, delay).expect("sensor failed");
+
         //let mut sensor = TempHumSensor::<SensorType>::new(sens_rcd, delay).expect("sensor failed");
 
         sensor.init().unwrap();
