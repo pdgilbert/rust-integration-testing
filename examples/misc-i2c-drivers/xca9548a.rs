@@ -27,7 +27,9 @@
 //!
 //!  As of March 17, 2024 this compiles and runs on blackpill stm32f401 both with and without --release
 //!    using up to 4 AHT10s all on the first xca9548a.
-//!    Testing was with DisplaySize128x32 but about to test with DisplaySize128x64. 
+//!    Testing with DisplaySize128x32 and then changed to DisplaySize128x64 rotated. 
+//!    Works with USB dongle power, USB 5v battery power,  and 3.2v battery power,
+//!    using 4 sensors on long wires.
 
 //! Compare examples aht20-display, aht10-display, aht10_rtic, dht_rtic, oled_dht, and blink_rtic.
 
@@ -67,32 +69,40 @@ use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd13
 
 use embedded_graphics::{
     //mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
-    mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
+    //mono_font::{ascii::FONT_6X10 as FONT, MonoTextStyleBuilder},
     //mono_font::{ascii::FONT_10X20, MonoTextStyleBuilder, MonoTextStyle}, 
+    mono_font::{iso_8859_1::FONT_6X10 as FONT, MonoTextStyleBuilder},      // need iso for degree symbol
+    //mono_font::{iso_8859_1::FONT_8X13 as FONT, MonoTextStyleBuilder},
     //mono_font::{iso_8859_1::FONT_9X15 as FONT, MonoTextStyleBuilder}, 
     pixelcolor::BinaryColor,
     prelude::*,
     text::{Baseline, Text},
 };
 
-    //  note that larger font size increases memory and may require building with --release
-    //  &FONT_9X15 128 pixels/ 9 per font = 14.2 characters wide.  32/15 = 2.1 characters high
-    //  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
-    //  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
-    //  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
+//  note that larger font size increases memory and may require building with --release
+//  
+//  for 128x32 display
+//  &FONT_9X15 128 pixels/ 9 per font = 14.2 characters wide.  32/15 = 2.1 characters high
+//  &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
+//  &FONT_5X8  128 pixels/ 5 per font = 25.6 characters wide.  32/8 =   4  characters high
+//  &FONT_4X6  128 pixels/ 4 per font =  32  characters wide.  32/6 =  5.3 characters high
 
-
-type DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
-const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
+const ROTATION: DisplayRotation = DisplayRotation::Rotate90;   // 0, 90, 180, 270
 
 //type DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
-//const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
+//const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x32;
+
+type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
+const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 
 const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
-const DISPLAY_LINES: usize = 3;     // in characters for 128x32
-//const DISPLAY_LINES: usize = 6;     // in characters for 128x64
 
-const DISPLAY_COLUMNS: usize = 32;  // in characters
+//const DISPLAY_LINES: usize = 3;     // in characters for 128x32 Rotate0
+//const DISPLAY_LINES: usize = 6;     // in characters for 128x64   Rotate0
+const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate90
+
+//const DISPLAY_COLUMNS: usize = 32;  // in characters   Rotate0
+const DISPLAY_COLUMNS: usize = 12;  // in characters   Rotate90
 const R_VAL: heapless::String<DISPLAY_COLUMNS> = heapless::String::new();
 
 type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
@@ -172,12 +182,14 @@ fn show_screen<S>(
 where
     S: ssd1306::size::DisplaySize,  //trait
 {
+   //hprintln!("in show_screen").unwrap();
    
    // workaround. build here because text_style cannot be shared
    let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
    disp.clear_buffer();
    for  i in 0..DISPLAY_LINES {  // 0..2 is [0, 1] ;  0..=2 is [0, 1, 2]
+     // hprintln!("display line {}", i).unwrap();
       if 0 != screen[i].len() {                         // 12 point per char verticle
          Text::with_baseline( &screen[i], Point::new(0, (i*PPC).try_into().unwrap()), text_style, Baseline::Top)
               .draw(&mut *disp)
@@ -232,7 +244,7 @@ fn main() -> ! {
     let interface = I2CDisplayInterface::new(i2c1);
 
     //common display sizes are 128x64 and 128x32
-    let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
+    let mut display = Ssd1306::new(interface, DISPLAYSIZE, ROTATION)
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
@@ -293,6 +305,7 @@ fn main() -> ! {
 
     let mut i = 0;  // not very elegant
     for  prt in parts {
+       //hprintln!("i  {}", i).unwrap();
        let z = AHT10::new(prt, AltDelay{});
        screen[0].clear();
        match z {
@@ -310,19 +323,23 @@ fn main() -> ! {
        delay1.delay_ms(500);
        
        i += 1;
+       //hprintln!("i+1 {}", i).unwrap();
     };
 
-    let mut ln = 0;  // screen line to write. rolls inside loop
+    screen[0].clear();
+    write!(screen[0], "    °C %RH").unwrap();
 
+    //hprintln!("entering loop").unwrap();
     loop {   // Read humidity and temperature.
-       for  i in 0..7 {
+      let mut ln = 1;  // screen line to write. rolls if number of sensors exceed DISPLAY_LINES
+      for  i in 0..7 {
           match   &mut sensors[i] {
                None       => {},  //skip
    
                Some(sens) => {screen[ln].clear();
                               match sens.read() {
                                    Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                                                 write!(screen[ln], "J{} {:.1}C {:.0}%RH", i, t.celsius(), h.rh()).unwrap();
+                                                 write!(screen[ln], "J{} {:.1} {:.0}", i, t.celsius(), h.rh()).unwrap();
                                                 },
                                    Err(e)    => {sens.reset().unwrap();
                                                  //hprintln!("read error {:?}", e).unwrap();
@@ -332,7 +349,6 @@ fn main() -> ! {
                               show_screen(&screen, &mut display);
                               ln += 1;
                               ln = ln % DISPLAY_LINES;
-                              //hprintln!("ln+={} screen={:?}", ln, screen).unwrap();
                               delay1.delay_ms(500);
                               },
            };          
