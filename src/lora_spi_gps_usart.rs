@@ -1,30 +1,81 @@
+//    //////////////////////////////////////////
+//      stm32f0, stm32f4,    stm32g4
+//   sck     on PA5
+//  miso     on PA6
+//  mosi     on PA7
+
+//  CsPin    on PA1
+
+//  BusyPin  on PB8 DIO0
+//  ReadyPin on PB9 DIO1
+//  ResetPin on PA0
+
+//  tx  GPS  on PA2
+//  rx  GPS  on PA3
+
+//  scl      on PB10           PA13
+//  sda      on PB11           PA14
+
+//  led      on PC13
+
+//    //////////////////////////////////////////
+
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
 
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-use core::convert::Infallible;
+pub use embedded_hal::delay::DelayNs;
+//use crate::delay::{Delay2Type as Delay};
 
-use e_h_1a::delay::blocking::DelayMs;
+use embedded_hal::i2c::I2c as I2cTrait;
+//use embedded_hal_async::i2c::I2c as I2cTrait;
 
-// The embedded_hal_compat crate is to smooth the transition for hal crates that are
-// not yet based on embedded_hal 1.0.0-alpha while rust-radio-sx127x is.
-// When passing the older hal crate objects to the newer rust-radio-sx127x methods
-// the objects are appended with .forward().
+//use crate::led::{setup_led, LED, LedType};
 
-use embedded_hal_compat::ForwardCompat;
+pub type LedType = LEDPIN<Output<PushPull>>;
+
+pub use embedded_hal::digital::OutputPin;
+
+pub trait LED: OutputPin {  // see The Rust Programming Language, section 19, Using Supertraits...
+    // This does not have method blink which uses a delay.
+    // depending on board wiring, on may be set_high or set_low, with off also reversed
+    // A default of set_low() for on is defined here, but implementation should deal with a difference
+    fn on(&mut self) -> () {
+        self.set_low().unwrap()
+    }
+    fn off(&mut self) -> () {
+        self.set_high().unwrap()
+    }
+}
+
+pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
+
+//use crate::delay::{Delay2Type as Delay};
+
+
+pub use crate::stm32xxx_as_hal::hal;
+pub use hal::{
+      pac::{Peripherals, CorePeripherals, USART1},
+      serial::{Serial, Tx, Error},
+      gpio::{gpioa::PA8, Output, OpenDrain},
+      //prelude::*,
+};
+
+
 
 // MODE needs the old version as it is passed to the device hal crates
 use embedded_hal::spi::{Mode, Phase, Polarity};
 
-use radio_sx127x::Error as sx127xError; // Error name conflict with hals
 use radio_sx127x::{
+    base::Base,
     device::lora::{
         Bandwidth, CodingRate, FrequencyHopping, LoRaChannel, LoRaConfig, PayloadCrc,
         PayloadLength, SpreadingFactor,
     },
     device::{Channel, Modem, PaConfig, PaSelect},
+    Error as sx127xError, // Error name conflict with hals
     prelude::*, // prelude has Sx127x,
 };
 
@@ -80,13 +131,8 @@ pub const CONFIG_RADIO: radio_sx127x::device::Config = radio_sx127x::device::Con
     timeout_ms: 100,
 };
 
-// blink on board led to signal succesful transmit
-pub trait LED {
-    fn on(&mut self) -> ();
-    fn off(&mut self) -> ();
-}
 
-// setup() does all  hal/MCU specific setup and returns generic object for use in main code.
+//  /////////////// setup() does all  hal/MCU specific setup ///////////////////////////
 
 #[cfg(feature = "stm32f030xc")]
 use stm32f0xx_hal::pac::I2C2 as I2C;
@@ -153,16 +199,8 @@ pub fn setup() -> (
 
     // Create lora radio instance
 
-    let lora = Sx127x::spi(
-        spi.forward(),
-        pa1.forward(),
-        pb8.forward(),
-        pb9.forward(),
-        pa0.forward(),
-        delay.forward(),
-        &CONFIG_RADIO,
-    )
-    .unwrap(); // should handle error
+    let lora = Sx127x::spi(spi, pa1, pb8, pb9, pa0, delay, &CONFIG_RADIO, )
+                          .unwrap(); // should handle error
 
     //  stm32f030xc builds with gpiob..into_alternate_af4(cs) USART3 on tx pb10, rx pb11
     //    but stm32f042  only has 2 usarts.
@@ -257,12 +295,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                                             //Spi
-        gpioa.pa1.into_push_pull_output(&mut gpioa.crl).forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input(&mut gpiob.crh).forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input(&mut gpiob.crh).forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output(&mut gpioa.crl).forward(), //ResetPin      on PA0
-        delay.forward(),                                           //Delay
+        spi,                                             //Spi
+        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin      on PA0
+        delay,                                           //Delay
         &CONFIG_RADIO,                                             //&Config
     )
     .unwrap(); // should handle error
@@ -379,24 +417,20 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(), //Spi
+        spi, //Spi
         gpioa
             .pa1
-            .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //CsPin   on PA1
+            .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper), //CsPin   on PA1
         gpiob
             .pb8
-            .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //BusyPin  DIO0 on PB8
+            .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr), //BusyPin  DIO0 on PB8
         gpiob
             .pb9
-            .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //ReadyPin DIO1 on PB9
+            .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr), //ReadyPin DIO1 on PB9
         gpioa
             .pa0
-            .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //ResetPin      on PA0
-        delay.forward(), //Delay
+            .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper), //ResetPin      on PA0
+        delay, //Delay
         &CONFIG_RADIO, //&Config
     )
     .unwrap(); // should handle error
@@ -443,117 +477,113 @@ pub fn setup() -> (
     (lora, tx, rx, i2c, led)
 }
 
-#[cfg(feature = "stm32f4xx")]
-// eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
+#[cfg(feature = "stm32f4xx")]  // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, Pins},
-    pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    pac::{USART2, SPI1, TIM5},
+    i2c::{I2c},
+    serial::{config::Config, Rx},
+    spi::{Spi},
+    timer::{TimerExt, Delay},
+    gpio::{GpioExt, Pin, PushPull}, 
+    gpio::{gpioc::PC13 as LEDPIN},
     prelude::*,
-    serial::{config::Config, Rx, Serial, Tx},
-    spi::{Error, Spi},
-    time::MegaHertz,
 };
+
+// LoraSpiType   might be something like
+// impl DelayNs
+//    + Transmit<Error = sx127xError<Error>>
+//    + Receive<Info = PacketInfo, Error = sx127xError<Error>>,
 
 // If the type for the lora object is needed somewhere other than just in the setup() return type then it
 // may be better to explicitly define it as follows.
-//
-//    use embedded_spi::wrapper::Wrapper;
-//
-//    type LoraType = Sx127x<Wrapper<Spi<SPI1,
-//                           (PA5<Alternate<AF5>>,    PA6<Alternate<AF5>>,   PA7<Alternate<AF5>>)>,  Error,
-//                   PA1<Output<PushPull>>,  PB8<Input<Floating>>,  PB9<Input<Floating>>,  PA0<Output<PushPull>>,
-//                   Infallible,  Delay>,  Error, Infallible, Infallible>;
-// then
-//    pub fn setup() ->  LoraType {
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (
-    impl DelayMs<u32>
-        + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
-        + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
-    I2c<I2C2, impl Pins<I2C2>>,
-    PC13<Output<PushPull>>,
-) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
+pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>, 
+                                  Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
+                                  Delay<TIM5, 1000000>>>;
 
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.mhz()).pclk1(32.mhz()).freeze();
 
-    let gpioa = p.GPIOA.split();
-    let gpiob = p.GPIOB.split();
-    let gpioc = p.GPIOC.split();
+#[cfg(feature = "stm32f4xx")]
+pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, impl I2cTrait, LedType) {
+//pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, I2c<I2C2>, LedType) {
+    //let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+
+    let gpioa = dp.GPIOA.split();
+    let gpiob = dp.GPIOB.split();
+    let gpioc = dp.GPIOC.split();
 
     let spi = Spi::new(
-        p.SPI1,
+        dp.SPI1,
         (
-            gpioa.pa5.into_alternate(), // sck   on PA5
-            gpioa.pa6.into_alternate(), // miso  on PA6
-            gpioa.pa7.into_alternate(), // mosi  on PA7
+            gpioa.pa5.into_alternate(), // sck  
+            gpioa.pa6.into_alternate(), // miso 
+            gpioa.pa7.into_alternate(), // mosi 
         ),
         MODE,
-        MegaHertz(8),
+        8.MHz(),
         &clocks,
     );
 
-    let delay = Delay::new(cp.SYST, &clocks);
+    //let delay = Delay::new(cp.SYST, &clocks);
+    let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
 
     // Create lora radio instance
 
-    // open_drain_output is really input and output. BusyPin is just input, but I think this should work
-    //            gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh),
-    // however, gives trait bound  ... InputPin` is not satisfied
+    // open_drain_output is really input and output. BusyPin is just input.
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DI00 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DI01 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         
+        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
+        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
+        gpioa.pa0.into_push_pull_output(), //ResetPin      
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
-    )
-    .unwrap(); // should handle error
+    ).unwrap(); // should handle error
 
     //DIO0  triggers RxDone/TxDone status.
     //DIO1  triggers RxTimeout and other errors status.
     //D02, D03 ?
 
-    //lora.lora_configure( config_lora, &config_ch ).unwrap(); # not yet pub, to change something
+    //lora.lora_configure( config_lora, &config_ch ).unwrap(); // not yet pub, need to change something?
+    //let () =lora;
 
     let (tx, rx) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
-            gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
-            gpioa.pa3.into_alternate(), //rx pa3  for GPS tx
+            gpioa.pa2.into_alternate(), //tx  for GPS rx
+            gpioa.pa3.into_alternate(), //rx  for GPS tx
         ),
         Config::default().baudrate(9600.bps()),
         &clocks,
-    )
-    .unwrap()
-    .split();
+    ).unwrap().split();
 
-    let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
-    let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
-
-    let i2c = I2c::new(p.I2C2, (scl, sda), 400.khz(), &clocks);
+    let i2c = I2c::new(
+                    dp.I2C2, 
+                    (gpiob.pb10.into_alternate().set_open_drain(), // scl
+                     gpiob.pb3.into_alternate().set_open_drain()   // sda
+                    ), 
+                    400.kHz(), 
+                    &clocks);
 
     // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
+//    impl LED for PC13<Output<PushPull>> {
+//        fn on(&mut self) -> () {
+//            self.set_low()
+//        }
+//        fn off(&mut self) -> () {
+//            self.set_high()
+//        }
+//    }
 
-    let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay is in lora)
+    let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
+    impl LED for LedType {}  //using default method on = low  
+
+    led.off();
 
     (lora, tx, rx, i2c, led)
 }
@@ -606,13 +636,13 @@ pub fn setup() -> (
 
     // spi::new  partially consumes rcc which causes problem for second use of clocks
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
-        &CONFIG_RADIO,                               //&Config
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
+        &CONFIG_RADIO,                     //&Config
     )
     .unwrap(); // should handle error
 
@@ -654,6 +684,162 @@ pub fn setup() -> (
 
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off
 
+    (lora, tx, rx, i2c, led)
+}
+
+
+
+#[cfg(feature = "stm32g0xx")]
+use stm32g0xx_hal::{
+    gpio::{gpioc::PC13, Output, PushPull},
+    i2c::{I2c},
+    pac::{Peripherals, I2C2, USART2, SPI1, TIM5},
+    prelude::*,
+    serial::{config::Config, Rx, Serial, Tx},
+    spi::{Spi},
+    timer::{TimerExt, Delay},
+    gpio::{GpioExt, Pin, Output}, 
+    serial::{FullConfig},
+};
+
+#[cfg(feature = "stm32g0xx")]
+pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>, 
+                                  Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
+                                  Delay<TIM5, 1000000>>>;
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, I2c<I2C2>, PC13<Output<PushPull>>) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+    
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let spi = dp.SPI1.spi((gpioa.pa5, gpioa.pa6, gpioa.pa7), //sck, miso, mosi
+        mcp4x::MODE, 
+        3.MHz(), &mut rcc, );
+
+    let mut cs = gpioa.pa1.into_push_pull_output();
+    cs.set_high().unwrap();
+
+
+//    let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
+
+    let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+    led.off();
+
+    let tx = gpioa.pa9; 
+    let rx = gpioa.pa10;
+    let (tx, _rx) = dp.USART1.usart((tx, rx), FullConfig::default(), &mut rcc).unwrap().split();
+
+    let delay = dp.TIM2.delay(&mut rcc);
+
+    (lora, tx, rx, i2c, led)
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+use stm32g4xx_hal::{
+    pac::{USART2, SPI1, TIM5},
+    spi::{Spi, MODE_0, SpiExt},
+    serial::{FullConfig, NoDMA, Rx, SerialExt},
+    i2c::{Config, I2cExt}, //I2c in prelude?
+    time::{ExtU32, RateExtU32},
+    timer::{Timer, CountDownTimer},
+    delay::DelayFromCountDownTimer,
+    gpio::{Input, Alternate, Floating, PushPull, GpioExt,
+           gpioa::{ PA0, PA1, PA2, PA3, PA5, PA6, PA7},
+           gpiob::{  PB8, PB9} 
+    },
+    gpio::{gpioc::PC13 as LEDPIN},
+    rcc::RccExt,
+    prelude::*,
+};
+
+
+#[cfg(feature = "stm32g4xx")]
+pub type LoraSpiType = Sx127x<Base<
+                     Spi<SPI1,(PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternate<5>>)>, 
+                     PA1<Output<PushPull>>, PB8<Input<Floating>>, PB9<Input<Floating>>, PA0<Output<PushPull>>, 
+                     DelayFromCountDownTimer<CountDownTimer<TIM5>>>>;
+
+#[cfg(feature = "stm32g4xx")]
+pub type TxType = Tx<USART2, PA2<Alternate<7_u8>>, NoDMA >;
+
+#[cfg(feature = "stm32g4xx")]
+pub type RxType = Rx<USART2, PA3<Alternate<7_u8>>, NoDMA >;
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
+    let dp = Peripherals::take().unwrap();
+    let mut rcc = dp.RCC.constrain();
+    
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let spi = dp.SPI1.spi(
+            (gpioa.pa5.into_alternate(), // sck 
+             gpioa.pa6.into_alternate(), // miso
+             gpioa.pa7.into_alternate(), // mosi
+            ),
+        MODE_0,
+        400.kHz(),
+        &mut rcc,
+    );
+
+    let clocks = rcc.clocks;  // not sure if this is right
+
+    //let delay = Delay::new(cp.SYST, &clocks);
+    //let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
+    let timer2 = Timer::new(dp.TIM5, &clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
+
+    // Create lora radio instance
+
+    // open_drain_output is really input and output. BusyPin is just input, but I think this should work
+    //            gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh),
+    // however, gives trait bound  ... InputPin` is not satisfied
+
+    let lora = Sx127x::spi(
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         
+        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
+        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
+        gpioa.pa0.into_push_pull_output(), //ResetPin      
+        delay,                             //Delay
+        &CONFIG_RADIO,                               //&Config
+    ).unwrap(); // should handle error
+
+    //let () = lora;
+
+    let (tx, rx) = dp.USART2.usart(
+                           gpioa.pa2.into_alternate(),    //tx  was pa9
+                           gpioa.pa3.into_alternate(),   //rx  was pa10
+                           FullConfig::default().baudrate(115200.bps()),
+                           &mut rcc).unwrap().split();
+
+    let i2c = dp.I2C1.i2c(
+                       gpioa.pa14.into_alternate_open_drain(),  //sda
+                       gpioa.pa13.into_alternate_open_drain(),  //scl
+                       Config::new(400.kHz()), 
+                       &mut rcc
+    );
+
+    let mut led: LedType = gpioc.pc13.into_push_pull_output();
+
+    impl LED for LedType {
+        fn on(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+    }
+
+    led.off();
+    
     (lora, tx, rx, i2c, led)
 }
 
@@ -712,12 +898,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -803,12 +989,12 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa1.into_push_pull_output().forward(), //CsPin         on PA1
-        gpiob.pb8.into_floating_input().forward(),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input().forward(),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output().forward(), //ResetPin      on PA0
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         on PA1
+        gpiob.pb8.into_floating_input(),   //BusyPin  DIO0 on PB8
+        gpiob.pb9.into_floating_input(),   //ReadyPin DIO1 on PB9
+        gpioa.pa0.into_push_pull_output(), //ResetPin      on PA0
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -891,12 +1077,12 @@ pub fn setup() -> (
 
     //  Heltec lora_node STM32L151CCU6
     let lora = Sx127x::spi(
-        spi.forward(),                               //Spi
-        gpioa.pa4.into_push_pull_output().forward(), //CsPin         on PA4  in board on Heltec
-        gpiob.pb11.into_floating_input().forward(),  //BusyPin  DIO0 on PB11 in board on Heltec
-        gpiob.pb10.into_floating_input().forward(),  //ReadyPin DIO1 on PB10 in board on Heltec
-        gpioa.pa3.into_push_pull_output().forward(), //ResetPin      on PA3  in board on Heltec
-        delay.forward(),                             //Delay
+        spi,                               //Spi
+        gpioa.pa4.into_push_pull_output(), //CsPin         on PA4  in board on Heltec
+        gpiob.pb11.into_floating_input(),  //BusyPin  DIO0 on PB11 in board on Heltec
+        gpiob.pb10.into_floating_input(),  //ReadyPin DIO1 on PB10 in board on Heltec
+        gpioa.pa3.into_push_pull_output(), //ResetPin      on PA3  in board on Heltec
+        delay,                             //Delay
         &CONFIG_RADIO,                               //&Config
     )
     .unwrap(); // should handle error
@@ -995,24 +1181,24 @@ pub fn setup() -> (
     // Create lora radio instance
 
     let lora = Sx127x::spi(
-        spi.forward(), //Spi
+        spi, //Spi
         gpioa
             .pa1
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //CsPin   on PA1
+            , //CsPin   on PA1
         gpiob
             .pb8
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //BusyPin  DIO0 on PB8
+            , //BusyPin  DIO0 on PB8
         gpiob
             .pb9
             .into_floating_input(&mut gpiob.moder, &mut gpiob.pupdr)
-            .forward(), //ReadyPin DIO1 on PB9
+            , //ReadyPin DIO1 on PB9
         gpioa
             .pa0
             .into_push_pull_output(&mut gpioa.moder, &mut gpioa.otyper)
-            .forward(), //ResetPin      on PA0
-        delay.forward(), //Delay
+            , //ResetPin      on PA0
+        delay, //Delay
         &CONFIG_RADIO, //&Config
     )
     .unwrap(); // should handle error

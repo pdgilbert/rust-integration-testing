@@ -13,7 +13,7 @@ pub mod stm32xxx_as_hal;
 
 pub mod monoclock;
 
-//// pub mod lora_spi_gps_usart; 
+pub mod lora_spi_gps_usart; 
 
 pub mod tx1_rx1_tx2_rx2;
 
