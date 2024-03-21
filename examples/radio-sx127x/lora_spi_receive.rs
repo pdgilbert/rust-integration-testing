@@ -14,7 +14,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
-use e_h_1a::delay::blocking::DelayUs;
+use embedded_hal::delay::DelayNs;
 
 use radio::Receive;
 use radio_sx127x::prelude::PacketInfo;
@@ -36,8 +36,8 @@ fn main() -> ! {
     lora.start_receive().unwrap(); // should handle error
 
     let mut buff = [0u8; 1024];
-    let mut n: usize;
-    let mut info = PacketInfo::default();
+    let mut n: (usize, PacketInfo);
+    //let mut info = PacketInfo::default();
 
     loop {
         let poll = lora.check_receive(false);
@@ -46,11 +46,11 @@ fn main() -> ! {
 
         match poll {
             Ok(v) if v => {
-                n = lora.get_received(&mut info, &mut buff).unwrap();
+                n = lora.get_received(&mut buff).unwrap();
                 //hprintln!("RX complete ({:?}, length: {})", info, n).unwrap();
-                //hprintln!("{:?}", &buff[..n]).unwrap();
+                //hprintln!("{:?}", &buff[..n.0]).unwrap();
                 // for some reason the next prints twice?
-                hprintln!("{}", to_str(&buff[..n])).unwrap()
+                hprintln!("{}", to_str(&buff[..n.0])).unwrap()
             }
 
             Ok(_v) => (), // hprint!(".").unwrap(),   // print "." if nothing received
@@ -58,12 +58,6 @@ fn main() -> ! {
             Err(err) => hprintln!("poll error {:?} ", err).unwrap(),
         };
 
-        match lora.delay_ms(100u32) {
-            Ok(b) => b, // b is ()
-            Err(_err) => {
-                hprintln!("Error returned from lora.try_delay_ms().").unwrap();
-                panic!("should reset in release mode.");
-            }
-        };
+        lora.delay_ms(100);
     }
 }

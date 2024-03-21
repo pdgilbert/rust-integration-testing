@@ -150,7 +150,11 @@ fugit = { version = "0.3.3", optional = true }
 #radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
 #radio-sx127x  = { version = "0.14.0", default-features = false }
 #radio         = { version = "0.11.0" }
-radio         = { git = "https://github.com/rust-iot/radio-hal" }  # eh-1
+
+# NB seems important to use the same version of radio that is used by radio-sx127x
+
+radio = { version = "0.11.1", git = "https://github.com/rust-iot/radio-hal", rev = "7aade85b61c08161bf3422f7d148417bd38ecdc2" }
+#radio         = { git = "https://github.com/rust-iot/radio-hal" }  # eh-1
 radio-sx127x  = {  git = "https://github.com/matheo-lucak/rust-radio-sx127x", default-features = false }
 
 #  check:  diff dev-testing/Cargo.toml release-testing/Cargo.toml

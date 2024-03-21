@@ -50,7 +50,7 @@ pub trait LED: OutputPin {  // see The Rust Programming Language, section 19, Us
     }
 }
 
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
+//use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
 //use crate::delay::{Delay2Type as Delay};
 
@@ -75,12 +75,12 @@ use radio_sx127x::{
         PayloadLength, SpreadingFactor,
     },
     device::{Channel, Modem, PaConfig, PaSelect},
-    Error as sx127xError, // Error name conflict with hals
+    //Error as sx127xError, // Error name conflict with hals
     prelude::*, // prelude has Sx127x,
 };
 
 // trait needs to be in scope to find  methods start_transmit and check_transmit.
-use radio::{Receive, Transmit};
+pub use radio::{Receive, Transmit};
 
 // lora and radio parameters
 

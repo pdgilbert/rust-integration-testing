@@ -39,13 +39,6 @@
 //   'CH_13_868': 866.10, 'CH_14_868': 866.40, 'CH_15_868': 866.70,
 //   'CH_16_868': 867   , 'CH_17_868': 868   ,
 
-// The embedded_hal_compat crate is to smooth the transition for hal crates that are
-// not yet based on embedded_hal 1.0.0-alpha while rust-radio-sx127x is.
-// When passing the older hal crate objects to the newer rust-radio-sx127x methods
-// the objects are appended with .forward().
-
-// Development work on extensions are in repository https://github.com/pdgilbert/LoRaGPS-rust/
-
 #![no_std]
 #![no_main]
 
@@ -114,12 +107,6 @@ fn main() -> ! {
             }
         };
 
-        match lora.delay_ms(5000u32) {
-            Ok(b) => b, // b is ()
-            Err(_err) => {
-                hprintln!("Error returned from lora.try_delay_ms().").unwrap();
-                panic!("should reset in release mode.");
-            }
-        };
+        lora.delay_ms(5000);
     }
 }

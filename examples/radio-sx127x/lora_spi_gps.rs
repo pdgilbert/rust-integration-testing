@@ -14,12 +14,8 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
-use nb::block;
-
-//use e_h_1a::delay::blocking::DelayUs;
 use embedded_hal::delay::DelayNs;
-
-use embedded_hal::serial::Read;
+use embedded_io::{Read};
 
 use radio::Transmit;
 
@@ -39,9 +35,11 @@ fn main() -> ! {
     buffer.clear();
     buf2.clear();
 
+    let mut received: [u8; 80] = [0; 80];
+
     //hprintln!("going into write/read loop ^C to exit ...").unwrap();
 
-    let e: u8 = 9; // replace char errors with "9"
+    //let e: u8 = 9; // replace char errors with "9"
     let mut good = false; // true while capturing a line
 
     //let mut size: usize;   // buffer size should not be needed
@@ -50,10 +48,17 @@ fn main() -> ! {
     hprintln!("entering transmit loop").unwrap();
 
     loop {
-        let byte = match block!(rx_gps.read()) {
-            Ok(byt) => byt,
-            Err(_error) => e,
-        };
+       let _len = rx_gps.read(&mut received);   //stm32f4xx_hal fails here with 
+                                                //method not found in `Rx<USART2>`
+                                                //see https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+
+       //let byte = match block!(rx_gps.read()) {
+       //     Ok(byt) => byt,
+       //     Err(_error) => e,
+       //};
+       
+       //  LOGIC OF THIS NEEDS FIXING
+        let byte = 1;  //FAKE
 
         if byte == 36 {
             //  $ is 36. start of a line
@@ -128,13 +133,7 @@ fn main() -> ! {
                 buffer.clear();
                 buf2.clear();
                 good = false;
-                match lora.delay_ms(5000u32) {
-                    Ok(b) => b, // b is ()
-                    Err(_err) => {
-                        hprintln!("Error returned from lora.try_delay_ms().").unwrap();
-                        panic!("should reset in release mode.");
-                    }
-                };
+                lora.delay_ms(5000);
             };
         };
     }
