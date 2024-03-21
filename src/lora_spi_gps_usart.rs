@@ -151,9 +151,6 @@ use stm32f0xx_hal::{
 use stm32f0xx_hal::pac::I2C1 as I2C;
 
 #[cfg(feature = "stm32f0xx")]
-use embedded_hal::digital::v2::OutputPin;
-
-#[cfg(feature = "stm32f0xx")]
 pub fn setup() -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
@@ -216,25 +213,8 @@ pub fn setup() -> (
     #[cfg(feature = "stm32f042")]
     let i2c = I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), &mut rcc);
 
-    //impl LED for dyn OutputPin<Error = Infallible> {
-    //    fn on(&mut self) -> () {
-    //        self.set_low().unwrap()
-    //    }
-    //    fn off(&mut self) -> () {
-    //        self.set_high().unwrap()
-    //    }
-    //}
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
     // led on pc13 with on/off  above
+    impl LED for LedType {}  //using default method on = low  
 
     (lora, tx, rx, i2c, led)
 }
@@ -334,15 +314,6 @@ pub fn setup() -> (
         1000,
         1000,
     );
-
-    //impl LED for dyn OutputPin<Error = Infallible> {
-    //    fn on(&mut self) -> () {
-    //        self.try_set_low().unwrap()
-    //    }
-    //    fn off(&mut self) -> () {
-    //        self.try_set_high().unwrap()
-    //    }
-    //}
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
@@ -571,14 +542,6 @@ pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, impl I2cTrait, LedType) 
 
     // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
-//    impl LED for PC13<Output<PushPull>> {
-//        fn on(&mut self) -> () {
-//            self.set_low()
-//        }
-//        fn off(&mut self) -> () {
-//            self.set_high()
-//        }
-//    }
 
     let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
     impl LED for LedType {}  //using default method on = low  
@@ -843,37 +806,46 @@ pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     (lora, tx, rx, i2c, led)
 }
 
+
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
+    pac::{USART2, SPI1},
+    spi::{Spi, SpiExt, Enabled},
+    serial::{Rx},
     delay::Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
-    i2c::I2c,
-    pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    gpio::{Input, PushPull, GpioExt,
+           gpioa::{ PA0, PA1},
+           gpiob::{ PB8, PB9} 
+    },
+    gpio::{gpioc::PC13 as LEDPIN},
     prelude::*,
-    serial::{Rx, Tx},
-    spi::Error,
-    Never,
 };
 
 #[cfg(feature = "stm32h7xx")]
-use embedded_hal::digital::v2::OutputPin;
+pub type LoraSpiType = Sx127x<Base<Spi<SPI1, Enabled>,
+                     PA1<Output<PushPull>>, PB8<Input>, PB9<Input>, PA0<Output<PushPull>>, 
+                     Delay>>;
+
+
+//pub type LoraSpiType = Sx127x<Base<
+//                     Spi<SPI1, Enabled, (PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternate<5>>)>, 
+//                     PA1<Output<PushPull>>, PB8<Input>, PB9<Input>, PA0<Output<PushPull>>, 
+//                     Delay>>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup() -> (
-    impl DelayMs<u32>
-        + Transmit<Error = sx127xError<Error, Never, Infallible>>
-        + Receive<Info = PacketInfo, Error = sx127xError<Error, Never, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
-    I2c<I2C2>,
-    PC13<Output<PushPull>>,
-) {
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32h7xx")]
+pub type RxType = Rx<USART2>;
+
+#[cfg(feature = "stm32h7xx")]
+pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let pwr = p.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.mhz()).freeze(vos, &p.SYSCFG);
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &p.SYSCFG);
     let clocks = ccdr.clocks;
 
     let gpioa = p.GPIOA.split(ccdr.peripheral.GPIOA);
@@ -883,12 +855,12 @@ pub fn setup() -> (
     // following github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/spi.rs
     let spi = p.SPI1.spi(
         (
-            gpioa.pa5.into_alternate_af5(), // sck   on PA5
-            gpioa.pa6.into_alternate_af5(), // miso  on PA6
-            gpioa.pa7.into_alternate_af5(), // mosi  on PA7
+            gpioa.pa5.into_alternate(), // sck 
+            gpioa.pa6.into_alternate(), // miso
+            gpioa.pa7.into_alternate(), // mosi
         ),
         MODE,
-        8.mhz(),
+        8.MHz(),
         ccdr.peripheral.SPI1,
         &clocks,
     );
@@ -912,8 +884,8 @@ pub fn setup() -> (
         .USART2
         .serial(
             (
-                gpioa.pa2.into_alternate_af7(), //tx pa2 for GPS rx
-                gpioa.pa3.into_alternate_af7(), //rx pa3 for GPS tx
+                gpioa.pa2.into_alternate(), //tx for GPS rx
+                gpioa.pa3.into_alternate(), //rx for GPS tx
             ),
             9600.bps(),
             ccdr.peripheral.USART2,
@@ -922,23 +894,16 @@ pub fn setup() -> (
         .unwrap()
         .split();
 
-    let scl = gpiob.pb10.into_alternate_af4().set_open_drain();
-    let sda = gpiob.pb11.into_alternate_af4().set_open_drain();
+    let scl = gpiob.pb10.into_alternate().set_open_drain();
+    let sda = gpiob.pb11.into_alternate().set_open_drain();
 
     let i2c = p
         .I2C2
-        .i2c((scl, sda), 400.khz(), ccdr.peripheral.I2C2, &clocks);
+        .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C2, &clocks);
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
 
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off
+    impl LED for LedType {}  //using default method on = low  
 
     (lora, tx, rx, i2c, led)
 }
@@ -1040,8 +1005,7 @@ use stm32l1xx_hal::{
     stm32::{CorePeripherals, Peripherals, I2C1, USART1},
 };
 
-#[cfg(feature = "stm32l1xx")]
-use embedded_hal::digital::v2::OutputPin;
+
 
 #[cfg(feature = "stm32l1xx")]
 pub fn setup() -> (
@@ -1105,7 +1069,7 @@ pub fn setup() -> (
 
     let i2c = p.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 
-    impl LED for PB6<Output<PushPull>> {
+    impl LED for LEDPIN {
         fn on(&mut self) -> () {
             self.set_high().unwrap()
         }

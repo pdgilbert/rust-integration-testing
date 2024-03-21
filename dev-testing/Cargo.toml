@@ -152,6 +152,7 @@ fugit = { version = "0.3.3", optional = true }
 #radio         = { version = "0.11.0" }
 
 # NB seems important to use the same version of radio that is used by radio-sx127x
+#  It would be nice if radio-sx127x re-exported traits Transmit and  Receive so radio is not needed.
 
 radio = { version = "0.11.1", git = "https://github.com/rust-iot/radio-hal", rev = "7aade85b61c08161bf3422f7d148417bd38ecdc2" }
 #radio         = { git = "https://github.com/rust-iot/radio-hal" }  # eh-1
