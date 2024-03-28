@@ -3,8 +3,8 @@ pub use embedded_hal::delay::DelayNs;
 #[cfg(feature = "stm32f0xx")] //  eg  stm32f303x4
 use stm32f0xx_hal::delay::Delay;
 
-#[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
-use stm32f1xx_hal::timer::SysDelay as Delay;
+//#[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
+//use stm32f1xx_hal::timer::SysDelay as Delay;
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::delay::Delay;

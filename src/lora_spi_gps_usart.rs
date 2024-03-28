@@ -1,17 +1,16 @@
 //    //////////////////////////////////////////
-//      stm32f0, stm32f4,    stm32g4
+//        f0, f1, f4,       stm32g4
 //   sck     on PA5
 //  miso     on PA6
 //  mosi     on PA7
 
 //  CsPin    on PA1
-
 //  BusyPin  on PB8 DIO0
 //  ReadyPin on PB9 DIO1
 //  ResetPin on PA0
 
-//  tx  GPS  on PA2
-//  rx  GPS  on PA3
+//  tx  GPS  on PA2   to  GPS rx
+//  rx  GPS  on PA3  from GPS tx
 
 //  scl      on PB10           PA13
 //  sda      on PB11           PA14
@@ -221,91 +220,89 @@ pub fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    delay::Delay,
-    device::I2C2,
-    device::USART2,
-    gpio::{gpioc::PC13, Output, PushPull},
+    //delay::Delay,
+    pac::{I2C2, USART2, SPI1, TIM2, TIM5},
+    gpio::{gpioc::PC13 as LEDPIN, PushPull, Pin},
     i2c::{BlockingI2c, DutyCycle, Pins},
-    pac::{CorePeripherals, Peripherals},
+    spi::{Spi, Error as SpiError},
+    serial::{Config, Rx}, //, StopBits
+    timer::{TimerExt, Delay},
     prelude::*,
-    serial::{Config, Rx, Serial, Tx}, //, StopBits
-    spi::{Error, Spi},
 };
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (
-    impl DelayMs<u32>
-        + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
-        + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
-    BlockingI2c<I2C2, impl Pins<I2C2>>,
-    PC13<Output<PushPull>>,
-) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
+pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>, 
+                                  Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
+                                  Delay<TIM5, 1000000>>>;
 
-    let rcc = p.RCC.constrain();
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, impl I2cTrait, LedType,) {
+    let cp = CorePeripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
+
+    let rcc = dp.RCC.constrain();
     let clocks = rcc
         .cfgr
-        .sysclk(64.mhz())
-        .pclk1(32.mhz())
-        .freeze(&mut p.FLASH.constrain().acr);
+        .sysclk(64.MHz())
+        .pclk1(32.MHz())
+        .freeze(&mut dp.FLASH.constrain().acr);
 
-    let mut afio = p.AFIO.constrain();
-    let mut gpioa = p.GPIOA.split();
-    let mut gpiob = p.GPIOB.split();
-    let mut gpioc = p.GPIOC.split();
+    let mut afio = dp.AFIO.constrain();
+    let mut gpioa = dp.GPIOA.split();
+    let mut gpiob = dp.GPIOB.split();
+    let mut gpioc = dp.GPIOC.split();
 
     let spi = Spi::spi1(
-        p.SPI1,
+        dp.SPI1,
         (
-            gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck   on PA5
-            gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso  on PA6
-            gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi  on PA7
+            gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
+            gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso
+            gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
         ),
         &mut afio.mapr,
         MODE,
-        8.mhz(),
+        8.MHz(),
         clocks,
     );
 
-    let delay = Delay::new(cp.SYST, clocks);
+    //let delay = Delay::new(cp.SYST, clocks);
+    let mut delay = dp.TIM2.delay::<1000000_u32>(&clocks);
 
     // Create lora radio instance
 
     let lora = Sx127x::spi(
         spi,                                             //Spi
-        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin         on PA1
-        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0 on PB8
-        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1 on PB9
-        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin      on PA0
+        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin        
+        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
+        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
+        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
         delay,                                           //Delay
         &CONFIG_RADIO,                                             //&Config
     )
     .unwrap(); // should handle error
 
-    let (tx, rx) = Serial::usart2(
-        p.USART2,
+    let (tx, rx) = Serial::new(
+        dp.USART2,
         (
             gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2  for GPS rx
             gpioa.pa3,                                          //rx pa3  for GPS tx
         ),
         &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
-        clocks,
+        &clocks,
     )
     .split();
 
     let i2c = BlockingI2c::i2c2(
-        p.I2C2,
+        dp.I2C2,
         (
             gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
             gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
         ),
         //&mut afio.mapr,  need this for i2c1 but not i2c2
         stm32f1xx_hal::i2c::Mode::Fast {
-            frequency: 400_000.hz(),
+            frequency: 400.kHz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
         clocks,
@@ -315,16 +312,9 @@ pub fn setup() -> (
         1000,
     );
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh); // led on pc13 with on/off
+    impl LED for LedType {}  //using default method on = low  
+
 
     (lora, tx, rx, i2c, led)
 }

@@ -27,8 +27,8 @@ stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = 
 stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
 stm32l1xx-hal = { git = "https://github.com/TheCallSign/stm32l1xx-hal", optional = true, default-features = false}
-stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
-
+#stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
+stm32l4xx-hal = { git = "https://github.com/sousandrei/stm32l4xx-hal", optional = true, branch = "feat/migrate-to-ehal-1.0" }
 
 #  driver versions using git
 

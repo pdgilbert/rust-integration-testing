@@ -108,7 +108,12 @@ pub fn setup_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, impl Del
    let mut led = setup_led(dp.GPIOC.split()); 
    led.off();
 
-   let delay = dp.TIM2.delay(&clocks);
+  // let delay = dp.TIM5.delay(&clocks);
+        //let mut delay = hal::timer::FTimerUs::new(dp.TIM2, &clocks).delay();
+        // or
+        //let mut delay = dp.TIM2.delay_us(&clocks);
+    let mut delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+
 
    (i2c1, i2c2, led, delay, clocks)
    }

@@ -77,7 +77,7 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, gpiob: Parts, rcc: &mut Rcc) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    i2c::{I2c, DutyCycle, Mode, Pins},   //BlockingI2c
+    i2c::{I2c, DutyCycle, Mode},   //BlockingI2c, //Pins
     gpio::{gpiob::{PB8, PB9, PB10, PB11, Parts}, Alternate, OpenDrain},
     afio::Parts as afioParts,
     rcc::Clocks,

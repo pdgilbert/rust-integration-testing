@@ -309,7 +309,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 use stm32f4xx_hal::{
     //timer::SysDelay as Delay,
     gpio::{Input,
-           gpiob::{PB10, PB11, PB6},        
+           gpiob::{PB11, PB12, PB6},        
     },
     i2c::{I2c},
     prelude::*,
@@ -343,15 +343,20 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate().set_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
-    let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+    let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+
+    let scl = gpiob.pb10.into_alternate_open_drain();
+    let sda = gpiob.pb3.into_alternate_open_drain();
+    let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
+
     let led = setup_led(dp.GPIOC.split());
 
-    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(),
+    let buttons: SeekPins<PB12<Input>, PB11<Input>> = SeekPins {
+        p_seekup: gpiob.pb12.into_pull_down_input(),   // possibly not right pin for this function
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
+    impl SEEK for SeekPins<PB12<Input>, PB11<Input>> {
         fn seekup(&mut self) -> bool {
             self.p_seekup.is_high()
         }
