@@ -224,16 +224,18 @@ use stm32f1xx_hal::{
     pac::{I2C2, USART2, SPI1, TIM2, TIM5},
     gpio::{gpioc::PC13 as LEDPIN, PushPull, Pin},
     i2c::{BlockingI2c, DutyCycle, Pins},
-    spi::{Spi, Error as SpiError},
+    spi::{Spi, Error as SpiError, Pins as SpiPins, Spi1NoRemap},
     serial::{Config, Rx}, //, StopBits
     timer::{TimerExt, Delay},
     prelude::*,
 };
 
+
 #[cfg(feature = "stm32f1xx")]
-pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>, 
+pub type LoraSpiType =     Sx127x<Base<Spi<SPI1, Spi1NoRemap, impl SpiPins<Spi1NoRemap>, u8>, 
                                   Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
-                                  Delay<TIM5, 1000000>>>;
+                                  impl DelayNs>>;
+                                  //Delay<TIM5, 1000000>>>;
 
 
 #[cfg(feature = "stm32f1xx")]

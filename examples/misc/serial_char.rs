@@ -99,8 +99,7 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    device::{USART1, USART2, USART3},
-    pac::Peripherals,
+    pac::{Peripherals,USART1, USART2, USART3},
     prelude::*,
     serial::{Config, Rx, Serial, StopBits, Tx},
 };
