@@ -29,7 +29,7 @@ pub mod  opendrain_i2c_led_usart;
 
 pub mod lora_spi_gps_usart; 
 
-////pub mod spi; move problems need to be figured out for this
+//pub mod spi; move problems need to be figured out for this
 
 // consider putting some real tests here
 

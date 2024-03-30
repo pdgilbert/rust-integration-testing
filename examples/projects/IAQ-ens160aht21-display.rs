@@ -1,13 +1,17 @@
+//! TO DO  - share bus for aht
+//!        - read and display temp, humidity from aht and write to ens160 for improved calculation.
+//!        - add lora transmition
+//!        - use rtic
+//! 
 //! Continuously measure the eCO2 and eVOC in the air and print it to an SSD1306 OLED display.
-//! Ssd1306 is on i2c1 and ens160 is on i2c2. There is no bus sharing.
-//! This uses constant temperature and humidity for the sensor calibration rather than measuring. 
-//! (An ens160+AHT2x board has aht2x, typically aht21 which can be read and used to improve
-//! the calculations. See projects/IAQ-ens160aht21-display.rs for an example.)
+//! Ssd1306 is on i2c1. Ens160 and AHT21 are on i2c2.
+//! An ens160+AHT2x board has aht2x, typically aht21 which can be read and used to improve
+//! the calculations. 
 //! 
 //! Regarding sensor power supply issue see
 //!  https://community.home-assistant.io/t/issue-with-ens160-aht21-ens160-readings-unavailable/697522/2
 //!
-//! Compare  ccs811-gas-voc-display  and  aht20-display
+//! Compare ens160-co2-voc-iaq-display, ccs811-gas-voc-display  and  aht20-display
 //!
 
 #![deny(unsafe_code)]
@@ -21,6 +25,10 @@ use cortex_m_rt::entry;
 
 /////////////////////   ens
 use ens160::{Ens160, AirQualityIndex, ECo2};
+
+///////////////////// NEED aht21 NOT aht20
+//use aht20_async::{Aht20};   consider async, but need one that is working
+use aht20::{Aht20};
 
 
 /////////////////////   ssd
@@ -98,7 +106,7 @@ fn main() -> ! {
 
     //hprintln!("ens start").unwrap();
     let mut ens = Ens160::new(i2c2, 0x53);  //0x52 Ens160,  0x53 Ens160+Aht21
-    let _z = ens.reset();
+    let z = ens.reset();
 
    // match z {
    //         Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
@@ -109,7 +117,7 @@ fn main() -> ! {
    // };
 
     delay.delay_ms(250);
-    let _z = ens.operational();
+    let z = ens.operational();
 
    // match z {
    //         Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
@@ -118,6 +126,9 @@ fn main() -> ! {
    //                      //(25, 40)  //supply default values
    //                     },
    // };
+
+    /////////////////////   aht
+ //    let mut aht = Aht20::new(&mut i2c2, &mut delay); NEEDS delay, shared bus, aht21 not 20
 
 
     ///////////////////// initialize loop variables
@@ -133,10 +144,9 @@ fn main() -> ! {
     let mut eco2: ECo2;
     let mut aqi1: AirQualityIndex ;
     let mut aqi2: AirQualityIndex ;
-    #[allow(unused_assignments)]
-    let mut temp: i16 = -32767;    // initialize with imposible values which may never be used
-    #[allow(unused_assignments)]
-    let mut humd: u16 =  20000;    // initialize with imposible values which may never be used
+    let mut temp: i16 = -32767;    // initialize with imposible values
+    let mut humd: u16 =  20000;    // initialize with imposible values
+
 
     /////////////////////    measure and display in loop
 
@@ -146,6 +156,10 @@ fn main() -> ! {
         // If the LED is off, something went wrong.
         led.blink(100_u16, &mut delay);
         delay.delay_ms(100);
+
+//        // Read humidity and temperature.
+//        let (h, t) = aht.read().unwrap();
+//        //let (h, t) = aht.end_read().unwrap();
 
         if let Ok(status) = ens.status() {
             if status.data_is_ready() {
@@ -162,7 +176,7 @@ fn main() -> ! {
                 //hprintln!("humd:{:?}, ", humd).unwrap();
 
     // temp_and_hum(&mut self) -> Result<(i16, u16), E> 
-    //The (temp, humd) units are scaled by 100. For example, a temperature value of 2550 represents 25.50
+    //The units are scaled by 100. For example, a temperature value of 2550 represent2 25.50
     // and a humidity value of 5025 represents 50.25% RH.
 
                 for line in lines.iter_mut() {line.clear();}
@@ -171,15 +185,17 @@ fn main() -> ! {
                 // The eCO2 level is expressed in parts per million (ppm) in the range 400-65000.
                 write!(lines[0], "TVOC {}ppb {:?}ppm", tvoc, eco2).unwrap();
                 write!(lines[1], "AQI 1: {:?}  ", aqi1).unwrap();
-                write!(lines[2], "AQI 2: {:?}  ", aqi2).unwrap();
-                write!(lines[3], "{:?} deg  {:?} %RH", temp, humd).unwrap();  // /100
+                //write!(lines[2], "AQI 2: {:?}  ", aqi2).unwrap();
+                write!(lines[2], "{:?} deg  {:?} %RH", temp, humd).unwrap();  // /100
 
-                // note line[3] is off the sceen with 6x10, VPIX= 12
                 display.clear_buffer();
                 for i in 0..lines.len() {
                     //with font 6x10, VPIX= 12 = 10 high + 2 space
                     Text::with_baseline(
-                       &lines[i], Point::new(0, i as i32 * VPIX), text_style, Baseline::Top,
+                           &lines[i], 
+                           Point::new(0, i as i32 * VPIX), 
+                           text_style, 
+                           Baseline::Top,
                     ).draw(&mut display).unwrap();
                 }
                 display.flush().unwrap();

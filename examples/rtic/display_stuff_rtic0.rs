@@ -43,7 +43,7 @@ mod app {
     //use core::fmt::Write;
 
     use embedded_graphics::{
-        mono_font::{iso_8859_1::FONT_10X20, MonoTextStyleBuilder},  //FONT_6X10  FONT_8X13
+        mono_font::{iso_8859_1::FONT_6X10 as FONT, MonoTextStyleBuilder},  //FONT_6X10  FONT_8X13  FONT_10X20
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
@@ -105,14 +105,14 @@ mod app {
        //write!(lines[0], "stuff").unwrap();
        
        // should not be necessary to do this every call but have not yet managed to pass it as an arg
-       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     
        disp.clear_buffer();
        for i in 0..lines.len() {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(
                &lines[i],
-               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space  8X13  14 = 13 + 1
                text_style,
                Baseline::Top,
            )
@@ -157,7 +157,7 @@ mod app {
        let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
        //let interface = I2CDisplayInterface::new_custom_address(i2c1,   0x3D);  //alt address
 
-       let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
           .into_buffered_graphics_mode();
@@ -185,10 +185,11 @@ mod app {
            blink::spawn(BLINK_DURATION).ok();
 
            // workaround. build here because text_style cannot be shared
-           let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
+           let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-           let mut lines: [heapless::String<32>; 1] = [heapless::String::new(),];
-           lines[0] = "s".into();
+           let mut lines: [heapless::String<32>; 5] = [heapless::String::new(), heapless::String::new(),
+                              heapless::String::new(), heapless::String::new(), heapless::String::new(), ];
+           lines[0] = "stuff".into();
            lines[1] = "t".into();
            lines[2] = "u".into();
            lines[3] = "f".into();
@@ -208,7 +209,7 @@ mod app {
               // start from 0 requires that the top is used for font baseline
               Text::with_baseline(
                   &lines[i],
-                  Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+                  Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space  8X13  14 = 13 + 1
                   //cx.local.text_style,
                   text_style,
                   Baseline::Top,

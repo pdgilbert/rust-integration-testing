@@ -378,6 +378,7 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("echo_by_char example");
+    //when trying rtt again see https://github.com/probe-rs/probe-rs/issues/1384
 
     let (mut tx1, mut rx1) = setup();
 

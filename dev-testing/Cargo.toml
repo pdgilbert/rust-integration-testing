@@ -45,11 +45,11 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 #      (because shared_bus does not yet have an ehal1 version that works )
 #ssd1306         = { git = "https://github.com/jamwaffles/ssd1306"  }  
 
-ssd1306         = { git = "https://github.com/bugadani/ssd1306", branch = "ehal1"  }   #display interface 0.8.4
-#ssd1306         = { git = "https://github.com/markszente/ssd1306", branch = "master"  } #display interface 0.5.0
-#ssd1306         = { git = "https://github.com/Sycrosity/ssd1306", branch = "master"  }  
-#ssd1306         = { git = "https://github.com/jrmoulton/ssd1306", branch = "master"  }  
-#ssd1306         = { git = "https://github.com/irii/ssd1306", branch = "embedded-hal-1.0.0"  }  
+ssd1306         = { git = "https://github.com/bugadani/ssd1306", branch = "ehal1"  }     #eh-1 display interface 0.8.4
+#ssd1306         = { git = "https://github.com/markszente/ssd1306", branch = "master"  } #eh-1 display interface 0.5.0
+#ssd1306         = { git = "https://github.com/Sycrosity/ssd1306", branch = "master"  }  #eh-1
+#ssd1306         = { git = "https://github.com/jrmoulton/ssd1306", branch = "master"  }  #eh-1
+#ssd1306         = { git = "https://github.com/irii/ssd1306", branch = "embedded-hal-1.0.0"  }   #eh-1
 
 # experiments with onewire so far only using stm32f1xx BUT compile problems can cause
 # problems with src/onewire...  that prevent other examples from compiling
@@ -626,3 +626,7 @@ path = "examples/projects/temp-humidity-display.rs"
 [[example]]
 name = "temperature-display"
 path = "examples/projects/temperature-display.rs"
+
+[[example]]
+name = "IAQ-ens160aht21-display"
+path = "examples/projects/IAQ-ens160aht21-display.rs"
