@@ -133,6 +133,14 @@ pub const CONFIG_RADIO: radio_sx127x::device::Config = radio_sx127x::device::Con
 
 //  /////////////// setup() does all  hal/MCU specific setup ///////////////////////////
 
+pub fn setup() -> (LoraSpiType,  TxType, RxType, impl I2cTrait, LedType) {
+    let dp = Peripherals::take().unwrap();
+    setup_from_dp(dp)
+}
+
+
+//  ///////////////////////////////////////////////////////////////////
+
 #[cfg(feature = "stm32f030xc")]
 use stm32f0xx_hal::pac::I2C2 as I2C;
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc, stm32f042
@@ -149,25 +157,29 @@ use stm32f0xx_hal::{
 #[cfg(feature = "stm32f042")]
 use stm32f0xx_hal::pac::I2C1 as I2C;
 
+#[cfg(feature = "stm32f042")]
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32f042")]
+pub type RxType = Rx<USART2>;
+
 #[cfg(feature = "stm32f0xx")]
-pub fn setup() -> (
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
+    TxType, RxType,
     I2c<I2C, impl SclPin<I2C>, impl SdaPin<I2C>>,
     PC13<Output<PushPull>>,
 ) {
     //  Infallible, Infallible   reflect the error type on the spi and gpio traits.
 
     let cp = CorePeripherals::take().unwrap();
-    let mut p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.configure().freeze(&mut p.FLASH);
+    let mut rcc = dp.RCC.configure().freeze(&mut p.FLASH);
 
-    let gpioa = p.GPIOA.split(&mut rcc);
-    let gpiob = p.GPIOB.split(&mut rcc);
-    let gpioc = p.GPIOC.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let (sck, miso, mosi, _rst, pa1, pb8, pb9, pa0, tx, rx, scl, sda, led) =
         cortex_m::interrupt::free(move |cs| {
@@ -189,7 +201,7 @@ pub fn setup() -> (
             )
         });
 
-    let spi = Spi::spi1(p.SPI1, (sck, miso, mosi), MODE, 8.mhz(), &mut rcc);
+    let spi = Spi::spi1(dp.SPI1, (sck, miso, mosi), MODE, 8.mhz(), &mut rcc);
 
     let delay = Delay::new(cp.SYST, &rcc);
 
@@ -205,12 +217,12 @@ pub fn setup() -> (
     // This is done for tx, rx above because move |cs| consumes gpioa
     // let (tx, rx) = cortex_m::interrupt::free(move |cs| {...});
 
-    let (tx, rx) = Serial::usart2(p.USART2, (tx, rx), 9600.bps(), &mut rcc).split();
+    let (tx, rx) = Serial::usart2(dp.USART2, (tx, rx), 9600.bps(), &mut rcc).split();
 
     #[cfg(feature = "stm32f030xc")]
-    let i2c = I2c::i2c2(p.I2C2, (scl, sda), 400.khz(), &mut rcc);
+    let i2c = I2c::i2c2(dp.I2C2, (scl, sda), 400.khz(), &mut rcc);
     #[cfg(feature = "stm32f042")]
-    let i2c = I2c::i2c1(p.I2C1, (scl, sda), 400.khz(), &mut rcc);
+    let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), &mut rcc);
 
     // led on pc13 with on/off  above
     impl LED for LedType {}  //using default method on = low  
@@ -237,11 +249,16 @@ pub type LoraSpiType =     Sx127x<Base<Spi<SPI1, Spi1NoRemap, impl SpiPins<Spi1N
                                   impl DelayNs>>;
                                   //Delay<TIM5, 1000000>>>;
 
+#[cfg(feature = "stm32f1xx")]
+pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, impl I2cTrait, LedType,) {
+pub type RxType = Rx<USART2>;
+
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType,) {
     let cp = CorePeripherals::take().unwrap();
-    let dp = Peripherals::take().unwrap();
 
     let rcc = dp.RCC.constrain();
     let clocks = rcc
@@ -333,31 +350,35 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup() -> (
+pub type TxType = Tx<USART2, impl TxPin<USART2>>;
+
+#[cfg(feature = "stm32f3xx")]
+pub type RxType = Rx<USART2, impl RxPin<USART2>>;
+
+#[cfg(feature = "stm32f3xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2, impl TxPin<USART2>>,
-    Rx<USART2, impl RxPin<USART2>>,
+    TxType, RxType,
     I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)>,
     PE15<Output<PushPull>>,
 ) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
 
-    let mut rcc = p.RCC.constrain();
+    let mut rcc = dp.RCC.constrain();
     let clocks = rcc
         .cfgr
         .sysclk(64.MHz())
         .pclk1(32.MHz())
-        .freeze(&mut p.FLASH.constrain().acr);
+        .freeze(&mut dp.FLASH.constrain().acr);
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.ahb);
-    let mut gpiob = p.GPIOB.split(&mut rcc.ahb);
-    let mut gpioe = p.GPIOE.split(&mut rcc.ahb);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
 
     let spi = Spi::new(
-        p.SPI1,
+        dp.SPI1,
         (
             gpioa
                 .pa5
@@ -399,7 +420,7 @@ pub fn setup() -> (
     .unwrap(); // should handle error
 
     let (tx, rx) = Serial::new(
-        p.USART2,
+        dp.USART2,
         (
             gpioa
                 .pa2
@@ -421,7 +442,7 @@ pub fn setup() -> (
         .pa10
         .into_af_open_drain(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh);
 
-    let i2c = I2c::new(p.I2C2, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400_000.Hz(), clocks, &mut rcc.apb1);
 
     impl LED for PE15<Output<PushPull>> {
         fn on(&mut self) -> () {
@@ -465,12 +486,58 @@ pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>,
                                   Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
                                   Delay<TIM5, 1000000>>>;
 
+#[cfg(feature = "stm32f4xx")]
+pub type TxType =  Tx<USART2>;
+#[cfg(feature = "stm32f4xx")]
+pub type RxType =  Rx<USART2>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, impl I2cTrait, LedType) {
-//pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, I2c<I2C2>, LedType) {
-    //let cp = CorePeripherals::take().unwrap();
-    let dp = Peripherals::take().unwrap();
+pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+
+    let gpioa = dp.GPIOA.split();
+    let gpiob = dp.GPIOB.split();
+
+    let spi = Spi::new(
+        dp.SPI1,
+        (
+            gpioa.pa5.into_alternate(), // sck  
+            gpioa.pa6.into_alternate(), // miso 
+            gpioa.pa7.into_alternate(), // mosi 
+        ),
+        MODE,
+        8.MHz(),
+        &clocks,
+    );
+
+    let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
+
+    // Create lora radio instance
+
+    let lora = Sx127x::spi(
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         
+        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
+        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
+        gpioa.pa0.into_push_pull_output(), //ResetPin      
+        delay,                             //Delay
+        &CONFIG_RADIO,                               //&Config
+    ).unwrap(); // should handle error
+
+    //DIO0  triggers RxDone/TxDone status.
+    //DIO1  triggers RxTimeout and other errors status.
+    //D02, D03 ?
+
+    //lora.lora_configure( config_lora, &config_ch ).unwrap(); // not yet pub, need to change something?
+    //let () =lora;
+
+    lora
+}
+
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     let rcc = dp.RCC.constrain();
     let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
 
@@ -555,12 +622,17 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup() -> (
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32f7xx")]
+pub type RxType = Rx<USART2>;
+
+#[cfg(feature = "stm32f7xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
+    TxType, RxType,
     BlockingI2c<I2C2, impl PinScl<I2C2>, impl PinSda<I2C2>>,
     PC13<Output<PushPull>>,
 ) {
@@ -663,7 +735,13 @@ pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>,
                                   Delay<TIM5, 1000000>>>;
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup() -> (LoraSpiType, Tx<USART2>, Rx<USART2>, I2c<I2C2>, PC13<Output<PushPull>>) {
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32g0xx")]
+pub type RxType = Rx<USART2>;
+
+#[cfg(feature = "stm32g0xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, I2c<I2C2>, PC13<Output<PushPull>>) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     
@@ -726,8 +804,46 @@ pub type TxType = Tx<USART2, PA2<Alternate<7_u8>>, NoDMA >;
 pub type RxType = Rx<USART2, PA3<Alternate<7_u8>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
-    let dp = Peripherals::take().unwrap();
+pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
+    let mut rcc = dp.RCC.constrain();
+    
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+
+    let spi = dp.SPI1.spi(
+            (gpioa.pa5.into_alternate(), // sck 
+             gpioa.pa6.into_alternate(), // miso
+             gpioa.pa7.into_alternate(), // mosi
+            ),
+        MODE_0,
+        400.kHz(),
+        &mut rcc,
+    );
+
+    let clocks = rcc.clocks;  // not sure if this is right
+
+    let timer2 = Timer::new(dp.TIM5, &clocks);
+    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
+
+    // Create lora radio instance
+
+    let lora = Sx127x::spi(
+        spi,                               //Spi
+        gpioa.pa1.into_push_pull_output(), //CsPin         
+        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
+        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
+        gpioa.pa0.into_push_pull_output(), //ResetPin      
+        delay,                             //Delay
+        &CONFIG_RADIO,                               //&Config
+    ).unwrap(); // should handle error
+
+    lora
+}
+
+
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     let mut rcc = dp.RCC.constrain();
     
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -831,21 +947,20 @@ pub type TxType = Tx<USART2>;
 pub type RxType = Rx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
+pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let pwr = p.PWR.constrain();
+    let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
-    let rcc = p.RCC.constrain();
-    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &p.SYSCFG);
+    let rcc = dp.RCC.constrain();
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
     let clocks = ccdr.clocks;
 
-    let gpioa = p.GPIOA.split(ccdr.peripheral.GPIOA);
-    let gpiob = p.GPIOB.split(ccdr.peripheral.GPIOB);
-    let gpioc = p.GPIOC.split(ccdr.peripheral.GPIOC);
+    let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
+    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
     // following github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/spi.rs
-    let spi = p.SPI1.spi(
+    let spi = dp.SPI1.spi(
         (
             gpioa.pa5.into_alternate(), // sck 
             gpioa.pa6.into_alternate(), // miso
@@ -872,7 +987,7 @@ pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     )
     .unwrap(); // should handle error
 
-    let (tx, rx) = p
+    let (tx, rx) = dp
         .USART2
         .serial(
             (
@@ -889,7 +1004,7 @@ pub fn setup() -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
     let scl = gpiob.pb10.into_alternate().set_open_drain();
     let sda = gpiob.pb11.into_alternate().set_open_drain();
 
-    let i2c = p
+    let i2c = dp
         .I2C2
         .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C2, &clocks);
 
@@ -912,25 +1027,29 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup() -> (
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32l0xx")]
+pub type RxType = Rx<USART2>;
+
+#[cfg(feature = "stm32l0xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, void::Void, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, void::Void, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
+    TxType, RxType,
     I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>,
     PC13<Output<PushPull>>,
 ) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
 
-    let gpioa = p.GPIOA.split(&mut rcc);
-    let gpiob = p.GPIOB.split(&mut rcc);
-    let gpioc = p.GPIOC.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     // following  github.com/stm32-rs/stm32l0xx-hal/blob/master/examples/spi.rs
-    let spi = p.SPI1.spi(
+    let spi = dp.SPI1.spi(
         (
             gpioa.pa5, // sck   on PA5
             gpioa.pa6, // miso  on PA6
@@ -956,7 +1075,7 @@ pub fn setup() -> (
     )
     .unwrap(); // should handle error
 
-    let (tx, rx) = p
+    let (tx, rx) = dp
         .USART2
         .usart(
             gpioa.pa2, //tx pa2  for GPS
@@ -970,7 +1089,7 @@ pub fn setup() -> (
     let scl = gpiob.pb10.into_open_drain_output();
     let sda = gpiob.pb11.into_open_drain_output();
 
-    let i2c = p.I2C2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
+    let i2c = dp.I2C2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
 
     impl LED for PC13<Output<PushPull>> {
         fn on(&mut self) -> () {
@@ -997,26 +1116,30 @@ use stm32l1xx_hal::{
     stm32::{CorePeripherals, Peripherals, I2C1, USART1},
 };
 
+#[cfg(feature = "stm32l1xx")]
+pub type TxType = Tx<USART1>;
+
+#[cfg(feature = "stm32l1xx")]
+pub type RxType = Rx<USART1>;
+
 
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup() -> (
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART1>,
-    Rx<USART1>,
+    TxType, RxType,
     I2c<I2C1, impl Pins<I2C1>>,
     PB6<Output<PushPull>>,
 ) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.freeze(rcc::Config::hsi());
+    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
 
-    let gpioa = p.GPIOA.split(&mut rcc);
-    let gpiob = p.GPIOB.split(&mut rcc);
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
 
-    let spi = p.SPI1.spi(
+    let spi = dp.SPI1.spi(
         (
             gpioa.pa5, // sck   on PA5  in board on Heltec
             gpioa.pa6, // miso  on PA6  in board on Heltec
@@ -1043,7 +1166,7 @@ pub fn setup() -> (
     )
     .unwrap(); // should handle error
 
-    let (tx, rx) = p
+    let (tx, rx) = dp
         .USART1
         .usart(
             (
@@ -1059,7 +1182,7 @@ pub fn setup() -> (
     let scl = gpiob.pb8.into_open_drain_output();
     let sda = gpiob.pb9.into_open_drain_output();
 
-    let i2c = p.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
+    let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
 
     impl LED for LEDPIN {
         fn on(&mut self) -> () {
@@ -1088,20 +1211,24 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup() -> (
+pub type TxType = Tx<USART2>;
+
+#[cfg(feature = "stm32l4xx")]
+pub type RxType = Rx<USART2>;
+
+#[cfg(feature = "stm32l4xx")]
+pub fn setup_from_dp(dp: Peripherals) -> (
     impl DelayMs<u32>
         + Transmit<Error = sx127xError<Error, Infallible, Infallible>>
         + Receive<Info = PacketInfo, Error = sx127xError<Error, Infallible, Infallible>>,
-    Tx<USART2>,
-    Rx<USART2>,
+    TxType, RxType,
     I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     PC13<Output<PushPull>>,
 ) {
     let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut flash = p.FLASH.constrain();
-    let mut rcc = p.RCC.constrain();
-    let mut pwr = p.PWR.constrain(&mut rcc.apb1r1);
+    let mut flash = dp.FLASH.constrain();
+    let mut rcc = dp.RCC.constrain();
+    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc
         .cfgr
         .sysclk(80.mhz())
@@ -1109,12 +1236,12 @@ pub fn setup() -> (
         .pclk2(80.mhz())
         .freeze(&mut flash.acr, &mut pwr);
 
-    let mut gpioa = p.GPIOA.split(&mut rcc.ahb2);
-    let mut gpiob = p.GPIOB.split(&mut rcc.ahb2);
-    let mut gpioc = p.GPIOC.split(&mut rcc.ahb2);
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
+    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
 
     let spi = Spi::spi1(
-        p.SPI1,
+        dp.SPI1,
         (
             gpioa
                 .pa5.into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl),
@@ -1160,7 +1287,7 @@ pub fn setup() -> (
     .unwrap(); // should handle error
 
     let (tx, rx) = Serial::usart2(
-        p.USART2,
+        dp.USART2,
         (
             gpioa
                 .pa2
@@ -1188,7 +1315,7 @@ pub fn setup() -> (
     sda.internal_pull_up(&mut gpioa.pupdr, true);
 
     let i2c = I2c::i2c1(
-        p.I2C1,
+        dp.I2C1,
         (scl, sda),
         Config::new(400.khz(), clocks),
         &mut rcc.apb1r1,
@@ -1210,5 +1337,3 @@ pub fn setup() -> (
 
     (lora, tx, rx, i2c, led)
 }
-
-// End of hal/MCU specific setup. Following should be generic code.

@@ -1,8 +1,9 @@
 //! Continuously read temperature from AHT20 and display on SSD1306 OLED.
 //!
-//!  Sharing i2c bus.
+//!  Not sharing i2c bus.
 //!
-//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
+//!  The setup() functions make the application code common. They are in src/i2c1_i2c2_led_delay.rs;
+//!
 //!  The specific setup() function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!  (On "BluePill" (stm32f1xx_hal) scl is on PB8 and SDA is on PB9 using I2C1.  Using VCC  3.3v.)
