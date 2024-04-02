@@ -535,6 +535,36 @@ pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
     lora
 }
 
+#[cfg(feature = "stm32f4xx")]
+impl LED for LedType {}  //using default method on = low  
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
+    let gpioc = dp.GPIOC.split();
+
+    let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
+    led.off();
+
+    led
+}
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_i2c_from_dp(dp: Peripherals) -> impl I2cTrait {
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+
+    let gpiob = dp.GPIOB.split();
+
+    let i2c = I2c::new(
+                    dp.I2C2, 
+                    (gpiob.pb10.into_alternate().set_open_drain(), // scl
+                     gpiob.pb3.into_alternate().set_open_drain()   // sda
+                    ), 
+                    400.kHz(), 
+                    &clocks);
+
+    i2c
+}
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
@@ -603,8 +633,6 @@ pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cT
     // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
 
     let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
-    impl LED for LedType {}  //using default method on = low  
-
     led.off();
 
     (lora, tx, rx, i2c, led)

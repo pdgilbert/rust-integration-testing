@@ -91,11 +91,14 @@ fn main() -> ! {
     //rprintln!("example");
     //hprintln!("ens160-co2-voc-iaq-display example").unwrap();
 
-    let dp = Peripherals::take().unwrap();
-    let mut lora = lora_spi_gps_usart::setup_lora_from_dp(dp); //delay is available in lora
+    // INTERESTING. dp gets consumed but can be re-taken as modified.
+    let mut lora = lora_spi_gps_usart::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
+    let i2c2     = lora_spi_gps_usart::setup_i2c_from_dp(Peripherals::take().unwrap()); 
+    let mut led  = lora_spi_gps_usart::setup_led_from_dp(Peripherals::take().unwrap()); 
 
-    let dp = Peripherals::take().unwrap(); // INTERESTING. THIS NEEDS TO BE ASSIGNED AGAIN , AND IT CAN BE
-    let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let dp = Peripherals::take().unwrap(); 
+    let (i2c1, _i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
 
