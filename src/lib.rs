@@ -21,13 +21,13 @@ pub mod alt_delay;
 pub mod led;
 pub mod i2c;
 
-pub mod tx1_rx1_tx2_rx2;
+pub mod usart;
 
 pub mod i2c1_i2c2_led_delay;
 
 pub mod  opendrain_i2c_led_usart;
 
-pub mod lora_spi_gps_usart; 
+pub mod lora; 
 
 //pub mod spi; move problems need to be figured out for this
 

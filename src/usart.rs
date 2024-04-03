@@ -184,7 +184,7 @@ pub type Tx2Type = Tx<USART2>;
 pub type Rx2Type = Rx<USART2>;
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
+pub fn setup_1_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type) {
     let clocks = dp.RCC.constrain().cfgr.freeze();
     let gpioa = dp.GPIOA.split();
     let (tx1, rx1) = Serial::new(
@@ -198,6 +198,14 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     )
     .unwrap()
     .split();
+
+    (tx1, rx1)
+}
+
+#[cfg(feature = "stm32f4xx")]
+pub fn setup_2_from_dp(dp: Peripherals) -> (Tx2Type, Rx2Type) {
+    let clocks = dp.RCC.constrain().cfgr.freeze();
+    let gpioa = dp.GPIOA.split();
 
     // this probably needs fix here. rx2.read() stalls and does not return.
     //p.USART2.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
@@ -213,7 +221,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
     .unwrap()
     .split();
 
-    (tx1, rx1, tx2, rx2)
+    (tx2, rx2)
 }
 
 
@@ -328,7 +336,7 @@ pub type Tx2Type = Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>;
 pub type Rx2Type = Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
+pub fn setup_1_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type) {
     let mut rcc = dp.RCC.constrain();
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -337,12 +345,20 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
        gpioa.pa10.into_alternate(), 
        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
+    (tx1, rx1)
+}
+
+#[cfg(feature = "stm32g4xx")]
+pub fn setup_2_from_dp(dp: Peripherals) -> (Tx2Type, Rx2Type) {
+    let mut rcc = dp.RCC.constrain();
+    let gpioa = dp.GPIOA.split(&mut rcc);
+
     let (tx2, rx2) = dp.USART2.usart(   //tx, rx  forGPS
         gpioa.pa2.into_alternate(), 
         gpioa.pa3.into_alternate(),
         FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
-    (tx1, rx1, tx2, rx2)
+    (tx2, rx2)
 }
 
 
@@ -356,9 +372,8 @@ pub type Tx2Type = Tx<USART2>;
 #[cfg(feature = "stm32h7xx")]
 pub type Rx2Type = Rx<USART2>;
 
-
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
+pub fn setup_1_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -378,6 +393,18 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
         .unwrap()
         .split();
 
+    (tx1, rx1)
+}
+
+#[cfg(feature = "stm32h7xx")]
+pub fn setup_2_from_dp(dp: Peripherals) -> (Tx2Type, Rx2Type) {
+    let pwr = dp.PWR.constrain();
+    let vos = pwr.freeze();
+    let rcc = dp.RCC.constrain();
+    let ccdr = rcc.sys_ck(160.MHz()).freeze(vos, &dp.SYSCFG);
+    let clocks = ccdr.clocks;
+    let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
+
     let (tx2, rx2) = dp.USART2.serial(
             (
                 gpioa.pa2.into_alternate(), //tx pa2
@@ -390,8 +417,9 @@ pub fn setup_from_dp(dp: Peripherals) -> (Tx1Type, Rx1Type, Tx2Type, Rx2Type) {
         .unwrap()
         .split();
 
-    (tx1, rx1, tx2, rx2)
+    (tx2, rx2)
 }
+
 
 #[cfg(feature = "stm32l0xx")]
 pub use stm32l0xx_hal::{

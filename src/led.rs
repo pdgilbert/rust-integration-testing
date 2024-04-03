@@ -224,56 +224,70 @@ pub fn setup_led(mut gpiox: Parts) -> LedType {
 
 
 
-//  following are wrapper to do setup_led_using_dp(dp: Peripherals) -> LedType
+//  following are wrapper to do setup_led_from_dp(dp: Peripherals) -> LedType
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_led_using_dp(mut dp: Peripherals) -> LedType {    
+pub fn setup_led_from_dp(mut dp: Peripherals) -> LedType {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    setup_led(dp.GPIOC.split(&mut rcc))
 }
 
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    setup_led(dp.GPIOC.split())
 }
 
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    let mut rcc = dp.RCC.constrain();
    setup_led(dp.GPIOE.split(&mut rcc.ahb))
 }
 
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    setup_led(dp.GPIOC.split())
 }
 
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    setup_led(dp.GPIOC.split())
 }
 
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    let mut rcc = dp.RCC.constrain();
    setup_led(dp.GPIOC.split(&mut rcc))
 }
 
 
+
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
-   let mut rcc = dp.RCC.constrain();
-   setup_led(dp.GPIOC.split(&mut rcc))
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
+    let mut rcc = dp.RCC.constrain();
+    setup_led(dp.GPIOC.split(&mut rcc))
+}
+
+// or
+
+#[cfg(feature = "stm32g4xxXX")]
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
+    let mut rcc = dp.RCC.constrain();
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let mut led: LedType = gpioc.pc13.into_push_pull_output();
+    led.off();
+
+    led
 }
 
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -288,7 +302,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
   let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
   setup_led(dp.GPIOC.split(&mut rcc))
 }
@@ -300,17 +314,14 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi());
    setup_led(dp.GPIOC.split(&mut rcc).pc9)
 }
 
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_led_using_dp(dp: Peripherals) -> LedType {
+pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
    let mut rcc = dp.RCC.constrain();
    setup_led(dp.GPIOC.split(&mut rcc.ahb2))
 }
-
-
-

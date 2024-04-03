@@ -19,7 +19,14 @@ use embedded_hal::delay::DelayNs;
 use radio::Receive;
 use radio_sx127x::prelude::PacketInfo;
 
-use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora;
+use rust_integration_testing_of_examples::led;
+use rust_integration_testing_of_examples::led::LED;
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+   pac::{Peripherals},
+};
 
 fn to_str(x: &[u8]) -> &str {
     match core::str::from_utf8(x) {
@@ -30,7 +37,8 @@ fn to_str(x: &[u8]) -> &str {
 
 #[entry]
 fn main() -> ! {
-    let (mut lora, _tx, _rx, _i2c, mut led) = setup(); //delay is available in lora
+    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
+    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
     led.off();
 
     lora.start_receive().unwrap(); // should handle error

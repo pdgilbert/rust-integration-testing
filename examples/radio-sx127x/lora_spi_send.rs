@@ -1,6 +1,6 @@
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!
-//!  The setup() functions make the application code common. They are in src/lora_spi_gps_usart.rs.
+//!  The setup() functions make the application code common. They are in src/lora.rs.
 //!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!  The setup is using  sck, miso, mosi, cs, reset and D00, D01. Not yet using  D02, D03
@@ -8,7 +8,7 @@
 //!  The same setup() function is used for examples lora_spi_send, lora_spi_receive, and
 //!  lora_spi_gps (if the HAL setting is the same). The following is for all examples.
 //!
-//!  See FREQUENCY in src/lora_spi_gps_usart.rs to set the channel.
+//!  See FREQUENCY in src/lora.rs to set the channel.
 //!  Before running, check  FREQUENCY to be sure you have a channel setting appropriate for
 //!  your country, hardware and any testing sender/receiver on the other end of the communication.
 //!
@@ -56,11 +56,19 @@ use embedded_hal::delay::DelayNs;
 
 use radio::Transmit;
 
-use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora;
+use rust_integration_testing_of_examples::led;
+use rust_integration_testing_of_examples::led::LED;
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+   pac::{Peripherals},
+};
 
 #[entry]
 fn main() -> ! {
-    let (mut lora, _tx, _rx, _i2c, mut led) = setup(); //delay is available in lora
+    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
+    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
     led.off();
 
     // print out configuration (for debugging)

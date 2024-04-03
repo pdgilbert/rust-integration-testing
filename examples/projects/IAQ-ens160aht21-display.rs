@@ -66,7 +66,6 @@ use embedded_hal::{
 use heapless;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
 use hal::{
    pac::{Peripherals},
 };
@@ -74,13 +73,15 @@ use hal::{
 /////////////////////  
 
 use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::led;
 use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::i2c;
 use radio::Transmit;
-use rust_integration_testing_of_examples::lora_spi_gps_usart;
+use rust_integration_testing_of_examples::lora;
 
 //////////////////////////////////////////////////////////////////////////////////// 
 // This uses (i2c1, i2c2, mut led, mut delay, _clocks) as in src/i2c1_i2c2_led_delay.rs
-// and  lora as in  src/lora_spi_gps_usart.rs
+// and  lora as in  src/lora.rs
 
 
 //////////////////////////////////////////////////////////////////////////////////// 
@@ -92,12 +93,12 @@ fn main() -> ! {
     //hprintln!("ens160-co2-voc-iaq-display example").unwrap();
 
     // INTERESTING. dp gets consumed but can be re-taken as modified.
-    let mut lora = lora_spi_gps_usart::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
-    let i2c2     = lora_spi_gps_usart::setup_i2c_from_dp(Peripherals::take().unwrap()); 
-    let mut led  = lora_spi_gps_usart::setup_led_from_dp(Peripherals::take().unwrap()); 
+    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
+    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
 
+    //let i2c2     = i2c::setup_i2c_from_dp(Peripherals::take().unwrap()); 
     let dp = Peripherals::take().unwrap(); 
-    let (i2c1, _i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, _led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
 
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 

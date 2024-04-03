@@ -561,3 +561,47 @@ pub fn setup_i2c1_i2c2(i2c1: I2C1, i2c2: I2C2, mut gpiob: Parts, &clocks: &Clock
 
     (i2c1, i2c2)
 }
+
+//       ///////////////////////  PARTIAL migration from lora_spi_gps_usart
+
+// NOT SURE THESE GET USED IN  lora BUT MODEL FOR ELSEWHERE ??
+
+#[cfg(feature = "stm32f4xxXX")]
+pub fn setup_i2c_from_dp(dp: Peripherals) -> impl I2cTrait {
+    let rcc = dp.RCC.constrain();
+    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+
+    let gpiob = dp.GPIOB.split();
+
+    let i2c = I2c::new(
+                    dp.I2C2, 
+                    (gpiob.pb10.into_alternate().set_open_drain(), // scl
+                     gpiob.pb3.into_alternate().set_open_drain()   // sda
+                    ), 
+                    400.kHz(), 
+                    &clocks);
+
+    i2c
+}
+
+
+#[cfg(feature = "stm32g4xxXX")]
+use stm32g4xx_hal::{
+   pac::Peripherals,
+};
+
+#[cfg(feature = "stm32g4xxXX")]
+pub fn setup_i2c_from_dp(dp: Peripherals) -> impl I2c {
+    let mut rcc = dp.RCC.constrain();
+    let gpioa = dp.GPIOA.split(&mut rcc);
+   
+    let i2c = dp.I2C1.i2c(
+                       gpioa.pa14.into_alternate_open_drain(),  //sda
+                       gpioa.pa13.into_alternate_open_drain(),  //scl
+                       Config::new(400.kHz()), 
+                       &mut rcc
+    );
+    
+    i2c
+}
+

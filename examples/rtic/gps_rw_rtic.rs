@@ -66,8 +66,8 @@ mod app {
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
 
-    use rust_integration_testing_of_examples::tx1_rx1_tx2_rx2;
-    use rust_integration_testing_of_examples::tx1_rx1_tx2_rx2::{Tx1Type, Rx2Type};
+    use rust_integration_testing_of_examples::usart;
+    use rust_integration_testing_of_examples::usart::{Tx1Type, Rx2Type};
 
     use embedded_io::{Read, Write};
 
@@ -126,8 +126,8 @@ mod app {
         hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
         buffer.clear();
 
-        let dp = Peripherals::take().unwrap();
-        let (mut tx_con, mut _rx_con, mut _tx_gps, rx_gps) = tx1_rx1_tx2_rx2::setup_from_dp(dp); // console, GPS
+        let (mut tx_con, mut _rx_con) = usart::setup_1_from_dp(Peripherals::take().unwrap()); // console
+        let (mut _tx_gps,     rx_gps) = usart::setup_2_from_dp(Peripherals::take().unwrap()); // GPS
 
         //writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
         tx_con.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?

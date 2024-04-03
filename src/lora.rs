@@ -28,7 +28,7 @@ use panic_halt as _;
 pub use embedded_hal::delay::DelayNs;
 //use crate::delay::{Delay2Type as Delay};
 
-use embedded_hal::i2c::I2c as I2cTrait;
+//use embedded_hal::i2c::I2c as I2cTrait;
 //use embedded_hal_async::i2c::I2c as I2cTrait;
 
 //use crate::led::{setup_led, LED, LedType};
@@ -133,13 +133,6 @@ pub const CONFIG_RADIO: radio_sx127x::device::Config = radio_sx127x::device::Con
 
 //  /////////////// setup() does all  hal/MCU specific setup ///////////////////////////
 
-pub fn setup() -> (LoraSpiType,  TxType, RxType, impl I2cTrait, LedType) {
-    let dp = Peripherals::take().unwrap();
-    setup_from_dp(dp)
-}
-
-
-//  ///////////////////////////////////////////////////////////////////
 
 #[cfg(feature = "stm32f030xc")]
 use stm32f0xx_hal::pac::I2C2 as I2C;
@@ -463,9 +456,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32f4xx")]  // eg Nucleo-64 stm32f411, blackpill stm32f411, blackpill stm32f401
 use stm32f4xx_hal::{
-    pac::{USART2, SPI1, TIM5},
-    i2c::{I2c},
-    serial::{config::Config, Rx},
+    pac::{SPI1, TIM5},
     spi::{Spi},
     timer::{TimerExt, Delay},
     gpio::{GpioExt, Pin, PushPull}, 
@@ -486,10 +477,6 @@ pub type LoraSpiType =     Sx127x<Base<Spi<SPI1>,
                                   Pin<'A', 1, Output>, Pin<'B', 8>, Pin<'B', 9>, Pin<'A', 0, Output>, 
                                   Delay<TIM5, 1000000>>>;
 
-#[cfg(feature = "stm32f4xx")]
-pub type TxType =  Tx<USART2>;
-#[cfg(feature = "stm32f4xx")]
-pub type RxType =  Rx<USART2>;
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
@@ -535,108 +522,6 @@ pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
     lora
 }
 
-#[cfg(feature = "stm32f4xx")]
-impl LED for LedType {}  //using default method on = low  
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup_led_from_dp(dp: Peripherals) -> LedType {
-    let gpioc = dp.GPIOC.split();
-
-    let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
-    led.off();
-
-    led
-}
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup_i2c_from_dp(dp: Peripherals) -> impl I2cTrait {
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
-
-    let gpiob = dp.GPIOB.split();
-
-    let i2c = I2c::new(
-                    dp.I2C2, 
-                    (gpiob.pb10.into_alternate().set_open_drain(), // scl
-                     gpiob.pb3.into_alternate().set_open_drain()   // sda
-                    ), 
-                    400.kHz(), 
-                    &clocks);
-
-    i2c
-}
-
-#[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
-
-    let gpioa = dp.GPIOA.split();
-    let gpiob = dp.GPIOB.split();
-    let gpioc = dp.GPIOC.split();
-
-    let spi = Spi::new(
-        dp.SPI1,
-        (
-            gpioa.pa5.into_alternate(), // sck  
-            gpioa.pa6.into_alternate(), // miso 
-            gpioa.pa7.into_alternate(), // mosi 
-        ),
-        MODE,
-        8.MHz(),
-        &clocks,
-    );
-
-    //let delay = Delay::new(cp.SYST, &clocks);
-    let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
-
-    // Create lora radio instance
-
-    // open_drain_output is really input and output. BusyPin is just input.
-
-    let lora = Sx127x::spi(
-        spi,                               //Spi
-        gpioa.pa1.into_push_pull_output(), //CsPin         
-        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
-        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
-        gpioa.pa0.into_push_pull_output(), //ResetPin      
-        delay,                             //Delay
-        &CONFIG_RADIO,                               //&Config
-    ).unwrap(); // should handle error
-
-    //DIO0  triggers RxDone/TxDone status.
-    //DIO1  triggers RxTimeout and other errors status.
-    //D02, D03 ?
-
-    //lora.lora_configure( config_lora, &config_ch ).unwrap(); // not yet pub, need to change something?
-    //let () =lora;
-
-    let (tx, rx) = Serial::new(
-        dp.USART2,
-        (
-            gpioa.pa2.into_alternate(), //tx  for GPS rx
-            gpioa.pa3.into_alternate(), //rx  for GPS tx
-        ),
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    ).unwrap().split();
-
-    let i2c = I2c::new(
-                    dp.I2C2, 
-                    (gpiob.pb10.into_alternate().set_open_drain(), // scl
-                     gpiob.pb3.into_alternate().set_open_drain()   // sda
-                    ), 
-                    400.kHz(), 
-                    &clocks);
-
-    // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
-    // differently. Next will be reversed for nucleo-64 (in addition to PA5 vs PC13).
-
-    let mut led: LedType  = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off (note delay uused in lora)
-    led.off();
-
-    (lora, tx, rx, i2c, led)
-}
 
 #[cfg(feature = "stm32f7xx")]
 use stm32f7xx_hal::{
@@ -804,8 +689,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, I2c<I2C2>
 use stm32g4xx_hal::{
     pac::{USART2, SPI1, TIM5},
     spi::{Spi, MODE_0, SpiExt},
-    serial::{FullConfig, NoDMA, Rx, SerialExt},
-    i2c::{Config, I2cExt}, //I2c in prelude?
+    serial::{ NoDMA, Rx},
     time::{ExtU32, RateExtU32},
     timer::{Timer, CountDownTimer},
     delay::DelayFromCountDownTimer,
@@ -815,7 +699,6 @@ use stm32g4xx_hal::{
     },
     gpio::{gpioc::PC13 as LEDPIN},
     rcc::RccExt,
-    prelude::*,
 };
 
 
@@ -869,85 +752,10 @@ pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
 }
 
 
-
-#[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
-    let mut rcc = dp.RCC.constrain();
-    
-    let gpioa = dp.GPIOA.split(&mut rcc);
-    let gpiob = dp.GPIOB.split(&mut rcc);
-    let gpioc = dp.GPIOC.split(&mut rcc);
-
-    let spi = dp.SPI1.spi(
-            (gpioa.pa5.into_alternate(), // sck 
-             gpioa.pa6.into_alternate(), // miso
-             gpioa.pa7.into_alternate(), // mosi
-            ),
-        MODE_0,
-        400.kHz(),
-        &mut rcc,
-    );
-
-    let clocks = rcc.clocks;  // not sure if this is right
-
-    //let delay = Delay::new(cp.SYST, &clocks);
-    //let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
-    let timer2 = Timer::new(dp.TIM5, &clocks);
-    let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
-
-    // Create lora radio instance
-
-    // open_drain_output is really input and output. BusyPin is just input, but I think this should work
-    //            gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh),
-    // however, gives trait bound  ... InputPin` is not satisfied
-
-    let lora = Sx127x::spi(
-        spi,                               //Spi
-        gpioa.pa1.into_push_pull_output(), //CsPin         
-        gpiob.pb8.into_floating_input(),   //BusyPin  DI00 
-        gpiob.pb9.into_floating_input(),   //ReadyPin DI01 
-        gpioa.pa0.into_push_pull_output(), //ResetPin      
-        delay,                             //Delay
-        &CONFIG_RADIO,                               //&Config
-    ).unwrap(); // should handle error
-
-    //let () = lora;
-
-    let (tx, rx) = dp.USART2.usart(
-                           gpioa.pa2.into_alternate(),    //tx  was pa9
-                           gpioa.pa3.into_alternate(),   //rx  was pa10
-                           FullConfig::default().baudrate(115200.bps()),
-                           &mut rcc).unwrap().split();
-
-    let i2c = dp.I2C1.i2c(
-                       gpioa.pa14.into_alternate_open_drain(),  //sda
-                       gpioa.pa13.into_alternate_open_drain(),  //scl
-                       Config::new(400.kHz()), 
-                       &mut rcc
-    );
-
-    let mut led: LedType = gpioc.pc13.into_push_pull_output();
-
-    impl LED for LedType {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
-    led.off();
-    
-    (lora, tx, rx, i2c, led)
-}
-
-
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
-    pac::{USART2, SPI1},
+    pac::{SPI1},
     spi::{Spi, SpiExt, Enabled},
-    serial::{Rx},
     delay::Delay,
     gpio::{Input, PushPull, GpioExt,
            gpioa::{ PA0, PA1},
@@ -968,14 +776,9 @@ pub type LoraSpiType = Sx127x<Base<Spi<SPI1, Enabled>,
 //                     PA1<Output<PushPull>>, PB8<Input>, PB9<Input>, PA0<Output<PushPull>>, 
 //                     Delay>>;
 
-#[cfg(feature = "stm32h7xx")]
-pub type TxType = Tx<USART2>;
 
 #[cfg(feature = "stm32h7xx")]
-pub type RxType = Rx<USART2>;
-
-#[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cTrait, LedType) {
+pub fn setup_lora_from_dp(dp: Peripherals) -> LoraSpiType {
     let cp = CorePeripherals::take().unwrap();
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
@@ -985,7 +788,6 @@ pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cT
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
     // following github.com/stm32-rs/stm32h7xx-hal/blob/master/examples/spi.rs
     let spi = dp.SPI1.spi(
@@ -1015,32 +817,7 @@ pub fn setup_from_dp(dp: Peripherals) -> (LoraSpiType, TxType, RxType, impl I2cT
     )
     .unwrap(); // should handle error
 
-    let (tx, rx) = dp
-        .USART2
-        .serial(
-            (
-                gpioa.pa2.into_alternate(), //tx for GPS rx
-                gpioa.pa3.into_alternate(), //rx for GPS tx
-            ),
-            9600.bps(),
-            ccdr.peripheral.USART2,
-            &clocks,
-        )
-        .unwrap()
-        .split();
-
-    let scl = gpiob.pb10.into_alternate().set_open_drain();
-    let sda = gpiob.pb11.into_alternate().set_open_drain();
-
-    let i2c = dp
-        .I2C2
-        .i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C2, &clocks);
-
-
-    let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off
-    impl LED for LedType {}  //using default method on = low  
-
-    (lora, tx, rx, i2c, led)
+    lora
 }
 
 #[cfg(feature = "stm32l0xx")]

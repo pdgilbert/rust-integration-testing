@@ -19,12 +19,22 @@ use embedded_io::{Read};
 
 use radio::Transmit;
 
-use rust_integration_testing_of_examples::lora_spi_gps_usart::{setup, LED};
+use rust_integration_testing_of_examples::lora;
+use rust_integration_testing_of_examples::led;
+use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::usart;
+
+use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use hal::{
+   pac::{Peripherals},
+};
 
 #[entry]
 fn main() -> ! {
-    let (mut lora, _tx_gps, mut rx_gps, _i2c, mut led) = setup(); //delay is available in lora
+    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
+    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
     led.off();
+    let ( _tx1_gps, mut rx_gps) = usart::setup_1_from_dp(Peripherals::take().unwrap()); 
 
     // byte buffer   Nov 2020 limit data.len() < 255 in radio_sx127x  .start_transmit
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
