@@ -80,8 +80,8 @@ mod app {
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::{Delay2Type};
 
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{I2cType};
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2cType};
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -149,7 +149,7 @@ mod app {
         //rprintln!("blink_rtic example");
         //hprintln!("dht_rtic example").unwrap();
 
-        let (dht, i2c, mut led, _usart, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (dht, i2c, mut led, mut delay) = setup::pin_i2c_led_delay_from_dp(cx.device);
 
         led.on();
         delay.delay_ms(1000);  

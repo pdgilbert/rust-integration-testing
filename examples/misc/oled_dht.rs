@@ -7,7 +7,7 @@
 //!  Compare example dht_rtic for similar capability.
 //!  See example dht for more details, and also compare examples oled_gps, and temperature_display.
 //!    [The DHT data pin is connected to the MCU pin PA8 in most (all) cases. ]
-//!  The i2c is using src/opendrain_i2c_led_usart_delay.rs which calls src/i2c.rs. See i2c.rs for pin details.
+//!  The i2c is using src/setup.rs which has pin details.
 //!    [ oled is on i2c1 using scl on pb8 and  sda on pb9 in many cases, including blackpill ]
 //!  Note that the DisplaySize setting needs to be adjusted for 128x64 or 128x32 display
 //!  Note that '--release' is needed when doing a run test on actual hardware. Otherwise
@@ -60,7 +60,7 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+use rust_integration_testing_of_examples::setup;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -117,7 +117,7 @@ fn main() -> ! {
     //hprintln!("oled_dht example").unwrap();
 
     let dp = Peripherals::take().unwrap();
-    let (mut dht, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(dp);
+    let (mut dht, i2c, mut led, mut delay) = setup::pin_i2c_led_delay_from_dp(dp);
 
     led.blink(500_u16, &mut delay);  // to confirm startup
 

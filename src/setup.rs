@@ -33,6 +33,42 @@ pub type OpenDrainType = PA8<Output<OpenDrain>>;
 //    setup_from_dp(Peripherals::take().unwrap())
 //}
 
+//pub fn _from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {    
+//   all_from_dp(dp: Peripherals)
+//}
+
+
+
+pub fn pin_i2c_led_tx_delay_clocks_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {    
+   let (pin, i2c, led, tx, delay, clocks) =  all_from_dp(dp);
+   (pin, i2c, led, tx, delay, clocks) 
+}
+
+pub fn pin_i2c_led_tx_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay) {    
+   let (pin, i2c, led, tx, delay, _clocks) =  all_from_dp(dp);
+   (pin, i2c, led, tx, delay) 
+}
+
+pub fn pin_i2c_led_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Delay) {    
+   let (pin, i2c, led, _tx, delay, _clocks) =  all_from_dp(dp);
+   (pin, i2c, led, delay) 
+}
+
+pub fn i2c_led_delay_from_dp(dp: Peripherals) ->  (I2cType, LedType, Delay) {    
+   let (_pin, i2c, led, _tx, delay, _clocks) =  all_from_dp(dp);
+   (i2c, led, delay) 
+}
+
+pub fn i2c_led_tx_from_dp(dp: Peripherals) ->  (I2cType, LedType, TxType) {    
+   let (_pin, i2c, led, tx, _delay, _clocks) = all_from_dp(dp);
+   (i2c, led, tx)
+}
+
+pub fn pin_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, Delay) {    
+   let (pin, _i2c, _led, _tx, delay, _clocks) =  all_from_dp(dp);
+   (pin, delay) 
+}
+
 
 
 
@@ -43,7 +79,7 @@ pub type OpenDrainType = PA8<Output<OpenDrain>>;
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {    
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {    
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -81,7 +117,7 @@ use stm32f1xx_hal::{
 pub type TxType = Tx<USART1>;
 
 #[cfg(feature = "stm32f1xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain();
@@ -151,7 +187,7 @@ pub type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
 //   regarding why it is necessary to specify the concrete pin here.
 
 #[cfg(feature = "stm32f3xx")]
-pub fn setup_from_dp(dp: Peripherals) -> (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) -> (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze(&mut flash.acr);
@@ -199,7 +235,7 @@ use stm32f4xx_hal::{
 
 
 #[cfg(feature = "stm32f4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
    let mut pin = gpioa.pa8.into_open_drain_output();
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -237,7 +273,7 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let gpioa = dp.GPIOA.split();
    let mut dht   = gpioa .pa8.into_open_drain_output();
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -282,7 +318,7 @@ use stm32g0xx_hal::{
 };
 
 #[cfg(feature = "stm32g0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -323,7 +359,7 @@ pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
 //pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.constrain();
    
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -365,7 +401,7 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -413,7 +449,7 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
    //let clocks = rcc.clocks;
 
@@ -453,7 +489,7 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -488,7 +524,7 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
-pub fn setup_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);

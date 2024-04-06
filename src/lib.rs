@@ -25,7 +25,7 @@ pub mod usart;
 
 pub mod i2c1_i2c2_led_delay;
 
-pub mod  opendrain_i2c_led_usart;
+pub mod  setup;
 
 pub mod lora; 
 

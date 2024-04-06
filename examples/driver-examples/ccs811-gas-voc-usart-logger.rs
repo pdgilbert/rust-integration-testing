@@ -92,8 +92,8 @@ mod app {
     use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::setup::{TxType};
+    use rust_integration_testing_of_examples::setup;
 
 
     /////////////////////  
@@ -127,7 +127,7 @@ mod app {
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
 
-        let (_pin, i2c, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (i2c, mut led, mut tx) = setup::i2c_led_tx_from_dp(cx.device);
 
         led.off();
 

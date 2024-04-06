@@ -83,8 +83,8 @@ mod app {
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::delay::{Delay2Type};
 
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{I2cType, TxType };
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2cType, TxType };
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -105,7 +105,7 @@ mod app {
         //rtt_init_print!();
         //rprintln!("CCS811 example");
 
-        let (mut dht, i2c, mut led, mut tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (mut dht, i2c, mut led, mut tx, mut delay) = setup::pin_i2c_led_tx_delay_from_dp(cx.device);
 
         led.on(); 
         delay.delay_ms(1000);

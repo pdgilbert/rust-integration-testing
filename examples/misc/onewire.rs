@@ -60,7 +60,7 @@ use onewire;
 //    )
 //}
 
-use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+use rust_integration_testing_of_examples::setup;
 
 use rust_integration_testing_of_examples::delay::{Delay2Type as Delay};
 
@@ -74,7 +74,7 @@ use hal::{
 
 fn main() -> ! {
     let cp = CorePeripherals::take().unwrap();
-    let (one, _i2c, _led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup();
+    let (one, mut delay) = setup::pin_delay();
 
     delay.delay_ms(1000);
     

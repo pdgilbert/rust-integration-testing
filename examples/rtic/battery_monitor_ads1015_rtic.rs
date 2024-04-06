@@ -84,7 +84,6 @@ mod app {
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
-    //use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
     use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
     use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type };
 
@@ -190,7 +189,6 @@ use embedded_hal_bus::i2c::RefCellDevice;
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        //let (_pin, i2c, mut led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
         let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
 
         led.on(); 

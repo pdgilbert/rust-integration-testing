@@ -20,7 +20,7 @@ use embedded_hal::digital::{InputPin, OutputPin};
 use core::fmt::Debug;
 use one_wire_bus::{OneWire};   //, DeviceSearch
 
-use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+use rust_integration_testing_of_examples::setup;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -69,7 +69,7 @@ fn find_devices<P, E>(
 #[entry]
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
-    let (pin, _i2c, _led, _tx, mut delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(dp);
+    let (pin, mut delay) = setup::pin_delay_from_dp(dp);
     
     delay.delay_ms(1000);
 

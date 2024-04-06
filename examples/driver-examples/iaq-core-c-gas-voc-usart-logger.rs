@@ -75,8 +75,8 @@ mod app {
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
     use rust_integration_testing_of_examples::led::{LED, LedType};
     use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart::{TxType};
-    use rust_integration_testing_of_examples::opendrain_i2c_led_usart;
+    use rust_integration_testing_of_examples::setup::{TxType};
+    use rust_integration_testing_of_examples::setup;
 
 
     /////////////////////  
@@ -108,7 +108,7 @@ mod app {
         //rprintln!("example");
         hprintln!("iaq-core-c-gas-voc... example").unwrap();
 
-        let (_pin, i2cset, mut led, mut tx, _delay, _clocks) = opendrain_i2c_led_usart::setup_from_dp(cx.device);
+        let (i2cset, mut led, mut tx) = setup::i2c_led_tx_from_dp(cx.device);
 
         led.off();
         let led_state: bool = false;
