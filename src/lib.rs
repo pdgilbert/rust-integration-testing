@@ -27,6 +27,44 @@ pub mod i2c1_i2c2_led_delay;
 
 pub mod  setup;
 
+// Note, if feature gate is not set then compiling for the module will be 
+//  attempted, and features gates are not set in the module, making a mess.
+
+#[cfg(feature = "stm32f0xx")]
+pub mod  setup_all_stm32f0xx;
+
+#[cfg(feature = "stm32f1xx")]
+pub mod  setup_all_stm32f1xx;
+
+#[cfg(feature = "stm32f3xx")]
+pub mod  setup_all_stm32f3xx;
+
+#[cfg(feature = "stm32f4xx")]
+pub mod  setup_all_stm32f4xx;
+
+#[cfg(feature = "stm32f7xx")]
+pub mod  setup_all_stm32f7xx;
+
+#[cfg(feature = "stm32g0xx")]
+pub mod  setup_all_stm32g0xx;
+
+#[cfg(feature = "stm32g4xx")]
+pub mod  setup_all_stm32g4xx;
+
+#[cfg(feature = "stm32h7xx")]
+pub mod  setup_all_stm32h7xx;
+
+#[cfg(feature = "stm32l0xx")]
+pub mod  setup_all_stm3210xx;
+
+#[cfg(feature = "stm32l1xx")]
+pub mod  setup_all_stm3211xx;
+
+#[cfg(feature = "stm32l4xx")]
+pub mod  setup_all_stm3214xx;
+
+//pub mod  setup_all_ALL;
+
 pub mod lora; 
 
 //pub mod spi; move problems need to be figured out for this
