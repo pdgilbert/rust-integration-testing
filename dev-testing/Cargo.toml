@@ -628,5 +628,5 @@ name = "temperature-display"
 path = "examples/projects/temperature-display.rs"
 
 [[example]]
-name = "IAQ-ens160aht21-display"
-path = "examples/projects/IAQ-ens160aht21-display.rs"
+name = "iaq_ens160aht21_display"
+path = "examples/projects/iaq_ens160aht21_display.rs"

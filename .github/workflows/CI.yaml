@@ -392,8 +392,8 @@ jobs:
 
       #####  project examples   #####
 
-      - name: Example IAQ-ens160aht21-display
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example IAQ-ens160aht21-display
+      - name: Example iaq_ens160aht21_display
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq_ens160aht21_display
 
 #################################################################################################
 
@@ -489,7 +489,7 @@ jobs:
               vl53lox-display,         ens160-co2-voc-iaq-display,
               ina219-display,          ina219_rtic,                      gps_rw_rtic,
               xca9548a,                one_wire_bus_find_devices,        onewire,
-              IAQ-ens160aht21-display
+              iaq_ens160aht21_display
              ]
              
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
