@@ -80,21 +80,14 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{Delay2Type};
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{I2cType, TxType };
+    use rust_integration_testing_of_examples::setup::{OpenDrainType, I2cType, LedType, LED, TxType, Delay };
 
-    // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
     use hal::{
-       //pac::{Peripherals, CorePeripherals},
-       gpio::{gpioa::PA8, Output, OpenDrain},
        prelude::*,
     };
-
-    type OpenDrainType = PA8<Output<OpenDrain>>;
 
 
     #[init]
@@ -110,13 +103,6 @@ mod app {
         led.on(); 
         delay.delay_ms(1000);
         led.off();
-
-        // 5 sec systick timer  check
-        // beware this needs to happen before other spawn activity interferes with led.
-        //led_on::spawn_after(1.secs()).unwrap(); 
-        //led_off::spawn_after(6.secs()).unwrap();
-
-        delay.delay_ms(2000); //  2 second delay for dhtsensor initialization
         
         // intial dht reading
         let (temperature, humidity) = match read(&mut delay, &mut dht) {  //NEEDS NON SYSTICK DELAY
@@ -130,6 +116,7 @@ mod app {
                     (25, 40)  //supply default values
                    },
         };
+        delay.delay_ms(2000); //  2 second delay for dhtsensor initialization
 
         // initialize ccs811
         //let env: [(f32, f32); 1200] = [(0.0, 0.0); 1200];
@@ -186,7 +173,7 @@ mod app {
         dht: OpenDrainType,
         ccs811: Ccs811Awake<I2cProxy<'static,   Mutex<RefCell<I2cType>>>, Ccs811Mode::App>,
         tx: TxType,
-        delay:Delay2Type,
+        delay:Delay,
     }
 
     #[idle()]

@@ -1,6 +1,7 @@
 
 pub use stm32h7xx_hal::{
       pac::{Peripherals, CorePeripherals, USART1},
+      i2c::I2c,   //this is a type
       serial::{Serial, Tx, Error},
       gpio::{Output, OpenDrain},
       prelude::*,
@@ -15,18 +16,22 @@ pub use stm32h7xx_hal::{
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub use crate::led::{setup_led, LED, LedType};
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
-
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
-pub type TxType = Tx<USART1>;
+pub type I2c1Type = I2c<I2C1>;
+pub type I2c2Type = I2c<I2C2>;
+pub type I2cType  = I2c1Type;
+pub type TxType  = Tx<USART1>;
+
+pub use crate::led::LED;  // defines trait and default methods
+pub type LedType = LEDPIN<Output<PushPull>>;
+impl LED for LedType {}    
 
 //   //////////////////////////////////////////////////////////////////////
 
 
-pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, Delay, Clocks) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -41,7 +46,15 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType
    let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
    let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
 
-   let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
+   //let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
+   let i2c1 =  i2c1.i2c((gpiob.pb8.into_alternate().set_open_drain(), // scl  
+              gpiob.pb9.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx1, &clocks),
+
+   let i2c2 =  i2c2.i2c((gpiof.pf1.into_alternate().set_open_drain(), // scl
+              gpiof.pf0.into_alternate().set_open_drain(), // sda
+             ), 400.kHz(), i2cx2, &clocks)
+
    let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
    led.off();
 
@@ -62,6 +75,6 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType
         .split();
 
 
-   (pin, i2c, led, tx, delay, clocks)
+   (pin, i2c1, i2c2, led, tx, delay, clocks)
 }
 

@@ -12,7 +12,7 @@
 //!  The specific setup() function used will depend on the HAL feature specified (see HAL in README.md).
 //!  See the section of setup functions corresponding to the HAL setting for details on pin connections.
 //!  As of February 2024 the organization is:
-//!   - `i2c1_i2c2_led_delay::setup_from_dp()` called below is from src/i2c1_i2c2_led_delay.rs.
+//!   - `setup::i2c1_i2c2_led_delay_from_dp()` called below is from src/i2c1_i2c2_led_delay.rs.
 //!   -  setup_from_dp() corresponds to feature stm32f4xx. -  setup_from_dp() 
 //!   -  setup_from_dp() does some HAL specific extraction and configuration and
 //!   -  setup_from_dp() calls setup_led from src/led.rs to setup the led and pin.
@@ -111,8 +111,8 @@ type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
 ///////////////////////////////////////////////////////////////
 
 use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
-use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup::{LED};
+use rust_integration_testing_of_examples::setup;
 
 use embedded_hal::delay::DelayNs;
 
@@ -206,7 +206,7 @@ where
 fn main() -> ! {
     let dp = Peripherals::take().unwrap();
 
-    let (i2c1, i2c2, mut led, mut delay1, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay1) = setup::i2c1_i2c2_led_delay_from_dp(dp);
 
 
     //////////////////////////////////////////////////////////////////////////////////

@@ -78,9 +78,10 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType};
     
     use embedded_hal::delay::DelayNs;
 
@@ -135,7 +136,7 @@ use embedded_hal_bus::i2c::RefCellDevice;
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (i2c1, i2c2, mut led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led) = setup::i2c1_i2c2_led_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  

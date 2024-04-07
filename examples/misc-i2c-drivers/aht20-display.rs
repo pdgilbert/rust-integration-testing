@@ -70,7 +70,7 @@ use stm32h7xx_hal::{
 
 ///////////////////// 
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::led::{LED};
 
 #[entry]
@@ -82,7 +82,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
 
-    let (i2c1, mut i2c2, mut led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, mut i2c2, mut led, mut delay, clocks) = setup::i2c1_i2c2_led_delay_clocks_from_dp(dp);
     let mut delay2 = cp.SYST.delay(&clocks); 
 
     // Blink LED to indicate initializing.

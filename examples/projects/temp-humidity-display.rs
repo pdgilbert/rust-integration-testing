@@ -321,10 +321,9 @@ use core::borrow::BorrowMut;  // bring trait is in scope
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{Delay1Type, Delay2Type};
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+
+    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type, I2c2Type, Delay1Type, Delay2Type};
+    use rust_integration_testing_of_examples::setup;
 
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
     use hal::{
@@ -461,7 +460,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
         //hprintln!("temp-humidity-display example").unwrap();
 
         //  sensors use this delay (not systick)
-        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on();
         //  needs Systick::start first, but also is a future and .await needs to be in a block

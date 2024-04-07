@@ -107,8 +107,8 @@ mod app {
       //pwr::PwrExt,
    };
    
-   use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
-   use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+   use rust_integration_testing_of_examples::setup;
+   use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type};
 
 // THESE ARE NO LONGER USED
    #[cfg(feature = "stm32f4xx")]            
@@ -221,7 +221,7 @@ mod app {
        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
        //let (i2cset, _delay) = setup_from_dp(cx.device);
-       let (i2c1, i2c2, _led, _delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+       let (i2c1, i2c2) = setup::i2c1_i2c2_from_dp(cx.device);
 
        // let i2c = I2c::new(cx.device.I2C1);
        // let i2c_arbiter = cx.local.i2c_arbiter.write(Arbiter::new(i2c));

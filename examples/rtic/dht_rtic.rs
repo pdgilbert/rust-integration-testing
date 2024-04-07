@@ -77,11 +77,9 @@ mod app {
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{Delay2Type};
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{I2cType};
+    use rust_integration_testing_of_examples::setup::{I2cType, LED, LedType, Delay};
 
     // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -201,7 +199,7 @@ mod app {
         display: Ssd1306<I2CInterface<I2cType>, 
                           DISPLAYSIZE, 
                           BufferedGraphicsMode<DISPLAYSIZE>>,
-        delay:   Delay2Type,
+        delay:   Delay,
     }
 
     #[task(shared = [led, ], local = [dht, display, delay ] )]

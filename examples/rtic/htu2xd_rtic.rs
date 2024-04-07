@@ -90,11 +90,10 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
-    use rust_integration_testing_of_examples::delay::Delay2Type;
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    
+
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType, Delay};
+
     use embedded_hal::delay::DelayNs;
 
     use shared_bus::{I2cProxy};
@@ -121,7 +120,7 @@ mod app {
                           BufferedGraphicsMode<DisplaySize128x32>>,
 
         sensor:  htu21df_sensor::Sensor<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
-        delay:  Delay2Type,   //Delay<TIM5, 1000000_u32>, for stm32f4xx
+        delay:  Delay,   //Delay<TIM5, 1000000_u32>, for stm32f4xx
     }
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -181,7 +180,7 @@ mod app {
         let mono_token = rtic_monotonics::create_systick_token!();
         Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
 
-        let (i2c1, i2c2, mut led, delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on();
         Systick.delay_ms(1000u32);  

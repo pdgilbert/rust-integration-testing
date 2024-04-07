@@ -30,7 +30,7 @@ use cortex_m_rt::entry;
 
 use rtt_target::{rprintln, rtt_init_print};
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::pac::{Peripherals};
@@ -42,7 +42,7 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2c, _i2c2, _led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c, mut delay) = setup::i2c_delay_from_dp(dp);
 
     let mut pwm = Pca9685::new(i2c, Address::default()).unwrap();
     pwm.enable().unwrap();

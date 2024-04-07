@@ -19,11 +19,11 @@ pub mod delay;
 pub mod delay_syst;
 pub mod alt_delay;
 pub mod led;
-pub mod i2c;
+//pub mod i2c;
 
 pub mod usart;
 
-pub mod i2c1_i2c2_led_delay;
+//pub mod i2c1_i2c2_led_delay;
 
 pub mod  setup;
 

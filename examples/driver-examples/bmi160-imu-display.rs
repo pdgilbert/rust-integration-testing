@@ -53,7 +53,7 @@ use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::pac::{Peripherals};
 
 use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup;
 
 #[entry]
 fn main() -> ! {
@@ -63,7 +63,7 @@ fn main() -> ! {
 
     let dp = Peripherals::take().unwrap();
 
-    let (i2cset, _i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, mut led, mut delay) = setup::i2c_led_delay_from_dp(dp);
 
     let i2cset_ref_cell = RefCell::new(i2cset);
     let bmi_rcd = RefCellDevice::new(&i2cset_ref_cell); 

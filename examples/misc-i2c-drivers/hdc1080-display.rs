@@ -43,7 +43,7 @@ use embedded_graphics::{
 };
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup;
 
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
@@ -85,7 +85,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
 
-    let (i2c1, i2c2, _led, mut delay, clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2c1, i2c2, mut delay, clocks) = setup::i2c1_i2c2_delay_clocks_from_dp(dp);
     let delay2 = cp.SYST.delay(&clocks); // this DelayMs works with non-eh-1 sensor crate
 
     // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re manager)

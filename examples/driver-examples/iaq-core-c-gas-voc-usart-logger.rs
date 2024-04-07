@@ -71,12 +71,11 @@ mod app {
     //use cortex_m::interrupt::Mutex;
 
 
-    /////////////////////   boards
+    /////////////////////   setups
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
-    use rust_integration_testing_of_examples::setup::{TxType};
+
     use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type as I2cType, TxType};
 
 
     /////////////////////  

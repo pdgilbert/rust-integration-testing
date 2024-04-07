@@ -49,8 +49,9 @@ mod app {
     const TEN_DURATION: u32 = 500;
 
     use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::led;
+
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{LED, LedType};
 
 
     #[init]
@@ -59,7 +60,7 @@ mod app {
         //rprintln!("blink_rtic example");
         hprintln!("blink_rtic example").unwrap();
 
-        let mut led = led::setup_led_from_dp(cx.device);
+        let mut led = setup::led_from_dp(cx.device);
 
         led.on();
 

@@ -83,14 +83,15 @@ mod app {
     /////////////////////   hals
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type };
+
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType};
 
     use core::cell::RefCell;
     use shared_bus::{I2cProxy};
     use cortex_m::interrupt::Mutex;
-use embedded_hal_bus::i2c::RefCellDevice;
+
+    use embedded_hal_bus::i2c::RefCellDevice;
 
     use embedded_hal::delay::DelayNs;
 
@@ -189,7 +190,7 @@ use embedded_hal_bus::i2c::RefCellDevice;
         //rprintln!("battery_monitor_ads1015_rtic example");
         hprintln!("battery_monitor_ads1015_rtic example").unwrap();
 
-        let (i2c1, i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on(); 
         delay.delay_ms(1000);

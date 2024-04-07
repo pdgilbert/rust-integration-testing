@@ -86,7 +86,7 @@ use hal::{
    block,
 };
 
-use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::led::{LED};
 
 
@@ -139,7 +139,7 @@ fn main() -> ! {
     hprintln!("temperature_display example").unwrap();
 
     let dp = Peripherals::take().unwrap();
-    let (i2cset, _i2c2, mut led, mut delay, _clocks) = i2c1_i2c2_led_delay::setup_from_dp(dp);
+    let (i2cset, mut led, mut delay) = setup::i2c_led_delay_from_dp(dp);
 
     let i2cset_ref_cell = RefCell::new(i2cset);
     let adc_rcd = RefCellDevice::new(&i2cset_ref_cell); 

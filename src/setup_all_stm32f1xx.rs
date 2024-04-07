@@ -2,6 +2,8 @@
 pub use crate::stm32f1xx_as_hal::hal;
 pub use hal::{
       pac::{Peripherals, CorePeripherals, USART1},
+      pac::{I2C1, I2C2},
+      i2c::I2c,
       serial::{Serial, Tx, Error},
       gpio::{Output, OpenDrain},
       prelude::*,
@@ -16,17 +18,24 @@ use stm32f1xx_hal::{
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub use crate::led::{setup_led, LED, LedType};
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
-
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
+
+pub type I2c1Type = I2cType<I2C1, (PB8<Alternate<OpenDrain>>, PB9<Alternate<OpenDrain>>)>;
+//pub type I2c1Type = I2cType<I2C1, impl Pins<I2C1> >;
+pub type I2c2Type = I2cType<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
+//pub type I2c2Type = I2cType<I2C2, impl Pins<I2C2> >;
+
 pub type TxType = Tx<USART1>;
+
+pub use crate::led::LED;  // defines trait and default methods
+pub type LedType = LEDPIN<Output<PushPull>>;
+impl LED for LedType {}    
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
     let mut afio = dp.AFIO.constrain();
@@ -54,7 +63,41 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType
     let gpiob = dp.GPIOB.split();
 
     //afio  needed for i2c1 (PB8, PB9) but not i2c2
-    let i2c = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
+    //let i2c = setup_i2c1(dp.I2C1, gpiob, &mut afio, &clocks);
+    let i2c1 = I2c::i2c1(
+        i2c1,
+        (gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh), 
+         gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)
+        ),
+        &mut afio.mapr,
+        Mode::Fast {
+            frequency: 100_000_u32.Hz(),
+            duty_cycle: DutyCycle::Ratio2to1,
+        },
+        clocks,
+        //1000,
+        //10,
+        //1000,
+        //1000,
+    );
+
+    let i2c2 = I2c::i2c2(
+        i2c2,
+        (
+            gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
+            gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
+        ),
+        //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
+        Mode::Fast {
+            frequency: 400_000_u32.Hz(),
+            duty_cycle: DutyCycle::Ratio2to1,
+        },
+        clocks,
+        //1000,
+        //10,
+        //1000,
+        //1000,
+    );
 
     let mut led = setup_led(dp.GPIOC.split()); 
     led.off();
@@ -79,6 +122,6 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, TxType
        &clocks,
     ).split();
 
-    (pin, i2c, led, tx, delay, clocks)
+    (pin, i2c1, i2c2, led, tx, delay, clocks)
 }
 

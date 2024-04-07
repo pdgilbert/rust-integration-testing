@@ -83,9 +83,7 @@ use hal::{
 
 /////////////////////  
 
-use rust_integration_testing_of_examples::led::{setup_led, LED};
-use rust_integration_testing_of_examples::i2c::{I2c1Type as I2c1Type, I2c2Type};
-use rust_integration_testing_of_examples::delay::{Delay1Type as DelayType};
+use rust_integration_testing_of_examples::setup::{LED, I2c1Type, I2c2Type, Delay1Type as DelayType};
 
 //use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
 //              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};

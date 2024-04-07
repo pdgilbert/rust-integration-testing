@@ -92,10 +92,9 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-    use rust_integration_testing_of_examples::i2c::{I2c1Type, I2c2Type};
-    use rust_integration_testing_of_examples::led::{LED, LedType};
-    use rust_integration_testing_of_examples::delay::{Delay2Type};
-    use rust_integration_testing_of_examples::i2c1_i2c2_led_delay;
+
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType, Delay};
 
     use shared_bus::{I2cProxy};
     use core::cell::RefCell;
@@ -186,7 +185,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let (i2c1, i2c2, mut led, mut delay, _clock) = i2c1_i2c2_led_delay::setup_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on();
         delay.delay(1000.millis());  
@@ -242,7 +241,7 @@ mod app {
 
         ina:  INA219<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>,
 
-        sensor:  AHT10<I2c1Type, Delay2Type>,
+        sensor:  AHT10<I2c1Type, Delay>,
     }
 
     #[task(shared = [led, ], local = [sensor, display, ina] )]
