@@ -72,8 +72,7 @@ use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
 use dht_sensor::dht22::{read, Reading};
 
-use rust_integration_testing_of_examples::led::{setup_led, LED }; //LedType
-//use rust_integration_testing_of_examples::i2c::{I2c1Type as I2cType};
+use rust_integration_testing_of_examples::led::LED;
 
 //use dht_sensor::Delay;  // trait, whereas timer::Delay is a type does not yet use DelayNs
 
@@ -150,6 +149,7 @@ pub fn setup(mut dp: Peripherals) -> (SensorType, DhtType, impl I2cTrait, impl L
     let mut rcc = rcc.freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let mut dht = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
     // Pulling the pin high to avoid confusing the sensor when initializing.
@@ -166,7 +166,8 @@ pub fn setup(mut dp: Peripherals) -> (SensorType, DhtType, impl I2cTrait, impl L
      }
 
     let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc), &mut rcc);
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+
+    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
 
     (sens, dht, i2c, led, delay)
 }
@@ -179,6 +180,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
 
     let mut gpioa = dp.GPIOA.split();
+    let mut gpioc = dp.GPIOC.split();
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.crl), //channel
         adc: Adc::adc1(dp.ADC1, clocks),
@@ -192,7 +195,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     dht.set_high();
 
     let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(), &mut dp.AFIO.constrain(), &clocks);
-    let led = setup_led(dp.GPIOC.split());
+
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     (sens, dht, i2c, led, delay)
 }
@@ -211,6 +215,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
     
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
 
     let adc_common = CommonAdc::new(dp.ADC1_2, &clocks, &mut rcc.ahb);
 
@@ -227,7 +232,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     dht.set_high().ok();
 
     let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb), clocks, rcc.apb1);
-    let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+
+    let led = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
 
     (sens, dht, i2c, led, delay)
 }
@@ -250,6 +256,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let mut clocks = rcc.cfgr.freeze();
 
     let gpioa = dp.GPIOA.split();
+    let gpioc = dp.GPIOC.split(); 
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
@@ -270,7 +278,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 
     let i2c = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
 
-    let led = setup_led(dp.GPIOC.split());
+    let led = gpioc.pc13.into_push_pull_output();
 
     // let mut delay = Delay::new(cp.SYST, clocks); 
     // Delay::new() works with DelayNs but needs older delay for dht sensor crate
@@ -296,6 +304,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let clocks = rcc.cfgr.freeze();
 
     let gpioa = dp.GPIOA.split();
+    let gpioc = dp.GPIOC.split();
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, &mut rcc.apb2, &clocks, 4, true),
@@ -308,8 +318,23 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
 
-    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(), &clocks, &mut rcc.apb1);
-    let led = setup_led(dp.GPIOC.split());
+    let mut sda = gpiob.pb9.into_push_pull_output();
+    let mut scl = gpiob.pb8.into_alternate_open_drain();
+
+    let i2c = BlockingI2c::i2c1(
+        dp.I2C1,
+        (scl, sda),
+        //400.khz(),
+        Mode::Fast {
+            frequency: 400_000.Hz(),
+        },
+        &clocks,
+        &mut rcc.apb1,
+        1000,
+    );
+
+    let led = gpioc.pc13.into_push_pull_output();
+
     let mut delay = dp.TIM2.delay_us(&clocks);
 
     (sens, dht, i2c, led, delay)
@@ -330,6 +355,9 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 // dp.ADC.constrain(&mut rcc);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::new(dp.ADC, &mut rcc ),           //  NEEDS PROPER CONFIGURATION
@@ -342,11 +370,11 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().unwrap();
     
-    let gpiob = dp.GPIOB.split(&mut rcc);
+    let scl = gpiob.pb8.into_open_drain_output();
+    let mut sda = gpiob.pb9.into_push_pull_output();
+    let i2c = I2c::i2c1(dp.I2C1,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
 
-    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, &mut rcc);
-
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     //let mut delay = DelayType{};
     let mut delay = dp.TIM2.delay(&mut rcc);
@@ -381,6 +409,8 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
     let pin = gpioa.pa1.into_analog();
     let adc1 = dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true);  // Adc::new(...  would be nice
 
@@ -409,7 +439,7 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     //let i2c = I2c::new(i2c1, (scl, sda), 400.kHz(), &clocks);
     let i2c = dp.I2C1.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     (sens, dht, i2c, led, delay)
 }
@@ -461,6 +491,8 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     dht.set_high();
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
+
     //let i2cx = ccdr.peripheral.I2C1;
 
     //let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, i2cx, &clocks);
@@ -469,7 +501,7 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     let sda = gpiob.pb9.into_alternate().set_open_drain();
     let i2c = dp.I2C1.i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
 
-    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+    let led = gpioc.pc13.into_push_pull_output();
 
     (sens, dht, i2c, led, delay)
 }
@@ -503,8 +535,11 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     dht.set_high().ok();
 
 
-    let gpiob =dp.GPIOB.split(&mut rcc);
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
+    let led = gpioc.pc13.into_push_pull_output(); 
+
     let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, gpiob, rcc);
 
     (sens, dht, i2c, led, delay)
@@ -527,6 +562,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     adc.set_precision(Precision::B_12);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+    
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: adc,
@@ -539,7 +576,8 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+    let led = gpioc.pc9.into_push_pull_output(); 
+
     let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
 
     (sens, dht, i2c, led, delay)
@@ -559,12 +597,16 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
     let clocks = rcc.cfgr.sysclk(80.MHz()).pclk1(80.MHz()).pclk2(80.MHz()).freeze(&mut flash.acr, &mut pwr);
 
+    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
+    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
+
     //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
     let mut delay = DelayType{};
 
     let adc_common = AdcCommon::new(dp.ADC_COMMON, &mut rcc.ahb2);
     let adc = Adc::adc1(dp.ADC1, adc_common, &mut rcc.ccipr, &mut delay );
-    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+
     let sens: SensorType = Sensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.moder, &mut gpioa.pupdr), //channel
         adc: adc,
@@ -577,8 +619,11 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high();
 
-    let (i2c, _i2c2) = i2c::setup_i2c1_i2c2(dp.I2C1, dp.GPIOB.split(&mut rcc.ahb2), &clocks, &mut rcc.apb1r1);
-    let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
+    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
+    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
+    let i2c1 = i2c1.i2c((scl, sda), 400.khz(), &mut rcc);
+
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); 
 
     (sens, dht, i2c, led, delay)
 }

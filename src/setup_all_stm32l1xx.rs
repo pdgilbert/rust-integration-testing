@@ -43,17 +43,19 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
    let gpioa = dp.GPIOA.split(&mut rcc);
+   let gpiob = dp.GPIOB.split(&mut rcc);
+
    let mut pin = gpioa.pa8.into_open_drain_output();
    pin.set_high().ok(); // Pull high to avoid confusing the sensor when initializing.
 
    //let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(&mut rcc), rcc);
-    let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
-    let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
-    let i2c1 = i2c1.i2c((scl, sda), 400.khz(), &mut rcc);
+   let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
+   let sda = gpiob.pb9.into_open_drain_output(); // sda on PB9
+   let i2c1 = i2c1.i2c((scl, sda), 400.khz(), &mut rcc);
 
-    let scl = gpiob.pb10.into_open_drain_output();
-    let sda = gpiob.pb11.into_open_drain_output();
-    let i2c2 = i2c2.i2c((scl, sda), 400.khz(), &mut rcc);
+   let scl = gpiob.pb10.into_open_drain_output();
+   let sda = gpiob.pb11.into_open_drain_output();
+   let i2c2 = i2c2.i2c((scl, sda), 400.khz(), &mut rcc);
 
    let mut led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
    led.off();

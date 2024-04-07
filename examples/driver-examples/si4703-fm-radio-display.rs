@@ -83,7 +83,7 @@ use hal::{
 
 /////////////////////  
 
-use rust_integration_testing_of_examples::setup::{LED, I2c1Type, I2c2Type, Delay1Type as DelayType};
+use rust_integration_testing_of_examples::setup::{LED, I2c1Type, I2c2Type, Delay};
 
 //use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
 //              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};
@@ -119,15 +119,16 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
     I2c1Type,   //I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
     let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
-    let mut delay = DelayType{};
+    let mut delay = Delay{};
     //let mut delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let (scl, mut sda, mut rst, stcint, seekup, seekdown) =
         cortex_m::interrupt::free(move |cs| {
@@ -146,7 +147,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
     let sda = cortex_m::interrupt::free(move |cs| sda.into_alternate_af1(cs));
 
     let i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), &mut rcc);
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+
+    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: seekup,
@@ -182,7 +184,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -196,9 +198,10 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let mut afio = dp.AFIO.constrain();
 
-    let led = setup_led(dp.GPIOC.split());
-
     let mut gpiob = dp.GPIOB.split();
+    let mut gpioc = dp.GPIOC.split();
+
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
@@ -256,7 +259,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,   //I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB8<Input>,
 ) {
@@ -266,9 +269,10 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     //let mut delay = Delay::new(cp.SYST, clocks);
     let mut delay = DelayType{};
 
-    let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
-
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
+
+    let led = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
 
     let stcint = gpiob.pb8.into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
     let mut rst = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
@@ -318,7 +322,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input>,
 ) {
@@ -326,9 +330,10 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let clocks = rcc.cfgr.freeze();
     //let mut delay = Delay::new(cp.SYST, &clocks);
     //let mut delay = cp.SYST.delay(&clocks);
-    let mut delay = dp.TIM2.delay_us(&clocks);
+    let mut delay = dp.TIM5.delay_us(&clocks);
 
     let gpiob = dp.GPIOB.split(); // for i2c
+    let gpioc = dp.GPIOC.split(); 
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
@@ -347,7 +352,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = gpiob.pb3.into_alternate_open_drain();
     let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
 
-    let led = setup_led(dp.GPIOC.split());
+    let led = gpioc.pc13.into_push_pull_output();
 
     let buttons: SeekPins<PB12<Input>, PB11<Input>> = SeekPins {
         p_seekup: gpiob.pb12.into_pull_down_input(),   // possibly not right pin for this function
@@ -381,7 +386,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -389,9 +394,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let clocks = rcc.cfgr.freeze();
     let mut delay = dp.TIM2.delay_us(&clocks);
 
-    let led = setup_led(dp.GPIOC.split());
-
     let gpiob = dp.GPIOB.split();
+    let gpioc = dp.GPIOC.split();
+
+    let led = gpioc.pc13.into_push_pull_output();
+
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
 
@@ -446,7 +453,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -454,6 +461,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let mut delay = dp.TIM2.delay(&mut rcc);
 
     let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let scl = gpiob.pb8.into_open_drain_output();
     let mut sda = gpiob.pb9.into_push_pull_output();
@@ -466,7 +474,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     //let i2c = setup_i2c1(dp.I2C1, gpiob, &mut rcc);
     let i2c = I2c::i2c1(dp.I2C1,  sda, scl,  i2cConfig::with_timing(0x2020_151b), &mut rcc);
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
@@ -503,15 +511,18 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
     let mut rcc = dp.RCC.constrain();
-    let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
+    let timer2 = Timer::new(dp.TIM3, &rcc.clocks);
     let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
+    let gpioa = dp.GPIOA.split(&mut rcc);
     let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
     let scl = gpiob.pb8.into_alternate_open_drain();
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -522,12 +533,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let i2c1 = dp.I2C1.i2c(sda, scl, i2cConfig::new(400.kHz()), &mut rcc);
 
-    let gpioa = dp.GPIOA.split(&mut rcc);
-    let scl2 = gpioa.pa9.into_alternate_open_drain();
+    let scl2 = gpioc.pc4.into_alternate_open_drain();
     let sda2 = gpioa.pa8.into_alternate_open_drain(); 
     let i2c2 = dp.I2C2.i2c(sda2, scl2, i2cConfig::new(400.kHz()), &mut rcc);
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
@@ -561,7 +571,7 @@ use stm32h7xx_hal::delay::DelayFromCountDownTimer;
 
 #[cfg(feature = "stm32h7xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> 
-  (I2c1Type, I2c2Type, impl LED, DelayType, impl SEEK, PB6<Input>) {
+  (I2c1Type, I2c2Type, impl LED, Delay, impl SEEK, PB6<Input>) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -576,8 +586,9 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) ->
    let delay = DelayFromCountDownTimer::new(timer);
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
-    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+    let led = gpioc.pc13.into_push_pull_output();
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -627,7 +638,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -641,7 +652,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let led = setup_led(gpioc);
+    let led = gpioc.pc13.into_push_pull_output(); 
 
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
@@ -688,7 +699,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -699,6 +710,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let mut delay = DelayType{};
 
     let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
@@ -707,7 +720,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let scl = gpiob.pb8.into_open_drain_output(); // scl on PB8
 
     let i2c = dp.I2C1.i2c((scl, sda), 400.khz(), &mut rcc);
-    let led = setup_led(dp.GPIOC.split(&mut rcc).pc9);
+
+    let led = gpioc.pc9.into_push_pull_output(); 
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
@@ -740,7 +754,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    DelayType,
+    Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
@@ -757,31 +771,23 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     //let mut delay = Delay::new(cp.SYST, clocks);
     let mut delay = DelayType{};
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
-
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
+    let mut gpioc = dp.GPIOC.split(&mut rcc.ahb2);
 
-    let mut sda = gpiob
-        .pb9
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); 
 
-    let mut rst = gpiob
-        .pb7
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+
+    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 
     let sda = sda.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
-    let stcint = gpiob
-        .pb6
-        .into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
+    let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.moder, &mut gpiob.pupdr);
 
     //this should be simpler
-    let mut scl =
-        gpiob
-            .pb8
-            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
+    let mut scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
     scl.internal_pull_up(&mut gpiob.pupdr, true);
 
     let i2c = I2c::i2c1(

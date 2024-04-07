@@ -56,6 +56,11 @@ pub fn i2c1_i2c2_led_delay_clocks_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Ty
    (i2c1, i2c2, led, delay, clocks) 
 }
 
+pub fn i2c1_i2c2_delay_clocks_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, Delay, Clocks) {    
+   let (_pin, i2c1, i2c2, _led, _tx, delay, clocks) =  all_from_dp(dp);
+   (i2c1, i2c2, delay, clocks) 
+}
+
 pub fn i2c1_i2c2_led_delay_from_dp(dp: Peripherals) ->  (I2c1Type, I2c2Type, LedType, Delay) {    
    let (_pin, i2c1, i2c2, led, _tx, delay, _clocks) =  all_from_dp(dp);
    (i2c1, i2c2, led, delay) 

@@ -650,6 +650,8 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let mut delay = DelayType{};
 
     let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
+
     let mut sda = gpiob.pb9.into_push_pull_output();
     let mut rst = gpiob.pb7.into_push_pull_output();
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
@@ -714,14 +716,9 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); 
 
+    let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
-    let mut sda = gpiob
-        .pb9
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
-
-    let mut rst = gpiob
-        .pb7
-        .into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
+    let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.moder, &mut gpiob.otyper);
 
     reset_si4703(&mut rst, &mut sda, &mut delay).unwrap();
 

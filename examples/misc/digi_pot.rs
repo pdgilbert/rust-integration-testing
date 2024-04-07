@@ -39,18 +39,16 @@ use cortex_m_rt::entry;
 
 use mcp4x;
 
-use rust_integration_testing_of_examples::led::{setup_led, LED, LedType};
+use rust_integration_testing_of_examples::setup::{LED, LedType};
 // need to resolve move problem to get this to work
 //use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 
 pub use embedded_hal::delay::DelayNs;
 
 
-// setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
-    //delay::Delay,
     gpio::{
         gpioa::{PA1, PA5, PA6, PA7},
         Alternate, Output, PushPull, AF0,
@@ -75,6 +73,7 @@ fn setup() -> (
     let mut rcc = dp.RCC.configure().sysclk(8.mhz()).freeze(&mut dp.FLASH);
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let (sck, miso, mosi, mut cs) = cortex_m::interrupt::free(move |c| {
         (
@@ -89,10 +88,11 @@ fn setup() -> (
 
     cs.set_high().unwrap();
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
+
     //let cp = CorePeripherals::take().unwrap();
     //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
-    let delay = DelayType{};
+    let delay = Delay{};
 
     (spi, cs, led, delay)
 }
@@ -124,6 +124,7 @@ fn setup() -> (
 
     let mut afio = dp.AFIO.constrain();
     let mut gpioa = dp.GPIOA.split();
+    let mut gpioc = dp.GPIOC.split();
 
     // SPI1
     let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
@@ -142,7 +143,8 @@ fn setup() -> (
         clocks,
     );
 
-    let led = setup_led(dp.GPIOC.split());
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+
     //let delay = cp.SYST.delay(&clocks);
     let delay = dp.TIM2.delay_us(&clocks);
 
@@ -177,6 +179,7 @@ fn setup() -> (
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb);
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
+    let mut gpioe = dp.GPIOE.split(&mut rcc.ahb);
 
     let spi = Spi::new(
         dp.SPI1,
@@ -202,7 +205,8 @@ fn setup() -> (
 
     cs.set_high().unwrap();
 
-    let led = setup_led(dp.GPIOE.split(&mut rcc.ahb));
+    let led = gpioe.pe15.into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
+
     let delay = DelayType{};
 
     (spi, cs, led, delay)
@@ -232,6 +236,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
+    let gpioc = dp.GPIOC.split(); 
 
     // There is a problem with this because gpioa is move and then needed for cs below.
     //let spi = setup_spi(dp.SPI1, gpioa,  &clocks);
@@ -251,7 +256,7 @@ fn setup() -> (
     let mut cs = gpioa.pa1.into_push_pull_output();
     cs.set_high();
 
-    let led = setup_led(dp.GPIOC.split());
+    let led = gpioc.pc13.into_push_pull_output();
 
     //let delay = cp.SYST.delay(&clocks);
     let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
@@ -282,6 +287,7 @@ fn setup() -> (
     let clocks = rcc.cfgr.sysclk(216.MHz()).freeze();
 
     let gpioa = dp.GPIOA.split();
+    let gpioc = dp.GPIOC.split();
 
     let sck = gpioa.pa5.into_alternate(); // sck   on PA5
     let miso = gpioa.pa6.into_alternate(); // miso  on PA6
@@ -300,7 +306,8 @@ fn setup() -> (
     let mut cs = gpioa.pa1.into_push_pull_output();
     cs.set_high();
 
-    let led = setup_led(dp.GPIOC.split());
+    let led = gpioc.pc13.into_push_pull_output();
+
     let delay = dp.TIM2.delay_us(&clocks);
 
     (spi, cs, led, delay)
@@ -328,6 +335,7 @@ fn setup() -> (
     let mut rcc = dp.RCC.constrain();
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let spi = dp.SPI1.spi((gpioa.pa5, gpioa.pa6, gpioa.pa7), //sck, miso, mosi
         mcp4x::MODE, 
@@ -336,7 +344,7 @@ fn setup() -> (
     let mut cs = gpioa.pa1.into_push_pull_output();
     cs.set_high().unwrap();
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     let delay = dp.TIM2.delay(&mut rcc);
 
@@ -368,6 +376,7 @@ fn setup() -> (
     let mut rcc = dp.RCC.constrain();
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
 
     let spi = dp.SPI1.spi(
             (gpioa.pa5.into_alternate(), // sck   on PA5
@@ -382,7 +391,7 @@ fn setup() -> (
     let mut cs = gpioa.pa8.into_push_pull_output();
     cs.set_high().unwrap();
 
-    let led = setup_led(dp.GPIOC.split(&mut rcc));
+    let led = gpioc.pc13.into_push_pull_output();
 
     //let delay = cp.SYST.delay(&mut rcc.clocks);
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
@@ -415,6 +424,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, impl DelayNs)
     let clocks = ccdr.clocks;
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
+    let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
 
     let spi = dp.SPI1.spi(
         (
@@ -431,7 +441,7 @@ fn setup() -> (Spi<SPI1, Enabled>, PA1<Output<PushPull>>, LedType, impl DelayNs)
     let mut cs = gpioa.pa1.into_push_pull_output();
     cs.set_high();
 
-    let led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+    let led = gpioc.pc13.into_push_pull_output();
 
     let timer = dp.TIM2.timer(1.Hz(), ccdr.peripheral.TIM2, &clocks);
     let delay = DelayFromCountDownTimer::new(timer);

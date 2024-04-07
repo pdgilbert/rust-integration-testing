@@ -39,6 +39,9 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
         .freeze(&mut flash.acr, &mut pwr);
 
    let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
+   let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
+
+
    let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.moder, &mut gpioa.otyper);
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 

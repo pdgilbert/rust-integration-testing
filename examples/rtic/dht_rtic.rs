@@ -79,16 +79,13 @@ mod app {
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{I2cType, LED, LedType, Delay};
+    use rust_integration_testing_of_examples::setup::{OpenDrainType, I2cType, LED, LedType, Delay};
 
-    // "hal" is used for items that are the same in all hal  crates
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
     use hal::{
-       gpio::{gpioa::PA8, Output, OpenDrain},
        prelude::*,
     };
 
-    type OpenDrainType = PA8<Output<OpenDrain>>;
 
 
 

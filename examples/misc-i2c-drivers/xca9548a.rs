@@ -111,23 +111,16 @@ type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
 ///////////////////////////////////////////////////////////////
 
 use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
-use rust_integration_testing_of_examples::setup::{LED};
+use rust_integration_testing_of_examples::setup::{LED, I2c2Type};
 use rust_integration_testing_of_examples::setup;
 
 use embedded_hal::delay::DelayNs;
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
-      pac::{Peripherals, I2C2},
-      i2c::I2c,   //Error as i2cError},
+      pac::{Peripherals},
 };
 
-
-#[cfg(feature = "stm32g4xx")]
-use stm32g4xx_hal::{
-    gpio::{AlternateOD, gpioa::{PA8, PA9}},
-    //delay::SYSTDelayExt }; // trait for cp.SYST.delay
-};
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
@@ -137,18 +130,7 @@ use stm32h7xx_hal::{
 }; 
 
 
-
-#[cfg(feature = "stm32f4xx")]
-type I2cType = I2c<I2C2>;
-
-#[cfg(feature = "stm32g4xx")]
-type I2cType = I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>;
-
-#[cfg(feature = "stm32h7xx")]
-type I2cType = I2c<I2C2>;
-
-
-type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2cType>, I2cType>, AltDelay>;
+type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2c2Type>, I2c2Type>, AltDelay>;
 
 
 ///////////////////////////////////////////////////////////////

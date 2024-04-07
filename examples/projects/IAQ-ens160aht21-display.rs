@@ -90,7 +90,7 @@ fn main() -> ! {
     let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
  
     let dp = Peripherals::take().unwrap(); 
-    let (i2c1, i2c2, led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(dp);
+    let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(dp);
 
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
