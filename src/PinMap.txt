@@ -1,0 +1,128 @@
+
+
+
+
+///////////////////////////////   /////////////////////////////// 
+
+Using I2C1 for oled display and  I2C2 for ccs811.
+The hardware configuration for the STM32F103 "Bluepill" and  STM32F401 "Blackpill" boards use 
+  I2C1 for oled:    PB8 for SCL, PB9 for SDA.
+  I2C2 for ccs811: PB10 for SCL, PB3 for SDA,
+   ccs811:  VCC 1.8 to 3.7v
+   WAKE  GND to communicate. VCC puts sensor to sleep. (GND for this example)
+   RST pull to GND to resets sensor (NC (floating)  for this example)
+   INT  hardware interrupt output. (no connection for this example)
+   ADDR altrnate address if available. Low hex 0x5A, high  hex 0x5B.
+
+
+///////////////////////////////  stm32f1xx  /////////////////////////////// 
+
+
+PC13 as LEDPIN   gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
+ 
+
+dp.SPI1,
+        (
+            gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
+            gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso
+            gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
+        ),
+        &mut afio.mapr,
+        MODE,
+        8.MHz(),
+
+Sx127x::spi(
+        spi,                                             //Spi
+        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin        
+        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
+        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
+        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
+
+let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh); // led on pc13 with on/off
+
+
+///////////////////////////////  stm32f4xx  /////////////////////////////// 
+
+TIM5   delay = dp.TIM5.delay::<1000000_u32>(&clocks);
+
+PC13   as LEDPIN gpiox.pc13.into_push_pull_output();
+
+PA8     opendrain      gpioa.pa8.into_open_drain_output();
+
+PB9    sda1       I2C1.i2c(     (gpiob.pb8.into_alternate_open_drain(),  // scl
+PB8    scl1                      gpiob.pb9.into_alternate_open_drain()   // sda
+                                      ), 400.kHz(), &clocks);
+
+PB10   sda2       I2C2.i2c(     (gpiob.pb10.into_alternate().set_open_drain(), // scl
+PB3    scl2                      gpiob.pb3.into_alternate().set_open_drain()   // sda
+                                      ), 400.kHz(), 
+
+PA9    tx1        dp.USART1    gpioa.pa9.into_alternate(), 
+PA10   rx1                     gpioa.pa10.into_alternate(),
+                                Config::default().baudrate(9600.bps()),
+
+PA2    tx2        dp.USART2    gpioa.pa2.into_alternate(), 
+PA3    rx2                     gpioa.pa3.into_alternate(), 
+                                Config::default().baudrate(9600.bps()),
+
+PA5     sck       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
+PA6     miso                   gpioa.pa6.into_alternate(), // miso 
+PA7     mosi                   gpioa.pa7.into_alternate(), // mosi 
+                                MODE,  8.MHz(),
+
+PA1     CsPin     Sx127x::spi( gpioa.pa1.into_push_pull_output(), //CsPin         
+PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.           CHANGED
+PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status. CHANGED
+PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
+                                    delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
+
+PC13
+PB3 PB8 PB9 PB10
+PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8  PA9 PA10
+
+
+///////////////////////////////  stm32g4xx  /////////////////////////////// 
+
+TIM5   let timer2 = Timer::new(dp.TIM5, &clocks);
+       let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
+
+PC13   as LEDPIN gpiox.pc13.into_push_pull_output(); //NOT SURE WHAT THIS SHOULD BE
+
+PB7    opendrain            gpiob.pb7.into_open_drain_output();                           CHANGED
+
+PB9    sda1       I2C1.i2c(     gpiob.pb9.into_alternate_open_drain(),  //sda  NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
+PB8    scl1                     gpiob.pb8.into_alternate_open_drain(),  //scl
+                               Config::new(400.kHz()), 
+
+PA8    sda2        I2C2.i2c(    gpioa.pa8.into_alternate_open_drain(),   //sda
+PC4    scl2                     gpioa.pa9.into_alternate_open_drain(),   //scl           CHANGED
+                                Config::new(400.kHz()), 
+
+PA9    tx1         USART1     gpioa.pa9.into_alternate(), 
+PA10   rx1                    gpioa.pa10.into_alternate(), 
+                               FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
+
+PA2    tx2         USART2     gpioa.pa2.into_alternate(), 
+PA3    rx2                    gpioa.pa3.into_alternate(),
+                               FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
+
+PA5     sck        SPI1.spi(   (gpioa.pa5.into_alternate(), // sck 
+PA6     miso                    gpioa.pa6.into_alternate(), // miso
+PA7     mosi                    gpioa.pa7.into_alternate(), // mosi
+                                ), MODE_0, 400.kHz(),  &mut rcc, );
+
+PA1     CsPin        Sx127x     gpioa.pa1.into_push_pull_output(), //CsPin         
+PB4     BusyPin                 gpiob.pb8.into_floating_input(),   //BusyPin  DI00            CHANGED
+PB5     ReadyPin                gpiob.pb9.into_floating_input(),   //ReadyPin DI01            CHANGED
+PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin      
+                                delay,  &CONFIG_RADIO, ).unwrap(); // should handle error
+
+
+PC4 PC13
+PB4 PB5 PB7 PB8 PB9    
+PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8 PA9 PA10
+    
+
+
+
+    

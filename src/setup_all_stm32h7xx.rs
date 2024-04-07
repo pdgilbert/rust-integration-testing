@@ -1,9 +1,9 @@
 
 pub use stm32h7xx_hal::{
-      pac::{Peripherals, CorePeripherals, USART1},
+      pac::{Peripherals, CorePeripherals, I2C1, I2C2, USART1},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Error},
-      gpio::{Output, OpenDrain},
+      gpio::{Output, OpenDrain, PushPull},
       prelude::*,
 };
 
@@ -12,6 +12,7 @@ pub use stm32h7xx_hal::{
       rcc::CoreClocks as Clocks,
       delay::DelayFromCountDownTimer,
       gpio::{gpioa::PA8},
+      gpio::{gpioc::PC13 as LEDPIN},
 };
 
 //   //////////////////////////////////////////////////////////////////////
@@ -39,23 +40,26 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
    let clocks = ccdr.clocks;
 
    let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
+   let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
+   let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
+   let gpiof = dp.GPIOF.split(ccdr.peripheral.GPIOF);
 
    let mut pin = gpioa.pa8.into_open_drain_output();
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-   let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-   let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
-
+   //let i2cx = ccdr.peripheral.I2C1;  //.I2C4;
    //let i2c = setup_i2c1(dp.I2C1, gpiob, i2cx, &clocks);
-   let i2c1 =  i2c1.i2c((gpiob.pb8.into_alternate().set_open_drain(), // scl  
-              gpiob.pb9.into_alternate().set_open_drain(), // sda
-             ), 400.kHz(), i2cx1, &clocks),
+   let i2c1 =  dp.I2C1.i2c(
+                    (gpiob.pb8.into_alternate().set_open_drain(), // scl  
+                     gpiob.pb9.into_alternate().set_open_drain(), // sda
+                    ), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
 
-   let i2c2 =  i2c2.i2c((gpiof.pf1.into_alternate().set_open_drain(), // scl
-              gpiof.pf0.into_alternate().set_open_drain(), // sda
-             ), 400.kHz(), i2cx2, &clocks)
+   let i2c2 =  dp.I2C2.i2c(
+                    (gpiof.pf1.into_alternate().set_open_drain(), // scl
+                     gpiof.pf0.into_alternate().set_open_drain(), // sda
+                    ), 400.kHz(), ccdr.peripheral.I2C2, &clocks);
 
-   let mut led = setup_led(dp.GPIOC.split(ccdr.peripheral.GPIOC));
+   let mut led: LedType = gpioc.pc13.into_push_pull_output();
    led.off();
 
    // CountDownTimer not supported by embedded-hal 1.0.0 ??

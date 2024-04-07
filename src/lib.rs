@@ -19,16 +19,16 @@ pub mod delay;
 pub mod delay_syst;
 pub mod alt_delay;
 pub mod led;
-//pub mod i2c;
 
 pub mod usart;
-
-//pub mod i2c1_i2c2_led_delay;
 
 pub mod  setup;
 
 // Note, if feature gate is not set then compiling for the module will be 
 //  attempted, and features gates are not set in the module, making a mess.
+
+//#[cfg(not(any(feature="stm32f0xx", feature="stm32f1xx", feature="stm32f3xx", feature="stm32f4xx", feature="stm32f7xx", feature="stm32g0xx", feature="stm32g4xx", feature="stm32h7xx",  feature="stm32l0xx",  feature="stm32l1xx", feature="stm32l4xx")))]
+// hal featuremust be set
 
 #[cfg(feature = "stm32f0xx")]
 pub mod  setup_all_stm32f0xx;
@@ -62,8 +62,6 @@ pub mod  setup_all_stm3211xx;
 
 #[cfg(feature = "stm32l4xx")]
 pub mod  setup_all_stm3214xx;
-
-//pub mod  setup_all_ALL;
 
 pub mod lora; 
 
