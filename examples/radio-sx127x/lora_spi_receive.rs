@@ -17,11 +17,19 @@ use cortex_m_semihosting::*;
 use embedded_hal::delay::DelayNs;
 
 use radio::Receive;
-use radio_sx127x::prelude::PacketInfo;
 
-use rust_integration_testing_of_examples::lora;
-use rust_integration_testing_of_examples::led;
+use radio_sx127x::{
+    //Error as sx127xError, // Error name conflict with hals
+    prelude::*, // prelude has Sx127x,
+    prelude::PacketInfo
+};
+
+
+use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::led::LED;
+
+//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
 use hal::{
@@ -37,9 +45,12 @@ fn to_str(x: &[u8]) -> &str {
 
 #[entry]
 fn main() -> ! {
-    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
-    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
+    let dp =Peripherals::take().unwrap();
+    let (mut led, spi, spiext, delay) = setup::led_spi_spiext_delay_from_dp(dp); 
     led.off();
+
+    let mut lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, &CONFIG_RADIO
+       ).unwrap(); // should handle error
 
     lora.start_receive().unwrap(); // should handle error
 
