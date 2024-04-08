@@ -18,7 +18,9 @@ pub mod monoclock;
 pub mod delay;
 pub mod delay_syst;
 pub mod alt_delay;
-pub mod led;
+
+pub mod led;   // has trait and default impl
+pub mod lora;  // has structures and constants
 
 pub mod usart;
 
@@ -63,7 +65,6 @@ pub mod  setup_all_stm3211xx;
 #[cfg(feature = "stm32l4xx")]
 pub mod  setup_all_stm3214xx;
 
-pub mod lora; 
 
 //pub mod spi; move problems need to be figured out for this
 

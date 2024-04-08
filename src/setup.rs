@@ -44,10 +44,22 @@ pub use  crate::setup_all_stm32l4xx::*;
 
 // This enforces a common pin usage in all examples, which simplifies rewiring for hardware tests
 
-pub fn pin_i2c1_i2c2_led_tx_spi_spiext_delay_clocks_from_dp(dp: Peripherals) ->  
+pub fn pin_i2c1_i2c2_led_tx_rx_spi_spiext_delay_clocks_from_dp(dp: Peripherals) ->  
                            (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType,  RxType,  SpiType, SpiExt, Delay, Clocks) {    
    let (pin, i2c1, i2c2, led, tx, rx, spi, spiext, delay, clocks) =  all_from_dp(dp);
    (pin, i2c1, i2c2, led, tx, rx, spi, spiext, delay, clocks) 
+}
+
+pub fn i2c1_i2c2_led_spi_spiext_delay_from_dp(dp: Peripherals) ->  
+                           (I2c1Type, I2c2Type, LedType, SpiType, SpiExt, Delay) {    
+   let (_pin, i2c1, i2c2, led, _tx, _rx, spi, spiext, delay, _clocks) =  all_from_dp(dp);
+   (i2c1, i2c2, led, spi, spiext, delay) 
+}
+
+pub fn led_tx_rx_spi_spiext_delay_from_dp(dp: Peripherals) ->  
+                           (LedType, TxType,  RxType,  SpiType, SpiExt, Delay) {    
+   let (_pin, _i2c1, _i2c2, led, tx, rx, spi, spiext, delay, _clocks) =  all_from_dp(dp);
+   (led, tx, rx, spi, spiext, delay) 
 }
 
 pub fn led_spi_spiext_delay_from_dp(dp: Peripherals) ->  
@@ -98,38 +110,46 @@ pub fn pin_i2c_led_tx_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType
    (pin, i2c, led, tx, delay) 
 }
 
+pub fn i2c_led_tx_from_dp(dp: Peripherals) ->  (I2cType, LedType, TxType) {    
+   let (_pin, i2c, _i2c2, led, tx, _rx, _spi, _spiext, _delay, _clocks) =  all_from_dp(dp);
+   (i2c, led, tx) 
+}
+
+
+//    ///// filter   no_tx_rx_spi below
+
+fn no_tx_rx_spi_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedType, Delay, Clocks) {    
+   let (pin, i2c1, i2c2, led, _tx, _rx, _spi, _spiext, delay, clocks) = all_from_dp(dp);
+   (pin, i2c1, i2c2, led, delay, clocks)
+}
+
 pub fn pin_i2c_led_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, I2cType, LedType, Delay) {    
-   let (pin, i2c, _i2c2, led, _tx, _rx, _spi, _spiext, delay, _clocks) =  all_from_dp(dp);
+   let (pin, i2c, _i2c2, led, delay, _clocks) =  no_tx_rx_spi_from_dp(dp);
    (pin, i2c, led, delay) 
 }
 
 pub fn i2c_led_delay_from_dp(dp: Peripherals) ->  (I2cType, LedType, Delay) {    
-   let (_pin, i2c, _i2c2, led, _tx, _rx, _spi, _spiext, delay, _clocks) =  all_from_dp(dp);
+   let (_pin, i2c, _i2c2, led, delay, _clocks) =  no_tx_rx_spi_from_dp(dp);
    (i2c, led, delay) 
 }
 
-pub fn i2c_led_tx_from_dp(dp: Peripherals) ->  (I2cType, LedType, TxType) {    
-   let (_pin, i2c, _i2c2, led, tx, _rx, _spi, _spiext, _delay, _clocks) = all_from_dp(dp);
-   (i2c, led, tx)
-}
-
 pub fn i2c_delay_from_dp(dp: Peripherals) ->  (I2cType, Delay) {    
-   let (_pin, i2c, _i2c2, _led, _tx, _rx, _spi, _spiext, delay, _clocks) =  all_from_dp(dp);
+   let (_pin, i2c, _i2c2, _led, delay, _clocks) =  no_tx_rx_spi_from_dp(dp);
    (i2c, delay) 
 }
 
 pub fn i2c_led_from_dp(dp: Peripherals) ->  (I2cType, LedType) {    
-   let (_pin, i2c, _i2c2, led, _tx, _rx, _spi, _spiext, _delay, _clocks) =  all_from_dp(dp);
+   let (_pin, i2c, _i2c2, led, _delay, _clocks) =  no_tx_rx_spi_from_dp(dp);
    (i2c, led) 
 }
 
 pub fn pin_delay_from_dp(dp: Peripherals) ->  (OpenDrainType, Delay) {    
-   let (pin, _i2c, _i2c2, _led, _tx, _rx, _spi, _spiext, delay, _clocks) =  all_from_dp(dp);
+   let (pin, _i2c, _i2c2, _led, delay, _clocks) =  no_tx_rx_spi_from_dp(dp);
    (pin, delay) 
 }
 
 pub fn led_from_dp(dp: Peripherals) ->  LedType {    
-   let (_pin, _i2c, _i2c2, led, _tx, _rx, _spi, _spiext, _delay, _clocks) = all_from_dp(dp);
+   let (_pin, _i2c, _i2c2, led, _delay, _clocks) = no_tx_rx_spi_from_dp(dp);
    led
 }
 

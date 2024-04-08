@@ -1,33 +1,60 @@
 
-pub use stm32l4xx_hal::{
-      pac::{Peripherals, CorePeripherals, USART1},
+pub use stm32l4xx_hal as hal;
+pub use hal::{
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      spi::{Spi},
       pac::{I2C1, I2C2},
       i2c::I2c,
-      serial::{Serial, Tx, Error},
-      gpio::{Output, OpenDrain},
+      i2c::I2c,   //this is a type
+      serial::{Serial, Tx, Rx, Error},
+      gpio::{Output, OpenDrain, PushPull},
       prelude::*,
 };
 
-use stm32l4xx_hal::{
-      serial::{Config as serialConfig, },
-      gpio::{gpioa::PA8},
+pub use stm32l4xx_hal::{
+    serial::{Config as serialConfig, },
+    gpio::{gpioa::PA8},
+    gpio::{gpioc::{PC13 as LEDPIN}},
 };
 
+use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
-
-pub use crate::led::{setup_led, LED, LedType};
 
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
-//pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
-//pub type I2c1Type =  I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
+
+pub type I2c1Type = I2c<I2C1, (PB8<Alternate<OpenDrain, 4u8>>, PB9<Alternate<OpenDrain, 4u8>>)>;
+pub type I2c1Type =  I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)>;
+pub type I2cType  = I2c1Type; 
+
+pub use crate::led::LED;  // defines trait and default methods
+pub type LedType = LEDPIN<Output<PushPull>>;
+impl LED for LedType {}    
+
 pub type TxType = Tx<USART1>;
+pub type RxType = Rx<USART1>;
+
+pub type SpiType =  Spi<SPI1>;
+pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
+                    pub busy:  Pin<'B', 4>, 
+                    pub ready: Pin<'B', 5>, 
+                    pub reset: Pin<'A', 0, Output>
+}
+
+
+// this really should be set in example code
+pub const MODE: Mode = Mode {
+    //  SPI mode for radio
+    phase: Phase::CaptureOnSecondTransition,
+    polarity: Polarity::IdleHigh,
+};
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) -> 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
     let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain();
     let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
@@ -65,6 +92,25 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
    let mut led = setup_led(dp.GPIOC.split(&mut rcc.ahb2));
    led.off();
 
+   let spi1 = Spi::new(
+       dp.SPI1,
+       (
+           gpioa.pa5.into_alternate(), // sck  
+           gpioa.pa6.into_alternate(), // miso 
+           gpioa.pa7.into_alternate(), // mosi 
+       ),
+       MODE,
+       8.MHz(),
+       &clocks,
+   );
+   
+   let spiext = SpiExt {
+        cs:    gpioa.pa1.into_push_pull_output(), //CsPin         
+        busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
+        ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
+        reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
+        };   
+
    let delay = DelayType{};
 
    let (tx, _rx) = Serial::usart1(
@@ -72,10 +118,10 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
         (
             gpioa
                 .pa9
-                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9  for console
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //tx pa9
             gpioa
                 .pa10
-                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10 for console
+                .into_alternate_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrh), //rx pa10
         ),
         Config::default().baudrate(115200.bps()),
         clocks,
@@ -83,6 +129,6 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
    )
    .split();
 
-   (pin, i2c1, i2c2, led, tx, delay, clocks)
+   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
 }
 

@@ -55,7 +55,6 @@ use embedded_graphics::{
     text::{Baseline, Text},
 };
 
-
 /////////////////////   hals
 
 use embedded_hal::{
@@ -65,18 +64,23 @@ use embedded_hal::{
 
 use heapless;
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-   pac::{Peripherals},
+
+/////////////////////   lora
+
+use radio::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
+
+use radio_sx127x::{
+    //Error as sx127xError, // Error name conflict with hals
+    prelude::*, // prelude has Sx127x,
 };
+
+//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 
 /////////////////////  
 
-use rust_integration_testing_of_examples::setup::LED;
 use rust_integration_testing_of_examples::setup;
-
-use radio::Transmit;
-use rust_integration_testing_of_examples::lora;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
 //////////////////////////////////////////////////////////////////////////////////// 
 
@@ -86,11 +90,12 @@ fn main() -> ! {
     //rprintln!("example");
     //hprintln!("ens160-co2-voc-iaq-display example").unwrap();
 
-    // INTERESTING. BUT DOES NOT RUN. dp gets consumed but can be re-taken as modified.
-    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
- 
-    let dp = Peripherals::take().unwrap(); 
-    let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(dp);
+    let dp =Peripherals::take().unwrap();
+    let (i2c1, i2c2, mut led, spi, spiext, delay) = setup::i2c1_i2c2_led_spi_spiext_delay_from_dp(dp); 
+    led.off();
+
+    let mut lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, &CONFIG_RADIO
+       ).unwrap(); // should handle error   //delay is available in lora
 
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
@@ -138,7 +143,7 @@ fn main() -> ! {
                         },
     };
 
-    delay.delay_ms(250);
+    lora.delay_ms(250);
     let z = ens.operational();
 
     match z {
@@ -166,7 +171,7 @@ fn main() -> ! {
 
     ///////////////////// initialize loop variables
 
-    delay.delay_ms(1000);
+    lora.delay_ms(1000);
 
     let mut lines: [heapless::String<32>; 4] = [heapless::String::new(), heapless::String::new(),
                                                 heapless::String::new(), heapless::String::new(), ];
@@ -187,8 +192,10 @@ fn main() -> ! {
     loop {
         // Blink LED to check that everything is actually running.
         // If the LED is off, something went wrong.
-        led.blink(100_u16, &mut delay);
-        delay.delay_ms(100);
+        // led.blink(100_u16, &mut delay);  delay consumed by lora above
+        led.on();
+        lora.delay_ms(200);
+        led.off();
 
 //        // Read humidity and temperature.
 //        let (h, t) = aht.read().unwrap();
@@ -268,7 +275,7 @@ fn main() -> ! {
             }
         }
     
-        delay.delay_ms(5000);
+        lora.delay_ms(5000);
         //hprintln!("loop end").unwrap();
     }
     //let i2c = ens.release(); // destruct driver to re-use bus

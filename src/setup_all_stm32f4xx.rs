@@ -1,7 +1,7 @@
 use stm32f4xx_hal as hal;
 pub use hal::{
-      pac::{Peripherals, CorePeripherals, USART1, I2C1, I2C2},
-    spi::{Spi},
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
       gpio::{Output, OpenDrain, PushPull},
@@ -11,17 +11,16 @@ pub use hal::{
 // above are commom to all hals. Below are possibly different.
 
 pub use stm32f4xx_hal::{
-    pac::{SPI1, TIM5},
+    pac::{TIM5},
     rcc::{Clocks, RccExt},
     timer::TimerExt,
+    serial::{config::Config},
     gpio::{GpioExt, Pin}, 
     gpio::{gpioa::PA8},
-    serial::{config::Config},
     gpio::{gpioc::{PC13 as LEDPIN}},
 };
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
-
 
 //   //////////////////////////////////////////////////////////////////////
 
@@ -36,7 +35,6 @@ pub type I2cType  = I2c1Type;
 // impl LED would work in function signature but does not yet work in rtic share
 // or implimentation of methods,  so LedType is defined:
 pub use crate::led::LED;  // defines trait and default methods
-
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
@@ -44,7 +42,6 @@ pub type TxType = Tx<USART1>;
 pub type RxType = Rx<USART1>;
 
 pub type SpiType =  Spi<SPI1>;
-
 pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
                     pub busy:  Pin<'B', 4>, 
                     pub ready: Pin<'B', 5>, 
@@ -64,16 +61,17 @@ pub const MODE: Mode = Mode {
 
 pub fn all_from_dp(dp: Peripherals) -> 
                (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
+   let rcc = dp.RCC.constrain();
+   let clocks = rcc.cfgr.freeze();
+   
    let gpioa = dp.GPIOA.split();
    let gpiob = dp.GPIOB.split();
+   let gpioc   = dp.GPIOC.split();
 
    let mut pin = gpioa.pa8.into_open_drain_output();
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
 
-   //let i2c = setup_i2c1(dp.I2C1, dp.GPIOB.split(), &clocks);
    let scl = gpiob.pb8.into_alternate_open_drain(); 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
    let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
@@ -82,8 +80,6 @@ pub fn all_from_dp(dp: Peripherals) ->
    let sda = gpiob.pb3.into_alternate_open_drain();
    let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
 
-   //let mut led = setup_led(dp.GPIOC.split()); 
-   let gpioc   = dp.GPIOC.split();
    let mut led = gpioc.pc13.into_push_pull_output();
    led.off();
 
@@ -94,9 +90,7 @@ pub fn all_from_dp(dp: Peripherals) ->
            gpioa.pa6.into_alternate(), // miso 
            gpioa.pa7.into_alternate(), // mosi 
        ),
-       MODE,
-       8.MHz(),
-       &clocks,
+       MODE, 8.MHz(), &clocks,
    );
    
    let spiext = SpiExt {
@@ -106,12 +100,12 @@ pub fn all_from_dp(dp: Peripherals) ->
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
         };   
 
-   let delay = dp.TIM5.delay(&clocks);
-
    let tx = gpioa.pa9.into_alternate();
    let rx = gpioa.pa10.into_alternate();
    let (tx, rx) = Serial::new(dp.USART1, (tx, rx), Config::default().baudrate(115200.bps()), &clocks,
                       ).unwrap().split();
+
+   let delay = dp.TIM5.delay(&clocks);
 
    (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
 }

@@ -118,9 +118,9 @@ PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin
                                 delay,  &CONFIG_RADIO, ).unwrap(); // should handle error
 
 
-PC4 PC13
-PB4 PB5 PB7 PB8 PB9    
-PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8 PA9 PA10
+PC4, PC13
+PB4, PB5, PB7, PB8, PB9    
+PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10
     
 
 

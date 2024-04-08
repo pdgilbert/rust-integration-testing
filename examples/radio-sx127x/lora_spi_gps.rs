@@ -19,22 +19,26 @@ use embedded_io::{Read};
 
 use radio::Transmit;
 
-use rust_integration_testing_of_examples::lora;
-use rust_integration_testing_of_examples::led;
-use rust_integration_testing_of_examples::led::LED;
-use rust_integration_testing_of_examples::usart;
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-   pac::{Peripherals},
+use radio_sx127x::{
+    //Error as sx127xError, // Error name conflict with hals
+    prelude::*, // prelude has Sx127x,
 };
+
+use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
+
+//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
+
 
 #[entry]
 fn main() -> ! {
-    let mut lora = lora::setup_lora_from_dp(Peripherals::take().unwrap()); //delay is available in lora
-    let mut led  = led::setup_led_from_dp(Peripherals::take().unwrap()); 
+    let dp =Peripherals::take().unwrap();
+    let (mut led, _tx, mut rx_gps, spi, spiext, delay) = setup::led_tx_rx_spi_spiext_delay_from_dp(dp); 
     led.off();
-    let ( _tx1_gps, mut rx_gps) = usart::setup_1_from_dp(Peripherals::take().unwrap()); 
+ 
+    let mut lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, &CONFIG_RADIO
+       ).unwrap(); // should handle error
 
     // byte buffer   Nov 2020 limit data.len() < 255 in radio_sx127x  .start_transmit
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();

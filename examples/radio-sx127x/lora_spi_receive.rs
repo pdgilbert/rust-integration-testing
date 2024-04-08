@@ -26,15 +26,10 @@ use radio_sx127x::{
 
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::led::LED;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
 //use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
 use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-   pac::{Peripherals},
-};
 
 fn to_str(x: &[u8]) -> &str {
     match core::str::from_utf8(x) {

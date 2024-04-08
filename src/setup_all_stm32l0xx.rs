@@ -1,8 +1,10 @@
-
-pub use stm32l0xx_hal::{
-      pac::{Peripherals, CorePeripherals, USART1},
-      serial::{Serial, Tx, Error},
-      gpio::{gpioa::PA8, Output, OpenDrain},
+pub use stm32l0xx_hal as hal;
+pub use hal::{
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      spi::{Spi},
+      i2c::I2c,   //this is a type
+      serial::{Serial, Tx, Rx, Error},
+      gpio::{Output, OpenDrain, PushPull},
       prelude::*,
 };
 
@@ -10,27 +12,48 @@ pub use stm32l0xx_hal::{
 use stm32l0xx_hal::{
     rcc, // for ::Config but note name conflict with serial
     serial::{Config, Serial1Ext, },
+    gpio::{gpioa::PA8},
 };
 
+use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
-
-pub use crate::i2c::{setup_i2c1, I2c1Type as I2cType,};
 
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
+
+pub type I2c1Type = I2c<I2C1>;
+pub type I2c2Type = I2c<I2C2>;
+pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
 pub type TxType = Tx<USART1>;
+pub type RxType = Rx<USART1>;
+
+pub type SpiType =  Spi<SPI1>;
+pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
+                    pub busy:  Pin<'B', 4>, 
+                    pub ready: Pin<'B', 5>, 
+                    pub reset: Pin<'A', 0, Output>
+}
+
+
+// this really should be set in example code
+pub const MODE: Mode = Mode {
+    //  SPI mode for radio
+    phase: Phase::CaptureOnSecondTransition,
+    polarity: Polarity::IdleHigh,
+};
 
 //   //////////////////////////////////////////////////////////////////////
 
 
-pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, Delay, Clocks) {
+pub fn all_from_dp(dp: Peripherals) -> 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
    //let clocks = rcc.clocks;
 
@@ -59,9 +82,28 @@ pub fn all_from_dp(dp: Peripherals) ->  (OpenDrainType, I2c1Type, I2c2Type, LedT
     let led = gpiox.pc13.into_push_pull_output(); 
    led.off();
 
+   let spi1 = Spi::new(
+       dp.SPI1,
+       (
+           gpioa.pa5.into_alternate(), // sck  
+           gpioa.pa6.into_alternate(), // miso 
+           gpioa.pa7.into_alternate(), // mosi 
+       ),
+       MODE,
+       8.MHz(),
+       &clocks,
+   );
+   
+   let spiext = SpiExt {
+        cs:    gpioa.pa1.into_push_pull_output(), //CsPin         
+        busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
+        ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
+        reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
+        };   
+
    let delay = DelayType{};
    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, clocks);
 
-   (pin, i2c1, i2c2, led, tx, delay, clocks)
+   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
 }
 
