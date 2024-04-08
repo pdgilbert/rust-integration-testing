@@ -11,9 +11,13 @@ pub use hal::{
 
 pub use stm32h7xx_hal::{
       rcc::CoreClocks as Clocks,
+      spi::{Enabled}, // may need SpiExt from here, but name conflict
       delay::DelayFromCountDownTimer,
-      gpio::{gpioa::PA8},
-      gpio::{gpioc::PC13 as LEDPIN},
+      gpio::{Input, GpioExt,
+             gpioa::{PA0, PA1, PA8},
+             gpiob::{PB4, PB5, PB8, PB9},
+             gpiof::{PF0, PF1},
+             gpioc::PC13 as LEDPIN},
 };
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
@@ -35,11 +39,11 @@ impl LED for LedType {}
 pub type TxType  = Tx<USART1>;
 pub type RxType = Rx<USART1>;
 
-pub type SpiType =  Spi<SPI1>;
-pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
-                    pub busy:  Pin<'B', 4>, 
-                    pub ready: Pin<'B', 5>, 
-                    pub reset: Pin<'A', 0, Output>
+pub type SpiType =  Spi<SPI1, Enabled>;
+pub struct SpiExt { pub cs:    PA1<Output<PushPull>>, 
+                    pub busy:  PB4<Input>, 
+                    pub ready: PB5<Input>, 
+                    pub reset: PA0<Output<PushPull>>
 }
 
 
@@ -84,16 +88,12 @@ pub fn all_from_dp(dp: Peripherals) ->
    let mut led: LedType = gpioc.pc13.into_push_pull_output();
    led.off();
 
-   let spi1 = Spi::new(
-       dp.SPI1,
-       (
-           gpioa.pa5.into_alternate(), // sck  
-           gpioa.pa6.into_alternate(), // miso 
-           gpioa.pa7.into_alternate(), // mosi 
+   let spi1 = dp.SPI1.spi(
+       (gpioa.pa5.into_alternate(), // sck  
+        gpioa.pa6.into_alternate(), // miso 
+        gpioa.pa7.into_alternate(), // mosi 
        ),
-       MODE,
-       8.MHz(),
-       &clocks,
+       MODE, 8.MHz(), ccdr.peripheral.SPI1, &clocks,
    );
    
    let spiext = SpiExt {
@@ -107,7 +107,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
    let delay = DelayFromCountDownTimer::new(timer);
 
-   let (tx, _rx) = dp.USART1.serial(
+   let (tx, rx) = dp.USART1.serial(
             (
                 gpioa.pa9.into_alternate(), //tx pa9
                 gpioa.pa10.into_alternate(),

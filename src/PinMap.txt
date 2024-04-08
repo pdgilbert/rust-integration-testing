@@ -124,5 +124,44 @@ PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10
     
 
 
+///////////////////////////////  stm32h7xx  /////////////////////////////// 
+
+TIM5   delay = dp.TIM5.delay::<1000000_u32>(&clocks);
+
+PC13   as LEDPIN gpiox.pc13.into_push_pull_output();
+
+PA8     opendrain      gpioa.pa8.into_open_drain_output();
+
+PB9    sda1       I2C1.i2c(     (gpiob.pb8.into_alternate_open_drain(),  // scl
+PB8    scl1                      gpiob.pb9.into_alternate_open_drain()   // sda
+                                      ), 400.kHz(), &clocks);
+
+PF0   sda2       I2C2.i2c(     (gpiof.pf0.into_alternate().set_open_drain(), // scl
+PF1    scl2                      gpiof.pf1.into_alternate().set_open_drain()   // sda
+                                      ), 400.kHz(), 
+
+PA9    tx1        dp.USART1    gpioa.pa9.into_alternate(), 
+PA10   rx1                     gpioa.pa10.into_alternate(),
+                                Config::default().baudrate(9600.bps()),
+
+PA2    tx2        dp.USART2    gpioa.pa2.into_alternate(), 
+PA3    rx2                     gpioa.pa3.into_alternate(), 
+                                 Config::default().baudrate(9600.bps()),
+
+PA5     sck       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
+PA6     miso                   gpioa.pa6.into_alternate(), // miso 
+PA7     mosi                   gpioa.pa7.into_alternate(), // mosi 
+                                MODE,  8.MHz(),
+
+PA1     CsPin     Sx127x::spi( gpioa.pa1.into_push_pull_output(), //CsPin         
+PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.           CHANGED
+PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status. CHANGED
+PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
+                                    delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
+
+PF0, PF1
+PC13
+PB4, PB5, PB8, PB9
+PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8,  PA9, PA10
 
     
