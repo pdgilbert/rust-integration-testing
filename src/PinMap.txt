@@ -17,28 +17,38 @@ The hardware configuration for the STM32F103 "Bluepill" and  STM32F401 "Blackpil
 
 ///////////////////////////////  stm32f1xx  /////////////////////////////// 
 
+TIM3   delay =  dp.TIM3.delay::<1000000_u32>(&clocks);
 
 PC13 as LEDPIN   gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
  
+PA8     opendrain     gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
+
+        
+PB6    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
+PB7    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
+
+PB10   scl2   dp.I2C2,  gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh),
+PB11   sda2             gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh),
+
+PA9    tx1    dp.USART1, (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
+PA10   rx1                gpioa.pa10,
 
 dp.SPI1,
         (
-            gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
-            gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso
-            gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
-        ),
-        &mut afio.mapr,
-        MODE,
-        8.MHz(),
+PA5     sck                gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
+PA6     miso               gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso
+PA7     mosi              gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
 
-Sx127x::spi(
-        spi,                                             //Spi
-        gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin        
-        gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
-        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
-        gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
 
-let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh); // led on pc13 with on/off
+PA1     CsPin     Sx127x::spi(     gpioa.pa1.into_push_pull_output(&mut gpioa.crl), //CsPin        
+PB8     BusyPin         gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
+PB9     ReadyPin        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
+PA0     ResetPin         gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
+
+
+PC13
+PB6 PB7 PB8 PB9 PB10 PB11
+PA0 PA1 PA5 PA6  PA7  PA8  PA9 PA10
 
 
 ///////////////////////////////  stm32f4xx  /////////////////////////////// 
