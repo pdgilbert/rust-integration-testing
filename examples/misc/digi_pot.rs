@@ -40,8 +40,6 @@ use cortex_m_rt::entry;
 use mcp4x;
 
 use rust_integration_testing_of_examples::setup::{LED, LedType};
-// need to resolve move problem to get this to work
-//use rust_integration_testing_of_examples::spi::{setup_spi, SpiType};
 
 pub use embedded_hal::delay::DelayNs;
 

@@ -24,6 +24,8 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
+pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;

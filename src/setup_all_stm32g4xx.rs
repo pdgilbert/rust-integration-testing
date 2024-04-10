@@ -27,6 +27,8 @@ pub use stm32g4xx_hal::{
 
 //   //////////////////////////////////////////////////////////////////////
 
+pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PB7<Output<OpenDrain>>;

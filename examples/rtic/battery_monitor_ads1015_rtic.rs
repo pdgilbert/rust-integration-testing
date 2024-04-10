@@ -80,12 +80,10 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    /////////////////////   hals
-
-    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-
+    /////////////////////  setup
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType};
+
 
     use core::cell::RefCell;
     use shared_bus::{I2cProxy};

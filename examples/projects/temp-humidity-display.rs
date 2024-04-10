@@ -335,9 +335,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-
-    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type, I2c2Type, Delay};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType, I2c1Type, I2c2Type, Delay};
     use rust_integration_testing_of_examples::setup;
 
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;

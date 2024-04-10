@@ -75,15 +75,11 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    // NEED THIS UNTIL ALL EXAMPLES ARE CONVERTED TO SOMETHING BETTER (as in stm32f4xx)
-    #[allow(unused_imports)]
+    #[allow(unused_imports)]  // NEED THIS ?
 
-    use rust_integration_testing_of_examples::dp::{Peripherals};
-    use rust_integration_testing_of_examples::cp::{CorePeripherals};
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{
-        I2cType, LED, LedType, DelayNs, MONOCLOCK};
-    use rust_integration_testing_of_examples::delay::Delay;
+    use rust_integration_testing_of_examples::setup::{Peripherals,
+        I2cType, LED, LedType, DelayNs, Delay, MONOCLOCK};
 
     #[cfg(feature = "stm32f4xx")]
     use stm32f4xx_hal::{

@@ -48,10 +48,8 @@ mod app {
     const ONE_DURATION: u32 = 20;  // used as milliseconds
     const TEN_DURATION: u32 = 500;
 
-    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
-
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{LED, LedType};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType};
 
 
     #[init]

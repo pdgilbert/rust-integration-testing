@@ -72,11 +72,8 @@ mod app {
 
 
     /////////////////////   setups
-    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type as I2cType, TxType};
-
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType, I2c1Type as I2cType, TxType};
 
     /////////////////////  
 

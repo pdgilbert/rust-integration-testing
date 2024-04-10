@@ -64,10 +64,9 @@ mod app {
         prelude::*,
     };
 
-    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-
     use rust_integration_testing_of_examples::usart;
     use rust_integration_testing_of_examples::usart::{Tx1Type, Rx2Type};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK};
 
     use embedded_io::{Read, Write};
 

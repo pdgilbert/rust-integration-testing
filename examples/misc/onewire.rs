@@ -61,8 +61,7 @@ use onewire;
 //}
 
 use rust_integration_testing_of_examples::setup;
-
-use rust_integration_testing_of_examples::delay::{Delay2Type as Delay};
+use rust_integration_testing_of_examples::setup::Delay;
 
 // "hal" is used for items that are the same in all hal  crates
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;

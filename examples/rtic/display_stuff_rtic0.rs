@@ -58,10 +58,8 @@ mod app {
     const READ_INTERVAL: u32 = 10;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::monoclock::{MONOCLOCK};
-
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type, LED, LedType, Delay};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, Delay};
 
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
     use hal::{

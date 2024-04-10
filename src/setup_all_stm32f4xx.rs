@@ -24,6 +24,8 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
+pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
@@ -38,8 +40,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
+
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 

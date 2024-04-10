@@ -10,10 +10,7 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-
 pub mod stm32xxx_as_hal;   
-
-pub mod monoclock;
 
 pub mod delay;
 pub mod delay_syst;
@@ -65,8 +62,6 @@ pub mod  setup_all_stm3211xx;
 #[cfg(feature = "stm32l4xx")]
 pub mod  setup_all_stm3214xx;
 
-
-//pub mod spi; move problems need to be figured out for this
 
 // consider putting some real tests here
 

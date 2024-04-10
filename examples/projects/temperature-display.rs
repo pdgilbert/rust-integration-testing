@@ -79,9 +79,7 @@ mod app {
     const READ_INTERVAL:  u32 =  2;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
-
-    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType, I2c1Type};
     use rust_integration_testing_of_examples::setup;
 
     use embedded_hal::delay::DelayNs;

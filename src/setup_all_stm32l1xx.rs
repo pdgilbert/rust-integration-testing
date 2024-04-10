@@ -18,6 +18,8 @@ use stm32l1xx_hal::{  // eg  Discovery STM32L100 and Heltec lora_node STM32L151C
 
 //   //////////////////////////////////////////////////////////////////////
 
+pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+
 pub use crate::delay::{Delay2Type as Delay};
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
