@@ -1,6 +1,9 @@
 //  THIS IS NOT USING DelayNs yet
 
-//  Consider splitting into separate versions for each sensor
+//  CONSIDER USING ALT_DELAY OR
+//  CONSIDER SPLITTING INTO SEPARATE VERSIONS FOR EACH SENSOR
+//   COMPARE misc-i2c-drivers/htu2xd-display.rs  rtic/htu2xd_rtic.rs
+//  AND OTHERS
 
 //  Compare xca9548a which is not rtic
 
@@ -60,9 +63,7 @@
 //! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
 //! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
 
-//!  Blackpill stm32f401 test wiring:
-//!     SSD1306 and ina219 on   shared bus  i2c2   sda on B3   scl on B10
-//!             sensor     on   shared bus  i2c1   sda on B8   scl on B9 
+//!  Blackpill stm32f401 test wiring see  src/setup_all_stm32f4xx.rs
 //! 
 //!       This example has a  workaround for SSD1306  text_style.
 //!
@@ -143,11 +144,11 @@ mod app {
     use embedded_hdc1080_rs::{Hdc1080}; 
 
     #[cfg(feature = "hdc1080")]
-    type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, Delay2Type>;
+    type SensorType = embedded_hdc1080_rs::Hdc1080<I2c1Type, Delay>;
     //type SensorType =  embedded_hdc1080_rs::Hdc1080<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>, DelayType>;
 
     #[cfg(feature = "hdc1080")]
-    type  SensorRcdType = embedded_hdc1080_rs::Hdc1080<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+    type  SensorRcdType = embedded_hdc1080_rs::Hdc1080<RefCellDevice<'static, I2c1Type>, Delay>;
 
 //SENSOR AND INA USE SAME I2C WHICH THUS NEEDS TO BE IN A REFCELL
 use core::borrow::BorrowMut;  // bring trait is in scope
@@ -183,26 +184,40 @@ use core::borrow::BorrowMut;  // bring trait is in scope
     //Workaround. This needs a new struct because channel is not part of the Htu2xd structure
 
     #[cfg(feature = "htu2")]
-    pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: Delay2Type}
+    pub struct SensorType { dev: SensorDev, ch: I2c1Type, delay: Delay}
 
 
     #[cfg(feature = "htu2")]
     impl TempHumSensor for SensorType {
         fn read_th(&mut self) -> (i32, u8) {
-            let t = match self.dev.read_temperature_blocking(&mut self.ch){
-                Ok(Reading::Ok(t))     =>  (10.0 * t.as_degrees_celsius()) as i32,
-                Ok(Reading::ErrorLow)  => -4090,
-                Ok(Reading::ErrorHigh) => -4090,
-                Err(_)                 => -4090,
-            };
+            let t = self.dev.read_temperature_blocking(&mut self.ch);
+            let () = t;
+ //           let t = match t {
+ //               Ok(Reading::Ok(t))     =>  (10.0 * t.as_degrees_celsius()) as i32,
+ //               Ok(Reading::ErrorLow)  => -4090,
+ //               Ok(Reading::ErrorHigh) => -4090,
+ //               Err(_)                 => -4090,
+ //           };
             self.delay.delay(15.millis());  // not sure if delay is needed
 
-            let rh = match self.dev.read_humidity_blocking(&mut self.ch) {
-               Ok(Reading::Ok(rh))    => rh.as_percent_relative() as u8,
-               Ok(Reading::ErrorLow)  => 255,
-               Ok(Reading::ErrorHigh) => 255,
-               Err(_)                 => 255,
-            };
+            let rh = self.dev.read_humidity_blocking(&mut self.ch);
+            let () = rh;
+  //          let rh = match rh {
+  //             Ok(Reading::Ok(rh))    => rh.as_percent_relative() as u8,
+  //             Ok(Reading::ErrorLow)  => 255,
+  //             Ok(Reading::ErrorHigh) => 255,
+  //             Err(_)                 => 255,
+  //          };
+        match htu.measure_temperature(&mut delay2) {
+            Ok(v)     => write!(lines[0], "  {:.1} C? ", v.value()).unwrap(),
+            Err(_)    => write!(lines[0], "Error reading temperature").unwrap(),
+        }
+
+        match htu.measure_humidity(&mut delay2) {
+            Ok(v)     => write!(lines[1], "  {:.1} %RH? ", v.value()).unwrap(),
+            Err(_)    => write!(lines[1], "Error reading humidity").unwrap(),
+        }
+
             self.delay.delay(15.millis());  // not sure if delay is needed
         (t, rh)
         }
@@ -226,10 +241,10 @@ use core::borrow::BorrowMut;  // bring trait is in scope
     use aht10::AHT10;
 
     #[cfg(feature = "aht10")]
-    type SensorType = AHT10<I2c1Type, Delay2Type>;
+    type SensorType = AHT10<I2c1Type, Delay>;
 
     #[cfg(feature = "aht10")]
-    type  SensorRcdType = AHT10<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+    type  SensorRcdType = AHT10<RefCellDevice<'static, I2c1Type>, Delay>;
 
     #[cfg(feature = "aht10")]
     impl TempHumSensor for SensorRcdType {
@@ -256,10 +271,10 @@ use core::borrow::BorrowMut;  // bring trait is in scope
     use aht20::Aht20;
 
     #[cfg(feature = "aht20")]
-    type SensorType = Aht20<I2c1Type, Delay2Type>;
+    type SensorType = Aht20<I2c1Type, Delay>;
 
     #[cfg(feature = "aht20")]
-    type  SensorRcdType = Aht20<RefCellDevice<'static, I2c1Type>, Delay2Type>;
+    type  SensorRcdType = Aht20<RefCellDevice<'static, I2c1Type>, Delay>;
 
     #[cfg(feature = "aht20")]
     impl TempHumSensor for SensorType {
@@ -275,7 +290,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
             };
             (t, rh)
         }
-        //fn new(i: I2c1Type, d: Delay2Type) -> Self {
+        //fn new(i: I2c1Type, d: Delay) -> Self {
         //    Aht20::new(i, d).expect("sensor failed")
         //}
 
@@ -322,7 +337,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
 
     use rust_integration_testing_of_examples::monoclock::MONOCLOCK;
 
-    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type, I2c2Type, Delay1Type, Delay2Type};
+    use rust_integration_testing_of_examples::setup::{LED, LedType, I2c1Type, I2c2Type, Delay};
     use rust_integration_testing_of_examples::setup;
 
     use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;

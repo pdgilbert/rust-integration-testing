@@ -268,7 +268,7 @@ stm32l486     = ["stm32l4xx-hal/stm32l486"  ]
 
 # temp-humidity sensor choice in projects
 hdc1080   = []
-htu2xd    = []
+htu2      = []
 aht10     = []
 aht20     = []
 
