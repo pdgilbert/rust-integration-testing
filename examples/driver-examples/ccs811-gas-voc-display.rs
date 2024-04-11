@@ -63,23 +63,13 @@ use embedded_graphics::{
 };
 
 
-/////////////////////   hals
-
-use embedded_hal::{
-   delay::DelayNs,
-};
-
 use heapless::String;
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-   block,
-};
 
 /////////////////////  setups
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::setup::{Peripherals, LED};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs, block,};
 
 /////////////////////  entry
 

@@ -31,9 +31,8 @@ use cortex_m_rt::entry;
 use rtt_target::{rprintln, rtt_init_print};
 
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals};
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::pac::{Peripherals};
 
 #[entry]
 fn main() -> ! {

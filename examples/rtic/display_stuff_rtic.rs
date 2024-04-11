@@ -62,13 +62,6 @@ mod app {
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2cType, LED, LedType};
 
-    //use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    //use hal::{
-    //    //i2c::I2c as I2cType,
-    //    //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
-    //};
-
-    // use embedded_hal::i2c::I2c as I2cTrait; 
 
     use core::cell::RefCell;
     use embedded_hal_bus::i2c::RefCellDevice;

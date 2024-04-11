@@ -42,19 +42,12 @@ use embedded_graphics::{
 
 use embedded_hal::{
    i2c::I2c as I2cTrait,
-   delay::DelayNs,
 };
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-use hal::{
-      pac::{Peripherals},
-};
-
-///////////////////// 
+///////////////////// setup
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
 
 #[entry]
 fn main() -> ! {

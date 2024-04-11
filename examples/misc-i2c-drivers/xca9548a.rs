@@ -110,16 +110,10 @@ type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
 
 ///////////////////////////////////////////////////////////////
 
-use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
-use rust_integration_testing_of_examples::setup::{LED, I2c2Type};
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c2Type, DelayNs};
 
-use embedded_hal::delay::DelayNs;
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals},
-};
+use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
 
 
 #[cfg(feature = "stm32h7xx")]

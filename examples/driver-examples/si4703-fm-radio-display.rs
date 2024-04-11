@@ -71,19 +71,9 @@ use si4703::{
 };
 
 
-/////////////////////   hals
+/////////////////////  setup
 
-use embedded_hal::delay::DelayNs;
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-   pac::{Peripherals},
-};
-
-
-/////////////////////  
-
-use rust_integration_testing_of_examples::setup::{LED, I2c1Type, I2c2Type, Delay};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, Delay, DelayNs};
 
 //use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
 //              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};

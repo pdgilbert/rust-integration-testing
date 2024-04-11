@@ -44,18 +44,11 @@ use embedded_graphics::{
 //use embedded_hal_bus::i2c::RefCellDevice;
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
+use rust_integration_testing_of_examples::setup::{CorePeripherals};
+
 //use rust_integration_testing_of_examples::alt_delay::{AltDelay as OldDelayType};
 
-use embedded_hal::{
-   //i2c::I2c as I2cTrait,
-   delay::DelayNs,
-};
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals, CorePeripherals},
-};
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
@@ -146,7 +139,9 @@ fn main() -> ! {
 
     /////////////////////   htu
     // Start the sensor.
-    let mut htu = Sensor::new(manager2.acquire_i2c(), Some(&mut delay2)).expect("sensor init");
+    let mut htu = Sensor::new(manager2.acquire_i2c(), Some(&mut delay2
+    
+    )).expect("sensor init");
     delay.delay_ms(15);  // needed?
     //let mut htu = Sensor::new(htu_rcd, Some(&mut delay2)).expect("sensor init");
     //let mut htu = Sensor::new(i2c2, Some(&mut delay2)).expect("sensor init");

@@ -29,11 +29,9 @@ use cortex_m_rt::entry;
 use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::pac::{Peripherals};
 
 #[entry]
 fn main() -> ! {

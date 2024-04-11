@@ -59,28 +59,10 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, Delay};
-
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    use hal::{
-        pac::{I2C1},
-        i2c::I2c as halI2c,
-        //prelude::*,  // needed if 400.kHz() gives "you must specify a concrete type"
-    };
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, I2cType, LED, LedType,};
 
 //    use embedded_hal::i2c::I2c as I2cTrait; 
-
-    #[cfg(not(feature = "stm32g4xx"))]
-    type I2cType = halI2c<I2C1>;
-
-    #[cfg(feature = "stm32g4xx")]
-    use stm32g4xx_hal::{
-        gpio::{AlternateOD, gpiob::{PB8, PB9}},
-    };
-
-    #[cfg(feature = "stm32g4xx")]
-    type I2cType = halI2c<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
-    //type I2cType  = halI2c<I2C1, impl SCLPin<I2C1>, impl SDAPin<I2C1>>;
 
 
 

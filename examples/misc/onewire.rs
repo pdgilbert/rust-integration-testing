@@ -61,18 +61,10 @@ use onewire;
 //}
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::setup::Delay;
-
-// "hal" is used for items that are the same in all hal  crates
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-use hal::{
-      pac::Peripherals,
-      pac::CorePeripherals,
-};
+use rust_integration_testing_of_examples::setup::{Peripherals, Delay};
 
 fn main() -> ! {
-    let cp = CorePeripherals::take().unwrap();
+//    let cp = CorePeripherals::take().unwrap();
     let (one, mut delay) = setup::pin_delay();
 
     delay.delay_ms(1000);

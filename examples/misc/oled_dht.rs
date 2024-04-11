@@ -59,13 +59,10 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMode,
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
-use rust_integration_testing_of_examples::led::LED;
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals},
-};
+
 
 fn show_display<S>(
     temperature: i8,

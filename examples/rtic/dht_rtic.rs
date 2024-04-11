@@ -77,12 +77,9 @@ mod app {
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType, Delay};
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType, Delay, prelude::*,};
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    use hal::{
-       prelude::*,
-    };
 
 
 

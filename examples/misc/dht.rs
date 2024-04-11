@@ -44,21 +44,14 @@ use dht_sensor::dht22::{read, Reading};
 //Also more in comments in dht-sensor crate file src/lib.rs
 
 
-use embedded_hal::delay::DelayNs;
-
 //use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 
+use rust_integration_testing_of_examples::setup::{Peripherals, OpenDrainType, DelayNs, GpioExt, prelude::*,};
+use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
-// "stm32xxxx_hal" is used for items that are different in some crates
-// "hal" is used for items that are the same in all hal  crates
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals, CorePeripherals},
-      gpio::{gpioa::PA8, Output, OpenDrain, GpioExt},
-      prelude::*,
-};
 
-type DhtType = PA8<Output<OpenDrain>>;
+//type DhtType = PA8<Output<OpenDrain>>;
+type DhtType = OpenDrainType;
 
 
 #[cfg(feature = "stm32f4xx")]
@@ -106,15 +99,14 @@ pub type DelayMsType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType ) {
    let mut rcc = dp.RCC.constrain();
 
-   let gpioa = dp.GPIOA.split(&mut rcc);
-   let mut dht = gpioa.pa8.into_open_drain_output();
+   let gpiob = dp.GPIOB.split(&mut rcc);
+   let mut dht = gpiob.pb7.into_open_drain_output();
    let _ = dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let clocks = rcc.clocks; 
 
    let timer1 = Timer::new(dp.TIM2, &clocks);
    let delay = DelayFromCountDownTimer::new(timer1.start_count_down(100.millis()));
-   //let delay = cp.SYST.delay(&clocks);
 
    (dht, delay)
 }

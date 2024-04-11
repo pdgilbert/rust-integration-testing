@@ -37,29 +37,13 @@ use embedded_hal_bus::i2c::RefCellDevice;
 
 use embedded_hal::{
    i2c::I2c as I2cTrait,
-   delay::DelayNs,
 };
 
-// "hal" is used for items that are the same in all hal crates
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
+use rust_integration_testing_of_examples::
+                     setup::{Peripherals, DelayNs, prelude::*, block, RccExt};
 
-use hal::{
-   pac::{Peripherals},  // I2C1
-   //i2c::I2c as I2cType,
-   //  i2c::Error as i2cError,
-   rcc::{RccExt},
-   prelude::*,
-   block,
-};
 
-//#[cfg(feature = "stm32f4xx")]
-//pub use stm32f4xx_hal::{
-//   rcc::Clocks,
-//   pac::{TIM5},
-//   timer::Delay,
-//   timer::TimerExt,
-//   gpio::GpioExt,
-//};
+
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{

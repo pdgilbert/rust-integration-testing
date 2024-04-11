@@ -39,17 +39,6 @@ use embedded_graphics::{
 
 /////////////////////   hals
 
-use embedded_hal::{
-   delay::DelayNs,
-};
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-use hal::{
-      pac::{Peripherals, CorePeripherals},
-};
-
-
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     timer::SysTimerExt,
@@ -71,7 +60,8 @@ use stm32h7xx_hal::{
 ///////////////////// 
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::led::{LED};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
+use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 #[entry]
 fn main() -> ! {

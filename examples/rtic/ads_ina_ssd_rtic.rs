@@ -73,33 +73,7 @@ mod app {
    use core::cell::RefCell;
    use embedded_hal_bus::i2c::RefCellDevice;
    
-   use embedded_hal::{
-      //i2c::I2c as I2cTrait,
-      delay::DelayNs,
-   };
-   
-   // "hal" is used for items that are the same in all hal crates
-   use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-   
-   use hal::{
-      pac::{Peripherals, I2C1}, 
-      i2c::I2c as I2cType,
-      //  i2c::Error as i2cError,
-      rcc::{RccExt},
-      prelude::*,
-      //block,
-   };
-   
-   // may NOT need this
-   //#[cfg(feature = "stm32f4xx")]
-   //pub use stm32f4xx_hal::{
-   //   rcc::Clocks,
-   //   pac::{TIM5},
-   //   timer::Delay,
-   //   timer::TimerExt,
-   //   gpio::GpioExt,
-   //};
-   
+  
 
    #[cfg(feature = "stm32h7xx")]
    use stm32h7xx_hal::{
@@ -108,47 +82,10 @@ mod app {
    };
    
    use rust_integration_testing_of_examples::setup;
-   use rust_integration_testing_of_examples::setup::{I2c1Type, I2c2Type};
+   use rust_integration_testing_of_examples::
+                  setup::{Peripherals, I2C1, I2cType, I2c1Type, I2c2Type, RccExt, DelayNs,};
 
-// THESE ARE NO LONGER USED
-   #[cfg(feature = "stm32f4xx")]            
-   pub fn setup_from_dp(dp: Peripherals) ->  ( I2cType<I2C1>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
-      let rcc = dp.RCC.constrain();
-      let clocks = rcc.cfgr.freeze();
-   
-      let gpiob = dp.GPIOB.split();
-      let scl = gpiob.pb8.into_alternate_open_drain(); 
-      let sda = gpiob.pb9.into_alternate_open_drain(); 
-   
-      let i2c = dp.I2C1.i2c( (scl, sda), 400.kHz(), &clocks);
-   
-      // need  ::<1000000_u32>  for `FREQ` of the method `delay   WHY?
-      let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
-
-      (i2c, delay)
-   }
-
-   #[cfg(feature = "stm32h7xx")]
-   pub fn setup_from_dp(dp: Peripherals) ->  ( I2cType<I2C1>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
-   //pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
-      let rcc = dp.RCC.constrain();
-      let vos = dp.PWR.constrain().freeze();
-      let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &dp.SYSCFG); 
-      let clocks = ccdr.clocks;
-   
-      let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
-      let scl = gpiob.pb8.into_alternate().set_open_drain();
-      let sda = gpiob.pb9.into_alternate().set_open_drain();
-   
-      let i2c = dp.I2C1.i2c((scl, sda), 400.kHz(), ccdr.peripheral.I2C1, &clocks);
-   
-      // CountDownTimer not supported by embedded-hal 1.0.0
-      let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
-      let delay = DelayFromCountDownTimer::new(timer);
-   
-      (i2c, delay)
-   }
-   
+  
 ///////////////////////////////////////////////////////////////////////////////////////////
 
        #[shared]

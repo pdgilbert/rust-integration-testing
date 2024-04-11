@@ -80,12 +80,9 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, OpenDrainType, I2cType, LedType, LED, TxType, Delay };
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, OpenDrainType, I2cType, LedType, LED, TxType, Delay, prelude::*,};
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    use hal::{
-       prelude::*,
-    };
 
 
     #[init]

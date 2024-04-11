@@ -45,15 +45,14 @@ use embedded_graphics::{
 };
 
 
-/////////////////////   hals
 use core::cell::RefCell;
 use embedded_hal_bus::i2c::RefCellDevice;
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::pac::{Peripherals};
 
-use rust_integration_testing_of_examples::led::LED;
+/////////////////////   setup
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals, LED};
+
 
 #[entry]
 fn main() -> ! {

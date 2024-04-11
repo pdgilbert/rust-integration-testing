@@ -1,11 +1,16 @@
 use stm32g4xx_hal as hal;
 pub use hal::{
-      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      pac::CorePeripherals,   //hopefully temperary, used in some examples
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
+      rcc::{RccExt},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
-      gpio::{Output, OpenDrain, PushPull},
+      gpio::{Output, OpenDrain, PushPull, Analog, GpioExt},
+      adc::Adc,
       prelude::*,
+      prelude,
+      block,
 };
 
 // above are commom to all hals. Below are different.
@@ -24,6 +29,8 @@ pub use stm32g4xx_hal::{
            gpioa::{PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC13 as LEDPIN}},
+    adc::{Disabled},
+    //adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
 };
 
 
@@ -63,7 +70,7 @@ pub type TxType = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA >;
 pub type RxType = Rx<USART1, PA10<Alternate<7_u8>>, NoDMA >;
 
 pub type SpiType =  Spi<SPI1,(PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternate<5>>)>;
-pub struct SpiExt { pub cs:    PA1<Output<PushPull>>, 
+pub struct SpiExt { pub cs:    PA3<Output<PushPull>>, 
                     pub busy:  PB4<Input<Floating>>, 
                     pub ready: PB5<Input<Floating>>, 
                     pub reset: PA0<Output<PushPull>>
@@ -76,6 +83,15 @@ pub const MODE: Mode = Mode {
     phase: Phase::CaptureOnSecondTransition,
     polarity: Polarity::IdleHigh,
 };
+
+//pub struct AdcSensor<U, A> { ch: U, adc: A }
+//
+//pub trait ReadAdc {
+//    // for reading on channel(self.ch) in mV.
+//    fn read_mv(&mut self)    -> u32;
+//}
+//
+//pub type ADC1Type = AdcSensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
 
 //   //////////////////////////////////////////////////////////////////////
 
@@ -112,7 +128,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    );
    
    let spiext = SpiExt {
-        cs:    gpioa.pa1.into_push_pull_output(), //CsPin         
+        cs:    gpioa.pa3.into_push_pull_output(), //CsPin         
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   

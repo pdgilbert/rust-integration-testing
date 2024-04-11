@@ -36,17 +36,8 @@ use rtt_target::{rprintln, rtt_init_print};
 
 use si4703::{ChannelSpacing, DeEmphasis, SeekDirection, SeekMode, Si4703, Volume};
 
-use embedded_hal::delay::DelayNs;
 
-use rust_integration_testing_of_examples::setup::{LED, I2cType, Delay};
-
-//use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
-//              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};
-
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals},
-};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2cType, Delay, DelayNs};
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 

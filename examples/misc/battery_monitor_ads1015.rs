@@ -55,27 +55,14 @@ use embedded_graphics::{
 };
 
 
-/////////////////////   hals
+///////////////////// 
 use core::cell::RefCell;
 use embedded_hal_bus::i2c::RefCellDevice;
 
-use embedded_hal::{
-   delay::DelayNs,
-};
 
-// "hal" is used for items that are the same in all hal  crates
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-use hal::{
-   pac::{Peripherals},
-   block,
-};
-
-
-/////////////////////  
-
-use rust_integration_testing_of_examples::led::{LED};
+/////////////////////  setup
 use rust_integration_testing_of_examples::setup;  // setup function
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, block, DelayNs};
 
 
 /////////////////////  

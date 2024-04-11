@@ -55,18 +55,9 @@ mod app {
     //use nb::block;
     //use rtt_target::{rprintln, rtt_init_print};
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
-    pub use hal::{
-        pac::Peripherals,
-        pac::{USART1, USART2},
-        serial::{Serial, Tx, Rx, Error},
-        prelude::*,
-    };
-
     use rust_integration_testing_of_examples::usart;
     use rust_integration_testing_of_examples::usart::{Tx1Type, Rx2Type};
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK};
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, Peripherals};
 
     use embedded_io::{Read, Write};
 

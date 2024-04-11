@@ -335,17 +335,11 @@ use core::borrow::BorrowMut;  // bring trait is in scope
 
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType, I2c1Type, I2c2Type, Delay};
     use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::
+          {MONOCLOCK, Peripherals, LED, LedType, I2c1Type, I2c2Type, Delay, DelayNs};
 
-    use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-    use hal::{
-      pac::{Peripherals},
-      i2c::Error as i2cError,
-      prelude::*,
-      prelude::DelayNs,
-    };
-
+    //    i2c::Error as i2cError,
     //use embedded_hal_async::delay::DelayNs;
 
     #[cfg(feature = "stm32g4xx")]

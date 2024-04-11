@@ -21,11 +21,9 @@ use core::fmt::Debug;
 use one_wire_bus::{OneWire};   //, DeviceSearch
 
 use rust_integration_testing_of_examples::setup;
+use rust_integration_testing_of_examples::setup::{Peripherals};
 
-use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-use hal::{
-      pac::{Peripherals},
-};
+
 
 fn find_devices<P, E>(
     delay: &mut impl DelayNs,

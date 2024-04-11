@@ -1,6 +1,6 @@
-
-pub use crate::stm32xxx_as_hal::hal;
+pub use stm32f7xx_hal as hal;
 pub use hal::{
+      pac::CorePeripherals,   //hopefully temperary, used in some examples
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
       timer::{Delay as halDelay},
       spi::{Spi},
@@ -10,6 +10,8 @@ pub use hal::{
       serial::{Serial, Tx, Rx, Error},
       gpio::{Output, OpenDrain, PushPull},
       prelude::*,
+      prelude,
+      block,
 };
 
 use stm32f7xx_hal::{

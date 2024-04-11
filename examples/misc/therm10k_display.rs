@@ -72,33 +72,28 @@ use dht_sensor::dht11::{read, Reading};
 #[cfg(feature = "dht22")]
 use dht_sensor::dht22::{read, Reading};
 
-use rust_integration_testing_of_examples::led::LED;
+
+use rust_integration_testing_of_examples::
+                     setup::{CorePeripherals, Peripherals, LED, OpenDrainType, DelayNs,
+                     Adc, ADC1, Analog, GpioExt, prelude::*,};
 
 //use dht_sensor::Delay;  // trait, whereas timer::Delay is a type does not yet use DelayNs
 
 use rust_integration_testing_of_examples::stm32xxx_as_hal::hal;
-
 use hal::{
-   pac::{Peripherals, CorePeripherals},
-   //i2c::I2c as I2cType,
-   gpio::{gpioa::PA8, Output, OpenDrain, GpioExt},
-   gpio::{Analog, gpioa::{PA1}},
-   prelude::*,  
-   adc::Adc,
-   pac::ADC1,
+   gpio::{gpioa::{PA1}},
 };
 
 
 use embedded_hal::{
    i2c::I2c as I2cTrait,
-   delay::DelayNs,
 };
 
 ///////////////////////////////
 
-type DhtType = PA8<Output<OpenDrain>>;
+type DhtType = OpenDrainType;
 
-pub struct Sensor<U, A> { ch: U, adc: A }
+pub struct AdcSensor<U, A> { ch: U, adc: A }
 
 pub trait ReadAdc {
     // for reading on channel(self.ch) in mV.
@@ -108,37 +103,37 @@ pub trait ReadAdc {
 ///////////////////////////////
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
-type SensorType = Sensor<PA1<Analog>, Adc>;
+type SensorType = AdcSensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32f1xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f4xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32f7xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 #[cfg(feature = "stm32g0xx")]
-type SensorType = Sensor<PA1<Analog>, Adc>;
+type SensorType = AdcSensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32g4xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
 
 #[cfg(feature = "stm32h7xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1, Enabled>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1, Enabled>>;
 
 #[cfg(feature = "stm32l0xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<Ready>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<Ready>>;
 
 #[cfg(feature = "stm32l1xx")] // eg  Discovery STM32L100 and Heltec lora_node STM32L151CCU6
-type SensorType = Sensor<PA1<Analog>, Adc>;
+type SensorType = AdcSensor<PA1<Analog>, Adc>;
 
 #[cfg(feature = "stm32l4xx")]
-type SensorType = Sensor<PA1<Analog>, Adc<ADC1>>;
+type SensorType = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 ///////////////////////////////
 
@@ -155,7 +150,7 @@ pub fn setup(mut dp: Peripherals) -> (SensorType, DhtType, impl I2cTrait, impl L
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().ok();
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch: cortex_m::interrupt::free(move |cs| {gpioa.pa1.into_analog(cs)}),
         adc: Adc::new(dp.ADC, &mut rcc),
     }; 
@@ -182,7 +177,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.crl), //channel
         adc: Adc::adc1(dp.ADC1, clocks),
     }; 
@@ -219,7 +214,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
 
     let adc_common = CommonAdc::new(dp.ADC1_2, &clocks, &mut rcc.ahb);
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.moder, &mut gpioa.pupdr), //channel
         adc: Adc::new(dp.ADC1, Config::default(), &clocks, &adc_common, ),
     }; 
@@ -258,7 +253,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split(); 
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
     }; 
@@ -306,7 +301,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let gpioa = dp.GPIOA.split();
     let gpioc = dp.GPIOC.split();
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, &mut rcc.apb2, &clocks, 4, true),
     }; 
@@ -358,7 +353,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::new(dp.ADC, &mut rcc ),           //  NEEDS PROPER CONFIGURATION
     }; 
@@ -409,12 +404,13 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     let mut delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
     let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
 
     let pin = gpioa.pa1.into_analog();
     let adc1 = dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true);  // Adc::new(...  would be nice
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  pin,
         adc: adc1,
     }; 
@@ -425,14 +421,13 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
         } 
     }
 
-    let mut dht = gpioa.pa8.into_open_drain_output();
+    let mut dht = gpiob.pb7.into_open_drain_output();
     // Pulling the pin high to avoid confusing the sensor when initializing.
     dht.set_high().unwrap();
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
 
-    let gpiob = dp.GPIOB.split(&mut rcc);
     let sda = gpiob.pb9.into_alternate_open_drain(); 
     let scl = gpiob.pb8.into_alternate_open_drain(); 
     //let i2c = i2c1.i2c(sda, scl, Config::new(400.kHz()), rcc);
@@ -478,7 +473,7 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) -> (SensorType, DhtType, imp
     let adc1 = adc1.enable();
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: adc1,
     }; 
@@ -520,7 +515,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     //let clocks = rcc.clocks;
 
     let gpioa = dp.GPIOA.split(&mut rcc);
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: dp.ADC.constrain(&mut rcc),
         //adc: Adc::adc(dp.ADC, clocks),
@@ -564,7 +559,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let gpioa = dp.GPIOA.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
     
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(), //channel
         adc: adc,
     }; 
@@ -607,7 +602,7 @@ pub fn setup(dp: Peripherals, cp: CorePeripherals) -> (SensorType, DhtType, impl
     let adc_common = AdcCommon::new(dp.ADC_COMMON, &mut rcc.ahb2);
     let adc = Adc::adc1(dp.ADC1, adc_common, &mut rcc.ccipr, &mut delay );
 
-    let sens: SensorType = Sensor {
+    let sens: SensorType = AdcSensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.moder, &mut gpioa.pupdr), //channel
         adc: adc,
     }; 
