@@ -15,6 +15,18 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
+pub use embedded_hal::delay::DelayNs;
+
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay;
+
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay;
+
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
 pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub use crate::delay::{Delay2Type as Delay};

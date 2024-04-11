@@ -1,6 +1,7 @@
 pub use crate::stm32g0xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
@@ -9,10 +10,21 @@ pub use hal::{
 };
 
 pub use stm32g0xx_hal::{
+    pac::{TIM2, TIM3}
     serial::{FullConfig},
     gpio::{gpioa::PA8},
     gpio::{gpioc::{PC13 as LEDPIN}},
 };
+
+//   /
+pub use embedded_hal::delay::DelayNs;
+/////////////////////////////////////////////////////////////////////
+
+pub use embedded_hal::delay::DelayNs;
+
+pub type Delay1Type = halDelay<TIM2>;
+pub type Delay2Type = halDelay<TIM3>;
+pub type Delay = Delay2Type;
 
 //   //////////////////////////////////////////////////////////////////////
 

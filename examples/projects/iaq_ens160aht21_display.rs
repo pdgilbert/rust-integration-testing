@@ -94,9 +94,18 @@ fn main() -> ! {
     let (i2c1, i2c2, mut led, spi, spiext, delay) = setup::i2c1_i2c2_led_spi_spiext_delay_from_dp(dp); 
     led.off();
 
+    /////////////////////   lora
     let mut lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, &CONFIG_RADIO
        ).unwrap(); // should handle error   //delay is available in lora
 
+    // byte buffer   Nov 2020 limit data.len() < 255 in radio_sx127x  .start_transmit
+    let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
+    let mut buf2: heapless::Vec<u8, 80> = heapless::Vec::new();
+
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
+    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity()).unwrap();  //0 of 80
+    buffer.clear();
+    buf2.clear();
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
 
@@ -156,18 +165,6 @@ fn main() -> ! {
 
     /////////////////////   aht
     //let mut aht = Aht20::new(manager.acquire_i2c(), AltDelay{}); //NEEDS delay, shared bus, aht21 not 20
-
-
-    /////////////////////   lora
-    // byte buffer   Nov 2020 limit data.len() < 255 in radio_sx127x  .start_transmit
-    let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-    let mut buf2: heapless::Vec<u8, 80> = heapless::Vec::new();
-
-    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
-    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity()).unwrap();  //0 of 80
-    buffer.clear();
-    buf2.clear();
-
 
     ///////////////////// initialize loop variables
 

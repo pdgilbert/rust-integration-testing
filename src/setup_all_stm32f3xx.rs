@@ -2,6 +2,7 @@
 pub use crate::stm32xxx_as_hal::hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       pac::{I2C1, I2C2},
       i2c::I2c,
@@ -12,10 +13,23 @@ pub use hal::{
 };
 
 use stm32f3xx_hal::{
+    pac::{TIM2, TIM3}
     gpio::{gpioa::{PA8, PA9}, PushPull, AF7 },
 };
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub use embedded_hal::delay::DelayNs;
+
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = halDelay;
+
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = halDelay;
+
+pub type Delay = Delay2Type;
 
 //   //////////////////////////////////////////////////////////////////////
 

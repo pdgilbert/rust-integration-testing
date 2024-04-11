@@ -12,7 +12,6 @@ use panic_halt as _;
 
 pub mod stm32xxx_as_hal;   
 
-pub mod delay;
 pub mod delay_syst;
 pub mod alt_delay;
 

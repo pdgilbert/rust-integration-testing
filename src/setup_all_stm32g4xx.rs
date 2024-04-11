@@ -11,10 +11,12 @@ pub use hal::{
 // above are commom to all hals. Below are different.
 
 pub use stm32g4xx_hal::{
+    pac::{TIM2, TIM3}, 
     i2c::{Config},// SDAPin, SCLPin},
     rcc::{Clocks},
     time::{ExtU32, RateExtU32},
     timer::Timer,
+    timer::CountDownTimer,
     delay::DelayFromCountDownTimer,
     spi::{Mode, Phase, Polarity},
     serial::{FullConfig, NoDMA},
@@ -27,9 +29,15 @@ pub use stm32g4xx_hal::{
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay2Type as Delay};
+pub type Delay1Type = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+pub type Delay2Type = DelayFromCountDownTimer<CountDownTimer<TIM3>>;
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PB7<Output<OpenDrain>>;
 

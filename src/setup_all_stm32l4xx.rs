@@ -2,6 +2,7 @@
 pub use stm32l4xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       pac::{I2C1, I2C2},
       i2c::I2c,
@@ -21,9 +22,17 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay2Type as Delay};
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay; //<TIM3, 1000000_u32>;
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 

@@ -1,6 +1,7 @@
 pub use stm32l1xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
@@ -18,9 +19,24 @@ use stm32l1xx_hal::{  // eg  Discovery STM32L100 and Heltec lora_node STM32L151C
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay2Type as Delay};
+//#[cfg(feature = "stm32l1xx")] 
+//use stm32l1xx_hal::{
+//    delay::Delay,
+//    stm32::{TIM2, TIM5}
+//};
+
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
+
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay; //<TIM5, 1000000_u32>;
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 

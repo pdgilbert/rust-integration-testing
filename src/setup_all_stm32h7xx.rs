@@ -1,6 +1,7 @@
 pub use stm32h7xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      //timer::{Delay as halDelay},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
@@ -11,8 +12,11 @@ pub use hal::{
 
 pub use stm32h7xx_hal::{
       rcc::CoreClocks as Clocks,
-      spi::{Enabled}, // may need SpiExt from here, but name conflict
+      pac::{TIM2, TIM5},
+      timer::Timer,
+      //delay::Delay,
       delay::DelayFromCountDownTimer,
+      spi::{Enabled}, // may need SpiExt from here, but name conflict
       gpio::{Input, GpioExt,
              gpioa::{PA0, PA1, PA8},
              gpiob::{PB4, PB5, PB8, PB9},
@@ -24,9 +28,35 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay2Type as Delay};
+#[cfg(feature = "stm32h7xx")]
+pub type Delay1Type = DelayFromCountDownTimer<TIM2>;
+//pub type Delay1Type = DelayFromCountDownTimer<CountDown<TIM2>>;
+//pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
+//pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
+//pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
+
+#[cfg(feature = "stm32h7xx")]
+pub type Delay2Type = DelayFromCountDownTimer<Timer<TIM5>>;
+//pub type Delay2Type = DelayFromCountDownTimer<TIM5>;
+//pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
+//pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay; //<TIM5, 1000000_u32>;
+//pub type Delay2Type = Delay;
+//pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
+//pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
+//pub type Delay2Type = Delay<TIM5, 1000000_u32>;
+//pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay; //<TIM5, 1000000_u32>;
+
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 

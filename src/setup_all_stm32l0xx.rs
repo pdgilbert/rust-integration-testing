@@ -1,6 +1,7 @@
 pub use stm32l0xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
@@ -16,6 +17,16 @@ use stm32l0xx_hal::{
 };
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub use embedded_hal::delay::DelayNs;
+
+pub use crate::alt_delay::{AltDelay as Delay1Type};
+//pub type Delay1Type = Delay<>;
+pub use crate::alt_delay::{AltDelay as Delay2Type};
+//pub type Delay2Type = Delay<>;
+pub type Delay = Delay2Type;
 
 //   //////////////////////////////////////////////////////////////////////
 

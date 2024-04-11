@@ -1,6 +1,7 @@
 use stm32f4xx_hal as hal;
 pub use hal::{
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      timer::{Delay as halDelay},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
@@ -11,9 +12,9 @@ pub use hal::{
 // above are commom to all hals. Below are possibly different.
 
 pub use stm32f4xx_hal::{
-    pac::{TIM5},
+    pac::{TIM2, TIM5},
     rcc::{Clocks, RccExt},
-    timer::TimerExt,
+    timer::{TimerExt},
     serial::{config::Config},
     gpio::{GpioExt, Pin}, 
     gpio::{gpioa::PA8},
@@ -24,9 +25,15 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
+pub use embedded_hal::delay::DelayNs;
 
-pub use crate::delay::{Delay2Type as Delay};
+pub type Delay1Type = halDelay<TIM2, 1000000_u32>;
+pub type Delay2Type = halDelay<TIM5, 1000000_u32>;
+pub type Delay = Delay2Type;
+
+//   //////////////////////////////////////////////////////////////////////
+
+pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
