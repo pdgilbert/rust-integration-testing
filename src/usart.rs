@@ -1,11 +1,5 @@
 
-use crate::stm32xxx_as_hal::hal;
-
-pub use hal::{
-    pac::{Peripherals, USART1, USART2},
-    serial::{Serial, Tx, Rx, Error},
-    prelude::*,
-};
+use crate::setup::{ Peripherals, USART1, USART2, Tx, Rx, prelude::*, };  // Error},
 
 #[cfg(feature = "stm32f0xx")] // eg stm32f030xc  stm32f042
 pub use stm32f0xx_hal::{

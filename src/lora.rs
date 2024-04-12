@@ -1,24 +1,7 @@
 //    //////////////////////////////////////////
-//        f0, f1, f4,       stm32g4
-//   sck     on PA5
-//  miso     on PA6
-//  mosi     on PA7
+//  see src/PinMap.txt for pin usage
 
-//  CsPin    on PA1
-//  BusyPin  on PB8 DIO0
-//  ReadyPin on PB9 DIO1
-//  ResetPin on PA0
-
-//  tx  GPS  on PA2   to  GPS rx
-//  rx  GPS  on PA3  from GPS tx
-
-//  scl      on PB10           PA13
-//  sda      on PB11           PA14
-
-//  led      on PC13
-
-//    //////////////////////////////////////////
-
+// might be something like
 //pub type LoraSpiType =     Sx127x<Base<SpiType, 
 //                                  Pin<'A', 1, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, 
 //                                  Delay<TIM5, 1000000>>>;
@@ -39,16 +22,6 @@ use panic_halt as _;
 
 pub use embedded_hal::delay::DelayNs;
 pub use embedded_hal::digital::OutputPin;
-
-pub use crate::stm32xxx_as_hal::hal;
-pub use hal::{
-      pac::{Peripherals, CorePeripherals, USART1},
-      serial::{Serial, Tx, Error},
-      gpio::{gpioa::PA8, Output, OpenDrain},
-      //prelude::*,
-};
-
-
 
 // MODE needs the old version as it is passed to the device hal crates
 use embedded_hal::spi::{Mode, Phase, Polarity};

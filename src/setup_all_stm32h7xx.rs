@@ -1,12 +1,14 @@
 pub use stm32h7xx_hal as hal;
 pub use hal::{
       pac::CorePeripherals,   //hopefully temperary, used in some examples
-      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
       //timer::{Delay as halDelay},
+      rcc::{RccExt},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
-      gpio::{Output, OpenDrain, PushPull},
+      gpio::{Output, OpenDrain, PushPull, Analog, GpioExt},
+      adc::Adc,
       prelude::*,
       prelude,
       block,
@@ -20,8 +22,9 @@ pub use stm32h7xx_hal::{
       //delay::Delay,
       delay::DelayFromCountDownTimer,
       spi::{Enabled}, // may need SpiExt from here, but name conflict
-      gpio::{Input, GpioExt,
-             gpioa::{PA0, PA1, PA8},
+      adc,
+      gpio::{Input,
+             gpioa::{PA0, PA1, PA8, PA11},
              gpiob::{PB4, PB5, PB8, PB9},
              gpiof::{PF0, PF1},
              gpioc::PC13 as LEDPIN},
@@ -75,7 +78,7 @@ pub type TxType  = Tx<USART1>;
 pub type RxType = Rx<USART1>;
 
 pub type SpiType =  Spi<SPI1, Enabled>;
-pub struct SpiExt { pub cs:    PA1<Output<PushPull>>, 
+pub struct SpiExt { pub cs:    PA11<Output<PushPull>>,   //pa11 UNTESTED
                     pub busy:  PB4<Input>, 
                     pub ready: PB5<Input>, 
                     pub reset: PA0<Output<PushPull>>
@@ -89,11 +92,21 @@ pub const MODE: Mode = Mode {
     polarity: Polarity::IdleHigh,
 };
 
+pub struct AdcSensor<U, A> { ch: U, adc: A }
+
+pub trait ReadAdc {
+    // for reading on channel(self.ch) in mV.
+    fn read_mv(&mut self)    -> u32;
+}
+
+pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1, adc::Enabled>>;
+
 //   //////////////////////////////////////////////////////////////////////
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+           SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
    let rcc = dp.RCC.constrain();
@@ -132,7 +145,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    );
    
    let spiext = SpiExt {
-        cs:    gpioa.pa1.into_push_pull_output(), //CsPin         
+        cs:    gpioa.pa11.into_push_pull_output(), //CsPin       //pa11 UNTESTED    
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
@@ -140,7 +153,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    // CountDownTimer not supported by embedded-hal 1.0.0 ??
    let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
-   let delay = DelayFromCountDownTimer::new(timer);
+   let mut delay = DelayFromCountDownTimer::new(timer);
 
    let (tx, rx) = dp.USART1.serial(
             (
@@ -155,6 +168,19 @@ pub fn all_from_dp(dp: Peripherals) ->
         .split();
 
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
+   
+   let mut adcx = Adc::adc1(dp.ADC1, 4.MHz(), &mut delay, ccdr.peripheral.ADC12, &ccdr.clocks);
+   adcx.set_resolution(adc::Resolution::SixteenBit);
+   let adcx = adcx.enable();
+
+   let adc1: AdcSensor1Type = AdcSensor {
+       ch:  gpioa.pa1.into_analog(),
+       adc: adcx,
+   }; 
+   impl ReadAdc for AdcSensor1Type {
+       fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
+   }
+
+   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
 }
 

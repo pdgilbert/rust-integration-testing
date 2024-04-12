@@ -1,12 +1,14 @@
 pub use stm32l1xx_hal as hal;
 pub use hal::{
       pac::CorePeripherals,   //hopefully temperary, used in some examples
-      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1},
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
       timer::{Delay as halDelay},
+      rcc::{RccExt},
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
-      gpio::{Output, OpenDrain, PushPull},
+      gpio::{Output, OpenDrain, PushPull, Analog, GpioExt},
+      adc::Adc,
       prelude::*,
       prelude,
       block,
@@ -62,7 +64,7 @@ pub type TxType = Tx<USART1>;
 pub type RxType = Rx<USART1>;
 
 pub type SpiType =  Spi<SPI1>;
-pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
+pub struct SpiExt { pub cs:    Pin<'A', 11, Output>,   //pa11 UNTESTED
                     pub busy:  Pin<'B', 4>, 
                     pub ready: Pin<'B', 5>, 
                     pub reset: Pin<'A', 0, Output>
@@ -76,12 +78,23 @@ pub const MODE: Mode = Mode {
     polarity: Polarity::IdleHigh,
 };
 
+pub struct AdcSensor<U, A> { ch: U, adc: A }
+
+pub trait ReadAdc {
+    // for reading on channel(self.ch) in mV.
+    fn read_mv(&mut self)    -> u32;
+}
+
+pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc>;
+
+
 //use embedded_hal::digital::v2::OutputPin;
 
 //   //////////////////////////////////////////////////////////////////////
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+           SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -115,7 +128,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    );
    
    let spiext = SpiExt {
-        cs:    gpioa.pa1.into_push_pull_output(), //CsPin         
+        cs:    gpioa.pa11.into_push_pull_output(), //CsPin      //pa11 UNTESTED     
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
@@ -133,7 +146,14 @@ pub fn all_from_dp(dp: Peripherals) ->
        .unwrap()
        .split();
 
+   let adc1: AdcSensor1Type = AdcSensor {
+       ch:  gpioa.pa1.into_analog(),
+       adc: dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
+   }; 
+   impl ReadAdc for AdcSensor1Type {
+       fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
+   }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
+   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
 }
 

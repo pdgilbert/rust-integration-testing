@@ -10,7 +10,6 @@ use panic_semihosting as _;
 #[cfg(not(debug_assertions))]
 use panic_halt as _;
 
-pub mod stm32xxx_as_hal;   
 
 pub mod delay_syst;
 pub mod alt_delay;

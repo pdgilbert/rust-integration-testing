@@ -29,8 +29,7 @@ pub use stm32g4xx_hal::{
            gpioa::{PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC13 as LEDPIN}},
-    adc::{Disabled},
-    //adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
+    adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
 };
 
 
@@ -84,20 +83,21 @@ pub const MODE: Mode = Mode {
     polarity: Polarity::IdleHigh,
 };
 
-//pub struct AdcSensor<U, A> { ch: U, adc: A }
-//
-//pub trait ReadAdc {
-//    // for reading on channel(self.ch) in mV.
-//    fn read_mv(&mut self)    -> u32;
-//}
-//
-//pub type ADC1Type = AdcSensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
+pub struct AdcSensor<U, A> { ch: U, adc: A }
+
+pub trait ReadAdc {
+    // for reading on channel(self.ch) in mV.
+    fn read_mv(&mut self)    -> u32;
+}
+
+pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
 
 //   //////////////////////////////////////////////////////////////////////
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, SpiType, SpiExt, Delay, Clocks) {
+          (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+           SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.clocks;  // not sure if this is right
 
@@ -141,8 +141,20 @@ pub fn all_from_dp(dp: Peripherals) ->
          &mut rcc).unwrap().split();
    
    let timerx = Timer::new(dp.TIM3, &clocks);
-   let delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
+   let mut delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks)
+
+   let adc1: AdcSensor1Type = AdcSensor {
+       ch:  gpioa.pa1.into_analog(),
+       adc: dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
+   }; 
+   impl ReadAdc for AdcSensor1Type {
+       fn read_mv(&mut self)    -> u32 { 
+          let sample = self.adc.convert(&self.ch, SampleTime::Cycles_640_5);
+          self.adc.sample_to_millivolts(sample) as u32
+       }
+   }
+
+   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
 }
 
