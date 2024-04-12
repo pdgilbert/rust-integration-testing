@@ -24,6 +24,8 @@ use panic_halt as _;
 
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -40,6 +42,10 @@ use rtic::app;
 mod app {
     use cortex_m_semihosting::{hprintln};
 
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     //use core::fmt::Write;
 
     use embedded_graphics::{
@@ -52,9 +58,6 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
     use core::mem::MaybeUninit;
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     const READ_INTERVAL: u32 = 10;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
@@ -131,8 +134,7 @@ mod app {
     ])]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-       let mono_token = rtic_monotonics::create_systick_token!();
-       Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+       Mono::start(cx.core.SYST, MONOCLOCK);
 
        //rtt_init_print!();
        //rprintln!("isplay_stuff_rtic example");
@@ -206,14 +208,14 @@ mod app {
               ).draw(cx.local.display).unwrap();
           }
           cx.local.display.flush().unwrap();
-          Systick::delay(READ_INTERVAL.secs()).await;
+          Mono::delay(READ_INTERVAL.secs()).await;
        }        
     }
 
     #[task(shared = [led] )]
     async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

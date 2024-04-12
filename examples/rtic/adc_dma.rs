@@ -1,5 +1,7 @@
 // from stm32-rs/stm32l4xx-hal/examples/adc_dma.rs
 
+// WORK IN PROGRESS OR DISCARD?
+
 #![no_main]
 #![no_std]
 #![feature(type_alias_impl_trait)]
@@ -15,11 +17,33 @@ use stm32l4xx_hal::{
 };
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
-const SEQUENCE_LEN: usize = 3;
 
-#[app(device = stm32l4xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
-const APP: () = {
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+
+//const SEQUENCE_LEN: usize = 3;
+//
+//#[app(device = stm32l4xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
+//const APP: () = {
+
+mod app {
+
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     // RTIC app is written in here!
 
     struct Resources {

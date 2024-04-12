@@ -94,6 +94,11 @@ pub fn all_from_dp(dp: Peripherals) ->
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
+
+   // according to  https://github.com/rtic-rs/rtic/blob/master/examples/stm32f411_rtc_interrupt/src/main.rs
+   // 25 MHz must be used for HSE on the Blackpill-STM32F411CE board according to manual
+   // let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
+
    
    let gpioa = dp.GPIOA.split();
    let gpiob = dp.GPIOB.split();

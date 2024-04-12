@@ -38,6 +38,7 @@ pub type Delay = Delay2Type;
 //   //////////////////////////////////////////////////////////////////////
 
 pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
+//  Could be faster? Somewhere it was suggested default STM32F303 clock-rate is 36MHz
 
 pub use crate::delay::{Delay2Type as Delay};
 

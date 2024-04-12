@@ -11,6 +11,8 @@
 use panic_semihosting as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 // NOTE: does NOT work on QEMU!
 
@@ -34,8 +36,8 @@ mod app {
     use cortex_m_semihosting::{hprintln};
 
     use rtic;
-    use rtic_monotonics::systick::{Systick};
-    use rtic_monotonics::systick::fugit::{ExtU32};
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
 
     const MONOCLOCK: u32 = 8_000_000; // 8 MHz
 
@@ -48,8 +50,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         //hprintln!("init").ok();
 
@@ -85,28 +86,28 @@ mod app {
     // TRY TO DO SOMETHING MORE LIKE SPAWN_AT AND SPAWN_AFTER
     #[task( )]
     async fn foobar2(_: foobar2::Context) {
-       Systick::delay(0.secs() + 10.secs()).await;  //0 in place of now()
+       Mono::delay(0.secs() + 10.secs()).await;  //0 in place of now()
        foo::spawn().unwrap();
 
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        baz::spawn().ok();
 
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        bar::spawn().ok();
 
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        cdr::spawn().ok();
     }
 
     #[task( )]
     async fn foobar3(_: foobar3::Context) {
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        baz::spawn().ok();
 
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        bar::spawn().ok();
 
-       Systick::delay(1.secs()).await;
+       Mono::delay(1.secs()).await;
        cdr::spawn().ok();
     }
 
@@ -123,13 +124,13 @@ mod app {
 
     #[task( )]
     async fn baz(_: baz::Context) {
-       Systick::delay(1000.millis()).await;
+       Mono::delay(1000.millis()).await;
        hprintln!("baz").ok();
     }
 
     #[task( )]
     async fn cdr(_: cdr::Context) {
-       Systick::delay(1000.millis()).await;
+       Mono::delay(1000.millis()).await;
        hprintln!("cdr").ok();
    }
 }

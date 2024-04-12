@@ -10,6 +10,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -25,16 +27,16 @@ use rtic::app;
 
 mod app {
 
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
    use core::mem::MaybeUninit;
    use rtic_sync::arbiter::{i2c::ArbiterDevice, Arbiter};
 
     // Instantiate an Arbiter with a static lifetime.
     static ARBITER: Arbiter<u32> = Arbiter::new(32);
 // THIS HAS THE SAME PROBLEM AS   https://github.com/rtic-rs/rtic/issues/886
-
-   use rtic;
-   use rtic_monotonics::systick::Systick;
-   use rtic_monotonics::systick::fugit::{ExtU32};
 
    const MONOCLOCK: u32 = 8_000_000; 
 
@@ -154,8 +156,7 @@ mod app {
     ])]
    fn init(cx: init::Context) -> (Shared, Local ) {
 
-       let mono_token = rtic_monotonics::create_systick_token!();
-       Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+       Mono::start(cx.core.SYST, MONOCLOCK);
 
        //let (i2cset, _delay) = setup_from_dp(cx.device);
        let (i2c1, i2c2) = setup::i2c1_i2c2_from_dp(cx.device);
@@ -243,7 +244,7 @@ mod app {
              let a_mv: i16 = 0;                 //FAKE
              let values_b: [i16; 2] = [0, 0];   //FAKE
              show_display(voltage, a_mv, values_b, *text_style, &mut display);
-             Systick::delay(READ_INTERVAL.secs()).await;
+             Mono::delay(READ_INTERVAL.secs()).await;
           }        
        }
 }    

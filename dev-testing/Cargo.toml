@@ -122,7 +122,7 @@ ens160           = { git = "https://github.com/teamplayer3/ens160", default-feat
 
 ## NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
 #rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
-rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
+rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend"], optional = true  }
 
 #rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
 rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }

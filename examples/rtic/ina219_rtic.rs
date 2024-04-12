@@ -37,6 +37,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -52,6 +54,10 @@ use rtic::app;
 
 mod app {
 
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     /////////////////////   ina
     use ina219::{address::{Address, Pin}, 
              SyncIna219,
@@ -64,10 +70,6 @@ mod app {
     //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -145,13 +147,12 @@ mod app {
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         let (i2c1, i2c2, mut led) = setup::i2c1_i2c2_led_from_dp(cx.device);
 
         led.on();
-        Systick.delay_ms(1000u32);  
+        Mono.delay_ms(1000u32);  
         led.off();
 
         let interface = I2CDisplayInterface::new(i2c1);
@@ -168,7 +169,7 @@ mod app {
           .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        Systick.delay_ms(2000u32);    
+        Mono.delay_ms(2000u32);    
 
         // Start the battery sensor.
         let mut ina = SyncIna219::new( i2c2, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
@@ -176,7 +177,7 @@ mod app {
 
         //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
 
-        Systick.delay_ms(15u32);     // Wait for sensor
+        Mono.delay_ms(15u32);     // Wait for sensor
 
         read_and_display::spawn().unwrap();
 
@@ -235,7 +236,7 @@ mod app {
 
            show_display(v, vs, i, p, pc, cx.local.display);
            
-           Systick::delay(READ_INTERVAL.secs()).await;
+           Mono::delay(READ_INTERVAL.secs()).await;
        }
     }
 
@@ -245,7 +246,7 @@ mod app {
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

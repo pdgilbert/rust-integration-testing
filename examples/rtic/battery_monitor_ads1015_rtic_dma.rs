@@ -23,6 +23,8 @@ use panic_halt as _;
 //use panic_rtt_target as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -37,6 +39,11 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
+
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
                   ChannelSelection,
                   ic::{Ads1015, Resolution12Bit},
@@ -48,10 +55,6 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
 
     use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -165,8 +168,8 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+     
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
@@ -280,7 +283,7 @@ mod app {
     async fn read_and_display(mut cx: read_and_display::Context) {
        //hprintln!("measure").unwrap();
        loop {
-          Systick::delay(READ_INTERVAL.secs()).await;
+          Mono::delay(READ_INTERVAL.secs()).await;
 
           blink::spawn(BLINK_DURATION).ok();
 
@@ -316,7 +319,7 @@ mod app {
     #[task(shared = [led], priority=1)]
     async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

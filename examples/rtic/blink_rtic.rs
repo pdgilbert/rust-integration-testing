@@ -15,6 +15,11 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
+
+// I need a better understanding of what 1000 above is, and relationship with
+//     MONOCLOCK in     Mono::start(cx.core.SYST, MONOCLOCK)   below. 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -29,14 +34,14 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-    //use cortex_m_semihosting::{debug, hprintln};
+
     use cortex_m_semihosting::{hprintln};
 
     use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs 
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+ //   use rtic_monotonics::systick::Systick;
+ //   use rtic_monotonics::systick::fugit::{ExtU32};
 
     use cortex_m::asm; //asm::delay(N:u32) blocks the program for at least N CPU cycles.
                        //delay_ms could be used but needs to use a timer other than Systick
@@ -71,8 +76,9 @@ mod app {
 
         led.off();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+    //     let mono_token = rtic_monotonics::create_systick_token!();
+    //     Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Mono::start(cx.core.SYST, MONOCLOCK); 
 
         ten::spawn().unwrap();
         one::spawn().unwrap();
@@ -94,7 +100,7 @@ mod app {
         // blink and await to repeat after ONE second
         loop {
            blink::spawn(ONE_DURATION).ok();
-           Systick::delay(ONE.secs()).await;
+           Mono::delay(ONE.secs()).await;
         }
     }
 
@@ -108,7 +114,7 @@ mod app {
            //ten::spawn_after(TEN.secs()).unwrap();
            blink::spawn(ONE_DURATION).unwrap(); 
            blink::spawn(TEN_DURATION - ONE_DURATION).unwrap(); 
-           Systick::delay(TEN.secs()).await;
+           Mono::delay(TEN.secs()).await;
         }
     }
 
@@ -118,7 +124,7 @@ mod app {
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

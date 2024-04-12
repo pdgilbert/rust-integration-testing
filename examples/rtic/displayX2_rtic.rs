@@ -39,6 +39,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -61,8 +63,8 @@ mod app {
     use core::fmt::Write;
 
     use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
    
     use embedded_graphics::{
         mono_font::{iso_8859_1::FONT_10X20 as FONT, MonoTextStyleBuilder}, 
@@ -130,13 +132,13 @@ use embedded_hal_bus::i2c::RefCellDevice;
     // ])]
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+  
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         let (i2c1, i2c2, mut led) = setup::i2c1_i2c2_led_from_dp(cx.device);
 
         led.on();
-        Systick.delay_ms(1000u32);  
+        Mono.delay_ms(1000u32);  
         led.off();
 
     let i2c1_rc    = RefCell::new(i2c1);
@@ -151,7 +153,7 @@ use embedded_hal_bus::i2c::RefCellDevice;
         display_a.init().unwrap();
         
         show_message("displayX2_rtic", &mut display_a);   // Example name
-        Systick.delay_ms(2000u32);  
+        Mono.delay_ms(2000u32);  
 
     let i2c2_rc = RefCell::new(i2c2);
     let i2c2_rcd   = RefCellDevice::new(&i2c2_rc); 
@@ -164,7 +166,7 @@ use embedded_hal_bus::i2c::RefCellDevice;
         display_b.init().unwrap();
         
         show_message("displayX2_rtic", &mut display_b);   // Example name
-        Systick.delay_ms(2000u32);  
+        Mono.delay_ms(2000u32);  
 
         let count: u16 = 0;
         display_and_display::spawn().unwrap();
@@ -202,14 +204,14 @@ use embedded_hal_bus::i2c::RefCellDevice;
            show_display("display A", cx.local.count, cx.local.display_a);
            show_display("display B", cx.local.count, cx.local.display_b);
 
-           Systick::delay(READ_INTERVAL.secs()).await;
+           Mono::delay(READ_INTERVAL.secs()).await;
        }
     }
 
     #[task(shared = [led])]
     async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

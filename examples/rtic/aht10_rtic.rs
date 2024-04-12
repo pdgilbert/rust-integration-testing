@@ -43,6 +43,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -57,6 +59,11 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
+
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     use aht10::AHT10;  //or aht10-async
     use ina219::{INA219,}; //INA219_ADDR
 
@@ -65,10 +72,6 @@ mod app {
     //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -218,8 +221,7 @@ mod app {
 
         read_and_display::spawn().unwrap();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         (Shared { led, },   Local {display, ina,  sensor })
     }
@@ -269,7 +271,7 @@ mod app {
            show_display(t, h, v, vs, i, p, cx.local.display);
            //hprintln!("shown").unwrap();
 
-           Systick::delay(READ_INTERVAL.secs()).await;
+           Mono::delay(READ_INTERVAL.secs()).await;
        }
     }
 
@@ -277,7 +279,7 @@ mod app {
     async fn blink(_cx: blink::Context, duration: u32) {
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

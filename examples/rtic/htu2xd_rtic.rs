@@ -39,6 +39,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -53,6 +55,11 @@ use rtic::app;
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
+
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     use htu21df_sensor::{Sensor}; 
     //use htu2xd::{Htu2xd, Reading};   //, Resolution
 
@@ -61,11 +68,6 @@ mod app {
     //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
-
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -175,13 +177,13 @@ mod app {
         //rprintln!("htu2xd_rtic example");
         //hprintln!("htu2xd_rtic example").unwrap();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+      
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         let (i2c1, i2c2, mut led, delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on();
-        Systick.delay_ms(1000u32);  
+        Mono.delay_ms(1000u32);  
         led.off();
 
         let manager2 = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>>::new(i2c2);
@@ -202,15 +204,15 @@ mod app {
           .draw(&mut display).unwrap();
         display.flush().unwrap();
         
-        Systick.delay_ms(2000u32);    
+        Mono.delay_ms(2000u32);    
 
         /////////////////////   htu
         // Start the sensor.
-         // delay or Systick::delay ?  Neither WILL WORK. Need DelayMs<u16>
+         // delay or Mono::delay ?  Neither WILL WORK. Need DelayMs<u16>
          //  and being able to .await would ne nice
          let mut sensor = Sensor::new(manager2.acquire_i2c(), Some(&mut delay)).expect("sensor init");
         //                                                  ^^^^^^^^^^^^^^^^ the trait `DelayMs<u16>` is not implemented for `impl embedded_hal::delay::DelayNs`
-        Systick.delay_ms(15u32);     // Wait for the reset to finish // needed?
+        Mono.delay_ms(15u32);     // Wait for the reset to finish // needed?
 
         read_and_display::spawn().unwrap();
 
@@ -228,7 +230,7 @@ mod app {
           blink::spawn(BLINK_DURATION).ok();
 
      //     let z = sensor.read_temperature_blocking(htu_ch);
-          // delay2 or Systick::delay?   NOT SURE IF THIS WILLL WORK. .await?
+          // delay2 or Mono::delay?   NOT SURE IF THIS WILLL WORK. .await?
           let t = sensor.measure_temperature(&mut delay).unwrap().value();
 
      //   See htu2xd-display for error handling
@@ -250,7 +252,7 @@ mod app {
 
           show_display(t, h, cx.local.display);
           
-          Systick::delay(READ_INTERVAL.secs()).await;
+          Mono::delay(READ_INTERVAL.secs()).await;
        }
     }
 
@@ -260,7 +262,7 @@ mod app {
         // and the second is the duration.
         //hprintln!("blink {}", duration).unwrap();
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

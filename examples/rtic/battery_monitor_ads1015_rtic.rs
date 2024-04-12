@@ -19,6 +19,8 @@ use panic_halt as _;
 //use panic_rtt_target as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -39,8 +41,8 @@ mod app {
     //use rtt_target::{rprintln, rtt_init_print};
 
     use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
 
     /////////////////////   ads
     //    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
@@ -82,7 +84,8 @@ mod app {
 
     /////////////////////  setup
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType};
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, prelude::* };
 
 
     use core::cell::RefCell;
@@ -181,8 +184,8 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+  
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
@@ -263,7 +266,7 @@ mod app {
        let () = adc_a ;
        //type `&mut Ads1x1x<I2cProxy<'static, cortex_m::interrupt::Mutex<RefCell<I2c<I2C2, PA8<AlternateOD<4>>, PA9<AlternateOD<4>>>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>`
        loop {
-          Systick::delay(READ_INTERVAL.secs()).await;
+          Mono::delay(READ_INTERVAL.secs()).await;
           //hprintln!("measure").unwrap();
           blink::spawn(BLINK_DURATION).ok();
 
@@ -302,7 +305,7 @@ mod app {
     #[task(shared = [led], priority=1  )]
     async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

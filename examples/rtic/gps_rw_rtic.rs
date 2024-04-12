@@ -31,6 +31,8 @@ use panic_halt as _;
 
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -49,8 +51,8 @@ mod app {
     use cortex_m_semihosting::{hprintln};
     
     use rtic;
-    use rtic_monotonics::systick::Systick;
-    //use rtic_monotonics::systick::fugit::{ExtU32};
+    use crate::Mono;
+    //use rtic_monotonics::systick::prelude::*;
 
     //use nb::block;
     //use rtt_target::{rprintln, rtt_init_print};
@@ -107,8 +109,8 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+      
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         // byte buffer up to 80  u8 elements on stack
         //let mut buffer: [u8; 80] = [0; 80];

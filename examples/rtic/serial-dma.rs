@@ -14,7 +14,17 @@
 #![no_std]
 #![feature(type_alias_impl_trait)]
 
+#[cfg(debug_assertions)]
+use panic_semihosting as _;
+
+#[cfg(not(debug_assertions))]
+use panic_halt as _;
+
 //  peripherals = true,  is the default, but to reduce code size set false if peripherals are not needed.
+
+use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 //  TIM3 is not yet used
 #[cfg_attr(feature = "stm32f0xx", rtic::app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
@@ -31,6 +41,10 @@
 
 mod app {
 
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+ 
     #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
     use stm32f4xx_hal::{
         dma::{config::DmaConfig, PeripheralToMemory, Stream2, StreamsTuple, Transfer},
@@ -43,15 +57,6 @@ mod app {
     #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
     const MONOTICK: u32 = 1000;       // 1000 Hz / 1 ms granularity
 
-    #[cfg(debug_assertions)]
-    use panic_semihosting as _;
-
-    #[cfg(not(debug_assertions))]
-    use panic_halt as _;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
 
     const BUFFER_SIZE: usize = 100;
 
@@ -85,8 +90,7 @@ mod app {
         let rcc = dp.RCC.constrain();
         let clocks = rcc.cfgr.freeze();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, clocks.sysclk().to_Hz(), mono_token);
+        Mono::start(cx.core.SYST, clocks.sysclk().to_Hz());
 
         let gpioa = dp.GPIOA.split();
 

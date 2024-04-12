@@ -40,6 +40,8 @@ use panic_halt as _;
 //use panic_rtt_target as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [ TIM3 ]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -55,8 +57,9 @@ use rtic::app;
 
 mod app {
     use rtic;
-    use rtic_monotonics::systick::Systick;
-    use rtic_monotonics::systick::fugit::{ExtU32};
+    use rtic_monotonics::systick::prelude::*;
+    use crate::Mono;
+
     //use cortex_m_semihosting::{hprintln};
     use rtt_target::{rprintln, rtt_init_print};
 
@@ -118,8 +121,7 @@ mod app {
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
+        Mono::start(cx.core.SYST, MONOCLOCK);
 
         rtt_init_print!();
         rprintln!("CCS811/HDC2080 example");
@@ -173,7 +175,7 @@ mod app {
     #[task(shared = [led, ccs811, hdc2080, tx], local = [led_state, env, index, measurements])]
     async fn measure(mut cx: measure::Context) {
        loop {
-           Systick::delay(PERIOD.secs()).await;
+           Mono::delay(PERIOD.secs()).await;
 
            if *cx.local.led_state {
                cx.shared.led.lock(|led| led.off());
