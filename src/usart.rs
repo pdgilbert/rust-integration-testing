@@ -1,5 +1,5 @@
 
-use crate::setup::{ Peripherals, Serial, USART1, USART2, Tx, Rx, prelude::*, };  // Error},
+use crate::setup::{ Peripherals, USART1, USART2, Tx, Rx, prelude::*, };  // Error},
 
 #[cfg(feature = "stm32f0xx")] // eg stm32f030xc  stm32f042
 pub use stm32f0xx_hal::{
@@ -162,6 +162,8 @@ pub fn setup_from_dp(dp: Peripherals) -> (
 }
 
 
+#[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
+use crate::setup::{ Serial}; 
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 pub use stm32f4xx_hal::{
