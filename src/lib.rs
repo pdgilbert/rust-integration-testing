@@ -11,7 +11,6 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 
-pub mod delay_syst;
 pub mod alt_delay;
 
 pub mod led;   // has trait and default impl
