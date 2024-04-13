@@ -49,8 +49,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>,   //pa11 UNTESTED
@@ -81,7 +86,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<Ready>>;
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.freeze(rcc::Config::hsi16());
    //let clocks = rcc.clocks;
@@ -99,7 +104,8 @@ pub fn all_from_dp(dp: Peripherals) ->
     let scl = gpiob.pb10.into_open_drain_output(); 
     let sda = gpiob.pb11.into_open_drain_output();
     let i2c2 = i2c2.i2c(sda, scl, 400_000.Hz(), &mut rcc);
-   let (tx, _rx) = dp.USART1.usart(
+
+   let (tx1, rx1) = dp.USART1.usart(
         gpioa.pa9,
         gpioa.pa10,
         Config::default().baudrate(115200.Bd()),
@@ -107,6 +113,15 @@ pub fn all_from_dp(dp: Peripherals) ->
     )
     .unwrap()
     .split();
+
+    let (tx2, rx2) = dp.USART2.usart(
+            gpioa.pa2, 
+            gpioa.pa3, 
+            Config::default().baudrate(9600.Bd()),
+            &mut rcc,
+        )
+        .unwrap()
+        .split();
 
     let led = gpiox.pc13.into_push_pull_output(); 
    led.off();
@@ -143,6 +158,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

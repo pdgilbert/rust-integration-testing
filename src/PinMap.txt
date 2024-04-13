@@ -33,6 +33,9 @@ PB11   sda2             gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh),
 PA9    tx1    dp.USART1, (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
 PA10   rx1                gpioa.pa10,
 
+PA2    tx2    dp.USART2  gpiob.pa2.into_alternate_push_pull(&mut gpiob.crh), 
+PA3    rx2               gpiob.pa3,  // may need alt
+
 dp.SPI1,
         (
 PA5     sck                gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
@@ -50,7 +53,7 @@ PA1     adc1  AdcSensor1Type    ch:   gpioa.pa1.into_analog(&mut gpioa.crl), //c
 
 PC13
 PB6 PB7 PB8 PB9 PB10 PB11
-PA0 PA1 PA5 PA6  PA7  PA8  PA9 PA10 PA11
+PA0 PA1 PA2 PA3 PA5 PA6  PA7  PA8  PA9 PA10 PA11 
 
 
 ///////////////////////////////  stm32f4xx  /////////////////////////////// 
@@ -125,7 +128,7 @@ PA6     miso                    gpioa.pa6.into_alternate(), // miso
 PA7     mosi                    gpioa.pa7.into_alternate(), // mosi
                                 ), MODE_0, 400.kHz(),  &mut rcc, );
 
-PA3     CsPin        Sx127x     gpioa.pa3.into_push_pull_output(), //CsPin         
+PA11    CsPin        Sx127x     gpioa.pa11.into_push_pull_output(), //CsPin         
 PB4     BusyPin                 gpiob.pb8.into_floating_input(),   //BusyPin  DI00            CHANGED
 PB5     ReadyPin                gpiob.pb9.into_floating_input(),   //ReadyPin DI01            CHANGED
 PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin      
@@ -135,7 +138,7 @@ PA1     adc1  AdcSensor1Type    ch:  gpioa.pa1.into_analog(),
 
 PC4, PC13
 PB4, PB5, PB7, PB8, PB9    
-PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10
+PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10, PA11
     
 
 

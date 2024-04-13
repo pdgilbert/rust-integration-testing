@@ -47,8 +47,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
@@ -78,7 +83,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc>;
 //   //////////////////////////////////////////////////////////////////////
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.constrain();
    
@@ -119,9 +124,13 @@ pub fn all_from_dp(dp: Peripherals) ->
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
         };   
 
-   let tx = gpioa.pa9; 
-   let rx = gpioa.pa10;
-   let (tx, _rx) = dp.USART1.usart((tx, rx), FullConfig::default(), &mut rcc).unwrap().split();
+    let (tx1, rx1) = dp.USART1.usart((gpioa.pa9, gpioa.pa10),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+    let (tx2, rx2) = dp.USART2.usart((gpioa.pa2, gpioa.pa3),
+                        FullConfig::default(), &mut rcc).unwrap().split();
+
+
 
    let delay = dp.TIM2.delay(&mut rcc);
 
@@ -135,6 +144,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read_voltage(&mut self.ch).unwrap() as u32}
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

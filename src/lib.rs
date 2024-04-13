@@ -17,8 +17,6 @@ pub mod alt_delay;
 pub mod led;   // has trait and default impl
 pub mod lora;  // has structures and constants
 
-pub mod usart;
-
 pub mod  setup;
 
 // Note, if feature gate is not set then compiling for the module will be 
