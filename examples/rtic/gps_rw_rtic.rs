@@ -57,9 +57,8 @@ mod app {
     //use nb::block;
     //use rtt_target::{rprintln, rtt_init_print};
 
-    use rust_integration_testing_of_examples::usart;
-    use rust_integration_testing_of_examples::usart::{Tx1Type, Rx2Type};
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, Peripherals};
+    use rust_integration_testing_of_examples::setup;
+    use rust_integration_testing_of_examples::setup::{MONOCLOCK, Tx1Type, Rx2Type};
 
     use embedded_io::{Read, Write};
 
@@ -117,9 +116,11 @@ mod app {
         let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
         hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
         buffer.clear();
-
-        let (mut tx_con, mut _rx_con) = usart::setup_1_from_dp(Peripherals::take().unwrap()); // console
-        let (mut _tx_gps,     rx_gps) = usart::setup_2_from_dp(Peripherals::take().unwrap()); // GPS
+        
+        // transmit to console, receive from gps
+        //let (mut tx_con, mut _rx_con) = usart::setup_1_from_dp(Peripherals::take().unwrap()); // console
+        //let (mut _tx_gps,     rx_gps) = usart::setup_2_from_dp(Peripherals::take().unwrap()); // GPS
+        let (mut tx_con, _rx1, _tx2, rx_gps) = setup::tx1_rx1_tx2_rx2_from_dp(cx.device);
 
         //writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
         tx_con.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?

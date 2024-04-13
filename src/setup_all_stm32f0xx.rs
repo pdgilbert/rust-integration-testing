@@ -45,8 +45,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>,   //pa11 UNTESTED
@@ -76,7 +81,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc>;
 //   //////////////////////////////////////////////////////////////////////
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
    let gpioa = dp.GPIOA.split(&mut rcc);
@@ -131,10 +136,18 @@ pub fn all_from_dp(dp: Peripherals) ->
            gpioa.pa10.into_alternate_af1(cs), //rx pa10
        )
    });
+   let (tx1, rx1, tx2, rx2) = cortex_m::interrupt::free(move |cs| {
+        (
+            gpioa.pa9.into_alternate_af1(cs),  //tx pa9
+            gpioa.pa10.into_alternate_af1(cs), //rx pa10
+            gpioa.pa2.into_alternate_af1(cs),  //tx pa2
+            gpioa.pa3.into_alternate_af1(cs),  //rx pa3
+        )
+    });
 
-   let (tx, _rx) = Serial::usart1(dp.USART1, (tx, rx), 9600.bps(), &mut rcc).split();
-
+   let (tx1, rx1) = Serial::usart1(p.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
    
+   let (tx2, rx2) = Serial::usart2(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
 
    let adc1: AdcSensor1Type = AdcSensor {
        ch:  gpioa.pa1.into_analog(),
@@ -144,6 +157,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 {  self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

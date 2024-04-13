@@ -49,8 +49,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
@@ -81,7 +86,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let gpioa = dp.GPIOA.split();
    let mut dht   = gpioa .pa8.into_open_drain_output();
@@ -143,7 +148,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let delay = dp.TIM2.delay_us(&clocks);
 
-   let (tx, _rx) = Serial::new(
+   let (tx1, rx1) = Serial::new(
         dp.USART1,
         (
             gpioa.pa9.into_alternate(), //tx pa9 
@@ -161,7 +166,25 @@ pub fn all_from_dp(dp: Peripherals) ->
    )
    .split();
 
-   
+     let (tx2, rx2) = Serial::new(
+        dp.USART2,
+        (
+            gpioa.pa2.into_alternate(), //tx pa2  for GPS
+            gpioa.pa3.into_alternate(),
+        ), //rx pa3  for GPS
+        &clocks,
+        Config {
+            baud_rate: 9600.bps(),
+            data_bits: DataBits::Bits9,  // 8 bits of data + 1 for even parity  CHECK THIS FOR HARDWARE
+            parity: Parity::ParityEven,
+            oversampling: Oversampling::By16,
+            character_match: None,
+            sysclock: false,
+        },
+    )
+    .split();
+
+  
 
    let adc1: AdcSensor1Type = AdcSensor {
        ch:  gpioa.pa1.into_analog(),
@@ -171,6 +194,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

@@ -62,8 +62,13 @@ impl LED for LedType {  // not default
 //pub type TxType = Tx<USART1, impl TxPin<USART1>>;  // impl is unstable in type alias
 // See  https://github.com/stm32-rs/stm32f3xx-hal/issues/288
 //   regarding why it is necessary to specify the concrete pin here.
-pub type TxType = Tx<USART1, PA9<AF7<PushPull>>>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1, PA9<AF7<PushPull>>>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
@@ -94,7 +99,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1, Disabled>>; // possib
 //   //////////////////////////////////////////////////////////////////////
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut flash = dp.FLASH.constrain();
    let mut rcc = dp.RCC.constrain();
@@ -144,7 +149,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let delay = DelayType{};
 
-   let (tx, _rx) = Serial::new(
+   let (tx1, rx1) = Serial::new(
        dp.USART1,
        (
            gpioa
@@ -160,6 +165,22 @@ pub fn all_from_dp(dp: Peripherals) ->
    )
    .split();
 
+   let (tx2, rx2) = Serial::new(
+        dp.USART2,
+        (
+            gpioa
+                .pa2
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //tx pa2
+            gpioa
+                .pa3
+                .into_af_push_pull(&mut gpioa.moder, &mut gpioa.otyper, &mut gpioa.afrl), //rx pa3
+        ),
+        115_200.Bd(), // 9600.bps(),
+        clocks,
+        &mut rcc.apb1,
+    )
+    .split();
+
    
 
    let adc1: AdcSensor1Type = AdcSensor {
@@ -170,6 +191,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

@@ -74,8 +74,13 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 
-pub type TxType  = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1, Enabled>;
 pub struct SpiExt { pub cs:    PA11<Output<PushPull>>,   //pa11 UNTESTED
@@ -105,7 +110,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1, adc::Enabled>>;
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let pwr = dp.PWR.constrain();
    let vos = pwr.freeze();
@@ -155,13 +160,25 @@ pub fn all_from_dp(dp: Peripherals) ->
    let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
    let mut delay = DelayFromCountDownTimer::new(timer);
 
-   let (tx, rx) = dp.USART1.serial(
+   let (tx1, rx1) = dp.USART1.serial(
             (
                 gpioa.pa9.into_alternate(), //tx pa9
                 gpioa.pa10.into_alternate(),
             ), //rx pa10
             115200.bps(),
             ccdr.peripheral.USART1,
+            &clocks,
+        )
+        .unwrap()
+        .split();
+
+    let (tx2, rx2) = dp.USART2.serial(
+            (
+                gpioa.pa2.into_alternate(), //tx pa2
+                gpioa.pa3.into_alternate(),
+            ), //rx pa3
+            9600.bps(),
+            ccdr.peripheral.USART2,
             &clocks,
         )
         .unwrap()
@@ -181,6 +198,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 

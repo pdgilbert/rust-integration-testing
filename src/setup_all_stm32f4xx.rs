@@ -55,11 +55,11 @@ impl LED for LedType {}
 
 pub type Tx1Type = Tx<USART1>;
 pub type Rx1Type = Rx<USART1>;
-pub type TxType = Tx1Type;
-pub type RxType = Rx1Type;
-
 pub type Tx2Type = Tx<USART2>;
 pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, 
@@ -90,7 +90,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1>>;
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-          (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+          (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let rcc = dp.RCC.constrain();
    let clocks = rcc.cfgr.freeze();
@@ -136,10 +136,17 @@ pub fn all_from_dp(dp: Peripherals) ->
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
         };   
 
-   let tx = gpioa.pa9.into_alternate();
-   let rx = gpioa.pa10.into_alternate();
-   let (tx, rx) = Serial::new(dp.USART1, (tx, rx), Config::default().baudrate(115200.bps()), &clocks,
-                      ).unwrap().split();
+   let (tx1, rx1) = Serial::new(dp.USART1, 
+                      (gpioa.pa9.into_alternate(),
+                       gpioa.pa10.into_alternate()
+                      ),
+                      Config::default().baudrate(115200.bps()), &clocks).unwrap().split();
+
+    let (tx2, rx2) = Serial::new( dp.USART2,
+                       (gpioa.pa2.into_alternate(), 
+                        gpioa.pa3.into_alternate(),
+                       ),
+                       Config::default().baudrate(9600.bps()),&clocks).unwrap().split();
 
    let delay = dp.TIM5.delay(&clocks);
 
@@ -151,7 +158,7 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() as u32 }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 
 

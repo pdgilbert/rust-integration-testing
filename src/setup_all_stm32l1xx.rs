@@ -60,8 +60,13 @@ impl LED for LedType {  // not default
         }
     }
 
-pub type TxType = Tx<USART1>;
-pub type RxType = Rx<USART1>;
+pub type Tx1Type = Tx<USART1>;
+pub type Rx1Type = Rx<USART1>;
+pub type Tx2Type = Tx<USART2>;
+pub type Rx2Type = Rx<USART2>;
+
+pub type TxType = Tx1Type;
+pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>,   //pa11 UNTESTED
@@ -93,7 +98,7 @@ pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc>;
 //   //////////////////////////////////////////////////////////////////////
 
 pub fn all_from_dp(dp: Peripherals) -> 
-               (OpenDrainType, I2c1Type, I2c2Type, LedType, TxType, RxType, 
+               (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.freeze(rccConfig::hsi());
 
@@ -136,7 +141,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let delay = DelayType{};
 
-   let (tx, _rx) = dp
+   let (tx1, rx1) = dp
        .USART1
        .usart(
            (gpioa.pa9, gpioa.pa10),
@@ -146,6 +151,16 @@ pub fn all_from_dp(dp: Peripherals) ->
        .unwrap()
        .split();
 
+    let (tx2, rx2) = dp.USART2.usart(
+            (gpioa.pa2, 
+             gpioa.pa3,
+            ), 
+            Config::default().baudrate(115_200.bps()),
+            &mut rcc,
+        )
+        .unwrap()
+        .split();
+
    let adc1: AdcSensor1Type = AdcSensor {
        ch:  gpioa.pa1.into_analog(),
        adc: dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
@@ -154,6 +169,6 @@ pub fn all_from_dp(dp: Peripherals) ->
        fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() }
    }
 
-   (pin, i2c1, i2c2, led, tx, rx, spi1, spiext,  delay, clocks, adc1)
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }
 
