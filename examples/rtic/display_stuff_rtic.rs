@@ -63,18 +63,22 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2cType, LED, LedType};
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, I2cType, I2c1Type, I2c2Type, LED, LedType, prelude::*, I2c};
 
 
     use core::cell::RefCell;
-    use embedded_hal_bus::i2c::RefCellDevice;
+//    use embedded_hal_bus::i2c::RefCellDevice;
+    //use shared_bus::{I2cProxy};
+    use cortex_m::interrupt::Mutex;
 
 
     fn show_display<S>(
         //text: &[heapless::String<32>; 1],
         //text_style: TextStyle,
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-        //disp: DisplayType,
+        //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        disp: &mut DisplayType,
     ) -> ()
     where
         S: DisplaySize,
@@ -108,6 +112,10 @@ mod app {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////
+    pub type DisplayType = Ssd1306<I2CInterface<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
+                          ssd1306::prelude::DisplaySize128x64, 
+                          BufferedGraphicsMode<DisplaySize128x64>>;
     #[shared]
     struct Shared {
         led: LedType,
@@ -115,9 +123,11 @@ mod app {
 
     #[local]
     struct Local {
-        display:  Ssd1306<I2CInterface<RefCellDevice<I2cType>>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+        //display:  Ssd1306<I2CInterface<RefCellDevice<I2cType>>, 
+        display:  DisplayType,
+
+   //     sensor:  htu21df_sensor::Sensor<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
+
         //i2c: &'static mut I2CBus,
         //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
@@ -125,13 +135,16 @@ mod app {
     }
 
 
-    //#[init]
-    #[init(local=[
-        // Task local initialized resources are static
-        // Here we use MaybeUninit to allow for initialization in init()
-        // This enables its usage in driver initialization
-        i2c1_rcd: MaybeUninit<RefCellDevice<I2cType>> = MaybeUninit::uninit()
-    ])]
+    ////////////////////////////////////////////////////////////////////////////////////
+
+//    //#[init]
+//    #[init(local=[
+//        // Task local initialized resources are static
+//        // Here we use MaybeUninit to allow for initialization in init()
+//        // This enables its usage in driver initialization
+//        i2c1_rcd: MaybeUninit<RefCellDevice<I2cType>> = MaybeUninit::uninit()
+//    ])]
+    #[init()]
     fn init(cx: init::Context) -> (Shared, Local ) {
 
        Mono::start(cx.core.SYST, MONOCLOCK);
@@ -145,10 +158,13 @@ mod app {
        led.on();
 
        //let i2c1_rc: RefCell<'static, I2cType>   = RefCell::new(i2c1);
-       let i2c1_rc   = RefCell::new(i2c1);
-       let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
-       let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
+  //     let i2c1_rc   = RefCell::new(i2c1);
+  //     let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
+  //     let interface = I2CDisplayInterface::new(i2c1_rcd); //default address 0x3C
        //let interface = I2CDisplayInterface::new_custom_address(i2c1_rcd,   0x3D);  //alt address
+       
+       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); 
+       let interface = I2CDisplayInterface::new(manager.acquire_i2c()); //default address 0x3C
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
 

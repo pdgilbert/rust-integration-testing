@@ -92,19 +92,12 @@ mod app {
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
     use rust_integration_testing_of_examples::setup;
-    use rust_integration_testing_of_examples::setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, Delay};
+    use rust_integration_testing_of_examples::
+                         setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, Delay, DelayNs};
 
-    use embedded_hal::delay::DelayNs;
-
-    use shared_bus::{I2cProxy};
+    //use shared_bus::{I2cProxy};
     use core::cell::RefCell;
     use cortex_m::interrupt::Mutex;
-
-    #[cfg(feature = "stm32f4xx")]
-    use stm32f4xx_hal::{
-       pac::TIM5,
-       timer::Delay,
-    };
 
     ////////////////////////////////////////////////////////////////////////////////////
     #[shared]
@@ -120,7 +113,8 @@ mod app {
                           BufferedGraphicsMode<DisplaySize128x32>>,
 
         sensor:  htu21df_sensor::Sensor<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c2Type>>>>, 
-        delay:  Delay,   //Delay<TIM5, 1000000_u32>, for stm32f4xx
+        
+        delay:  Delay, 
     }
     ////////////////////////////////////////////////////////////////////////////////////
 
@@ -180,16 +174,17 @@ mod app {
       
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        let (i2c1, i2c2, mut led, delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
+        let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
         led.on();
         Mono.delay_ms(1000u32);  
         led.off();
 
-        let manager2 = shared_bus::BusManager::<cortex_m::interrupt::Mutex<_>>::new(i2c2);
-        //let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
+        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); 
+        let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
     
         /////////////////////   ssd
+        //let interface = I2CDisplayInterface::new(manager1.acquire_i2c()); //default address 0x3C
         let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
@@ -208,10 +203,9 @@ mod app {
 
         /////////////////////   htu
         // Start the sensor.
-         // delay or Mono::delay ?  Neither WILL WORK. Need DelayMs<u16>
-         //  and being able to .await would ne nice
-         let mut sensor = Sensor::new(manager2.acquire_i2c(), Some(&mut delay)).expect("sensor init");
-        //                                                  ^^^^^^^^^^^^^^^^ the trait `DelayMs<u16>` is not implemented for `impl embedded_hal::delay::DelayNs`
+
+        let sensor = Sensor::new(manager2.acquire_i2c(), Some(&mut delay)).expect("sensor init");
+
         Mono.delay_ms(15u32);     // Wait for the reset to finish // needed?
 
         read_and_display::spawn().unwrap();
@@ -231,7 +225,8 @@ mod app {
 
      //     let z = sensor.read_temperature_blocking(htu_ch);
           // delay2 or Mono::delay?   NOT SURE IF THIS WILLL WORK. .await?
-          let t = sensor.measure_temperature(&mut delay).unwrap().value();
+          //let t = sensor.measure_temperature(&mut delay).unwrap().value();
+          let t = sensor.measure_temperature(delay).unwrap().value();
 
      //   See htu2xd-display for error handling
      //     let t = match z {
@@ -242,7 +237,8 @@ mod app {
      //     };
 
      //     let z = sensor.read_humidity_blocking(htu_ch);
-          let h = sensor.measure_humidity(&mut delay).unwrap().value();
+          //let h = sensor.measure_humidity(&mut delay).unwrap().value();
+          let h = sensor.measure_humidity(delay).unwrap().value();
      //     let h = match z {
      //         Ok(Reading::Ok(t))     => t.as_percent_relative(),
      //         Ok(Reading::ErrorLow)  => 409.0,

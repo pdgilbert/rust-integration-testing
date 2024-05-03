@@ -1,8 +1,9 @@
 //!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //!
-//! This uses analogue to digital chips to measure the battery (2 ads1x1x share the i2c bus).
+//! This uses analogue to digital chips ads1x1x on I2C2 to measure the battery.
+//! Code FOR NOW has only one ads1x1x. Two are possible but require sharing the i2c bus.
 //! (See ina219 examples for a better way to measure the battery.)
-//! It also has an oled ssd display on ??
+//! It also has an oled ssd display on  I2C1.
 
 //! See examples/misc/battery_monitor_ads1015_rtic_dma.rs for version using dma.
 
@@ -57,8 +58,10 @@ mod app {
     /////////////////////   ssd
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x64 = DisplaySize128x64;
-    const VPIX:i32 = 16; // vertical pixels for a line, including space. 12 for 128x32
+    type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
+    const DISPLAYSIZE: DisplaySizeType = DisplaySize128x64;
+
+    const VPIX:i32 = 12; // vertical pixels for a line, including space. 12 for 128x32
 
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
@@ -85,16 +88,14 @@ mod app {
     /////////////////////  setup
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::
-                         setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, prelude::* };
+                         setup::{MONOCLOCK, I2c1Type, I2c2Type, LED, LedType, DelayNs};
 
 
-    use core::cell::RefCell;
-    use shared_bus::{I2cProxy};
-    use cortex_m::interrupt::Mutex;
+//    use core::cell::RefCell;
+//    use shared_bus::{I2cProxy};
+//    use cortex_m::interrupt::Mutex;
 
-    use embedded_hal_bus::i2c::RefCellDevice;
-
-    use embedded_hal::delay::DelayNs;
+//    use embedded_hal_bus::i2c::RefCellDevice;
 
     use nb::block;
 
@@ -103,11 +104,11 @@ mod app {
     // Note SCALE_CUR divides,  SCALE_B multiplies
     const  SCALE_CUR: i16 = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
     const  SCALE_A: i16 = 2; // calibrated to get mV    depends on FullScaleRange
-    const  SCALE_B: i16 = 2; // calibrated to get mV    depends on FullScaleRange
+//    const  SCALE_B: i16 = 2; // calibrated to get mV    depends on FullScaleRange
 
     //TMP35 scale is 100 deg C per 1.0v (slope 10mV/deg C) and goes through  <50C, 1.0v>,  so 0.0v is  -50C.
-    const  SCALE_TEMP:  i16  = 5; //divides
-    const  OFFSET_TEMP: i16 = 50;
+//    const  SCALE_TEMP:  i16  = 5; //divides
+//    const  OFFSET_TEMP: i16 = 50;
 
     ////////////////////////////////////////////////////////////////////////
 
@@ -118,14 +119,12 @@ mod app {
 
     #[local]
     struct Local {    // NB I2CInterface  renamed I2cInterface ??
-//       adc_a:   Ads1x1x<I2c2Type, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_a:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc_a:   Ads1x1x<I2c2Type, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+//       adc_a:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
 //       adc_b:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
 
        //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2cType>>>>, 
-       display: Ssd1306<I2CInterface<I2c1Type>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+       display: Ssd1306<I2CInterface<I2c1Type>, DisplaySizeType, BufferedGraphicsMode<DisplaySizeType>>,
        //text_style: MonoTextStyle<BinaryColor>,
     }
 
@@ -169,7 +168,7 @@ mod app {
            // start from 0 requires that the top is used for font baseline
            Text::with_baseline(
                &lines[i],
-               Point::new(0, i as i32 * 12), //with font 6x10, 12 = 10 high + 2 space
+               Point::new(0, i as i32 * VPIX), //with font 6x10, 12 = 10 high + 2 space
                text_style,
                Baseline::Top,
                )
@@ -203,7 +202,7 @@ mod app {
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
         display.init().unwrap();
 
@@ -215,10 +214,10 @@ mod app {
 
         //////////////////////////////////  ads
         
-        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
+//        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
-//        let mut adc_a = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Gnd);
-        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
+        let mut adc_a = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Gnd);
+//        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
 //        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
 
         // FullScaleRange is very small for diff across low value shunt resistors for current
@@ -263,7 +262,6 @@ mod app {
     async fn read_and_display(mut cx: read_and_display::Context) {
        //let adc_a = *cx.local.adc_a.borrow_mut(); // extract from proxy
        let adc_a = cx.local.adc_a;
-       let () = adc_a ;
        //type `&mut Ads1x1x<I2cProxy<'static, cortex_m::interrupt::Mutex<RefCell<I2c<I2C2, PA8<AlternateOD<4>>, PA9<AlternateOD<4>>>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>`
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
