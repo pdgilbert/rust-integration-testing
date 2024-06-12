@@ -38,7 +38,8 @@ use cortex_m_rt::entry;
 //use embedded_hal::delay::DelayNs;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr, mode::OneShot,
+              ic::{Ads1015, Resolution12Bit}};
 
 /////////////////////   ssd
 use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
@@ -62,14 +63,16 @@ use embedded_hal_bus::i2c::RefCellDevice;
 
 /////////////////////  setup
 use rust_integration_testing_of_examples::setup;  // setup function
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, block, DelayNs};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, block, DelayNs, I2c1Type };
 
 
 /////////////////////  
-
-pub fn read_all<E, A: DynamicOneShot<Error = E>>(
-    adc_a: &mut A,
-    adc_b: &mut A,
+//Ads1x1x<embedded_hal_bus::i2c::RefCellDevice<'_, rust_integration_testing_of_examples::setup::I2c<I2C1, PB9<AlternateOD<4>>, PB8<AlternateOD<4>>>>, Ads1015, Resolution12Bit, OneShot>
+//Ads1x1x<RefCellDevice<'_, I2c<I2C1, PB9<AlternateOD<4>>, PB8<AlternateOD<4>>>>, Ads1015, Resolution12Bit, OneShot>
+//pub fn read_all<E, A: DynamicOneShot<Error = E>>(
+pub fn read_all(
+    adc_a: &mut Ads1x1x<RefCellDevice<'_, I2c1Type>, Ads1015, Resolution12Bit, OneShot>,
+    adc_b: &mut Ads1x1x<RefCellDevice<'_, I2c1Type>, Ads1015, Resolution12Bit, OneShot>,
 ) -> (i16, i16, i16, [i16; 3]) {
     // Note scale_cur divides, scale_a and scale_b multiplies
     let scale_cur = 10; // calibrated to get mA/mV depends on FullScaleRange above and values of shunt resistors
@@ -84,9 +87,9 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(
 
     //first adc  Note that readings are zero on USB power (programming) rather than battery.
 
-    let bat_ma = block!(adc_a.read(ChannelSelection::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
+    let bat_ma = block!(adc_a.read(channel::DifferentialA1A3)).unwrap_or(8091) / scale_cur;
     let load_ma =
-        block!(adc_a.read(ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
+        block!(adc_a.read(channel::DifferentialA2A3)).unwrap_or(8091) / scale_cur;
 
     // toggle FullScaleRange to measure battery voltage, not just diff across shunt resistor
     // also first adc
@@ -98,20 +101,20 @@ pub fn read_all<E, A: DynamicOneShot<Error = E>>(
 
     // second adc
     let values_b = [
-        block!(adc_b.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_b,
-        block!(adc_b.read(ChannelSelection::SingleA1)).unwrap_or(8091) * scale_b,
-        block!(adc_b.read(ChannelSelection::SingleA2)).unwrap_or(8091) * scale_b,
+        block!(adc_b.read(channel::SingleA0)).unwrap_or(8091) * scale_b,
+        block!(adc_b.read(channel::SingleA1)).unwrap_or(8091) * scale_b,
+        block!(adc_b.read(channel::SingleA2)).unwrap_or(8091) * scale_b,
     ];
 
     let temp_c =
-        block!(adc_b.read(ChannelSelection::SingleA3)).unwrap_or(8091) / scale_temp - offset_temp;
+        block!(adc_b.read(channel::SingleA3)).unwrap_or(8091) / scale_temp - offset_temp;
 
     // third adc
     //let values_c = [
-    //    block!(adc_c.read(ChannelSelection::SingleA0)).unwrap_or(8091),
-    //    block!(adc_c.read(ChannelSelection::SingleA1)).unwrap_or(8091),
-    //    block!(adc_c.read(ChannelSelection::SingleA2)).unwrap_or(8091),
-    //    block!(adc_c.read(ChannelSelection::SingleA3)).unwrap_or(8091),
+    //    block!(adc_c.read(channel::SingleA0)).unwrap_or(8091),
+    //    block!(adc_c.read(channel::SingleA1)).unwrap_or(8091),
+    //    block!(adc_c.read(channel::SingleA2)).unwrap_or(8091),
+    //    block!(adc_c.read(channel::SingleA3)).unwrap_or(8091),
     //];
 
     //(bat_mv, bat_ma, load_ma, temp_c, values_b )
@@ -232,13 +235,12 @@ fn main() -> ! {
 
         adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 
-        //let bat_mv = block!(adc_a.read(ChannelSelection::SingleA0)).unwrap_or(8091) * scale_a;
-        let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0))
-            .unwrap_or(8091)
-            * scale_a;
+        let bat_mv = block!(adc_a.read(channel::SingleA0)).unwrap_or(8091) * scale_a;
+        //let bat_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0))
+        //    .unwrap_or(8091)
+        //    * scale_a;
 
         adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
-
         let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
 
         //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();

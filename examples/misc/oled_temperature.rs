@@ -45,7 +45,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
 
 
 /////////////////////   ssd
@@ -168,10 +168,10 @@ fn main() -> ! {
         led.blink(50_u16, &mut delay);
 
         // Read adc
-        let thermistor = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA0)).unwrap_or(8091) * 5;  //FIX
-        let a1 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA1)).unwrap_or(8091);
-        let a2 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA2)).unwrap_or(8091);
-        let a3 = block!(DynamicOneShot::read(&mut adc, ChannelSelection::SingleA3)).unwrap_or(8091);
+        let thermistor = block!(adc.read(channel::SingleA0)).unwrap_or(8091) * 5;  //FIX
+        let a1 = block!(adc.read(channel::SingleA1)).unwrap_or(8091);
+        let a2 = block!(adc.read(channel::SingleA2)).unwrap_or(8091);
+        let a3 = block!(adc.read(channel::SingleA3)).unwrap_or(8091);
 
     hprintln!("values read").unwrap();
     hprintln!("values  {} {} {} {}", thermistor, a1, a2, a3).unwrap();

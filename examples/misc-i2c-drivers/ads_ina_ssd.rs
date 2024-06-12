@@ -12,7 +12,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, channel, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
 
 /////////////////////   ina
 use ina219::{address::{Address, Pin}, measurements::BusVoltage, SyncIna219};
@@ -212,7 +212,8 @@ fn main() -> ! {
     loop {
         let voltage = ina.bus_voltage().unwrap();  
 
-        let a_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0)).unwrap_or(8091);
+        //let a_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0)).unwrap_or(8091);
+        let a_mv = block!(adc_a.read(channel::SingleA0)).unwrap_or(8091);
 
         let values_b = [
             block!(adc_b.read(channel::SingleA0)).unwrap_or(8091),

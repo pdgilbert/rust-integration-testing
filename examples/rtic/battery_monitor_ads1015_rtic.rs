@@ -51,7 +51,7 @@ mod app {
     //                  ic::{Ads1015, Resolution12Bit},
     //                  interface::I2cInterface};
     
-    use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr,
+    use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr,
                   ic::{Ads1015, Resolution12Bit},
     };
 
@@ -269,27 +269,27 @@ mod app {
           blink::spawn(BLINK_DURATION).ok();
 
           adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();  // reading voltage which is higher 
-          let bat_mv = block!(DynamicOneShot::read(adc_a, ChannelSelection::SingleA0)).unwrap_or(8091)* SCALE_A;
+          let bat_mv = block!(adc_a.read(channel::SingleA0)).unwrap_or(8091)* SCALE_A;
           adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
           //first adc  Note that readings will be zero using USB power (ie while programming) 
           // but not when using battery.
 
           let bat_ma =
-              block!(DynamicOneShot::read(adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+              block!(adc_a.read(channel::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
           let load_ma =
-              block!(DynamicOneShot::read(adc_a, ChannelSelection::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
+              block!(adc_a.read(channel::DifferentialA2A3)).unwrap_or(8091) / SCALE_CUR;
 
 //          // second adc
 //          let values_b = [
-//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA0)).unwrap_or(8091) * SCALE_B,
-//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA1)).unwrap_or(8091) * SCALE_B,
-//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA2)).unwrap_or(8091) * SCALE_B,
+//              block!(adc_b.read(channel::SingleA0)).unwrap_or(8091) * SCALE_B,
+//              block!(adc_b.read(channel::SingleA1)).unwrap_or(8091) * SCALE_B,
+//              block!(adc_b.read(channel::SingleA2)).unwrap_or(8091) * SCALE_B,
 //          ];
 //
 //          let temp_c =
-//              block!(DynamicOneShot::read(cx.local.adc_b, ChannelSelection::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
+//              block!(adc_b.read(channel::SingleA3)).unwrap_or(8091) / SCALE_TEMP - OFFSET_TEMP;
 
            let temp_c = 0;   // FAKE
            let values_b = [0, 0, 0 ];   // FAKE

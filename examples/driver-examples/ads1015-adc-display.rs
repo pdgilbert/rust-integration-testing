@@ -26,7 +26,7 @@ use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, ChannelSelection, DynamicOneShot, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
 
 /////////////////////   ssd
 use ssd1306::{ prelude::*, I2CDisplayInterface, Ssd1306};
@@ -98,10 +98,10 @@ fn main() -> ! {
 
         // Read voltage in all channels
         let values = [
-            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA0)).unwrap_or(8091),
-            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA1)).unwrap_or(8091),
-            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA2)).unwrap_or(8091),
-            block!(DynamicOneShot::read(&mut adc,  ChannelSelection::SingleA3)).unwrap_or(8091),
+            block!(adc.read(channel::SingleA0)).unwrap_or(8091),
+            block!(adc.read(channel::SingleA1)).unwrap_or(8091),
+            block!(adc.read(channel::SingleA2)).unwrap_or(8091),
+            block!(adc.read(channel::SingleA3)).unwrap_or(8091),
         ];
 
         display.clear_buffer();
