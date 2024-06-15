@@ -44,8 +44,8 @@ mod app {
    const BLINK_DURATION: u32 = 20;  // used as milliseconds
 
    /////////////////////   ads
-   use ads1x1x::{Ads1x1x, channel, ChannelSelection, 
-                 DynamicOneShot, mode::OneShot, 
+   use ads1x1x::{Ads1x1x, channel, 
+                 mode::OneShot, 
                  //Ads1015, Resolution12Bit,    PRIVATE?
                  FullScaleRange, SlaveAddr};
    
@@ -234,7 +234,7 @@ mod app {
           loop {
              let voltage = ina.bus_voltage().unwrap();  
      
-//             let a_mv = block!(DynamicOneShot::read(&mut adc_a, ChannelSelection::SingleA0)).unwrap_or(8091);
+//             let a_mv = block!(adc_a.read(channel::SingleA0)).unwrap_or(8091);
 
 //             let values_b = [
 //                 block!(adc_b.read(channel::SingleA0)).unwrap_or(8091),

@@ -22,17 +22,25 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 use embedded_hal::delay::DelayNs;
+use embedded_hal::digital::OutputPin;
 
-pub trait LED {
-    fn on(&mut self) -> ();
-    fn off(&mut self) -> ();
-
+// see also src/led.rs. The trait is defined here so example is self contained.
+pub trait LED: OutputPin {
     // default methods
+    fn on(&mut self) -> () {
+        self.set_low().unwrap()
+    }
+
+    fn off(&mut self) -> () {
+        self.set_high().unwrap()
+    }
+
     fn blink(&mut self, time: u32, delay: &mut impl DelayNs) -> () {
         self.on();
         delay.delay_ms(time);
         self.off()
     }
+
     fn blink_ok(&mut self, delay: &mut impl DelayNs) -> () {
         let dot   = 5;
         let dash  = 100;
@@ -69,6 +77,9 @@ use stm32f0xx_hal::{
 };
 
 #[cfg(feature = "stm32f0xx")]
+impl LED for PC13<Output<PushPull>> {}
+
+#[cfg(feature = "stm32f0xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let mut p = Peripherals::take().unwrap();
@@ -79,15 +90,6 @@ fn setup() -> (impl LED, impl DelayNs) {
     // led on pc13 with on/off
     let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
     // return tuple  (led, delay)
     (led, Delay::new(cp.SYST, &rcc))
 }
@@ -96,11 +98,13 @@ fn setup() -> (impl LED, impl DelayNs) {
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
+
+#[cfg(feature = "stm32f1xx")]
+impl LED for PC13<Output<PushPull>> {}
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (impl LED, impl DelayNs) {
@@ -109,15 +113,6 @@ fn setup() -> (impl LED, impl DelayNs) {
     let rcc = p.RCC.constrain();
     let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     let mut gpioc = p.GPIOC.split();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -137,13 +132,6 @@ use stm32f3xx_hal::{
 };
 
 #[cfg(feature = "stm32f3xx")]
-fn setup() -> (impl LED, impl DelayNs) {
-    let cp = CorePeripherals::take().unwrap();
-    let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut gpioe = p.GPIOE.split(&mut rcc.ahb);
-
     impl LED for PE15<Output<PushPull>> {
         fn on(&mut self) -> () {
             self.set_high().unwrap()
@@ -152,6 +140,14 @@ fn setup() -> (impl LED, impl DelayNs) {
             self.set_low().unwrap()
         }
     }
+
+#[cfg(feature = "stm32f3xx")]
+fn setup() -> (impl LED, impl DelayNs) {
+    let cp = CorePeripherals::take().unwrap();
+    let p = Peripherals::take().unwrap();
+    let mut rcc = p.RCC.constrain();
+    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
+    let mut gpioe = p.GPIOE.split(&mut rcc.ahb);
 
     // return tuple  (led, delay)
     (
@@ -172,6 +168,12 @@ use stm32f4xx_hal::{
     prelude::*,
 };
 
+
+// Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
+// differently, so this is reversed (in addition to PA5 vs PC13).
+#[cfg(feature = "stm32f4xx")]
+impl LED for PC13<Output<PushPull>>{}
+
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
@@ -186,18 +188,6 @@ fn setup() -> (impl LED, impl DelayNs) {
         .freeze();
 
     let gpioc = p.GPIOC.split();
-
-    // Note that blackpill with stm32f411 and nucleo-64 with stm32f411 have onboard led wired
-    // differently, so this is reversed (in addition to PA5 vs PC13).
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -217,6 +207,9 @@ use stm32f7xx_hal::{
 };
 
 #[cfg(feature = "stm32f7xx")]
+impl LED for PC13<Output<PushPull>>{}
+
+#[cfg(feature = "stm32f7xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     // fn setup() -> (PC13<Output<PushPull>>, Delay) {
     let cp = CorePeripherals::take().unwrap();
@@ -224,15 +217,6 @@ fn setup() -> (impl LED, impl DelayNs) {
     let clocks = p.RCC.constrain().cfgr.sysclk(216.MHz()).freeze();
 
     let gpioc = p.GPIOC.split();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -254,6 +238,10 @@ use stm32g0xx_hal::{
 #[cfg(feature = "stm32g0xx")]
 type Delay = SysDelay<SYST>;
 
+//SHOULD OutputPin BE HIGH FOR OFF (the default)
+#[cfg(feature = "stm32g0xx")]
+impl LED for PC13<Output<PushPull>>{}
+
 #[cfg(feature = "stm32g0xx")]
 pub fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
@@ -263,16 +251,7 @@ pub fn setup() -> (impl LED, impl DelayNs) {
     let gpioc = dp.GPIOC.split(&mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output(); //NOT SURE WHAT PIN THIS SHOULD BE
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-    
+   
     let delay = cp.SYST.delay(&mut rcc);
  
     (led, delay)
@@ -291,6 +270,10 @@ use stm32g4xx_hal::{
     stm32::{Peripherals }, // TIM2
 };
 
+//SHOULD OutputPin BE HIGH FOR OFF (the default)
+#[cfg(feature = "stm32g4xx")]
+impl LED for PC13<Output<PushPull>>{}
+
 #[cfg(feature = "stm32g4xx")]
 pub fn setup() -> (impl LED, impl DelayNs) {
     let dp = Peripherals::take().unwrap();
@@ -299,15 +282,6 @@ pub fn setup() -> (impl LED, impl DelayNs) {
     let gpioc = dp.GPIOC.split(&mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output(); //NOT SURE WHAT PIN THIS SHOULD BE
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()        //SHOULD THIS BE HIGH OR LOW
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
     
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
     let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
@@ -328,6 +302,9 @@ use stm32h7xx_hal::{
 };
 
 #[cfg(feature = "stm32h7xx")]
+impl LED for PC13<Output<PushPull>>{}
+
+#[cfg(feature = "stm32h7xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -336,15 +313,6 @@ fn setup() -> (impl LED, impl DelayNs) {
     let rcc = p.RCC.constrain();
     let ccdr = rcc.sys_ck(100.MHz()).freeze(vos, &p.SYSCFG); // calibrate for correct blink rate
     let gpioc = p.GPIOC.split(ccdr.peripheral.GPIOC);
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -363,20 +331,14 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
+impl LED for PC13<Output<PushPull>>{}
+
+#[cfg(feature = "stm32l0xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.freeze(rcc::Config::hsi16());
     let gpioc = p.GPIOC.split(&mut rcc);
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -395,7 +357,14 @@ use stm32l1xx_hal::{
 };
 
 #[cfg(feature = "stm32l1xx")]
-use embedded_hal::digital::v2::OutputPin;
+    impl LED for PB6<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
 
 #[cfg(feature = "stm32l1xx")]
 fn setup() -> (impl LED, impl DelayNs) {
@@ -405,15 +374,6 @@ fn setup() -> (impl LED, impl DelayNs) {
     let mut rcc = p.RCC.freeze(rcc::Config::hsi());
 
     let gpiob = p.GPIOB.split(&mut rcc);
-
-    impl LED for PB6<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
 
     // return tuple  (led, delay)
     (
@@ -431,6 +391,9 @@ use stm32l4xx_hal::{
 };
 
 #[cfg(feature = "stm32l4xx")]
+impl LED for PC13<Output<PushPull>>{}
+
+#[cfg(feature = "stm32l4xx")]
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
@@ -445,15 +408,6 @@ fn setup() -> (impl LED, impl DelayNs) {
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpioc = p.GPIOC.split(&mut rcc.ahb2);
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     // return tuple  (led, delay)
     (

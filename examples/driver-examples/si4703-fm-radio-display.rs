@@ -93,6 +93,36 @@ pub trait SEEK {
 }
 
 
+#[cfg(feature = "stm32f4xx")]
+impl SEEK for SeekPins<PB12<Input>, PB11<Input>> {
+    fn seekup(&mut self) -> bool {
+        self.p_seekup.is_high()
+    }
+    fn seekdown(&mut self) -> bool {
+        self.p_seekdown.is_high() 
+    }
+}
+
+#[cfg(any(feature = "stm32f3xx", feature = "stm32h7xx"))]
+impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
+    fn seekup(&mut self) -> bool {
+        self.p_seekup.is_high()
+    }
+    fn seekdown(&mut self) -> bool {
+        self.p_seekdown.is_high()   // SOME NEED UNWRAP BUT CHECK EH-1 CONVENTION
+    }
+}
+
+#[cfg(not(any(feature = "stm32f3xx", feature = "stm32f4xx",feature = "stm32h7xx")))]
+impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    fn seekup(&mut self) -> bool {
+        self.p_seekup.is_high().unwrap()
+    }
+    fn seekdown(&mut self) -> bool {
+        self.p_seekdown.is_high().unwrap()   // SOME NEED UNWRAP BUT CHECK EH-1 CONVENTION
+    }
+}
+
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
 use stm32f0xx_hal::{
@@ -221,15 +251,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
-        }
-    }
-
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
 
@@ -283,15 +304,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
             .pb11
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
     };
-
-    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
@@ -348,15 +360,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekup: gpiob.pb12.into_pull_down_input(),   // possibly not right pin for this function
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
-
-    impl SEEK for SeekPins<PB12<Input>, PB11<Input>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
@@ -415,15 +418,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
-        }
-    }
-
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
 
@@ -470,15 +464,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
-
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
@@ -533,15 +518,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
-
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
@@ -600,15 +576,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) ->
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
-        }
-    }
-
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
 
@@ -660,15 +627,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
 
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
-        }
-    }
-
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
 
@@ -717,15 +675,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
-
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high().unwrap()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high().unwrap()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }
@@ -795,15 +744,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
             .pb11
             .into_pull_down_input(&mut gpiob.moder, &mut gpiob.pupdr),
     };
-
-    impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
-        fn seekup(&mut self) -> bool {
-            self.p_seekup.is_high()
-        }
-        fn seekdown(&mut self) -> bool {
-            self.p_seekdown.is_high()
-        }
-    }
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }

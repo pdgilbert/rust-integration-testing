@@ -78,12 +78,16 @@ pub const MODE: Mode = Mode {
 
 pub struct AdcSensor<U, A> { ch: U, adc: A }
 
+pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1>>; 
+
 pub trait ReadAdc {
     // for reading on channel(self.ch) in mV.
     fn read_mv(&mut self)    -> u32;
 }
 
-pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1>>; 
+impl ReadAdc for AdcSensor1Type {
+    fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() as u32 }
+}
 
 
 //   //////////////////////////////////////////////////////////////////////
@@ -154,9 +158,6 @@ pub fn all_from_dp(dp: Peripherals) ->
         ch:  gpioa.pa1.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
    }; 
-   impl ReadAdc for AdcSensor1Type {
-       fn read_mv(&mut self)    -> u32 { self.adc.read(&mut self.ch).unwrap() as u32 }
-   }
 
    (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
 }

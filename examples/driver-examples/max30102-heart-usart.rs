@@ -54,14 +54,21 @@ use cortex_m_semihosting::hprintln;
 use embedded_io::{Write};
 
 /////////////////////////////////////////////////////////////////////
+use embedded_hal::digital::OutputPin;
 
-pub trait LED {
+pub trait LED: OutputPin {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
     // implementation should deal with this difference
-    fn on(&mut self) -> ();
-    fn off(&mut self) -> ();
 
     // default methods
+    
+    fn on(&mut self) -> () {
+        self.set_low().unwrap() // DEFAULT MAY NOT WORK BECAUSE OF unwrap
+    }
+    fn off(&mut self) -> () {
+        self.set_high().unwrap()
+    }
+
     fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
         self.on();
         delay.delay_ms(time.into());
@@ -81,6 +88,9 @@ use stm32f0xx_hal::{
     prelude::*,
     serial::{Rx, Serial, Tx},
 };
+
+#[cfg(feature = "stm32f0xx")]
+impl LED for PC13<Output<PushPull>> {}
 
 #[cfg(feature = "stm32f0xx")]
 fn setup() -> (
@@ -112,15 +122,6 @@ fn setup() -> (
     let gpioc = dp.GPIOC.split(&mut rcc);
     let led = cortex_m::interrupt::free(move |cs| gpioc.pc13.into_push_pull_output(cs));
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
     let gpioa = dp.GPIOA.split(&mut rcc);
 
     let (tx, rx) = cortex_m::interrupt::free(move |cs| {
@@ -138,13 +139,23 @@ fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     timer::SysDelay as Delay,
-    device::USART1,
+    pac::USART1,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
 };
+
+#[cfg(feature = "stm32f1xx")]
+impl LED for PC13<Output<PushPull>> {
+    fn on(&mut self) -> () {
+        self.set_low()
+    }
+    fn off(&mut self) -> () {
+        self.set_high()
+    }
+}
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
@@ -193,15 +204,6 @@ fn setup() -> (
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     let delay = cp.SYST.delay(&clocks);
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-
     let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
     let rx = gpiob.pb7;
     let serial = Serial::new(
@@ -217,6 +219,16 @@ fn setup() -> (
 }
 
 
+
+#[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
+impl LED for PE9<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+}
 
 #[cfg(feature = "stm32f3xx")] //  eg Discovery-stm32f303
 use stm32f3xx_hal::{
@@ -249,15 +261,6 @@ fn setup() -> (
         .pe9
         .into_push_pull_output(&mut gpioe.moder, &mut gpioe.otyper);
     let delay = Delay::new(cp.SYST, clocks);
-
-    impl LED for PE9<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb);
 
@@ -312,6 +315,16 @@ use stm32f4xx_hal::{
 //use embedded_hal::serial::nb::Write;
 
 #[cfg(feature = "stm32f4xx")]
+impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+}
+
+#[cfg(feature = "stm32f4xx")]
 fn setup() -> (
     I2c<I2C2>,
     impl LED,
@@ -342,15 +355,6 @@ fn setup() -> (
     let gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output();
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
-
     let gpioa = dp.GPIOA.split();
 
     dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
@@ -380,6 +384,16 @@ use stm32f7xx_hal::{
     prelude::*,
     serial::{Config, Oversampling, Rx, Serial, Tx, DataBits, Parity},
 };
+
+#[cfg(feature = "stm32f7xx")]
+impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+}
 
 #[cfg(feature = "stm32f7xx")]
 fn setup() -> (
@@ -415,15 +429,6 @@ fn setup() -> (
 
     // led
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     let gpioa = dp.GPIOA.split();
 
@@ -467,6 +472,9 @@ use stm32g0xx_hal::{
 type Delay = DelayX<TIM2>;
 
 #[cfg(feature = "stm32g0xx")]
+impl LED for PC13<Output<PushPull>> {}
+
+#[cfg(feature = "stm32g0xx")]
 fn setup() -> (
     I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>>, 
     impl LED,
@@ -492,16 +500,6 @@ fn setup() -> (
     // led
     let gpioc = dp.GPIOC.split(&mut rcc);
     let led = gpioc.pc13.into_push_pull_output();
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
 
     // (tx, rx) 
     let gpioa = dp.GPIOA.split(&mut rcc);
@@ -529,6 +527,9 @@ use stm32g4xx_hal::{
 };
 
 #[cfg(feature = "stm32g4xx")]
+impl LED for PC13<Output<PushPull>> {}
+
+#[cfg(feature = "stm32g4xx")]
 fn setup() -> (
     I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,   //I2c<I2C2, impl Pins<I2C2>>,
     impl LED,
@@ -553,15 +554,6 @@ fn setup() -> (
     let gpioc = dp.GPIOC.split(&mut  rcc);
     let led = gpioc.pc13.into_push_pull_output();
 
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
-
     let (tx, rx) = dp.USART2.usart(
         gpioa.pa2.into_alternate(), 
         gpioa.pa3.into_alternate(),
@@ -581,6 +573,16 @@ use stm32h7xx_hal::{
     prelude::*,
     serial::{Rx, Tx},
 };
+
+#[cfg(feature = "stm32h7xx")]
+impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+}
 
 #[cfg(feature = "stm32h7xx")]
 fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
@@ -606,15 +608,6 @@ fn setup() -> (I2c<I2C1>, impl LED, Delay, Tx<USART1>, Rx<USART1>) {
 
     // led
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     let gpioa = dp.GPIOA.split(ccdr.peripheral.GPIOA);
 
@@ -651,6 +644,9 @@ use stm32l0xx_hal::{
 };
 
 #[cfg(feature = "stm32l0xx")]
+impl LED for PC13<Output<PushPull>> {}
+
+#[cfg(feature = "stm32l0xx")]
 fn setup() -> (
     I2c<I2C1, PB9<Output<OpenDrain>>, PB8<Output<OpenDrain>>>,
     //I2c<I2C1, impl Pins<I2C1>>,
@@ -678,15 +674,6 @@ fn setup() -> (
 
     // led
     let led = gpioc.pc13.into_push_pull_output(); // led on pc13 with on/off
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-    }
 
     let gpioa = dp.GPIOA.split(&mut rcc);
 
@@ -720,6 +707,16 @@ use stm32l1xx_hal::{
 use embedded_hal::digital::v2::OutputPin;
 
 #[cfg(feature = "stm32l1xx")]
+impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+}
+
+#[cfg(feature = "stm32l1xx")]
 fn setup() -> (
     I2c<I2C1, impl Pins<I2C1>>,
     impl LED,
@@ -742,17 +739,8 @@ fn setup() -> (
 
     let delay = Delay::new(cp.SYST, clocks);
 
-    // led
     let led = gpiob.pb6.into_push_pull_output(); // led on pb6
 
-    impl LED for PB6<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
     let gpioa = dp.GPIOA.split(&mut rcc);
 
     // Note that setting the alternate function mode and push_pull input/output
@@ -779,6 +767,16 @@ use stm32l4xx_hal::{
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
 };
+
+#[cfg(feature = "stm32l4xx")]
+impl LED for PC13<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_low()
+        }
+        fn off(&mut self) -> () {
+            self.set_high()
+        }
+}
 
 #[cfg(feature = "stm32l4xx")]
 fn setup() -> (
@@ -830,15 +828,6 @@ fn setup() -> (
     let led = gpioc
         .pc13
         .into_push_pull_output(&mut gpioc.moder, &mut gpioc.otyper); // led on pc13
-
-    impl LED for PC13<Output<PushPull>> {
-        fn on(&mut self) -> () {
-            self.set_low()
-        }
-        fn off(&mut self) -> () {
-            self.set_high()
-        }
-    }
 
     let mut gpioa = dp.GPIOA.split(&mut rcc.ahb2);
 
