@@ -43,11 +43,11 @@ jobs:
       matrix:        
         brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, none-stm32f769, 
               none-stm32g081, weact-stm32g431, none-stm32g473, weact-stm32g474, 
-              none-stm32h742,
+              devEBox-stm32h750,  
               none-stm32l0x2,      discovery-stm32l100, heltec-lora-node151,  none-stm32l422,
               none-stm32f100, none-stm32f101,      none-stm32f030,      ]
         #brd: [bluepill,       discovery-stm32f303, blackpill-stm32f401, blackpill-stm32f411, 
-        #      none-stm32f769, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l422,
+        #      none-stm32f769, devEBox-stm32h750, devEBox-stm32h743, none-stm32h742,      discovery-stm32l100, heltec-lora-node151,  none-stm32l422,
         #      none-stm32f100, none-stm32f101,      none-stm32f030,       none-stm32l0x2 ]
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         
@@ -111,8 +111,8 @@ jobs:
              mcu:  stm32g474xE
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32h742"
-             mcu:  stm32h742             
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
              hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
            - brd: "none-stm32l0x2"
@@ -496,19 +496,19 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [blackpill-stm32f401, weact-stm32g474, none-stm32h742]  
-        #brd: [bluepill, discovery-stm32f303]  
+        brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
+        #brd: [discovery-stm32f303]  
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
            - brd: "blackpill-stm32f401"
              mcu:  stm32f401
              hal: "stm32f4xx"
              trg: "thumbv7em-none-eabihf"
-        #   - brd: "bluepill"
-        #     mcu:  stm32f103
-        #     hal: "stm32f1xx"
-        #     trg: "thumbv7m-none-eabi"
         #   - brd: "discovery-stm32f303"
         #     mcu:  stm32f303xc
         #     hal: "stm32f3xx"
@@ -517,8 +517,8 @@ jobs:
              mcu:  stm32g474xE
              hal: "stm32g4xx"
              trg: "thumbv7em-none-eabihf"
-           - brd: "none-stm32h742"
-             mcu:  stm32h742             
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
              hal: "stm32h7xx"
              trg: "thumbv7em-none-eabihf"
 
