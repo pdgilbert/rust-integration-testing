@@ -496,8 +496,8 @@ jobs:
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
-        brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
-        #brd: [discovery-stm32f303]  
+        brd: [bluepill, blackpill-stm32f401, weact-stm32g474]  
+        #brd: [discovery-stm32f303, devEBox-stm32h750]  #   matrix expansion cannot exced 256
 
         #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
         include:
