@@ -90,11 +90,9 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
+    pac::{CorePeripherals, Peripherals, I2C2, USART2},
     timer::SysDelay as Delay,
-    device::I2C2,
-    device::USART2,
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::{CorePeripherals, Peripherals},
     prelude::*,
     serial::{Config, Rx, Serial, Tx}, //, StopBits
 };

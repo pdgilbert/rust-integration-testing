@@ -64,9 +64,8 @@ fn setup() -> I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>> {
 
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
-    device::I2C2,
+    pac::{Peripherals, I2C2},
     i2c::{BlockingI2c, DutyCycle, Mode, Pins},
-    pac::Peripherals,
     prelude::*,
 };
 
