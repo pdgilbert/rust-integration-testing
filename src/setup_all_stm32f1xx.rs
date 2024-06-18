@@ -1,3 +1,5 @@
+pub use nb::block;
+
 pub use stm32f1xx_hal as hal;
 pub use hal::{
       pac::CorePeripherals,   //hopefully temperary, used in some examples

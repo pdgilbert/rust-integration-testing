@@ -54,6 +54,41 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 type DhtType = OpenDrainType;
 
 
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    pac::TIM2,
+    timer::{Delay as halDelay},  //TimerExt, 
+    //timer::DelayMs,
+    //timer::SysTimerExt,  // trait
+    //rcc::Clocks,
+};
+
+#[cfg(feature = "stm32f1xx")]
+type DelayMsType =  halDelay<TIM2, 1000000_u32>;  // this fails, I think because dht want DelayMs not DelayNs ???
+//type DelayMsType =  TimerExt::delay_ms<TIM2, 1000000_u32>;
+
+#[cfg(feature = "stm32f1xx")]
+pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType) {
+   let mut flash = dp.FLASH.constrain();
+   let rcc = dp.RCC.constrain();
+   let mut afio = dp.AFIO.constrain();
+   let clocks = rcc.cfgr
+        //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
+        //.sysclk(64.mhz()) // system clock 8 MHz default, max 72MHz
+        //.pclk1(32.mhz())  // system clock 8 MHz default, max 36MHz ?
+        .freeze(&mut flash.acr);
+
+   let mut gpioa = dp.GPIOA.split();
+   let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
+   dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
+
+   //let delay = cp.SYST.delay(&clocks);  //SysDelay  System Timer  delay (SysTick)
+   let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+
+   (dht, delay)
+}
+
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     pac::TIM2,
