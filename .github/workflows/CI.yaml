@@ -463,21 +463,7 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [blink,  blink3,  blink_impl,  echo_by_char,  serial_char, gps_rw, 
-                           
-              lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
-              blink_rtic,              schedule,                         resource-user-struct,
-              dht_rtic,                ccs811-co2-voc,                   battery_monitor_ads1015_rtic,
-              display_stuff_rtic0,     display_stuff_rtic,               
-              ads_ina_ssd,             ads_ina_ssd_rtic,
-              aht10-display,           aht10_rtic,                       aht20-display,       
-              ds18b20,                 hdc1080-display,
-              htu2xd-display,          htu2xd_rtic,
-              vl53lox-display,         ens160-co2-voc-iaq-display,
-              ina219-display,          ina219_rtic,                      gps_rw_rtic,
-              xca9548a,                one_wire_bus_find_devices,        onewire,
-              iaq_ens160aht21_display
-             ]
+        eg:  [blink,  blink3,  blink_impl,  echo_by_char,  serial_char, gps_rw, ]
              
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
              # because the feature indicating the sensor needs to be set.
@@ -554,7 +540,7 @@ jobs:
               si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
               tmp006-ir-temp-display,  tmp102-temp-display,              
               veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
-              iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger,
+              iaq-core-c-gas-voc-usart-logger,   ccs811-gas-voc-usart-logger, ccs811-co2-voc, 
              ]
         
         brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
@@ -609,4 +595,155 @@ jobs:
 
       - name: Build example 
         run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
+#################################################################################################
+#################################################################################################
+
+  LoraEtcExamples:
+    name: ExP
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+
+        eg:  [lora_spi_send,           lora_spi_receive,                 lora_spi_gps,
+             ads_ina_ssd,             
+              aht10-display,           aht20-display,       
+              ds18b20,                 hdc1080-display,
+              htu2xd-display,          
+              vl53lox-display,         ens160-co2-voc-iaq-display,
+              ina219-display,         
+              xca9548a,                one_wire_bus_find_devices,        onewire,
+              iaq_ens160aht21_display
+             ]
+             
+             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
+             # because the feature indicating the sensor needs to be set.
+             #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
+
+        brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
+        #brd: [discovery-stm32f303]  #   matrix expansion cannot exced 256
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f401
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+        #   - brd: "discovery-stm32f303"
+        #     mcu:  stm32f303xc
+        #     hal: "stm32f3xx"
+        #     trg: "thumbv7em-none-eabihf"
+           - brd: "weact-stm32g474"
+             mcu:  stm32g474xE
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
+
+    steps:
+      - uses: actions/checkout@v3
+      #previously  uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          #profile: minimal
+          toolchain: nightly
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
+
+      - name: Build
+        run: cargo build   --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
+
+      - name: Build example 
+        run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
+#################################################################################################
+#################################################################################################
+
+
+  RticExamples:
+    name: ExR
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+
+        eg:  [blink_rtic,              schedule,                         resource-user-struct,
+              dht_rtic,                battery_monitor_ads1015_rtic,
+              display_stuff_rtic0,     display_stuff_rtic,              ads_ina_ssd_rtic,
+              aht10_rtic,              htu2xd_rtic,         ina219_rtic,             gps_rw_rtic,
+             ]
+
+        brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
+        #brd: [discovery-stm32f303]  #   matrix expansion cannot exced 256
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f401
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+        #   - brd: "discovery-stm32f303"
+        #     mcu:  stm32f303xc
+        #     hal: "stm32f3xx"
+        #     trg: "thumbv7em-none-eabihf"
+           - brd: "weact-stm32g474"
+             mcu:  stm32g474xE
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
+
+    steps:
+      - uses: actions/checkout@v3
+      #previously  uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          #profile: minimal
+          toolchain: nightly
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
+
+      - name: Build
+        run: cargo build   --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
+
+      - name: Build example 
+        run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
+#################################################################################################
+#################################################################################################
 

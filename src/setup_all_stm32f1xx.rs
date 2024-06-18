@@ -12,6 +12,7 @@ pub use hal::{
       adc::Adc,
       prelude::*,
       prelude,
+      //block,
 };
 
 pub use stm32f1xx_hal::{
