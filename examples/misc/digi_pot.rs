@@ -43,6 +43,7 @@ use rust_integration_testing_of_examples::setup::{LED, LedType};
 
 pub use embedded_hal::delay::DelayNs;
 
+use embedded_hal_bus::spi::ExclusiveDevice;
 
 
 #[cfg(feature = "stm32f0xx")] //  eg stm32f030xc
@@ -611,7 +612,9 @@ fn main() -> ! {
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
-    let mut pot = mcp4x::Mcp4x::new_mcp42x(spi, chip_select);
+    let dev =  ExclusiveDevice::new(spi, chip_select, delay);
+
+    let mut pot = mcp4x::Mcp4x::new_mcp42x(dev); // CHECK INTERFACE CHANGED
 
     let mut position = 0;
     loop {
