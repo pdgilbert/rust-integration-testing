@@ -463,7 +463,7 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [blink,  blink3,  blink_impl, echo_by_char, gps_rw,  serial_char, ]
+        eg:  [blink,  blink3,  blink_impl, echo_by_char, gps_rw,  serial_char,
               dht, digi_pot, ds18b20, oled_gps,  oled_dht,  oled_temperature,    
               one_wire_bus_find_devices,  temperature, text_i2c,   therm10k_display,
               battery_monitor_ads1015, ]
