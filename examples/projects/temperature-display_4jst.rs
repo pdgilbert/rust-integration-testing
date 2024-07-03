@@ -1,12 +1,7 @@
-THIS NEEDS TO SHARE MULTIPLE ADCs ON I2C1. COMPARE 
-   battery_monitor_ads1015_rtic (which is currently not sharing
-   htu2xd_rtic which has sensor on shared bus and 'static,         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
-ads1015-adc-display uses  RefCellDevice but is not rtic
-   ccs811-co2-voc  uses  RefCell  for sensor and rtic  AND SEE NOTES  Jan 2024
-
-//! TARGET Measure temperature with multiple 10k thermistor sensors (NTC 3950 10k thermistors probes) 
-//! using multiple channel adc and crate ads1x1x. Display using SSD1306.
-
+//! Measure temperature on four 10k thermistor sensors (NTC 3950 10k thermistors probes) 
+//! using a 4-channel adc and crate ads1x1x. Display using SSD1306.
+//! This does not require bus sharing.  Compare example temperature-display which uses
+//! four 4-channel adc's to read 16 sensor, but requires bus sharing.
 
 //!  WORK IN PROGRESS. MOST CODE STILL FROM ANOTHER EXAMPLE.
 //! https://www.ametherm.com/thermistor/ntc-thermistor-beta
@@ -95,11 +90,11 @@ mod app {
     use embedded_hal::delay::DelayNs;
 
 
-    use shared_bus::{I2cProxy};
-    use core::cell::RefCell;
+    //use shared_bus::{I2cProxy};
+    //use core::cell::RefCell;
     //use embedded_hal_bus::i2c::RefCellDevice;
     //use shared_bus::{I2cProxy};
-    use cortex_m::interrupt::Mutex;
+    //use cortex_m::interrupt::Mutex;
 
     use nb::block;
 
@@ -108,10 +103,7 @@ mod app {
 
 
     fn show_display<S>(
-        v_a: [i16; 4],
-        v_b: [i16; 4],
-        v_c: [i16; 4],
-        v_d: [i16; 4],
+        v: [i16; 4],
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
@@ -121,16 +113,7 @@ mod app {
            
        // Consider handling error in next. If line is too short then attempt to write it crashes
        write!(line, "A1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_a[0]/10,v_a[0]%10,  v_a[1]/10,v_a[1]%10,  v_a[2]/10,v_a[2]%10,  v_a[2]/10,v_a[2]%10,).unwrap();
-
-       write!(line, "\nB1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_b[0]/10,v_b[0]%10,  v_b[1]/10,v_b[1]%10,  v_b[2]/10,v_b[2]%10,  v_b[2]/10,v_b[2]%10,).unwrap();
-
-       write!(line, "\nC1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_c[0]/10,v_c[0]%10,  v_c[1]/10,v_c[1]%10,  v_c[2]/10,v_c[2]%10,  v_c[2]/10,v_c[2]%10,).unwrap();
-
-       write!(line, "\nD1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_d[0]/10,v_d[0]%10,  v_d[1]/10,v_d[1]%10,  v_d[2]/10,v_d[2]%10,  v_d[2]/10,v_d[2]%10,).unwrap();
+            v[0]/10,v[0]%10,  v[1]/10,v[1]%10,  v[2]/10,v[2]%10,  v[2]/10,v[2]%10,).unwrap();
 
        show_message(&line, disp);
        ()
@@ -176,7 +159,7 @@ mod app {
         // (No luck Using embedded-bus instead.
         // Try ssd on i2c2 and shared-bus ads's on i2c1
         //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
-        let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
 
        //let i2c1_ref_cell = RefCell::new(i2c1);
@@ -200,15 +183,15 @@ mod app {
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
-        let mut adc_a = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Gnd);
-        let mut adc_b = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Vdd);
-        let mut adc_c = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Sda);
-        let mut adc_d = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Scl);
+        let mut adc = Ads1x1x::new_ads1015(i2c1,  SlaveAddr::Gnd);
+        //let mut adc = Ads1x1x::new_ads1015(i2c1,  SlaveAddr::Vdd);
+        //let mut adc = Ads1x1x::new_ads1015(i2c1,  SlaveAddr::Sda);
+        //let mut adc = Ads1x1x::new_ads1015(i2c1,  SlaveAddr::Scl);
 
-       // let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
-       // let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
-       // let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Sda);
-       // let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Scl);
+       // let mut adc = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
+       // let mut adc = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
+       // let mut adc = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Sda);
+       // let mut adc = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Scl);
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small if measuring diff across low value shunt resistors for current
@@ -216,30 +199,9 @@ mod app {
         // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
-        match adc_a.set_full_scale_range(FullScaleRange::Within4_096V) {  
+        match adc.set_full_scale_range(FullScaleRange::Within4_096V) {  
             Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
-                        panic!("panic")
-                       },
-        };
-
-        match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
-            Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
-                        panic!("panic")
-                       },
-        };
-
-        match adc_c.set_full_scale_range(FullScaleRange::Within4_096V) {
-            Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
-                        panic!("panic")
-                       },
-        };
-
-        match adc_d.set_full_scale_range(FullScaleRange::Within4_096V) {
-            Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+            Err(e) =>  {hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                         panic!("panic")
                        },
         };
@@ -248,7 +210,7 @@ mod app {
 
         //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
-        (Shared {led}, Local {adc_a, adc_b, adc_c, adc_d, display})
+        (Shared {led}, Local {adc, display})
     }
 
     #[shared]
@@ -258,10 +220,9 @@ mod app {
 
     #[local]
     struct Local {
-       adc_a:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_b:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_c:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
-       adc_d:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       adc:   Ads1x1x<I2c1Type, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //adc:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
+       //adc:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
        // next I2CInterface is type of I2CDisplayInterface may not be the same as  above I2cInterface !!! ???
        //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
        //                   ssd1306::prelude::DisplaySize128x64, 
@@ -287,50 +248,26 @@ mod app {
         }
     }
 
-    #[task(shared = [led], local = [adc_a, adc_b, adc_c, adc_d, display], priority=1 )]
+    #[task(shared = [led], local = [adc, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
           //hprintln!("read_and_display").unwrap();
           blink::spawn(BLINK_DURATION).ok();
 
-          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+          cx.local.adc.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
           
           // note the range can be switched if needed, eg.
-          //cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
+          //cx.local.adc.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
 
-          let values_a = [
-              block!(cx.local.adc_a.read(channel::SingleA0)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_a.read(channel::SingleA1)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_a.read(channel::SingleA2)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_a.read(channel::SingleA3)).unwrap_or(8091) * SCALE,
+          let values = [
+              block!(cx.local.adc.read(channel::SingleA0)).unwrap_or(8091) * SCALE,
+              block!(cx.local.adc.read(channel::SingleA1)).unwrap_or(8091) * SCALE,
+              block!(cx.local.adc.read(channel::SingleA2)).unwrap_or(8091) * SCALE,
+              block!(cx.local.adc.read(channel::SingleA3)).unwrap_or(8091) * SCALE,
           ];
 
-          let values_b = [
-              block!(cx.local.adc_b.read(channel::SingleA0)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_b.read(channel::SingleA1)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_b.read(channel::SingleA2)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_b.read(channel::SingleA3)).unwrap_or(8091) * SCALE,
-          ];
-
-          let values_c = [
-              block!(cx.local.adc_c.read(channel::SingleA0)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_c.read(channel::SingleA1)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_c.read(channel::SingleA2)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_c.read(channel::SingleA3)).unwrap_or(8091) * SCALE,
-          ];
-
-          let values_d = [
-              block!(cx.local.adc_d.read(channel::SingleA0)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_d.read(channel::SingleA1)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_d.read(channel::SingleA2)).unwrap_or(8091) * SCALE,
-              block!(cx.local.adc_d.read(channel::SingleA3)).unwrap_or(8091) * SCALE,
-          ];
-
-          show_display(values_a, values_b, values_c, values_d, &mut cx.local.display);
+          show_display(values, &mut cx.local.display);
            
           //hprintln!(" values_a {:?}  values_b {:?}", values_a, values_b).unwrap();
           //hprintln!(" values_c {:?}  values_d {:?}", values_a, values_b).unwrap();

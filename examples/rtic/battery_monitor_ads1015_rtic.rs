@@ -217,6 +217,7 @@ mod app {
 //        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
         let mut adc_a = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Gnd);
+//        let mut adc_b = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Vdd);
 //        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
 //        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
 

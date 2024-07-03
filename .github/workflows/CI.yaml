@@ -395,6 +395,9 @@ jobs:
       - name: Example iaq_ens160aht21_display
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example iaq_ens160aht21_display
 
+      - name: Example temperature-display_4jst
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature-display_4jst
+
 #################################################################################################
 
 #################################################################################################
@@ -692,6 +695,74 @@ jobs:
               dht_rtic,                battery_monitor_ads1015_rtic,
               display_stuff_rtic0,     display_stuff_rtic,              ads_ina_ssd_rtic,
               aht10_rtic,              htu2xd_rtic,         ina219_rtic,             gps_rw_rtic,
+             ]
+
+        brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
+        #brd: [discovery-stm32f303]  #   matrix expansion cannot exced 256
+
+        #NB sections in brd above must be one-to-one with brd: below or matrix is messed up
+        include:
+           - brd: "bluepill"
+             mcu:  stm32f103
+             hal: "stm32f1xx"
+             trg: "thumbv7m-none-eabi"
+           - brd: "blackpill-stm32f401"
+             mcu:  stm32f401
+             hal: "stm32f4xx"
+             trg: "thumbv7em-none-eabihf"
+        #   - brd: "discovery-stm32f303"
+        #     mcu:  stm32f303xc
+        #     hal: "stm32f3xx"
+        #     trg: "thumbv7em-none-eabihf"
+           - brd: "weact-stm32g474"
+             mcu:  stm32g474xE
+             hal: "stm32g4xx"
+             trg: "thumbv7em-none-eabihf"
+           - brd: "devEBox-stm32h750"
+             mcu:  stm32h750             
+             hal: "stm32h7xx"
+             trg: "thumbv7em-none-eabihf"
+
+    steps:
+      - uses: actions/checkout@v3
+      #previously  uses: actions-rs/toolchain@v1
+      - uses: dtolnay/rust-toolchain@nightly
+        with:
+          #profile: minimal
+          toolchain: nightly
+          target: ${{ matrix.trg }}
+    
+      - name: Configure caching 
+        uses: actions/cache@v3
+        with:
+          key: ${{ matrix.brd }}
+          path: |
+            ${{ env.HOME }}/.cargo
+            target
+
+      - name: tree
+        #--manifest-path to find Caro.toml.      
+        run: cargo tree  --manifest-path dev-testing/Cargo.toml 
+
+      - name: Build
+        run: cargo build   --manifest-path dev-testing/Cargo.toml --no-default-features --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }}
+
+      - name: Build example 
+        run: cargo build  --manifest-path  dev-testing/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ${{ matrix.eg }}
+
+#################################################################################################
+#################################################################################################
+
+
+
+  ProjExamples:
+    name: ExP
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      matrix:
+
+        eg:  [iaq_ens160aht21_display, temperature-display_4jst,
              ]
 
         brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  

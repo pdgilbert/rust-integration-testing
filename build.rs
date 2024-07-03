@@ -60,6 +60,7 @@ fn main() {
         "STM32G473",
         "STM32G474XE",
         "STM32H742",
+        "STM32H750",
         "STM32L0X2",
         "STM32L100",
         "STM32L151",

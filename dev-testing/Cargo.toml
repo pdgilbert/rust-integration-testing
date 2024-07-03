@@ -642,5 +642,9 @@ name = "temperature-display"
 path = "examples/projects/temperature-display.rs"
 
 [[example]]
+name = "temperature-display_4jst"
+path = "examples/projects/temperature-display_4jst.rs"
+
+[[example]]
 name = "iaq_ens160aht21_display"
 path = "examples/projects/iaq_ens160aht21_display.rs"

@@ -108,7 +108,7 @@ mod app {
     #[local]
     struct Local {
         //display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>,
-        display:  Ssd1306<I2CInterface<I2c1Type>,                                   
+        display:  Ssd1306<I2CInterface<I2c1Type>,       //I2CInterface is from ssd1306::prelude                     
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
 

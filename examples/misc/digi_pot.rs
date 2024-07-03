@@ -406,11 +406,8 @@ use stm32h7xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Enabled, Pins, Spi, Config, MODE_0, SpiExt, Error },
+    spi::{Enabled, Spi, MODE_0, SpiExt },
     delay::DelayFromCountDownTimer,
-    pac, 
-    prelude::*, 
-    spi
 };
 
 #[cfg(feature = "stm32h7xx")]
@@ -612,9 +609,9 @@ fn main() -> ! {
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
-    let dev =  ExclusiveDevice::new(spi, chip_select, delay);
-
-    let mut pot = mcp4x::Mcp4x::new_mcp42x(dev); // CHECK INTERFACE CHANGED
+    //let dev =  ExclusiveDevice::new(spi, chip_select, delay).unwrap();
+    let dev =  ExclusiveDevice::new_no_delay(spi, chip_select).unwrap();
+    let mut pot = mcp4x::Mcp4x::new_mcp42x(dev); 
 
     let mut position = 0;
     loop {
@@ -625,8 +622,7 @@ fn main() -> ! {
         delay.delay_ms(50_u32);
 
         pot.set_position(mcp4x::Channel::Ch0, position).unwrap();
-        pot.set_position(mcp4x::Channel::Ch1, 255 - position)
-            .unwrap();
+        pot.set_position(mcp4x::Channel::Ch1, 255 - position).unwrap();
 
         if position == 255 {
             position = 0
