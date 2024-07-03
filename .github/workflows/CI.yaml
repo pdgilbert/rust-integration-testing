@@ -400,7 +400,7 @@ jobs:
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
 
-# these require require solving eh-1 Read/Write issue on stm32f4xx
+# these require solving eh-1 Read/Write issue on stm32f4xx
 
       - name: Example echo_by_char
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example echo_by_char
@@ -463,8 +463,11 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [blink,  blink3,  blink_impl,  echo_by_char,  serial_char, gps_rw, ]
-             
+        eg:  [blink,  blink3,  blink_impl, echo_by_char, gps_rw,  serial_char, ]
+              dht, digi_pot, ds18b20, oled_gps,  oled_dht,  oled_temperature,    
+              one_wire_bus_find_devices,  temperature, text_i2c,   therm10k_display,
+              battery_monitor_ads1015, ]
+
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
              # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
