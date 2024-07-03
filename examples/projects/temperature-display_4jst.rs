@@ -1,13 +1,11 @@
 //! Measure temperature on four 10k thermistor sensors (NTC 3950 10k thermistors probes) 
-//! using a 4-channel adc and crate ads1x1x. Display using SSD1306.
+//! using a 4-channel adc on I2C1 and crate ads1x1x. Display using SSD1306 on I2C2.
 //! This does not require bus sharing.  Compare example temperature-display which uses
 //! four 4-channel adc's to read 16 sensor, but requires bus sharing.
-
-//!  WORK IN PROGRESS. MOST CODE STILL FROM ANOTHER EXAMPLE.
-//! https://www.ametherm.com/thermistor/ntc-thermistor-beta
-
-//! Compare examples/rtic/battery_monitor_ads1015_rtic.rs, examples/misc/therm10k_display.rs,
+//! Compare also examples/rtic/battery_monitor_ads1015_rtic.rs, examples/misc/therm10k_display.rs,
 //! and examples/projects/temp-humidity-display.rs.
+
+//! https://www.ametherm.com/thermistor/ntc-thermistor-beta
 
 #![deny(unsafe_code)]
 #![no_std]
