@@ -609,6 +609,8 @@ fn main() -> ! {
 
     //  WARNING CS MAY NEED ON/OFF LIKE LED, RATHER THAN HIGH/LOW
 
+    //  see https://docs.rs/embedded-hal-bus/latest/embedded_hal_bus/spi/struct.ExclusiveDevice.html#method.new_no_delay
+    //  and https://github.com/eldruin/mcp4x-rs/issues/2
     //let dev =  ExclusiveDevice::new(spi, chip_select, delay).unwrap();
     let dev =  ExclusiveDevice::new_no_delay(spi, chip_select).unwrap();
     let mut pot = mcp4x::Mcp4x::new_mcp42x(dev); 

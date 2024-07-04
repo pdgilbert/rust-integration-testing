@@ -52,7 +52,7 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 #ssd1306         = { git = "https://github.com/irii/ssd1306", branch = "embedded-hal-1.0.0"  }   #eh-1
 #ssd1306         = { git = "https://github.com/embedevices-rs/ssd1306", branch = "master"  } #eh-1 display-interface 0.5.0
 #ssd1306         = { git = "https://github.com/embedevices-rs/ssd1306", branch = "async"  } 
-ssd1306         = { git = "https://github.com/sjoerdsimons/ssd1306", branch = "embedded-hal-1.0.0"  } 
+ssd1306         = { git = "https://github.com/sjoerdsimons/ssd1306", branch = "master"  } # embedded-hal-1.0.0
 
 # experiments with onewire so far only using stm32f1xx BUT compile problems can cause
 # problems with src/onewire...  that prevent other examples from compiling
