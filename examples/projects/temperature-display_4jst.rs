@@ -63,39 +63,24 @@ systick_monotonic!(Mono, 1000);
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-//    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
-//                  ChannelSelection,
-//                  ic::{Ads1115, Resolution12Bit, Resolution16Bit},
-//                  interface::I2cInterface};
     
-    use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution12Bit, ic::Resolution16Bit, channel,  
-                  FullScaleRange, SlaveAddr};
-
+    use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, SlaveAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
     use cortex_m_semihosting::{hprintln};
-    //use rtt_target::{rprintln, rtt_init_print};
-    use cortex_m::asm;
+    //use cortex_m::asm;
 
     use core::fmt::Write;
 
     use rtic;
-    //use rtic_monotonics::systick::Systick;
-    //use rtic_monotonics::systick::fugit::{ExtU32};
     use crate::Mono;
     use rtic_monotonics::systick::prelude::*;
-
-    // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
-
 
 
     /////////////////////   ssd
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    const DISPLAY_LINES: usize = 3; 
 
-    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
-    const VPIX:i32 = 12; // vertical pixels for a line, including space
     // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
     // DisplaySize128x32:
     //    &FONT_6X10 128 pixels/ 6 per font = 21.3 characters wide.  32/10 = 3.2 characters high
@@ -106,12 +91,21 @@ mod app {
     //    FONT_10X20 128 pixels/10 per font = 12.8 characters wide.  32/20 = 1.6 characters high
 
     use embedded_graphics::{
-        //mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder, MonoTextStyle}, 
         mono_font::{iso_8859_1::FONT_8X13 as FONT, MonoTextStyleBuilder}, 
         pixelcolor::BinaryColor,
         prelude::*,
         text::{Baseline, Text},
     };
+
+    //const DISPLAY_LINES: usize = 3; 
+    //const VPIX:i32 = 12; // vertical pixels for a line, including space
+
+    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
+
+    //I2CInterface is from ssd1306::prelude 
+    type  DisplayType =  Ssd1306<I2CInterface<I2c2Type>,                            
+                          ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
+
 
 
     ///////////////////// 
@@ -137,13 +131,6 @@ mod app {
 
     use embedded_hal::delay::DelayNs;
 
-
-    //use shared_bus::{I2cProxy};
-    //use core::cell::RefCell;
-    //use embedded_hal_bus::i2c::RefCellDevice;
-    //use shared_bus::{I2cProxy};
-    //use cortex_m::interrupt::Mutex;
-
     use nb::block;
 
 
@@ -156,10 +143,9 @@ mod app {
     {    
        let mut line: heapless::String<64> = heapless::String::new(); // \n to separate lines
            
-       //hprintln!("in show_display").unwrap();
        // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "J1{:3}.{:1} J2{:3}.{:1}\nJ3{:3}.{:1} J4{:3}.{:1}°C", 
-            v[0]/10,v[0]%10,  v[1]/10,v[1]%10,    v[2]/10,v[2]%10,  v[3]/10,v[3]%10,).unwrap();
+       write!(line, "J1{:3}.{:1} J2{:3}.{:1}\nJ3{:3}.{:1} J4{:3} °C", 
+            v[0]/10,v[0]%10,  v[1]/10,v[1]%10,    v[2]/10,v[2]%10,  v[3]/10,).unwrap();  //v[3]%10,
 
        show_message(&line, disp);
        ()
@@ -187,12 +173,8 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
-        //let mono_token = rtic_monotonics::create_systick_token!();
-        //Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //rtt_init_print!();
-        //rprintln!("battery_monitor_Ads1115_rtic example");
         hprintln!("temperature-display example").unwrap();
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
@@ -202,23 +184,8 @@ mod app {
         Mono.delay_ms(1000u32);
         led.off();
 
-        // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
-        // (No luck Using embedded-bus instead.
-        // Try ssd on i2c2 and shared-bus ads's on i2c1
-        //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
-        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-
-
-       //let i2c1_ref_cell = RefCell::new(i2c1);
-       //let adc_a_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-       //let adc_b_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-       //let adc_c_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-       //let adc_d_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-       //let ina_rcd = RefCellDevice::new(&i2c1_ref_cell); 
-       //let ssd_rcd   = RefCellDevice::new(&i2c1_ref_cell); 
-       //let interface = I2CDisplayInterface::new(ssd_rcd);
         let interface = I2CDisplayInterface::new(i2c2); //default address 0x3C
-        let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate0)
+        let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
             .into_buffered_graphics_mode();
 
         display.init().unwrap();
@@ -236,15 +203,10 @@ mod app {
         //let mut adc = Ads1x1x::new_Ads1115(i2c1,  SlaveAddr::Sda);
         //let mut adc = Ads1x1x::new_Ads1115(i2c1,  SlaveAddr::Scl);
 
-       // let mut adc = Ads1x1x::new_Ads1115(adc_a_rcd, SlaveAddr::Gnd);
-       // let mut adc = Ads1x1x::new_Ads1115(adc_b_rcd, SlaveAddr::Vdd);
-       // let mut adc = Ads1x1x::new_Ads1115(adc_c_rcd, SlaveAddr::Sda);
-       // let mut adc = Ads1x1x::new_Ads1115(adc_d_rcd, SlaveAddr::Scl);
-
         hprintln!("adc initialized.").unwrap();
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
-        asm::bkpt();
+        //asm::bkpt();
 
         //let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
        // match z {  
@@ -269,25 +231,8 @@ mod app {
 
     #[local]
     struct Local {
-       //adc:   Ads1x1x<I2c1Type, Ads1015, Resolution12Bit, ads1x1x::mode::OneShot>,
        adc:   Ads1x1x<I2c1Type, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       //adc:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       //adc:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       // next I2CInterface is type of I2CDisplayInterface may not be the same as  above I2cInterface !!! ???
-       //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>, 
-       //                   ssd1306::prelude::DisplaySize128x64, 
-       //                   BufferedGraphicsMode<DisplaySize128x64>>,
-       display:  Ssd1306<I2CInterface<I2c2Type>,       //I2CInterface is from ssd1306::prelude                      
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
-
-       //adc_a:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       //adc_b:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       //adc_c:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       //adc_d:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution12Bit, ads1x1x::mode::OneShot>,
-       //display: Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>, 
-       //                   ssd1306::prelude::DisplaySize128x64, 
-       //                   BufferedGraphicsMode<DisplaySize128x64>>,
+       display:  DisplayType,
     }
 
     #[idle()]
@@ -331,13 +276,13 @@ mod app {
           // t = a + v/b , v in mV, b inverse slope, a includes degrees K to C
           let a = 968i64;  //  tenth degree
           let b = -207i64;     //  tenth degrees / V. 
-         // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
+          // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
 
           
           let mut t:[i64; 4] = [-100; 4] ;
           for i in 0..t.len() { t[i] = a + (mv[i] as i64 * b)/1000  };  //  REALLY DO BETTER APROX.
  
-          hprintln!(" t {:?} 10 * degrees", t).unwrap();
+          //hprintln!(" t {:?} 10 * degrees", t).unwrap();
 
           show_display(t, &mut cx.local.display);
        }
