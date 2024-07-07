@@ -67,7 +67,7 @@ mod app {
     use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, SlaveAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
+    //use cortex_m_semihosting::{hprintln};
     //use cortex_m::asm;
 
     use core::fmt::Write;
@@ -142,10 +142,12 @@ mod app {
         S: DisplaySize,
     {    
        let mut line: heapless::String<64> = heapless::String::new(); // \n to separate lines
-           
+
+       let j0: u8 = 0;   //set to  0 / 4 / 8 / 12 depending on adc
+
        // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "J1{:3}.{:1} J2{:3}.{:1}\nJ3{:3}.{:1} J4{:3} °C", 
-            v[0]/10,v[0]%10,  v[1]/10,v[1]%10,    v[2]/10,v[2]%10,  v[3]/10,).unwrap();  //v[3]%10,
+       write!(line, "J{:1}{:3}.{:1} J{:1}{:3}.{:1}\nJ{:1}{:3}.{:1} J{:1}{:3} °C", 
+           j0+1, v[0]/10,v[0]%10,  j0+2, v[1]/10,v[1]%10,    j0+3, v[2]/10,v[2]%10, j0+4,  v[3]/10,).unwrap();  //v[3]%10,
 
        show_message(&line, disp);
        ()
@@ -175,10 +177,10 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        hprintln!("temperature-display example").unwrap();
+        //hprintln!("temperature-display example").unwrap();
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
-        hprintln!("setup done.").unwrap();
+        //hprintln!("setup done.").unwrap();
 
         led.on(); 
         Mono.delay_ms(1000u32);
@@ -192,18 +194,20 @@ mod app {
 
         show_message("temp-humidity", &mut display);
         Mono.delay_ms(2000u32);    
-        hprintln!("display initialized.").unwrap();
+        //hprintln!("display initialized.").unwrap();
 
          
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
+        //  also set j0 to  0 / 4 / 8 / 12 in show_display()
         let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Gnd);
-        //let mut adc = Ads1x1x::new_Ads1115(i2c1,  SlaveAddr::Vdd);
-        //let mut adc = Ads1x1x::new_Ads1115(i2c1,  SlaveAddr::Sda);
-        //let mut adc = Ads1x1x::new_Ads1115(i2c1,  SlaveAddr::Scl);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Vdd);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Sda);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Scl);
 
-        hprintln!("adc initialized.").unwrap();
+        //hprintln!("adc initialized.").unwrap();
+        show_message("adc initialized.", &mut display);
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         //asm::bkpt();
@@ -215,11 +219,11 @@ mod app {
        //                 //panic!("panic")
        //                },
        // };
-        hprintln!("set_full_scale_range skipped.").unwrap();
+//        hprintln!("set_full_scale_range skipped.").unwrap();
 
         read_and_display::spawn().unwrap();
 
-        hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+//        hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
         (Shared {led}, Local {adc, display})
     }
@@ -245,7 +249,7 @@ mod app {
 
     #[task(shared = [led], local = [adc, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
-       hprintln!("started read_and_display").unwrap();
+       //hprintln!("read_and_display started").unwrap();
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
           //hprintln!("read_and_display").unwrap();
