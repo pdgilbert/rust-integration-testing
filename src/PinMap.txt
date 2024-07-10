@@ -110,14 +110,14 @@ TIM5   let timer2 = Timer::new(dp.TIM5, &clocks);
 
 PC13   as LEDPIN gpiox.pc13.into_push_pull_output(); //NOT SURE WHAT THIS SHOULD BE
 
-PB7    opendrain            gpiob.pb7.into_open_drain_output();                           CHANGED
+PB7    opendrain             gpiob.pb7.into_open_drain_output();          
 
-PB9    sda1       I2C1.i2c(     gpiob.pb9.into_alternate_open_drain(),  //sda  NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
-PB8    scl1                     gpiob.pb8.into_alternate_open_drain(),  //scl
+PB8    scl1        I2C1      gpiob.pb8.into_alternate_open_drain(), 
+PB9    sda1        I2C1      gpiob.pb9.into_alternate_open_drain(),  
                                Config::new(400.kHz()), 
 
-PA8    sda2        I2C2.i2c(    gpioa.pa8.into_alternate_open_drain(),   //sda
-PC4    scl2                     gpioa.pa9.into_alternate_open_drain(),   //scl           CHANGED
+PC4    scl2        I2C2      gpioa.pa9.into_alternate_open_drain(),      
+PA8    sda2        I2C2      gpioa.pa8.into_alternate_open_drain(),  
                                 Config::new(400.kHz()), 
 
 PA9    tx1         USART1     gpioa.pa9.into_alternate(), 

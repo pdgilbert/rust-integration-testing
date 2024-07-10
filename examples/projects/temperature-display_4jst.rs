@@ -97,32 +97,37 @@ mod app {
         text::{Baseline, Text},
     };
 
-    //const DISPLAY_LINES: usize = 3; 
-    //const VPIX:i32 = 12; // vertical pixels for a line, including space
-
-    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
-
     //I2CInterface is from ssd1306::prelude 
     type  DisplayType =  Ssd1306<I2CInterface<I2c2Type>,                            
-                          ssd1306::prelude::DisplaySize128x32, BufferedGraphicsMode<DisplaySize128x32>>;
+                          ssd1306::prelude::DisplaySize128x64, BufferedGraphicsMode<DisplaySize128x64>>;
+
+    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x64 = DisplaySize128x64;
+
+    //const DISPLAY_LINES: usize = 3; 
+    //const VPIX:i32 = 12; // vertical pixels for a line, including space
 
 
 
     ///////////////////// 
 
-    const READ_INTERVAL:  u32 =  3;  // used as seconds
+    const READ_INTERVAL:  u32 = 5;  // used as seconds
     const BLINK_DURATION: u32 = 20;  // used as milliseconds
     
     // The units of measurement are  [32767..-32768] for 16-bit devices (and  [2047..-2048] for 12-bit devices)
-    // but only half the range is used for single-ended measurements. (Percision could be improved by using
+    // but only half the range is used for single-ended measurements. (Precision could be improved by using
     // one input set at GND as one side of a differential measurement.)
     // set FullScaleRange to measure expected max voltage.
-    // SCALE multiplies
-    const  FS: i64 = 4096;   // max 4.096v should correspond to setting  adc.set_full_scale_range(FullScaleRange::Within4_096V)
-    // calibrated to get mV    depends on FullScaleRange
-    //  SCALE is measured units per mV, so the  measurement is divided by SCALE to get mV
-    const  SCALE: i64 = 32767 / FS ; 
-        // This is very small if measuring diff across low value shunt resistors for current
+
+    // SCALE is measured units per mV, so the adc measurement is divided by SCALE to get mV.
+    // Calibrated to get mV depends on FullScaleRange.
+    // adc.set_full_scale_range(FullScaleRange::Within4_096V) sets adc max to 4.096v.
+    // Check by connecting J2 +pin to 3.3v on blackpill and J2 -pin NC.
+    // (Also J1 +pin to GND on blackpill to check 0, but this will cause power draw through 10k).
+    // (blackpill pin measures  3200mv by meter, so measurement/SCALE should give 3200mv.)
+
+    const  SCALE: i64 = 8 ;  // = 32767 / 4096
+
+        // The FullScaleRange needs to be small if measuring diff across low value shunt resistors for current
         //   but would be up to 5v when measuring usb power.
         // +- 6.144v , 4.096v, 2.048v, 1.024v, 0.512v, 0.256v
 
@@ -135,7 +140,8 @@ mod app {
 
 
     fn show_display<S>(
-        v: [i64; 4],
+        mv: [i64; 4],
+        t: [i64; 4],
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
@@ -145,9 +151,16 @@ mod app {
 
        let j0: u8 = 0;   //set to  0 / 4 / 8 / 12 depending on adc
 
-       // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "J{:1}{:3}.{:1} J{:1}{:3}.{:1}\nJ{:1}{:3}.{:1} J{:1}{:3} °C", 
-           j0+1, v[0]/10,v[0]%10,  j0+2, v[1]/10,v[1]%10,    j0+3, v[2]/10,v[2]%10, j0+4,  v[3]/10,).unwrap();  //v[3]%10,
+       // Consider handling error in next. If line is too short then attempt to write it crashes.
+       // This is truncated for DisplaySize128x32
+       //write!(line, "J{:1}{:3}.{:1} J{:1}{:3}.{:1}\nJ{:1}{:3}.{:1} J{:1}{:3}°C", 
+       //    j0+1, v[0]/10,v[0]%10,  j0+2, v[1]/10,v[1]%10,    j0+3, v[2]/10,v[2]%10, j0+4,  v[3]/10,).unwrap();  //v[3]%10,
+
+       // Writing mv is helpful for debug and calibration but requires DisplaySize128x64
+       write!(line, "J{:1}-{:1}{:5}{:5}mV\n\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C",
+           j0+1, j0+2, mv[0], mv[1],
+           j0+1, j0+2, t[0]/10,t[0]%10, t[1]/10,t[1]%10,
+           j0+3, j0+4, t[2]/10,t[2]%10, t[3]/10,t[3]%10,).unwrap();
 
        show_message(&line, disp);
        ()
@@ -192,7 +205,7 @@ mod app {
 
         display.init().unwrap();
 
-        show_message("temp-humidity", &mut display);
+        show_message("4jst temperature", &mut display);
         Mono.delay_ms(2000u32);    
         //hprintln!("display initialized.").unwrap();
 
@@ -213,13 +226,16 @@ mod app {
         //asm::bkpt();
 
         //let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
-       // match z {  
-       //     Ok(())   =>  (),
-       //     Err(e) =>  {hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
-       //                 //panic!("panic")
-       //                },
-       // };
-//        hprintln!("set_full_scale_range skipped.").unwrap();
+        let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
+        //hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
+        match z {  
+            Ok(())   =>  (),
+            Err(_e) =>  {show_message("range error.", &mut display);
+                        Mono.delay_ms(2000u32);    
+                       // hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                        //panic!("panic")
+                       },
+        };
 
         read_and_display::spawn().unwrap();
 
@@ -255,24 +271,15 @@ mod app {
           //hprintln!("read_and_display").unwrap();
           blink::spawn(BLINK_DURATION).ok();
 
-          //  NEED TO HANDLE ERROR
-          //cx.local.adc.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          //hprintln!("done set_full_scale_range").unwrap();
-          
-          // note the range can be switched if needed, eg.
-          //cx.local.adc.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
-
           let v = [
               block!(cx.local.adc.read(channel::SingleA0)).unwrap_or(-40),
               block!(cx.local.adc.read(channel::SingleA1)).unwrap_or(-40),
               block!(cx.local.adc.read(channel::SingleA2)).unwrap_or(-40),
               block!(cx.local.adc.read(channel::SingleA3)).unwrap_or(-40),
           ];
-           
-          //hprintln!("val {:?}", v).unwrap();
- 
+            
           let mut mv:[i64; 4] = [-100; 4] ;
-          for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE  }; 
+          for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
           //hprintln!(" mv {:?}", mv).unwrap();
 
           // very crude linear aproximation mv to degrees C
@@ -281,14 +288,13 @@ mod app {
           let a = 968i64;  //  tenth degree
           let b = -207i64;     //  tenth degrees / V. 
           // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
-
           
           let mut t:[i64; 4] = [-100; 4] ;
           for i in 0..t.len() { t[i] = a + (mv[i] as i64 * b)/1000  };  //  REALLY DO BETTER APROX.
  
           //hprintln!(" t {:?} 10 * degrees", t).unwrap();
 
-          show_display(t, &mut cx.local.display);
+          show_display(mv, t, &mut cx.local.display);
        }
     }
 
