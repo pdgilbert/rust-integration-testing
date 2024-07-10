@@ -28,7 +28,7 @@ pub use stm32g4xx_hal::{
     gpio::{Alternate, AlternateOD, Input, Floating,
            gpioa::{PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10, PA11},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
-           gpioc::{PC4, PC13 as LEDPIN}},
+           gpioc::{PC4, PC6 as LEDPIN}},  // weact-stm32g474CEU6 has onboard led on PC6
     adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
 };
 
@@ -57,10 +57,10 @@ pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {  // not default
         fn on(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_high().unwrap()
         }
         fn off(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_low().unwrap()
         }
     }
 
@@ -129,7 +129,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    let scl = gpioc.pc4.into_alternate_open_drain();
    let i2c2 = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
 
-   let mut led = gpioc.pc13.into_push_pull_output();
+   let mut led = gpioc.pc6.into_push_pull_output();
    led.off();
 
    let spi1 = dp.SPI1.spi(

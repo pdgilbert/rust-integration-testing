@@ -265,14 +265,20 @@ use stm32g4xx_hal::{
     time::{ExtU32},
     timer::{Timer},
     delay::DelayFromCountDownTimer,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{gpioc::PC6, Output, PushPull},
     prelude::*,
     stm32::{Peripherals }, // TIM2
 };
 
-//SHOULD OutputPin BE HIGH FOR OFF (the default)
 #[cfg(feature = "stm32g4xx")]
-impl LED for PC13<Output<PushPull>>{}
+    impl LED for PC6<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup() -> (impl LED, impl DelayNs) {
@@ -281,7 +287,7 @@ pub fn setup() -> (impl LED, impl DelayNs) {
 
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let led = gpioc.pc13.into_push_pull_output(); //NOT SURE WHAT PIN THIS SHOULD BE
+    let led = gpioc.pc6.into_push_pull_output(); //NOT SURE WHAT PIN THIS SHOULD BE
     
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
     let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));

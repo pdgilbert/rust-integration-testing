@@ -248,7 +248,7 @@ use stm32g4xx_hal::{
     time::{ExtU32},
     timer::{Timer, CountDownTimer},
     delay::DelayFromCountDownTimer,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{gpioc::PC6, Output, PushPull},
     prelude::*,
     pac::{TIM2, Peripherals},
 };
@@ -256,18 +256,25 @@ use stm32g4xx_hal::{
 #[cfg(feature = "stm32g4xx")]
 pub type DelayType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 
-//SHOULD OutputPin BE HIGH FOR OFF (the default)
+// weact-stm32g474CEU6 has onboard led on PC6
 #[cfg(feature = "stm32g4xx")]
-impl LED for PC13<Output<PushPull>>{}
+    impl LED for PC6<Output<PushPull>> {
+        fn on(&mut self) -> () {
+            self.set_high().unwrap()
+        }
+        fn off(&mut self) -> () {
+            self.set_low().unwrap()
+        }
+    }
 
 #[cfg(feature = "stm32g4xx")]
-pub fn setup() -> (PC13<Output<PushPull>>, DelayFromCountDownTimer<CountDownTimer<TIM2>>) {//NOT SURE WHAT PIN THIS SHOULD BE
+pub fn setup() -> (PC6<Output<PushPull>>, DelayFromCountDownTimer<CountDownTimer<TIM2>>) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
 
     let gpioc = dp.GPIOC.split(&mut rcc);
 
-    let led = gpioc.pc13.into_push_pull_output();
+    let led = gpioc.pc6.into_push_pull_output();
     
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
     let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));

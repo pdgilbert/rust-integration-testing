@@ -512,7 +512,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda2 = gpioa.pa8.into_alternate_open_drain(); 
     let i2c2 = dp.I2C2.i2c(sda2, scl2, i2cConfig::new(400.kHz()), &mut rcc);
 
-    let led = gpioc.pc13.into_push_pull_output();
+    let led = gpioc.pc6.into_push_pull_output();
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),

@@ -67,7 +67,7 @@ mod app {
     use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, SlaveAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
-    //use cortex_m_semihosting::{hprintln};
+    use cortex_m_semihosting::{hprintln};
     //use cortex_m::asm;
 
     use core::fmt::Write;
@@ -147,18 +147,19 @@ mod app {
     where
         S: DisplaySize,
     {    
-       let mut line: heapless::String<64> = heapless::String::new(); // \n to separate lines
+       let mut line: heapless::String<128> = heapless::String::new(); // \n to separate lines
 
        let j0: u8 = 0;   //set to  0 / 4 / 8 / 12 depending on adc
 
-       // Consider handling error in next. If line is too short then attempt to write it crashes.
-       // This is truncated for DisplaySize128x32
+       // Consider handling error in next. If line is too short then attempt to write into it panics.
+       // This is truncated for DisplaySize128x32, which can work with heapless::String<64>
        //write!(line, "J{:1}{:3}.{:1} J{:1}{:3}.{:1}\nJ{:1}{:3}.{:1} J{:1}{:3}°C", 
        //    j0+1, v[0]/10,v[0]%10,  j0+2, v[1]/10,v[1]%10,    j0+3, v[2]/10,v[2]%10, j0+4,  v[3]/10,).unwrap();  //v[3]%10,
 
        // Writing mv is helpful for debug and calibration but requires DisplaySize128x64
-       write!(line, "J{:1}-{:1}{:5}{:5}mV\n\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C",
+       write!(line, "J{:1}-{:1}{:5}{:5}mV\nJ{:1}-{:1}{:5}{:5}mV\n\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C",
            j0+1, j0+2, mv[0], mv[1],
+           j0+3, j0+4, mv[2], mv[3],
            j0+1, j0+2, t[0]/10,t[0]%10, t[1]/10,t[1]%10,
            j0+3, j0+4, t[2]/10,t[2]%10, t[3]/10,t[3]%10,).unwrap();
 
@@ -190,7 +191,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //hprintln!("temperature-display example").unwrap();
+        hprintln!("temperature-display example").unwrap();
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
         //hprintln!("setup done.").unwrap();
@@ -219,7 +220,7 @@ mod app {
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Sda);
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Scl);
 
-        //hprintln!("adc initialized.").unwrap();
+        hprintln!("adc initialized.").unwrap();
         show_message("adc initialized.", &mut display);
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
@@ -227,7 +228,7 @@ mod app {
 
         //let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
         let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
-        //hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
+        hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
         match z {  
             Ok(())   =>  (),
             Err(_e) =>  {show_message("range error.", &mut display);

@@ -390,7 +390,7 @@ fn setup() -> (
     let mut cs = gpioa.pa8.into_push_pull_output();
     cs.set_high().unwrap();
 
-    let led = gpioc.pc13.into_push_pull_output();
+    let led = gpioc.pc6.into_push_pull_output();
 
     //let delay = cp.SYST.delay(&mut rcc.clocks);
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);
