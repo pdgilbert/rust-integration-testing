@@ -67,7 +67,7 @@ mod app {
     use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, SlaveAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
+    //use cortex_m_semihosting::{hprintln};
     //use cortex_m::asm;
 
     use core::fmt::Write;
@@ -191,7 +191,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        hprintln!("temperature-display example").unwrap();
+        //hprintln!("temperature-display_4jst example").unwrap();
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
         //hprintln!("setup done.").unwrap();
@@ -220,7 +220,7 @@ mod app {
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Sda);
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Scl);
 
-        hprintln!("adc initialized.").unwrap();
+        //hprintln!("adc initialized.").unwrap();
         show_message("adc initialized.", &mut display);
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
@@ -228,12 +228,12 @@ mod app {
 
         //let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
         let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
-        hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
+        //hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
         match z {  
             Ok(())   =>  (),
             Err(_e) =>  {show_message("range error.", &mut display);
                         Mono.delay_ms(2000u32);    
-                       // hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                        // hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                         //panic!("panic")
                        },
         };
@@ -283,15 +283,17 @@ mod app {
           for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
           //hprintln!(" mv {:?}", mv).unwrap();
 
-          // very crude linear aproximation mv to degrees C
-          // t in tenths of a degree C, so it is an int  but t[0]/10, t[0]%10 give a degree with one decimal.
-          // t = a + v/b , v in mV, b inverse slope, a includes degrees K to C
-          let a = 968i64;  //  tenth degree
-          let b = -207i64;     //  tenth degrees / V. 
+          //  REALLY DO BETTER APROX.
+          // very crude linear aproximation mv to degrees C using 
+          // based on 
+          // t = a + v/b , v in mV, b inverse slope
+          let a = 72i64;    //  72 deg
+          let b = -34i64;   //  -34 mv/degree   
           // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
           
+          // t in tenths of a degree C, so it is an int  but t[0]/10, t[0]%10 give a degree with one decimal.
           let mut t:[i64; 4] = [-100; 4] ;
-          for i in 0..t.len() { t[i] = a + (mv[i] as i64 * b)/1000  };  //  REALLY DO BETTER APROX.
+          for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) };
  
           //hprintln!(" t {:?} 10 * degrees", t).unwrap();
 

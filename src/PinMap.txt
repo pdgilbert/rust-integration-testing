@@ -108,7 +108,7 @@ PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8  PA9 PA10 PA11
 TIM5   let timer2 = Timer::new(dp.TIM5, &clocks);
        let delay = DelayFromCountDownTimer::new(timer2.start_count_down(100.millis()));
 
-PC13   as LEDPIN gpiox.pc13.into_push_pull_output(); //NOT SURE WHAT THIS SHOULD BE
+PC6   as LEDPIN gpiox.pc13.into_push_pull_output(); //NOT SURE WHAT THIS SHOULD BE
 
 PB7    opendrain             gpiob.pb7.into_open_drain_output();          
 

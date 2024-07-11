@@ -1,5 +1,14 @@
-//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!  Compiling in debug mode may disturb the timing-sensitive parts crate dht_sensor. 
+//!   If Timeout error occurs THEN COMPILE --release.
 //!
+//!  Tested on Blackpill stm32f401 July 11, 2024. Works using  --release
+//!    Using dht-sensor v0.2.1 (https://github.com/michaelbeaumont/dht-sensor?branch=main#ba6627b7)
+//!    which calles  embedded-hal v0.2.7
+//! 
+//!  Tested on weact-stm32g474 July 11, 2024. Works using  --release
+//!    Using dht-sensor v0.2.1 (https://github.com/michaelbeaumont/dht-sensor?branch=main#ba6627b7)
+//!    which calles  embedded-hal v0.2.7
+//! 
 //!  Examples dht, dht_rtic, and oled_dht are similar and might be consolidated sometime.
 //!  
 //!  Measure the temperature and humidity from a DHT11 sensor and print with hprintln (to
@@ -188,23 +197,22 @@ fn main() -> ! {
 
     let (mut dht, mut delay) = setup(dp, cp);
     
-    //let mut delay: impl DelayNs = cp.SYST.delay(clocks);
-
-    // This syntax works with stm32h7xx but not with stm32f4xx, as of eh-rc3
-    // let mut delay = Delay::new(cp.SYST, clocks); 
+    // delay to ensure time between setup set_high() and sensor read.
+    delay.delay_ms(1000); 
 
     hprintln!("Reading sensor...").unwrap();
 
     // single read before loop for debugging purposes
-    //
-    //let r = Reading::read(&mut delay, &mut dht);
-    //match r {
-    //        Ok(Reading {
-    //            temperature,
-    //            relative_humidity,
-    //        }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap(),
-    //        Err(e) => hprintln!("Error {:?}", e).unwrap(),
-    //}
+    
+    let r = read(&mut delay, &mut dht);
+    match r {
+            Ok(Reading {
+                temperature,
+                relative_humidity,
+            }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap(),
+            Err(e) => hprintln!("Error {:?}", e).unwrap(),
+    }
+    delay.delay_ms(5000); 
 
     loop {
         match read(&mut delay, &mut dht) {

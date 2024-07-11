@@ -124,6 +124,7 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
+       hprintln!("display_stuff_rtic example").unwrap();
 
        Mono::start(cx.core.SYST, MONOCLOCK);
 
