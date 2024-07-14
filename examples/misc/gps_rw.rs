@@ -1,11 +1,14 @@
+//!  Tested on weact-stm32g474 July 12, 2024.
+//!  Works, but looping is so fast that read buffer only ever has 0 or 1 length.
+//!  This does not give a very good test of buffered read and it is possible that chars are lost.
+
 //! FAILS TO COMPILE WITH stm32f4xx_hal. See
 //! https://github.com/stm32-rs/stm32f4xx-hal/issues/721
 
-//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Serial interface read GPS one usart and write on another usart to USB-TTL console (minicom).
 //!
-//! usart1 connect the Tx pin pa9  to the Rx pin of a serial-usb converter
-//! usart1 connect the Rx pin pa10 to the Tx pin of a serial-usb converter
+//! usart1 connect the Tx pin (pa9  on bluepill) to the Rx pin of a serial-usb converter
+//! usart1 connect the Rx pin (pa10 on bluepill) to the Tx pin of a serial-usb converter
 
 //! Set up the serial console (e.g. minicom) with the same settings used here.
 //! (Using 9600bps, could be higher but needs serial console to be the same.)
@@ -320,7 +323,7 @@ fn setup_from_dp(dp: Peripherals) -> (
        gpioa.pa10.into_alternate(), 
        FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
-    let (tx2, rx2) = dp.USART2.usart(   //tx, rx  forGPS
+    let (tx2, rx2) = dp.USART2.usart(   //tx, rx  for GPS
         gpioa.pa2.into_alternate(), 
         gpioa.pa3.into_alternate(),
         FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
@@ -525,54 +528,54 @@ fn main() -> ! {
 
     // byte buffer up to 80  u8 elements on stack
     let mut buffer_r: [u8; 80] = [0; 80];
-    let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-    hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
-    buffer.clear();
+
+    //let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
+    //buffer.clear();
 
     let dp = Peripherals::take().unwrap();
     let (mut tx_con, mut _rx_con, mut _tx_gps, mut rx_gps) = setup_from_dp(dp); // console, GPS
 
-    tx_con.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?
+    let gt: u8 = 62;
+    tx_con.write_all(&[gt, gt, gt]).unwrap();
+    tx_con.write_all("\r\nconsole connect check.\r\n\r\n".as_bytes()).unwrap();  
+    tx_con.write_all(&[gt]).unwrap();
 
     // read gps on usart2
     hprintln!("about to read GPS").unwrap();
-
-    //    while (i < r.len()) && !buffer.push(r[i]).is_err() {
-    hprintln!("going into write/read loop ^C to exit ...").unwrap();
+    hprintln!("going into GPS read/write loop ^C to exit ...").unwrap();
 
     // note that putting hprintln! in loop slows it too much and loses data.
-    
-    // CLEANUP
-    let _e: u8 = 9;
-    let mut good = false;
-   
+     
     loop {
+        //buffer.clear();
         // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
-        let _len = rx_gps.read(&mut buffer_r);
-        // compare len and buf.len()  ?  AND HANDLE 0
-        // previously this was byte by byte
-        //let byte = match read_b::<Error>(&mut rx_gps) {
-        //   Ok(byt) => byt,
-        //    Err(_error) => e,
-        //};
+        // Previously this was byte by byte. Now, embedded-hal 1.0 support read() for a buffer.
+        // But the GPS serial is slow so the buffer usually has 0 or 1 char in each pass of the loop.
 
-        tx_con.write(&buffer_r).unwrap();  // echo everything to console
+        let len = rx_gps.read(&mut buffer_r);
+        //let len = rx_gps.read(&mut buffer);
+        // hprintln!(" buffer_r {:?}",  buffer_r).unwrap();
+        // hprintln!(" buffer {:?}",  buffer).unwrap();
+        // hprintln!(" buffer len {:?}",  buffer.len()).unwrap();
 
-//  THE LOGIC OF THIS NEEDS TO BE FIXED
-let byte= 35;  //fake
-        if byte == 36 {
-            //  $ is 36. start of a line
-            buffer.clear();
-            good = true; //start capturing line
-        };
-        if good {
-            if buffer.push(byte).is_err() || byte == 13 {
-                //  \r is 13, \n is 10
-                tx_con.write(&buffer).unwrap();
-                buffer.clear();
-                good = false;
-                //break;
-            };
-        };
+        match len {
+          Ok(length) => {  if length != 0 {
+                              //if buffer[0]  == 36  {//  $ is 36. start of a line (sentence) in GPS protocol
+                              if buffer_r[0]  == 36  {//  $ is 36. start of a line (sentence) in GPS protocol
+                                 tx_con.write(&[gt]).unwrap();  // show > for new sentence
+                              };
+                              // possibly write_all() should be used, but something does not work.
+                              // With write() part of the buffer may be lost?
+                              tx_con.write(&buffer_r).unwrap(); // echo everything to console
+                              let _ = tx_con.flush();
+                              //tx_con.write_all(&buffer).unwrap(); // echo everything to console
+                           };
+                        },
+          Err(_error) =>  {//tx_con.write("x".as_bytes()).unwrap(); // would be good to have actual error rather than assume overrun
+                           // tx_con.write_all("Overrun\r\n".as_bytes()).unwrap(); // would be good to have actual error rather than assume overrun
+                           //hprintln!("{:?}", error).unwrap(); //this is so slow it causes overrun in next pass of loop
+                          },
+       };
     }
 }

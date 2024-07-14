@@ -1,11 +1,13 @@
-//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!  Tested on weact-stm32g474 July 12, 2024.
+//!   Compiles but NOT working. Gives len Err(Overrun). Compare misc/gps_rw.rs which does work.
+//!   Also, the rx_gps.read(buf)  handling of buf in rtic seem to require u8 not [u8; 80] ?
 //!
 //! Two UARTS, no external device crates
 
 //! Serial interface read GPS one usart and write on another usart to USB-TTL console (minicom).
 //!
-//! usart1 connect the Tx pin pa9  to the Rx pin of a serial-usb converter
-//! usart1 connect the Rx pin pa10 to the Tx pin of a serial-usb converter
+//! usart1 connect the Tx pin (pa9  on bluepill) to the Rx pin of a serial-usb converter
+//! usart1 connect the Rx pin (pa10 on bluepill) to the Tx pin of a serial-usb converter
 //! Set up the serial console (e.g. minicom) with the same settings used here.
 //! (Using 9600bps, could be higher but needs serial console to be the same.)
 //!
@@ -52,52 +54,19 @@ mod app {
     
     use rtic;
     use crate::Mono;
-    //use rtic_monotonics::systick::prelude::*;
 
     //use nb::block;
-    //use rtt_target::{rprintln, rtt_init_print};
 
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::setup::{MONOCLOCK, Tx1Type, Rx2Type};
 
     use embedded_io::{Read, Write};
 
-//    fn writeln(con: &mut Tx<USART1>, buf: &str) -> () {
-//        for byte in buf.bytes() {write_b(con, byte)};
-//    ()
-//    }
-//    
-//    fn write_b(con: &mut Tx<USART1>, b: u8) -> () {
-//            #[cfg(feature = "stm32f4xx")]
-//            block!(con.write(b)).ok();
-//            #[cfg(not(feature = "stm32f4xx"))]
-//            block!(con.write_byte(b)).ok();
-//    ()
-//    }
-//    
-//    fn read_b<E>(con: &mut Rx<USART2>) -> Result<u8, Error> {
-//            #[cfg(feature = "stm32f4xx")]
-//            let b = block!(con.read());
-//            #[cfg(not(feature = "stm32f4xx"))]
-//            let b = block!(con.read_byte());
-//    b
-//    }
-
-    //something like this might also work
-    //fn read_b(con: &mut Rx<USART2>) -> Result<u8, Error> {
-    //        #[cfg(feature = "stm32f4xx")]
-    //        let b = con.read();
-    //        #[cfg(not(feature = "stm32f4xx"))]
-    //        let b = con.read_byte();
-    //b
-    //}
-
-
     #[shared]
     struct Shared {
         //led: LedType,
-        //buffer: [u8; 80],
-        buffer: heapless::Vec<u8, 80>,
+        buffer: [u8; 80],
+        //buffer: heapless::Vec<u8, 80>,
     }
 
     #[local]
@@ -112,28 +81,18 @@ mod app {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
         // byte buffer up to 80  u8 elements on stack
-        //let mut buffer: [u8; 80] = [0; 80];
-        let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-        hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
-        buffer.clear();
+        let mut buffer: [u8; 80] = [0; 80];
+        //let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
+        //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
+        //buffer.clear();
         
         // transmit to console, receive from gps
-        //let (mut tx_con, mut _rx_con) = usart::setup_1_from_dp(Peripherals::take().unwrap()); // console
-        //let (mut _tx_gps,     rx_gps) = usart::setup_2_from_dp(Peripherals::take().unwrap()); // GPS
         let (mut tx_con, _rx1, _tx2, rx_gps) = setup::tx1_rx1_tx2_rx2_from_dp(cx.device);
 
-        //writeln(&mut tx_con, "\r\nconsole connect check.\r\n");
-        tx_con.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?
+        tx_con.write_all("\r\nconsole connect check.\r\n".as_bytes()).unwrap(); 
 
-        // read gps on usart2
-        //    while (i < r.len()) && !buffer.push(r[i]).is_err() {
-
-        // note that putting hprintln! in loop slows it too much and loses data.
-    
-    // CLEANUP
-//    let _e: u8 = 9;
-//    let mut good = false;
- 
+        // note that putting hprintln! in loop slows it too much and data is lost.
+     
         // read gps on usart2
         hprintln!("starting read GPS").unwrap();
         read_gps::spawn().unwrap();
@@ -145,38 +104,18 @@ mod app {
     async fn read_gps(cx: read_gps::Context) {
         let mut buffer = cx.shared.buffer;
         let rx_gps     = cx.local.rx_gps;
-        //let mut tx_con = cx.local.tx_con;
        
-//        let e: u8 = 9;                                        // crude error indicator
-//        let mut good = false;
         loop {
-            let _len = buffer.lock(|buf| {rx_gps.read(buf)});
-            //let byte = match read_b::<Error>(&mut rx_gps) {
-            //    Ok(byt) => byt,
-            //    Err(_error) => e,
-            //};
-
-            //tx_con.write(&buffer).unwrap();  // echo everything to console
-            write_con::spawn().unwrap(); 
+            //let len = buffer.lock(|buf| {rx_gps.read(buf)});
+            let mut bf: [u8; 80] = [0; 80];
+            let len = rx_gps.read(&mut bf);
+        hprintln!("len {:?}", len).unwrap();  // indicates len Err(Overrun)
+            match len {
+               Ok(length) => {  if length != 0 {write_con::spawn().unwrap();};},
+               Err(_error) =>  {hprintln!(">").unwrap();
+                               }, // skip, but might be good to have actual error
+            };
           
-            //  THE LOGIC OF THIS NEEDS TO BE FIXED
-//            let byte= 35;  //fake
-//            if byte == 36 { //  $ is 36. start of a line      // watch for start of line
-//                buffer.lock(|buf| {buf.clear(); 
-//                                   let _ = buf.push(byte);
-//                                   }
-//                );  
-//                good = true; //start capturing line
-//            };
-//
-//            if good {                                       
-//                if buffer.lock(|buf| buf.push(byte)).is_err() || byte == 13 { // watch for end of line, \r is 13, \n is 10
-//                      write_con::spawn().unwrap(); 
-//                      //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();
-//                      buffer.lock(|buf| buf.clear() );
-//                      good = false;
-//                };
-//            };
         }
     }
 
@@ -185,10 +124,9 @@ mod app {
         let mut buffer = cx.shared.buffer;
         let tx_con = cx.local.tx_con;
 
-        //write_b(&mut tx_con, byte);
-        //for byte in &cx.shared.buffer.lock(|buffer| {write_b(&mut &cx.local.tx_con, *byte) });
-        //let _ = &cx.shared.buffer.lock(|buf| for byte in buf {write_b(cx.local.tx_con, *byte) });
-        let _ = buffer.lock(|buf| {tx_con.write(&buf).unwrap()});
+        //let _ = buffer.lock(|buf| {tx_con.write_all(&buf).unwrap()});
+        let _ = buffer.lock(|buf| {tx_con.write(&[buf[0]]).unwrap()});
+        let _ = tx_con.flush().unwrap(); 
         ()
     }
 }

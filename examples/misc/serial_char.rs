@@ -1,3 +1,6 @@
+//!  Tested on weact-stm32g474 July 13, 2024. Partially works. 
+//!     tx2 to rx3 is working but tx3 to rx2 gives rx2.read error Framing.
+
 //! FAILS TO COMPILE WITH stm32f4xx_hal. See
 //! https://github.com/stm32-rs/stm32f4xx-hal/issues/721
 
@@ -18,7 +21,7 @@
 //! (Using 9600bps. This could be higher but needs serial console to be the same.)
 //!
 //! Serial USART interconnect details:
-//! For HALs stm32f1xx, stm32f3xx and stm32l1xx connect USART2 to USART3: pa2 to pb11 and pa3 to pb10.
+//! For HALs stm32f1xx, stm32f3xx, stm3g4xx and stm32l1xx connect USART2 to USART3: pa2 to pb11 and pa3 to pb10.
 //! For HAL stm32f4xx connect USART2 to USART6:  pa2 to pa12 and pa3 to pa11.
 
 // This example contains the most extensive notes.
@@ -267,7 +270,7 @@ fn setup() -> (
 
     // alternate function modes see https://www.st.com/resource/en/datasheet/stm32f411re.pdf  p47.
 
-    p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    p.USART1.cr1().modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx1, rx1) = Serial::new(
         p.USART1,
         (
@@ -280,7 +283,7 @@ fn setup() -> (
     .unwrap()
     .split();
 
-    p.USART2.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    p.USART2.cr1().modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx2, rx2) = Serial::new(
         p.USART2,
         (
@@ -293,7 +296,7 @@ fn setup() -> (
     .unwrap()
     .split();
 
-    p.USART6.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    p.USART6.cr1().modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx3, rx3) = Serial::new(
         //  NOTE PINS and USART6 !!!
         p.USART6,
@@ -468,6 +471,8 @@ fn setup() -> (
         gpioa.pa2.into_alternate(), 
         gpioa.pa3.into_alternate(),
         FullConfig::default().baudrate(115_200.bps()), &mut rcc).unwrap().split();
+
+    // Err(Overrun) using 9600.bps(). Err(Framing) using 115_200.bps()  (with breakpoint).
 
     let (tx3, rx3) = dp.USART3.usart( 
         gpiob.pb10.into_alternate(),
@@ -772,13 +777,14 @@ fn main() -> ! {
     //see  examples/echo_by_char.rs for additional comments.
     hprintln!("initializing ...").unwrap();
 
-    let mut received: [u8; 80] = [0; 80];
-    let rec_byte: u8 = 0;
+    let mut received:  [u8; 80] = [0; 80];
+    let mut received2: [u8; 80] = [0; 80];
+    //let rec_byte: u8 = 0;
 
     let (mut tx1, _rx1, mut tx2, mut rx2, mut tx3, mut rx3) = setup();
 
     hprintln!("test write to console ...").unwrap();
-    tx1.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();   // does this need block!() ?
+    tx1.write_all("\r\nconsole connect check.\r\n".as_bytes()).unwrap();
 //    for byte in b"\r\nconsole connect check.\r\n" {
 //        #[cfg(feature = "stm32f4xx")]
 //        block!(tx1.write(*byte)).ok();
@@ -792,129 +798,83 @@ fn main() -> ! {
     let send = b'X';
 
     // Write `X` and wait until the write is successful
-    tx2.write(&[send]).unwrap(); 
-//    #[cfg(feature = "stm32f4xx")]
-//    block!(tx2.write(send)).ok();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    block!(tx2.write_byte(send)).ok();
+    tx2.write_all(&[send]).unwrap(); 
+    tx2.flush().unwrap(); 
 
     hprintln!("   receiving on rx3 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
     // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
-    let _len = rx3.read(&mut [rec_byte]);
-//    #[cfg(feature = "stm32f4xx")]
-//    let received = block!(rx3.read()).unwrap();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    let received = block!(rx3.read_byte()).unwrap();
+    let len = rx3.read(&mut received).unwrap();
 
-    hprintln!("   checking tx2 to rx3 rec_byte = send,  {:?} = {:?} byte",
-        rec_byte, send ).unwrap();
+    hprintln!("   length received on rx3: {}", len).unwrap();
+    hprintln!("   checking tx2 to rx3 received = send,  {:?} = {:?} byte", received[0], send ).unwrap();
 
     // The send byte should be the one received
-    assert_eq!( rec_byte, send,   "testing rec_byte = send,  {} = {}", rec_byte, send );
+    //assert_eq!( received, send,   "testing received = send,  {} = {}", received, send );
 
-    // PUT A TEST HERE THAT WILL SHOW FAILURE. ASSERT SEEMS TO PANIC HALT SO ...
+    // Maybe put a test here to show failure. assert does panic halt so remaining tests do not run.
 
     // Now print to semi-host as character rather than byte.
     // Note that send above was u8 byte (b'X') because tx.write() requires that, but
     //    hprintln!() needs a str and from_utf8() needs a slice, thus [send].
 
-    hprintln!(
-        "   tx2 to rx3  characters,  {} = {}",
-        from_utf8(&[rec_byte]).unwrap(),
+    hprintln!("      tx2 to rx3[0]  characters,  {} = {}",
+        from_utf8(&[received[0]]).unwrap(),
         from_utf8(&[send]).unwrap()
-    )
-    .unwrap();
+    ).unwrap();
 
     hprintln!("   sending received to console on tx1 ...").unwrap();
 
-    tx1.write("\r\ntx2 to rx3 with X\r\n".as_bytes()).unwrap();
-//    for byte in b"\r\ntx2 to rx3 with X\r\n" {
-//        // iterator fails if string is too long
-//        #[cfg(feature = "stm32f4xx")]
-//        block!(tx1.write(*byte)).unwrap();
-//        #[cfg(not(feature = "stm32f4xx"))]
-//        block!(tx1.write_byte(*byte)).unwrap();
-//    }
-
-    tx1.write(&received).unwrap();
-//    #[cfg(feature = "stm32f4xx")]
-//    block!(tx1.write(received)).ok();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    block!(tx1.write_byte(received)).ok();
-
-    tx1.write("\r\n".as_bytes()).unwrap();
-//    for byte in b"\r\n" {
-//        #[cfg(feature = "stm32f4xx")]
-//        block!(tx1.write(*byte)).unwrap();
-//        #[cfg(not(feature = "stm32f4xx"))]
-//        block!(tx1.write_byte(*byte)).unwrap();
-//    }
+    tx1.write_all("\r\ntx2 to rx3 with X\r\n".as_bytes()).unwrap();
+    tx1.write_all(&received).unwrap();
+    tx1.write_all("\r\n".as_bytes()).unwrap();
 
     // Trigger a breakpoint
     // asm::bkpt();
 
+
+
     hprintln!("testing  tx3 to rx2").unwrap();
     hprintln!("   sending on tx3 ...").unwrap();
+    tx1.write_all("\r\ntx3 to rx2 with Y\r\n".as_bytes()).unwrap();
 
     let send = b'Y';
 
     // Write `Y` and wait until the write is successful
 
-    tx3.write(&[send]).unwrap();
-//    #[cfg(feature = "stm32f4xx")]
-//    block!(tx3.write(send)).ok();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    block!(tx3.write_byte(send)).ok();
+    tx3.write_all(&[send]).unwrap();
+    tx3.flush().unwrap(); 
 
     // hprintln here can slow enough that transmition is missed
     //hprintln!("   receiving on rx2 ...").unwrap();
 
     // Read the byte that was just send. Blocks until the read is complete
 
-    let _len = rx2.read(&mut received);
-//    #[cfg(feature = "stm32f4xx")]
-//    let received = block!(rx2.read()).unwrap();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    let received = block!(rx2.read_byte()).unwrap();
+    let len = match rx2.read(&mut received2) {  
+        Ok(length)   =>  length,
+        Err(e) =>  {hprintln!("   rx2.read error {:?}", e).unwrap();    
+                    //panic!("panic");
+                    999
+                   },
+    };
 
-    hprintln!(
-        "    checking tx3 to rx2  received = send,  {:?} = {:?} byte",
-        received,
-        send
-    )
-    .unwrap();
+    hprintln!("   length received on rx2: {}", len).unwrap();
+    hprintln!("   checking tx3 to rx2 received = send,  {:?} = {:?}  byte", received2[0], send).unwrap();
 
     // The send byte should be the one received
-    //assert_eq!(received, send, "testing received = send,  {} = {}", received, send);
+    //assert_eq!(received2[0], send, "testing received2 = send,  {} = {}", received2[0], send);
 
-    hprintln!("   tx3 to rx2  characters,  {:?} = {:?}", received,  send ).unwrap();
+    hprintln!("      tx3 to rx2[0] characters,  {} = {}",
+        from_utf8(&[received2[0]]).unwrap(),
+        from_utf8(&[send]).unwrap()
+    ).unwrap();
 
     hprintln!("   sending received from rx2  to console on tx1 ...").unwrap();
 
-    tx1.write(b"tx3 to rx2 test with Y\r\n").unwrap();
-//    for byte in b"tx3 to rx2 test with Y\r\n" {
-//        // iterator fails if string is too long
-//        #[cfg(feature = "stm32f4xx")]
-//        block!(tx1.write(*byte)).unwrap();
-//        #[cfg(not(feature = "stm32f4xx"))]
-//        block!(tx1.write_byte(*byte)).unwrap();
-//    }
-
-    tx1.write(&received).unwrap();
-//    #[cfg(feature = "stm32f4xx")]
-//    block!(tx1.write(received)).ok();
-//    #[cfg(not(feature = "stm32f4xx"))]
-//    block!(tx1.write_byte(received)).ok();
-
-    tx1.write(b"\r\n").unwrap();
-//    for byte in b"\r\n" {
-//        #[cfg(feature = "stm32f4xx")]
-//        block!(tx1.write(*byte)).unwrap();
-//        #[cfg(not(feature = "stm32f4xx"))]
-//        block!(tx1.write_byte(*byte)).unwrap();
-//    }
+    tx1.write_all(b"tx3 to rx2 test with Y\r\n").unwrap();
+    tx1.write_all(&received2).unwrap();
+    tx1.write_all(b"\r\n").unwrap();
 
     // Trigger a breakpoint to inspect the values
     //asm::bkpt();

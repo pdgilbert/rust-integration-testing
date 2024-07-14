@@ -77,13 +77,16 @@ PB10   scl2       I2C2.i2c(     (gpiob.pb10.into_alternate().set_open_drain(),
 PB3    sda2                      gpiob.pb3.into_alternate().set_open_drain() 
                                       ), 400.kHz(), 
 
-PA9    tx1        dp.USART1    gpioa.pa9.into_alternate(), 
+PA9    tx1           USART1    gpioa.pa9.into_alternate(), 
 PA10   rx1                     gpioa.pa10.into_alternate(),
                                 Config::default().baudrate(9600.bps()),
 
-PA2    tx2        dp.USART2    gpioa.pa2.into_alternate(), 
+PA2    tx2           USART2    gpioa.pa2.into_alternate(), 
 PA3    rx2                     gpioa.pa3.into_alternate(), 
                                 Config::default().baudrate(9600.bps()),
+
+PA11   tx3    on     USART6    gpioa.pa11.into_alternate(),  TRY TO RESOLVE CONFILICT WITH CsPin below
+PA12   tx3                     gpioa.pa12.into_alternate(),
 
 PA5     sck       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
 PA6     miso                   gpioa.pa6.into_alternate(), // miso 
@@ -128,6 +131,9 @@ PA2    tx2         USART2     gpioa.pa2.into_alternate(),
 PA3    rx2                    gpioa.pa3.into_alternate(),
                                FullConfig::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
+PB10    tx3         USART3      gpiob.pb10.into_alternate(),
+PB11    rx3                     gpiob.pb11.into_alternate(), 
+
 PA5     sck        SPI1.spi(   (gpioa.pa5.into_alternate(), // sck 
 PA6     miso                    gpioa.pa6.into_alternate(), // miso
 PA7     mosi                    gpioa.pa7.into_alternate(), // mosi
@@ -142,7 +148,7 @@ PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin
 PA1     adc1  AdcSensor1Type    ch:  gpioa.pa1.into_analog(),
 
 PC4, PC13
-PB4, PB5, PB7, PB8, PB9    
+PB4, PB5, PB7, PB8, PB9, PB10, PB11    
 PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10, PA11
     
 
