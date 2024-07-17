@@ -1,11 +1,11 @@
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!
-//!  The setup() functions make the application code common. They are in src/lora.rs.
+//!  The setup() functions make the application code common. They are in src/setup_all*.
 //!  The specific function used will depend on the HAL setting (see README.md).
-//!  See the section of setup() corresponding to the HAL setting for details on pin connections.
+//!  See the setup() corresponding to the HAL for details on pin connections.
 //!  The setup is using  sck, miso, mosi, cs, reset and D00, D01. Not yet using  D02, D03
 //!  
-//!  The same setup() function is used for examples lora_spi_send, lora_spi_receive, and
+//!  The same setup function is used for examples lora_spi_send, lora_spi_receive, and
 //!  lora_spi_gps (if the HAL setting is the same). The following is for all examples.
 //!
 //!  See FREQUENCY in src/lora.rs to set the channel.
@@ -39,6 +39,10 @@
 //   'CH_13_868': 866.10, 'CH_14_868': 866.40, 'CH_15_868': 866.70,
 //   'CH_16_868': 867   , 'CH_17_868': 868   ,
 
+// Errata https://semtech.my.salesforce.com/sfc/p/#E0000000JelG/a/2R000000HSPv/sqi9xX0gs6hgzl2LoPwCK0TS9GDPlMwsXmcNzJCMHjw
+// Semtec  stores value 0x12 at address 0x42 to indicate version V1b. 
+// V1a was pre-production engineering samples
+
 #![no_std]
 #![no_main]
 
@@ -54,7 +58,8 @@ use cortex_m_semihosting::*;
 
 use embedded_hal::delay::DelayNs;
 
-use radio::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
+//use radio::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
+use radio_sx127x::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
 
 use radio_sx127x::{
     //Error as sx127xError, // Error name conflict with hals
@@ -77,24 +82,38 @@ fn main() -> ! {
     let (mut led, spi, spiext, delay) = setup::led_spi_spiext_delay_from_dp(dp); 
     led.off();
 
-    let mut lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, &CONFIG_RADIO
-       ).unwrap(); // should handle error   //delay is available in lora
+    let lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, 
+                       &CONFIG_RADIO ); 
 
+    let mut lora =  match lora {
+            Ok(lr)  => { hprintln!("lora setup completed.").unwrap();
+                        lr } 
+            Err(e) => { hprintln!("Error in lora setup. {:?}", e).unwrap();
+                         panic!("{:?}", e) }
+    };
+ 
+    //let mut lora = lora.unwrap();
+ 
+    //delay is available in lora
+
+    
+   
     // print out configuration (for debugging)
 
-    //    let v = lora.lora_get_config();
-    //    hprintln!("configuration {}", v).unwrap();
-
-    //    hprintln!("chammel	  {}", lora.get_chammel()).unwrap();
-
-    //hprintln!("mode		  {}", lora.get_mode()).unwrap();
-    //hprintln!("mode		  {}", lora.read_register(Register::RegOpMode.addr())).unwrap();
-    //hprintln!("bandwidth	  {:?}", lora.get_signal_bandwidth()).unwrap();
-    //hprintln!("coding_rate	  {:?}",  lora.get_coding_rate_4()).unwrap();
-    //hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
-    //hprintln!("spreading_factor {:?}",
-    //hprintln!("invert_iq	  {:?}",  lora.get_invert_iq()).unwrap();
-    //hprintln!("tx_power	  {:?}",  lora.get_tx_power()).unwrap();
+ //   use radio_sx127x::device::regs::Register;
+ //
+ //   let v = lora.lora_get_config();
+ //   hprintln!("configuration {}", v).unwrap();
+ //
+ //   hprintln!("channel      {}", lora.get_channel()).unwrap();
+ //
+ //   hprintln!("mode             {}",    lora.get_mode()).unwrap();
+ //   hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr())).unwrap();
+ //   hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth()).unwrap();
+ //   hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4()).unwrap();
+ //   hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
+ //   hprintln!("invert_iq        {:?}",  lora.get_invert_iq()).unwrap();
+ //   hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
 
     // transmit something
 
@@ -108,20 +127,20 @@ fn main() -> ! {
     //	}
 
     loop {
-        lora.start_transmit(message).unwrap(); // should handle error
+        match lora.start_transmit(message) {
+            Ok(_b)   => { hprintln!("start_transmit").unwrap() } 
+            Err(_e) => { hprintln!("Error in lora.start_transmit()").unwrap() }
+        };
+
+        lora.delay_ms(1); // without some delay next returns bad. (interrupt may also be an option)
 
         match lora.check_transmit() {
-            Ok(b) => {
-                if b {
-                    hprintln!("TX complete").unwrap()
-                } else {
-                    hprintln!("TX not complete").unwrap()
-                }
-            }
-
-            Err(_err) => {
+            Ok(b)   => {if b {hprintln!("TX good").unwrap() } 
+                        else {hprintln!("TX bad").unwrap() }
+                       }
+            Err(_e) => {
                 hprintln!("Error in lora.check_transmit(). Should return True or False.").unwrap()
-            }
+                }
         };
 
         lora.delay_ms(5000);

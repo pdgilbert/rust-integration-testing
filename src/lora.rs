@@ -38,7 +38,8 @@ use radio_sx127x::{
 };
 
 // trait needs to be in scope to find  methods start_transmit and check_transmit.
-pub use radio::{Receive, Transmit};
+//pub use radio::{Receive, Transmit};
+pub use radio_sx127x::{Receive, Transmit};
 
 // lora and radio parameters
 

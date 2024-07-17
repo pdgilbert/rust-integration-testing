@@ -260,9 +260,10 @@ fn setup() -> (
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     gpio::{gpioa::PA8, Output, PushPull},
-    stm32::{Peripherals, SPI1},
+    pac::{Peripherals, SPI1},
     prelude::*,
     spi::{Pins, Spi, MODE_0},
+    time::{RateExtU32},
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -282,7 +283,7 @@ fn setup() -> (
              gpioa.pa7.into_alternate(), // mosi  on PA7
             ),
         MODE_0,
-        400.khz(),
+        400.kHz(),
         &mut rcc,
     );
 

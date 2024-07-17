@@ -163,8 +163,13 @@ fugit = { version = "0.3.3", optional = true }
 #radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
 
 #    these two work together
-radio = { version = "0.11.1", git = "https://github.com/rust-iot/radio-hal", rev = "7aade85b61c08161bf3422f7d148417bd38ecdc2" }
-radio-sx127x  = {  git = "https://github.com/matheo-lucak/rust-radio-sx127x", default-features = false }
+#radio = { version = "0.11.1", git = "https://github.com/rust-iot/radio-hal", rev = "7aade85b61c08161bf3422f7d148417bd38ecdc2" }
+#radio-sx127x  = {  git = "https://github.com/matheo-lucak/rust-radio-sx127x", default-features = false }
+
+
+# This radio-sx127 re-exports {Receive, Transmit} so looks after getting correct radio version.
+radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", default-features = false, branch = "ehal-1" }
+#radio-sx127x  = { path = "...rust-radio-sx127x", default-features = false }
 
 # not used yet
 #radio-sx1231  = {  git = "https://github.com/rust-io/rust-radio-sx1231", default-features = false }

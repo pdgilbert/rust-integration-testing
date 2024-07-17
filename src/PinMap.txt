@@ -140,8 +140,8 @@ PA7     mosi                    gpioa.pa7.into_alternate(), // mosi
                                 ), MODE_0, 400.kHz(),  &mut rcc, );
 
 PA11    CsPin        Sx127x     gpioa.pa11.into_push_pull_output(), //CsPin         
-PB4     BusyPin                 gpiob.pb8.into_floating_input(),   //BusyPin  DI00            CHANGED
-PB5     ReadyPin                gpiob.pb9.into_floating_input(),   //ReadyPin DI01            CHANGED
+PB4     BusyPin                 gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
+PB5     ReadyPin                gpiob.pb5.into_floating_input(),   //ReadyPin DI01
 PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin      
                                 delay,  &CONFIG_RADIO, ).unwrap(); // should handle error
 

@@ -16,7 +16,8 @@ use cortex_m_semihosting::*;
 
 use embedded_hal::delay::DelayNs;
 
-use radio::Receive;
+//use radio::Receive;
+use radio_sx127x::Receive;
 
 use radio_sx127x::{
     //Error as sx127xError, // Error name conflict with hals
