@@ -1,15 +1,6 @@
 //    //////////////////////////////////////////
-//  see src/PinMap.txt for pin usage
-
-// might be something like
-//pub type LoraSpiType =     Sx127x<Base<SpiType, 
-//                                  Pin<'A', 1, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, 
-//                                  Delay<TIM5, 1000000>>>;
-
-// LoraSpiType   might be something like
-// impl DelayNs
-//    + Transmit<Error = sx127xError<Error>>
-//    + Receive<Info = PacketInfo, Error = sx127xError<Error>>,
+//  see src/PinMap.txt for summary pin assignment.
+//  see src/setup_all_*  for pin usage and details.
 
 //    //////////////////////////////////////////
 
@@ -49,7 +40,7 @@ pub const MODE: Mode = Mode {
     polarity: Polarity::IdleHigh,
 };
 
-pub const FREQUENCY: u32 = 907_400_000; // frequency in hertz ch_12: 915_000_000, ch_2: 907_400_000
+pub const FREQUENCY: u32 = 915_000_000; // 907_400_000; // frequency in hertz ch_12: 915_000_000, ch_2: 907_400_000
 
 pub const CONFIG_CH: LoRaChannel = LoRaChannel {
     freq: FREQUENCY as u32, // frequency in hertz

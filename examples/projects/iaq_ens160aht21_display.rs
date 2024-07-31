@@ -67,7 +67,7 @@ use heapless;
 
 /////////////////////   lora
 
-use radio::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
+use radio_sx127x::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
 
 use radio_sx127x::{
     //Error as sx127xError, // Error name conflict with hals

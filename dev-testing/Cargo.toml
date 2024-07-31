@@ -147,29 +147,18 @@ fugit = { version = "0.3.3", optional = true }
 #  include *also* thumbv6 support. It seems shared-bus-rtic is no longer needed.
 # shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", features = ["thumbv6"], optional = true }
 
-## only certain versions of radio, radio-sx127x, embedded-hal_1.0.0-alpha and embedded-hal-compat work together
-##radio         = { version = "0.9.0" }
-##radio-sx127x  = { version = "0.11.0", default-features = false }
-#radio         = { version = "0.9.1" }
-##radio         = { version = "0.10.0" }
-#radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
-#radio-sx127x  = { version = "0.14.0", default-features = false }
-#radio         = { version = "0.11.0" }
 
 # NB seems important to use the same version of radio that is used by radio-sx127x
 #  It would be nice if radio-sx127x re-exported traits Transmit and  Receive so radio is not needed.
-
-#radio         = { git = "https://github.com/rust-iot/radio-hal" }  # eh-1
-#radio-sx127x  = {  git = "https://github.com/rust-iot/rust-radio-sx127x", default-features = false }
+#  That is being done in pdgilbert/rust-radio-sx127x.
 
 #    these two work together
 #radio = { version = "0.11.1", git = "https://github.com/rust-iot/radio-hal", rev = "7aade85b61c08161bf3422f7d148417bd38ecdc2" }
 #radio-sx127x  = {  git = "https://github.com/matheo-lucak/rust-radio-sx127x", default-features = false }
 
-
-# This radio-sx127 re-exports {Receive, Transmit} so looks after getting correct radio version.
+# This radio-sx127 re-exports {Receive, Transmit} so insures correct radio version.
 radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", default-features = false, branch = "ehal-1" }
-#radio-sx127x  = { path = "...rust-radio-sx127x", default-features = false }
+#radio-sx127x  = { path = "/home/paul/githubClones/rust-radio-sx127x", default-features = false }
 
 # not used yet
 #radio-sx1231  = {  git = "https://github.com/rust-io/rust-radio-sx1231", default-features = false }
@@ -215,22 +204,6 @@ cortex-m-rt = ">=0.7.0"
 
 panic-rtt-target = { version =  "0.1.1", features = ["cortex-m"] }
 rtt-target = { version =  ">=0.3.1", features = ["cortex-m"] }
-
-
-# for radio-sx127x  https://github.com/rust-iot/rust-radio-sx127x
-
-#LEAVE THESE COMMENTED LINES FOR REFERENCE BUT REMOVE WHEN SOMETHING WORKS
-#embedded-hal  1.0.0-alpha
-#e-h-1a = { version = "1.0.0-alpha.5,<1.0.0-alpha.6", package = "embedded-hal" }  
-# alpha.6 requires changes to delay and radio-sx127x support. See branch eh-1-alpha
-#e-h-1a = { version = "1.0.0-alpha.6,<1.0.0-alpha.7", package = "embedded-hal" }  
-#e-h-1a = { version = "1.0.0-alpha.7,<1.0.0-alpha.8", package = "embedded-hal" }  
-
-#stm32f4xx IS NOW NEEDS 1.0.0-alpha.7 AND radio, radio-sx127x, embedded-hal-compat, NEED alpha.5
-# src/lib.rs also has lora_spi_gps_usart;  commented out
-
-#embedded-hal-compat = "0.4.0" 
-#embedded-hal-compat = { git = "https://github.com/ryankurte/embedded-hal-compat.git", branch = "main", optional = true}
 
 cortex-m-semihosting = { version = "0.3.7" }   #test carefully when updating. Version change can break many examples
 panic-semihosting    = { version = ">=0.5.2" }

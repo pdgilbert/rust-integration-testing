@@ -86,16 +86,16 @@ PA3    rx2                     gpioa.pa3.into_alternate(),
                                 Config::default().baudrate(9600.bps()),
 
 PA11   tx3    on     USART6    gpioa.pa11.into_alternate(),  TRY TO RESOLVE CONFILICT WITH CsPin below
-PA12   tx3                     gpioa.pa12.into_alternate(),
+PA12   rx3                     gpioa.pa12.into_alternate(),
 
 PA5     sck       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
 PA6     miso                   gpioa.pa6.into_alternate(), // miso 
 PA7     mosi                   gpioa.pa7.into_alternate(), // mosi 
                                 MODE,  8.MHz(),
 
-PA11    CsPin     Sx127x::spi( gpioa.pa11.into_push_pull_output(), //CsPin         
-PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.           CHANGED
-PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status. CHANGED
+PA11    CsPin     Sx127x::spi( gpioa.pa11.into_push_pull_output(), //CsPin (still unresolved conflict with  tx3 above)     
+PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.
+PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status.
 PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
                                     delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
 
@@ -183,8 +183,8 @@ PA7     mosi                   gpioa.pa7.into_alternate(), // mosi
                                 MODE,  8.MHz(),
 
 PA1     CsPin     Sx127x::spi( gpioa.pa1.into_push_pull_output(), //CsPin         
-PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.           CHANGED
-PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status. CHANGED
+PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.
+PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status.
 PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
                                     delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
 

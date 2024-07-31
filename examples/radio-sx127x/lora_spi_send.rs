@@ -56,6 +56,9 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 use cortex_m_semihosting::*;
 
+//use cortex_m_semihosting::{debug, hprintln};
+//use cortex_m_semihosting::{hprintln};
+
 use embedded_hal::delay::DelayNs;
 
 //use radio::Transmit;  // trait needs to be in scope to find  methods start_transmit and check_transmit.
@@ -66,13 +69,21 @@ use radio_sx127x::{
     prelude::*, // prelude has Sx127x,
 };
 
+// for config examination on debugging
+use radio_sx127x::{
+    device::regs::Register,
+   // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,
+    
+};
+
+
 //   //////////////////////////////////////////////////////////////////////
 
 use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
-//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
-use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
+use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+//use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 
 //   //////////////////////////////////////////////////////////////////////
 
@@ -99,21 +110,22 @@ fn main() -> ! {
     
    
     // print out configuration (for debugging)
+//    hprintln!("frequency          {:?}", lora.get_frequency());
 
  //   use radio_sx127x::device::regs::Register;
  //
- //   let v = lora.lora_get_config();
- //   hprintln!("configuration {}", v).unwrap();
- //
- //   hprintln!("channel      {}", lora.get_channel()).unwrap();
- //
- //   hprintln!("mode             {}",    lora.get_mode()).unwrap();
- //   hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr())).unwrap();
- //   hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth()).unwrap();
- //   hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4()).unwrap();
- //   hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
- //   hprintln!("invert_iq        {:?}",  lora.get_invert_iq()).unwrap();
- //   hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
+//    let v = lora.lora_get_config();
+//    hprintln!("configuration {:?}", v).unwrap();
+// 
+//    hprintln!("channel      {}", lora.get_channel()).unwrap();
+// 
+//    hprintln!("mode             {}",    lora.get_mode()).unwrap();
+//    hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr())).unwrap();
+//    hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth()).unwrap();
+//    hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4()).unwrap();
+//    hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
+//    hprintln!("invert_iq        {:?}",  lora.get_invert_iq()).unwrap();
+//    hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
 
     // transmit something
 
