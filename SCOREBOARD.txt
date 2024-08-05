@@ -1,4 +1,6 @@
- status of job CI( $BOARD , dev-testing)   good  => all examples in CI job ran, otherwise first fail
+THIS FILE IS OLD AND NEEDS TO BE REPLACED WITH SOMETHING AUTO-GENERATED (by git action?)
+
+HISTORICAL INFO - and long before embedded-hal 1.0
 
 25-09-2021 - added temperature and digi_pot to CI job. The result in temperature is FAKED for several hals.
 28-09-2021 - switched from stm32f722 to stm32f769 because adc is not yet supported in hal for former.
@@ -21,13 +23,3 @@ none-stm32l0x2       good         good            good         below
 discovery-stm32l100  rtic         rtic            rtic         good below
 heltec-lora-node151  rtic         rtic            rtic         good
 none-stm32l4x1        dht          dht             dht         good
-
-
-> rtic examples do not work with `stm32f0xx-hal` and `stm32l0xx-hal` and are skipped.
-
-> temperature example skips actual read/calculation on several hals because of problems.
-
-> `stm32l0xx-hal` jobs working only on my special rust-integration-testing branch because of  UPDATE CONFLICT
-
-> `stm32f3xx-hal` and `stm32l1xx-hal` jobs working only using non-default hal branch because of  UPDATE CONFLICT
-

@@ -4,64 +4,99 @@
 `stm32` MCUs.)
 
 ##  Contents
-- [Summary](#summary)
-- [Building](#building)
-- [Loading](#loading)
+
+See the auto-generated menu in the github README display (above right).
 
 ## Summary
 
-The idea of this `Rust` crate-like setup is to have sets of examples that are run 
-with four different `Cargo.toml` strategies.
+The idea of this `Rust` crate-like repository is to have examples that run on different MCUs
+with the same application code. Setup functions do all board/MCU/hal initialization
+so the application part of each example is generic code that works with all MCUs. 
+
+Results from compiling different examples are reported in the repository 'Actions' tab.
+(https://github.com/pdgilbert/rust-integration-testing/actions)
+This gives a way to see what examples actually compile and which do not. 
+The workflow jobs are organized in two groups. One group, indicated `CI(...)`, runs 
+"all examples that should be working" and reports success or failure for different hal/board setups. 
+It stops at the first example that fails, so is not very useful until things are mostly working.
+The second group, indicated `Ex?(example, board-hal)`, runs individual job steps for each example.
+This is more time consuming than the `CI()` approach so it is only done for a subset of boards/hals.
+The "?" in "Ex?" is replaced in the jobs as follows:
+- `ExM` are examples from the `examples/misc` directory of the repository. 
+Many of these are simple and self contained. If they do not work then the hal is probably broken,
+or I have the setup messed up.
+- `ExD` are examples from the `examples/driver-examples` directory of the repository.
+These are examples using crates from https://github.com/eldruin and 
+based on example from https://github.com/eldruin/driver-examples.
+- `ExI` are examples from the `examples/misc-i2c-drivers` directory of the repository. 
+- `ExR` are examples from the `examples/rtic` directory of the repository. 
+- `ExL` are examples from the `examples/radio-sx127x` directory of the repository which has LoRa examples. 
+- `ExP` are examples from the `examples/projects` directory of the repository. 
+These are a bit more ambitious projects.
+
+The jobs provide information from `cargo build` and from `cargo tree` for debugging purposes.
+
+## Setup Notes
+
+Different MCUs and boards have different hardware capabilities and the hal crates must reflect this. 
+To accommodate these differences there are setup functions for each board/MCU. 
+These pass a standardized set of devices to the application code. The standardized set (serial ports, 
+I2C pins, ...) is organized reduce changes in my hardware testing. 
+The setup is selected by environmental variables discussed further below.
+
+The examples in `examples/misc` mostly contain their own copy of the setup functions, so they are
+self contained  and easier to read. 
+Other examples use functions defined in `src/` (eg `setup_all_stm32g4xx.rs`) to simplify
+support and maintain consistence. 
+
+## Hardware Notes
+
+No automatic attempt is made to link/flash/run/debug.  The repository includes files to do this 
+(e.g. `.cargo/config` and `memory.x`) but these are not used in the github workflows.
+A very brief indication of how to do these is further below.
+
+Many examples have been tested on hardware at some stage, but not always with the current 
+version of software. (Any test with the board marked as `none-` means I do not have a
+board and so it is certain I have not tested on hardware.) 
+Some of the examples contain notes about hardware testing.
+
+## Testing Strategies
+
+(Note that only the dev-testing strategy below is active at the moment.
+The driver-testing, hal-testing, and release-testing strategies are disabled until
+things become more stable with `embedded-hal 1.0`. )
+
+The repository uses four different `Cargo.toml` strategies.
 One strategy uses a recent release versions of both HAL crates and driver device crates. 
 The  second  uses a recent release versions of HAL crates and github versions of driver crates. 
 The   third  uses  github versions of HAL crates and a recent release versions of driver crates. 
 The  fourth  uses  github versions of both HAL crates and driver crates. 
-(Disabled driver-testing, hal-testing, and release-testing. The dev-testing strategy is sufficient for now.)
 
-The examples themselves are the same for all strategies, with the exception that breaking 
-updates might be accommodated.  However, in general it is not necessary to accommodate
-breaking changes. They will simply show as failing in some tests. 
-For instance, the hal module name change from `stm32` to `pac` is changed to the newer
-convention in the example code. Until the change is moved into release the tests using 
-the release version show as failing. 
-
-The `setup()` functions in each example do all board/MCU/hal 
-setup so the application part of each example is generic code that works with all setups. 
-
-The stategies require different `Cargo.toml` (and `Cargo.lock`) files. 
+The strategies require different `Cargo.toml` (and `Cargo.lock`) files. 
 These are in directories `release-testing`, `driver-testing`, `hal-testing`, and `dev-testing`.
 (`Cargo` workspaces do not work for this because they have a common `Cargo.lock` file.
 Basically, the logic here is completely reversed from workspaces. In this setup almost 
 everything is the same except the `Cargo` files for the strategies.)
- 
-The main work of checking that examples build is done by the CI workflow. 
-See https://github.com/pdgilbert/rust-integration-testing/actions  for the latest results.
-The first set of jobs runs all working examples with each of the four strategies on each of
-the board (MCU/hardware) setups. If the first stategy (release) fails and last stategy (dev)
+
+The examples themselves are the same for all strategies. 
+
+If the first strategy (release) fails and last strategy (dev)
 passes then there is an update/fix/change in the github version of a hal that is not yet
-in the release version. In the reverse case there is a change in the gihub version that has 
+in the release version. In the reverse case there is a change in the github version that has 
 not yet been incorporated into the example code.
 
-There is a second set of jobs, one for each example, that run only on `bluepill`.
-This is for testing examples without stopping at the first one that fails. It includes
-some examples that are not yet working and are not included in the first set of jobs.
 
-No attempt is made to link/flash/run/debug so `.cargo/config` and `memory.x` are not needed.
-A very brief indication of how to do these is below.
+## Notes on Some Crates and Hals
 
-The link above shows build results for all examples on several boards and with various 
-device HALs. Some of them have
-been tested on hardware. (Any test board marked as `none-` below means I do not have a
-board and so it is certain I have not tested on hardware.)
+Examples in `examples/driver-examples` directory use crates from https://github.com/eldruin. 
+The originals from which they are derived are very well documented at
+https://github.com/eldruin/driver-examples. I found this a very good starting place for a novice. 
 
-The `driver-examples` are based on https://github.com/eldruin/driver-examples and more 
-information about them is available at that web site and in blog posts referenced there.
+The `radio-sx127x` examples are based on https://github.com/rust-iot/rust-radio-sx127x.
 
-The `radio-sx127x` examples are based on https://github.com/rust-iot/rust-radio-sx127x and
-fork https://github.com/pdgilbert/rust-radio-sx127x. These example are of special interest
-because the `radio-sx127x` crate is based on `embedded-hal 1.0.0-alpha-4` and uses a
-compatability plugin `embedded-hal-compat` to work with hal and other crates that are
-using `embedded-hal-0.2.4`.
+In the transition to `embedded-hal 1.0` there is some use of forks an branches that are ahead of the
+main branch of official repositories. Hopefully it is a temporary situation.
+This can be checked in the Cargo.toml file.
 
 ## Building
 
@@ -151,7 +186,7 @@ Licensed under either of
 
 at your option.
 
-### Contributing
+## Contributing
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall
