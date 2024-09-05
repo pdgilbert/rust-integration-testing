@@ -62,6 +62,7 @@ PA0 PA1 PA2 PA3 PA5 PA6  PA7  PA8  PA9 PA10 PA11
 
 
 ///////////////////////////////  stm32f4xx  /////////////////////////////// 
+https://stm32world.com/wiki/Black_Pill
 
 TIM5   delay = dp.TIM5.delay::<1000000_u32>(&clocks);
 
@@ -88,10 +89,12 @@ PA3    rx2                     gpioa.pa3.into_alternate(),
 PA11   tx3    on     USART6    gpioa.pa11.into_alternate(),  TRY TO RESOLVE CONFILICT WITH CsPin below
 PA12   rx3                     gpioa.pa12.into_alternate(),
 
-PA5     sck       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
-PA6     miso                   gpioa.pa6.into_alternate(), // miso 
-PA7     mosi                   gpioa.pa7.into_alternate(), // mosi 
-                                MODE,  8.MHz(),
+PA4     nss1 SHOULD PROBABLY USE THIS IN PLACE OF PA11 (Cs)  BUT NEED TO CONFIRM
+PA5     sck1       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
+PA6     miso1                   gpioa.pa6.into_alternate(), // miso 
+PA7     mosi1                  gpioa.pa7.into_alternate(), // mosi    MODE,  8.MHz(),
+
+nss vs cs ?? https://stackoverflow.com/questions/35780290/how-can-i-use-hardware-nss-spi-on-stm32f4
 
 PA11    CsPin     Sx127x::spi( gpioa.pa11.into_push_pull_output(), //CsPin (still unresolved conflict with  tx3 above)     
 PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.
@@ -103,7 +106,7 @@ PA1     adc1  AdcSensor1Type    ch:  gpioa.pa1.into_analog(),
 
 PC13
 PB3 PB8 PB9 PB10
-PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8  PA9 PA10 PA11
+PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8  PA9 PA10 PA11 PA12
 
 
 ///////////////////////////////  stm32g4xx  /////////////////////////////// 
@@ -134,9 +137,10 @@ PA3    rx2                    gpioa.pa3.into_alternate(),
 PB10    tx3         USART3      gpiob.pb10.into_alternate(),
 PB11    rx3                     gpiob.pb11.into_alternate(), 
 
-PA5     sck        SPI1.spi(   (gpioa.pa5.into_alternate(), // sck 
-PA6     miso                    gpioa.pa6.into_alternate(), // miso
-PA7     mosi                    gpioa.pa7.into_alternate(), // mosi
+PA4     nss1 SHOULD PROBABLY USE THIS IN PLACE OF PA11 (Cs)  BUT NEED TO CONFIRM
+PA5     sck1        SPI1.spi(   (gpioa.pa5.into_alternate(), // sck 
+PA6     miso1                    gpioa.pa6.into_alternate(), // miso
+PA7     mosi1                    gpioa.pa7.into_alternate(), // mosi
                                 ), MODE_0, 400.kHz(),  &mut rcc, );
 
 PA11    CsPin        Sx127x     gpioa.pa11.into_push_pull_output(), //CsPin         

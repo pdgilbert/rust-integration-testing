@@ -46,12 +46,12 @@ mod app {
     use rtic_monotonics::systick::prelude::*;
 
     /////////////////////   ads
-    //    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
+    //    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, TargetAddr, 
     //                  ChannelSelection,
     //                  ic::{Ads1015, Resolution12Bit},
     //                  interface::I2cInterface};
     
-    use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr,
+    use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr,
                   ic::{Ads1015, Resolution12Bit},
     };
 
@@ -216,10 +216,10 @@ mod app {
         
 //        let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
-        let mut adc_a = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Gnd);
-//        let mut adc_b = Ads1x1x::new_ads1015(i2c2,  SlaveAddr::Vdd);
-//        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Gnd);
-//        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  SlaveAddr::Vdd);
+        let mut adc_a = Ads1x1x::new_ads1015(i2c2,  TargetAddr::Gnd);
+//        let mut adc_b = Ads1x1x::new_ads1015(i2c2,  TargetAddr::Vdd);
+//        let mut adc_a = Ads1x1x::new_ads1015(manager.acquire_i2c(),  TargetAddr::Gnd);
+//        let mut adc_b = Ads1x1x::new_ads1015(manager.acquire_i2c(),  TargetAddr::Vdd);
 
         // FullScaleRange is very small for diff across low value shunt resistors for current
         //   but up to 5v when measuring usb power.

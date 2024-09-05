@@ -26,7 +26,7 @@ pub use stm32g4xx_hal::{
     spi::{Mode, Phase, Polarity},
     serial::{FullConfig, NoDMA},
     gpio::{Alternate, AlternateOD, Input, Floating,
-           gpioa::{PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10, PA11},
+           gpioa::{PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC6 as LEDPIN}},  // weact-stm32g474CEU6 has onboard led on PC6
     adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
@@ -75,7 +75,7 @@ pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1,(PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternate<5>>)>;
-pub struct SpiExt { pub cs:    PA11<Output<PushPull>>, 
+pub struct SpiExt { pub cs:    PA4<Output<PushPull>>, 
                     pub busy:  PB4<Input<Floating>>, 
                     pub ready: PB5<Input<Floating>>, 
                     pub reset: PA0<Output<PushPull>>
@@ -141,7 +141,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    );
    
    let spiext = SpiExt {
-        cs:    gpioa.pa11.into_push_pull_output(), //CsPin         
+        cs:    gpioa.pa4.into_push_pull_output(), //CsPin         
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   

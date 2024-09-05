@@ -41,8 +41,8 @@ The jobs provide information from `cargo build` and from `cargo tree` for debugg
 Different MCUs and boards have different hardware capabilities and the hal crates must reflect this. 
 To accommodate these differences there are setup functions for each board/MCU. 
 These pass a standardized set of devices to the application code. The standardized set (serial ports, 
-I2C pins, ...) is organized reduce changes in my hardware testing. 
-The setup is selected by environmental variables discussed further below.
+I2C pins, ...) is organized to reduce  hardware changes in my testing. 
+The setup is selected by environment variables discussed further below.
 
 The examples in `examples/misc` mostly contain their own copy of the setup functions, so they are
 self contained  and easier to read. 
@@ -94,7 +94,7 @@ https://github.com/eldruin/driver-examples. I found this a very good starting pl
 
 The `radio-sx127x` examples are based on https://github.com/rust-iot/rust-radio-sx127x.
 
-In the transition to `embedded-hal 1.0` there is some use of forks an branches that are ahead of the
+In the transition to `embedded-hal 1.0` there is some use of forks and branches that are ahead of the
 main branch of official repositories. Hopefully it is a temporary situation.
 This can be checked in the Cargo.toml file.
 

@@ -45,7 +45,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
 
 
 /////////////////////   ssd
@@ -141,7 +141,7 @@ fn main() -> ! {
     led.blink(500_u16, &mut delay);  // to confirm startup
 
     /////////////////////   ads
-    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::default()); //addr = Gnd
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, TargetAddr::default()); //addr = Gnd
 
     // to measure [0-5V] use FullScaleRange::Within6_144V
     adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();

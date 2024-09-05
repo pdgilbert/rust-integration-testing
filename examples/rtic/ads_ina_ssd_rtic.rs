@@ -47,7 +47,7 @@ mod app {
    use ads1x1x::{Ads1x1x, channel, 
                  mode::OneShot, 
                  //Ads1015, Resolution12Bit,    PRIVATE?
-                 FullScaleRange, SlaveAddr};
+                 FullScaleRange, TargetAddr};
    
    /////////////////////   ina
    use ina219::{address::{Address, Pin}, 
@@ -176,14 +176,14 @@ mod app {
 //       let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
        /////////////////////   ads
-//       let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd,  SlaveAddr::Gnd);
-//       let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd,  SlaveAddr::Vdd);
+//       let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd,  TargetAddr::Gnd);
+//       let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd,  TargetAddr::Vdd);
 //       // set FullScaleRange to measure expected max voltage.
 //       adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 //       adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
 
-       let mut adc_a = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  SlaveAddr::Gnd);
-       let mut adc_b = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  SlaveAddr::Vdd);
+       let mut adc_a = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  TargetAddr::Gnd);
+       let mut adc_b = Ads1x1x::new_ads1015(ArbiterDevice::new(i2c_arbiter),  TargetAddr::Vdd);
        // set FullScaleRange to measure expected max voltage.
        adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
        adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();

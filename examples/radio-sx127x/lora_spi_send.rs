@@ -1,5 +1,8 @@
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!
+//!  Status: tested working on stm32g474 in debug with probe, Sept 5, 2024.
+//!          Does not work on battery without debug because of hprintln.
+//!
 //!  The setup() functions make the application code common. They are in src/setup_all*.
 //!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the setup() corresponding to the HAL for details on pin connections.

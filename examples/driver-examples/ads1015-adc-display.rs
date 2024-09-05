@@ -26,7 +26,7 @@ use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_rt::entry;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
 
 /////////////////////   ssd
 use ssd1306::{ prelude::*, I2CDisplayInterface, Ssd1306};
@@ -65,7 +65,7 @@ fn main() -> ! {
     let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ads
-    let mut adc = Ads1x1x::new_ads1015(adc_rcd, SlaveAddr::default()); //addr = Gnd
+    let mut adc = Ads1x1x::new_ads1015(adc_rcd, TargetAddr::default()); //addr = Gnd
     // need to be able to measure [0-5V]
     adc.set_full_scale_range(FullScaleRange::Within6_144V).unwrap();
 

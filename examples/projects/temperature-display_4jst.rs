@@ -64,7 +64,7 @@ systick_monotonic!(Mono, 1000);
 
 mod app {
     
-    use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, SlaveAddr};
+    use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, TargetAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
     //use cortex_m_semihosting::{hprintln};
@@ -215,10 +215,10 @@ mod app {
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
         //  also set j0 to  0 / 4 / 8 / 12 in show_display()
-        let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Gnd);
-        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Vdd);
-        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Sda);
-        //let mut adc = Ads1x1x::new_ads1115(i2c1,  SlaveAddr::Scl);
+        let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Gnd);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Vdd);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Sda);
+        //let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Scl);
 
         //hprintln!("adc initialized.").unwrap();
         show_message("adc initialized.", &mut display);

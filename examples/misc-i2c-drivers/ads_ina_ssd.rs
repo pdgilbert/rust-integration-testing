@@ -12,7 +12,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   ads
-use ads1x1x::{Ads1x1x, channel, FullScaleRange, SlaveAddr};
+use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
 
 /////////////////////   ina
 use ina219::{address::{Address, Pin}, measurements::BusVoltage, SyncIna219};
@@ -175,8 +175,8 @@ fn main() -> ! {
     let ssd_rcd   = RefCellDevice::new(&i2cset_ref_cell); 
 
     /////////////////////   ads
-    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
-    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
+    let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, TargetAddr::Gnd);
+    let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, TargetAddr::Vdd);
 
     // set FullScaleRange to measure expected max voltage.
     adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();

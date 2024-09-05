@@ -43,13 +43,13 @@ systick_monotonic!(Mono, 1000);
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
-//    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, SlaveAddr, 
+//    use ads1x1x::{Ads1x1x, DynamicOneShot, FullScaleRange, TargetAddr, 
 //                  ChannelSelection,
 //                  ic::{Ads1015, Resolution12Bit},
 //                  interface::I2cInterface};
     
     use ads1x1x::{Ads1x1x, ic::Ads1015, ic::Resolution12Bit, channel,  
-                  FullScaleRange, SlaveAddr};
+                  FullScaleRange, TargetAddr};
 
 
     //use cortex_m_semihosting::{debug, hprintln};
@@ -200,15 +200,15 @@ mod app {
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
-        let mut adc_a = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Gnd);
-        let mut adc_b = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Vdd);
-        let mut adc_c = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Sda);
-        let mut adc_d = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  SlaveAddr::Scl);
+        let mut adc_a = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  TargetAddr::Gnd);
+        let mut adc_b = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  TargetAddr::Vdd);
+        let mut adc_c = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  TargetAddr::Sda);
+        let mut adc_d = Ads1x1x::new_ads1015(manager1.acquire_i2c(),  TargetAddr::Scl);
 
-       // let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, SlaveAddr::Gnd);
-       // let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, SlaveAddr::Vdd);
-       // let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, SlaveAddr::Sda);
-       // let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, SlaveAddr::Scl);
+       // let mut adc_a = Ads1x1x::new_ads1015(adc_a_rcd, TargetAddr::Gnd);
+       // let mut adc_b = Ads1x1x::new_ads1015(adc_b_rcd, TargetAddr::Vdd);
+       // let mut adc_c = Ads1x1x::new_ads1015(adc_c_rcd, TargetAddr::Sda);
+       // let mut adc_d = Ads1x1x::new_ads1015(adc_d_rcd, TargetAddr::Scl);
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small if measuring diff across low value shunt resistors for current

@@ -7,7 +7,7 @@ pub use hal::{
       spi::{Spi},
       i2c::I2c,   //this is a type
       serial::{Serial, Tx, Rx, Error},
-      gpio::{Output, OpenDrain, PushPull, Analog, GpioExt},
+      gpio::{Output, OpenDrain, PushPull, Analog, GpioExt, Input},
       adc::Adc,
       prelude::*,
       prelude,
@@ -22,7 +22,8 @@ pub use stm32f4xx_hal::{
     timer::{TimerExt},
     serial::{config::Config},
     gpio::{Pin}, 
-    gpio::{gpioa::{PA1, PA8, }},
+    gpio::{gpioa::{PA0, PA1, PA8, PA4, PA5, PA6, PA7}},
+    gpio::{gpiob::{PB4, PB5}},
     gpio::{gpioc::{PC13 as LEDPIN}},
     adc::{config::{AdcConfig, SampleTime}},
 };
@@ -62,10 +63,15 @@ pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
-pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, 
-                    pub busy:  Pin<'B', 4>, 
-                    pub ready: Pin<'B', 5>, 
-                    pub reset: Pin<'A', 0, Output>
+//pub struct SpiExt { pub cs:    Pin<'A', 4, Output>, 
+//                    pub busy:  Pin<'B', 4>, 
+//                    pub ready: Pin<'B', 5>, 
+//                    pub reset: Pin<'A', 0, Output>
+//}
+pub struct SpiExt { pub cs:    PA4<Output<PushPull>>, 
+                    pub busy:  PB4<Input<>>, 
+                    pub ready: PB5<Input<>>, 
+                    pub reset: PA0<Output<PushPull>>
 }
 
 
@@ -134,7 +140,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    );
    
    let spiext = SpiExt {
-        cs:    gpioa.pa11.into_push_pull_output(), //CsPin         
+        cs:    gpioa.pa4.into_push_pull_output(), //CsPin         
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
