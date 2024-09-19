@@ -1,7 +1,8 @@
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!
-//!  Status: tested working on stm32g474 in debug with probe, Sept 5, 2024.
-//!          Does not work on battery without debug because of hprintln.
+//!  Status: tested working on stm32g474 and stm32f411 in debug with probe, Sept 5, 2024.
+//!          Does not work on battery because hprintln requires debug probe.
+//!     lora.delay_ms(5) CONVERTS 5 TO SECONDS ON  STM32F411 BUT MILLISECONDS ON  STM32G474
 //!
 //!  The setup() functions make the application code common. They are in src/setup_all*.
 //!  The specific function used will depend on the HAL setting (see README.md).
@@ -93,9 +94,14 @@ use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG
 #[entry]
 fn main() -> ! {
     let dp =Peripherals::take().unwrap();
-    let (mut led, spi, spiext, delay) = setup::led_spi_spiext_delay_from_dp(dp); 
+    let (mut led, spi, spiext, mut delay) = setup::led_spi_spiext_delay_from_dp(dp); 
     led.off();
 
+    hprintln!("start delay.delay_ms(5)").unwrap();
+    delay.delay_ms(5);
+    hprintln!(" end  delay.delay_ms(5)").unwrap();
+
+    // cs should be called nss
     let lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, 
                        &CONFIG_RADIO ); 
 
@@ -146,6 +152,7 @@ fn main() -> ! {
             Ok(_b)   => { hprintln!("start_transmit").unwrap() } 
             Err(_e) => { hprintln!("Error in lora.start_transmit()").unwrap() }
         };
+        hprintln!("start_transmit done").unwrap();
 
         lora.delay_ms(1); // without some delay next returns bad. (interrupt may also be an option)
 
@@ -157,7 +164,10 @@ fn main() -> ! {
                 hprintln!("Error in lora.check_transmit(). Should return True or False.").unwrap()
                 }
         };
+        hprintln!("check_transmit done").unwrap();
 
-        lora.delay_ms(5000);
+        //lora.delay_ms(5000);
+        lora.delay_ms(5);
+        hprintln!("re-loop").unwrap();
     }
 }

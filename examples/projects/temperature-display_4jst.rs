@@ -240,7 +240,7 @@ mod app {
 
         read_and_display::spawn().unwrap();
 
-//        hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+       //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
 
         (Shared {led}, Local {adc, display})
     }
