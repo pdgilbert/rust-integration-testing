@@ -7,7 +7,7 @@
 //! and examples/projects/temp-humidity-display.rs.
 
 //! One side of the thermistor is connected to GND and other side to adc pin and also through
-//! a 10k sresistor to VCC. That makes the max voltage about VCC/2, so about 2.5v when VCC is 5v.
+//! a 10k resistor to VCC. That makes the max voltage about VCC/2, so about 2.5v when VCC is 5v.
 //! and 1.6v when vcc is 3.2v. This is convenient for adc pins that are not 5v tolerant.
 //! This means the voltage varies inversely compared to connecting throught the resistor to GND 
 //! as is sometimes done. (Since NTC resistance goes down as temperature goes up, this means
@@ -32,7 +32,8 @@
 //! The full range is only used for differential measurement between two pins. These can be
 //! positive or negative.  Direct (single) measurements are always positive (the devices do not
 //! allow inputs lower than GND) so only half the range is used.
-//! The voltage that values correspond to depend on the full-scale range setting.
+//! The voltage that values correspond to depend on the full-scale range setting and
+//! are also sensitive to the supply voltage.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -160,8 +161,8 @@ mod app {
        write!(line, "J{:1}-{:1}{:5}{:5}mV\nJ{:1}-{:1}{:5}{:5}mV\n\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C\nJ{:1}-{:1}{:3}.{:1}{:3}.{:1}°C",
            j0+1, j0+2, mv[0], mv[1],
            j0+3, j0+4, mv[2], mv[3],
-           j0+1, j0+2, t[0]/10,t[0]%10, t[1]/10,t[1]%10,
-           j0+3, j0+4, t[2]/10,t[2]%10, t[3]/10,t[3]%10,).unwrap();
+           j0+1, j0+2, t[0]/10,t[0].abs() %10, t[1]/10,t[1].abs() %10,
+           j0+3, j0+4, t[2]/10,t[2].abs() %10, t[3]/10,t[3].abs() %10,).unwrap();
 
        show_message(&line, disp);
        ()
@@ -267,6 +268,15 @@ mod app {
     #[task(shared = [led], local = [adc, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
        //hprintln!("read_and_display started").unwrap();
+
+       //  REALLY DO BETTER APROX.
+       // very crude linear aproximation mv to degrees C using 
+       // based on 
+       // t = a + v/b , v in mV, b inverse slope
+       let a = 72i64;    //  72 deg
+       let b = -34i64;   //  -34 mv/degree   
+       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
+          
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
           //hprintln!("read_and_display").unwrap();
@@ -283,19 +293,13 @@ mod app {
           for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
           //hprintln!(" mv {:?}", mv).unwrap();
 
-          //  REALLY DO BETTER APROX.
-          // very crude linear aproximation mv to degrees C using 
-          // based on 
-          // t = a + v/b , v in mV, b inverse slope
-          let a = 72i64;    //  72 deg
-          let b = -34i64;   //  -34 mv/degree   
-          // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
-          
-          // t in tenths of a degree C, so it is an int  but t[0]/10, t[0]%10 give a degree with one decimal.
+          // t in tenths of a degrees C, so it is an int  but t[0]/10, t[0].abs() %10 give a degree with one decimal.
           let mut t:[i64; 4] = [-100; 4] ;
-          for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) };
+
+          //for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) }; // loses the decimal rounding division
+          for i in 0..t.len() { t[i] =  10 * a  + (10 * mv[i]) / b };
  
-          //hprintln!(" t {:?} 10 * degrees", t).unwrap();
+          //hprintln!(" t {:?} = 10 * degrees", t).unwrap();
 
           show_display(mv, t, &mut cx.local.display);
        }
