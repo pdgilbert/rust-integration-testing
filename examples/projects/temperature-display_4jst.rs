@@ -227,7 +227,6 @@ mod app {
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         //asm::bkpt();
 
-        //let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
         let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
         //hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
         match z {  

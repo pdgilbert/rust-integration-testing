@@ -625,6 +625,10 @@ name = "temperature-display"
 path = "examples/projects/temperature-display.rs"
 
 [[example]]
+name = "temperature-display_no-rtic"
+path = "examples/projects/temperature-display_no-rtic.rs"
+
+[[example]]
 name = "temperature-display_4jst"
 path = "examples/projects/temperature-display_4jst.rs"
 

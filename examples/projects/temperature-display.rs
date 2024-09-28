@@ -122,18 +122,19 @@ mod app {
 
     use nb::block;
 
-    use shared_bus::{I2cProxy};
+    /////////////////////  bus sharing
+
     use core::cell::RefCell;
-    //use embedded_hal_bus::i2c::RefCellDevice;
-    //use shared_bus::{I2cProxy};
-    use cortex_m::interrupt::Mutex;
+    use embedded_hal_bus::i2c;
+    use embedded_hal_bus::i2c::RefCellDevice;
+    use rtic::Mutex;
 
 
     fn show_display<S>(
-        v_a: [i16; 4],
-        v_b: [i16; 4],
-        v_c: [i16; 4],
-        v_d: [i16; 4],
+        v_a: [i64; 4],
+        v_b: [i64; 4],
+        v_c: [i64; 4],
+        v_d: [i64; 4],
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
@@ -178,6 +179,46 @@ mod app {
        ()
     }
 
+//   //////////////////////////////////////////////////////////////////
+
+    #[shared]
+    struct Shared {
+        led: LedType,
+    }
+
+    #[local]
+    struct Local {
+       adc_a:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       adc_b:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       adc_c:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       adc_d:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+
+       //adc_a:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_b:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_c:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_d:   Ads1x1x<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+
+       //     beware      I2CInterface is for ssd
+       //adc_a:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_b:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_c:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_d:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+
+       //adc_a:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_b:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_c:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+       //adc_d:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
+
+       // next I2CInterface is type of I2CDisplayInterface may not be the same as  above I2cInterface !!! ???
+       //display: Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>,  ssd1306::prelude::DisplaySize128x64, 
+       //                   BufferedGraphicsMode<DisplaySize128x64>>,
+       //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>,  ssd1306::prelude::DisplaySize128x64, 
+       //                   BufferedGraphicsMode<DisplaySize128x64>>,
+       display:  DisplayType,
+    }
+
+//   //////////////////////////////////////////////////////////////////
+
     #[init]
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
@@ -191,11 +232,12 @@ mod app {
         Mono.delay_ms(1000u32);
         led.off();
 
+   let i2c_ref_cell = RefCell::new(i2c1);
         // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
         // (No luck Using embedded-bus instead.
         // Try ssd on i2c2 and shared-bus ads's on i2c1
         //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
-        let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
+        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
 
 
        //let i2c1_ref_cell = RefCell::new(i2c1);
@@ -220,11 +262,15 @@ mod app {
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
-        let mut adc_a = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Gnd);
-        let mut adc_b = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Vdd);
-        let mut adc_c = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Sda);
-        let mut adc_d = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Scl);
+        //let mut adc_a = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Gnd);
+        //let mut adc_b = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Vdd);
+        //let mut adc_c = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Sda);
+        //let mut adc_d = Ads1x1x::new_ads1115(manager1.acquire_i2c(),  TargetAddr::Scl);
 
+        let mut adc_a = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Gnd);
+        let mut adc_b = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Vdd);
+        let mut adc_c = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Sda);
+        let mut adc_d = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Scl);
        // let mut adc_a = Ads1x1x::new_ads1115(adc_a_rcd, TargetAddr::Gnd);
        // let mut adc_b = Ads1x1x::new_ads1115(adc_b_rcd, TargetAddr::Vdd);
        // let mut adc_c = Ads1x1x::new_ads1115(adc_c_rcd, TargetAddr::Sda);
@@ -282,31 +328,6 @@ mod app {
         (Shared {led}, Local {adc_a, adc_b, adc_c, adc_d, display})
     }
 
-    #[shared]
-    struct Shared {
-        led: LedType,
-    }
-
-    #[local]
-    struct Local {
-       adc_a:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       adc_b:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       adc_c:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       adc_d:   Ads1x1x<I2cInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-
-       //adc_a:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       //adc_b:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       //adc_c:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-       //adc_d:   Ads1x1x<RefCellDevice<'static, I2c1Type>, Ads1115, Resolution16Bit, ads1x1x::mode::OneShot>,
-
-       // next I2CInterface is type of I2CDisplayInterface may not be the same as  above I2cInterface !!! ???
-       //display: Ssd1306<I2CInterface<RefCellDevice<'static, I2c1Type>>,  ssd1306::prelude::DisplaySize128x64, 
-       //                   BufferedGraphicsMode<DisplaySize128x64>>,
-       //display: Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c2Type>>>>,  ssd1306::prelude::DisplaySize128x64, 
-       //                   BufferedGraphicsMode<DisplaySize128x64>>,
-       display:  DisplayType,
-    }
-
     #[idle()]
     fn idle(_cx: idle::Context) -> ! {
         //hprintln!("idle with wfi started").unwrap();
@@ -323,10 +344,11 @@ mod app {
           //hprintln!("read_and_display").unwrap();
           blink::spawn(BLINK_DURATION).ok();
 
-          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
-          cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+//         these are set in init but can be switched (and switched back)
+//          cx.local.adc_a.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+//          cx.local.adc_b.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+//          cx.local.adc_c.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
+//          cx.local.adc_d.set_full_scale_range(FullScaleRange::Within4_096V).unwrap(); 
           
           // note the range can be switched if needed, eg.
           //cx.local.adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
@@ -359,7 +381,7 @@ mod app {
               block!(cx.local.adc_d.read(channel::SingleA3)).unwrap_or(-40) as i64 / SCALE,
           ];
 
-          // SEE temperature-display_4jst REGARDING CALCUATION HERE
+          // SEE temperature-display_4jst REGARDING CALCULATION HERE
           
           show_display(values_a, values_b, values_c, values_d, &mut cx.local.display);
        }
