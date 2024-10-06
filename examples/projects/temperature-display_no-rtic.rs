@@ -1,10 +1,11 @@
-//! Measure temperature with multiple 10k thermistor sensors (NTC 3950 10k thermistors probes) 
-//! using multiple channel adc and crate ads1x1x. Display using SSD1306.
+//! Measure temperature on sixteen 10k thermistor sensors (NTC 3950 10k thermistors probes) 
+//! using four 4-channel adc's sharing I2C1 and crate ads1x1x. Display using SSD1306 on I2C2.
+//! See additional documentation in temperature-display_4jst.
 //! Eventually, transmit with LoRa.
 
 //! Compare 
 //!    temperature-display_4jst which uses rtic but reads only 4 ADCs and does not need share the bus. (It has more documentation.)
-//!    temperature-display which uses rtic and shares  the bus but does not work yet.
+//!    temperature-display which uses rtic and shares the bus, but does not work yet.
 //!    battery_monitor_ads1015_rtic which is currently not sharing
 //!    therm10k_display
 //!    htu2xd_rtic which has sensor on shared bus and 'static,  but the htu2xd crate is not using e-h 1.0.
@@ -34,7 +35,7 @@ use cortex_m_rt::entry;
     use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
 
     //use cortex_m_semihosting::{debug, hprintln};
-    //use cortex_m_semihosting::{hprintln};
+    use cortex_m_semihosting::{hprintln};
     //use cortex_m::asm;
 
     use core::fmt::Write;
@@ -79,7 +80,7 @@ use cortex_m_rt::entry;
     ///////////////////// 
 
     const READ_INTERVAL:  u32 = 5000;  // used as milliseconds
-    const BLINK_DURATION: u32 = 30;    // used as milliseconds
+    const BLINK_DURATION: u32 = 20;    // used as milliseconds
 
     
     // The units of measurement are  [32767..-32768] for 16-bit devices (and  [2047..-2048] for 12-bit devices)
@@ -103,10 +104,7 @@ use cortex_m_rt::entry;
 //   //////////////////////////////////////////////////////////////////
 
     fn show_display<S>(
-        v_a: [i64; 4],
-        v_b: [i64; 4],
-        v_c: [i64; 4],
-        v_d: [i64; 4],
+        t: [i64; 16],
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
     where
@@ -115,17 +113,22 @@ use cortex_m_rt::entry;
        let mut line: heapless::String<128> = heapless::String::new(); // \n to separate lines
            
        // Consider handling error in next. If line is too short then attempt to write it crashes
-       write!(line, "A1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_a[0]/10,v_a[0]%10,  v_a[1]/10,v_a[1]%10,  v_a[2]/10,v_a[2]%10,  v_a[2]/10,v_a[2]%10,).unwrap();
+       write!(line,   "1:{:3}.{:1}  {:3}.{:1}°C",  t[0]/10,t[0].abs() %10,   t[1]/10,t[1].abs() %10).unwrap();
+       write!(line, "\n3:{:3}.{:1}  {:3}.{:1}°C",  t[2]/10,t[2].abs() %10,   t[3]/10,t[3].abs() %10,).unwrap();
+       write!(line, "\n5:{:3}.{:1}  {:3}.{:1}°C",  t[4]/10,t[4].abs() %10,   t[5]/10,t[5].abs() %10,).unwrap();
+       write!(line, "\n7:{:3}.{:1}  {:3}.{:1}°C",  t[6]/10,t[6].abs() %10,   t[7]/10,t[7].abs() %10,).unwrap();
+       write!(line, "\n9:{:3}.{:1}  {:3}.{:1}°C",  t[8]/10,t[8].abs() %10,   t[9]/10,t[9].abs() %10,).unwrap();
+ //      delay.delay_ms(3000u32);
+       line.clear();
+       write!(line, "\n7:{:3}.{:1}  {:3}.{:1}°C",  t[6]/10,t[6].abs() %10,   t[7]/10,t[7].abs() %10,).unwrap();
+       write!(line, "\n9:{:3}.{:1}  {:3}.{:1}°C",  t[8]/10,t[8].abs() %10,   t[9]/10,t[9].abs() %10,).unwrap();
+       write!(line, "\n11:{:3}.{:1} {:3}.{:1}°C",  t[10]/10,t[10].abs() %10, t[11]/10,t[11].abs() %10,).unwrap();
+       write!(line, "\n13:{:3}.{:1} {:3}.{:1}°C",  t[12]/10,t[12].abs() %10, t[13]/10,t[13].abs() %10,).unwrap();
+       write!(line, "\n15:{:3}.{:1} {:3}.{:1}°C",  t[14]/10,t[14].abs() %10, t[15]/10,t[15].abs() %10,).unwrap();
 
-       write!(line, "\nB1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_b[0]/10,v_b[0]%10,  v_b[1]/10,v_b[1]%10,  v_b[2]/10,v_b[2]%10,  v_b[2]/10,v_b[2]%10,).unwrap();
-
-       write!(line, "\nC1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_c[0]/10,v_c[0]%10,  v_c[1]/10,v_c[1]%10,  v_c[2]/10,v_c[2]%10,  v_c[2]/10,v_c[2]%10,).unwrap();
-
-       write!(line, "\nD1-4 {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C  {:3}.{:1}°C ", 
-            v_d[0]/10,v_d[0]%10,  v_d[1]/10,v_d[1]%10,  v_d[2]/10,v_d[2]%10,  v_d[2]/10,v_d[2]%10,).unwrap();
+   // CHECK SIGN IS CORRECT FOR -0.3 C
+   // NEED TO DISPLAY THE REST
+      // hprintln!(" t {:?} = 10 * degrees", t).unwrap();
 
        show_message(&line, disp);
        ()
@@ -232,6 +235,16 @@ fn main() -> ! {
                         },
         };
 
+
+       //COMPARE temperature-display_4jst REGARDING CALCULATION HERE
+       //  REALLY DO BETTER APROX.
+       // very crude linear aproximation mv to degrees C using 
+       // based on 
+       // t = a + v/b , v in mV, b inverse slope
+       let a = 72i64;    //  72 deg
+       let b = -34i64;   //  -34 mv/degree   
+       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
+
        loop {
           delay.delay_ms(READ_INTERVAL);
           //hprintln!("read_and_display").unwrap();
@@ -272,8 +285,32 @@ fn main() -> ! {
               block!(adc_d.read(channel::SingleA3)).unwrap_or(-40) as i64 / SCALE,
           ];
 
-          // SEE temperature-display_4jst REGARDING CALCULATION HERE
+          // this is ugly
+          let mut mv:[i64; 16]= [-100; 16];
+          for i in 0..4  {mv[   i] = values_a[i]};
+          for i in 0..4  {mv[ 4+i] = values_b[i]};
+          for i in 0..4  {mv[ 8+i] = values_c[i]};
+          for i in 0..4  {mv[12+i]=  values_d[i]};
+
+          //If the mv value is over 3000 (temperature < about -19.0 C ) then the thermistor is probably missing.
           
-          show_display(values_a, values_b, values_c, values_d, &mut display);
+          //hprintln!(" mv{:?} = values_a mv ", values_a).unwrap();
+          hprintln!(" mv{:?} =      mv     ", mv).unwrap();
+
+          //show_display(mv, &mut display);
+
+ //         for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
+ //         //hprintln!(" mv {:?}", mv).unwrap();
+
+          // t in tenths of a degrees C, so it is an int  but t[0]/10, t[0].abs() %10 give a degree with one decimal.
+          let mut t:[i64; 16] = [-100; 16] ;
+
+          //for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) }; // loses the decimal rounding division
+          for i in 0..t.len() { t[i] =  10 * a  + (10 * mv[i]) / b };
+ 
+          hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+
+          show_display(t, &mut display);
+
        }
 }

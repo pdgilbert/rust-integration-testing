@@ -48,7 +48,7 @@ use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
 //use embedded_io;
 //use embedded_io::{Read, Write, WriteRead};
 
-use xca9548a::{Error as xca9548aError, TargetAddr, Xca9548a, I2cSlave};   //Error as xca9548aError, 
+use xca9548a::{Error as xca9548aError, SlaveAddr, Xca9548a, I2cSlave};   //Error as xca9548aError, 
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -240,7 +240,7 @@ fn main() -> ! {
     let slave_address = 0b010_0000; // example slave address
     let write_data = [0b0101_0101, 0b1010_1010]; // some data to be sent
 
-    let mut switch1 = Xca9548a::new(i2c2, TargetAddr::default());
+    let mut switch1 = Xca9548a::new(i2c2, SlaveAddr::default());
 
     // Enable channel 0
     switch1.select_channels(0b0000_0001).unwrap();

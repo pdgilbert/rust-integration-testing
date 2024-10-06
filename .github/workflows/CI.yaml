@@ -398,6 +398,9 @@ jobs:
       - name: Example temperature-display_4jst
         run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature-display_4jst
 
+      - name: Example temperature-display_no-rtic
+        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example temperature-display_no-rtic
+
 #################################################################################################
 
 #################################################################################################
@@ -828,7 +831,7 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [iaq_ens160aht21_display, temperature-display_4jst,
+        eg:  [iaq_ens160aht21_display, temperature-display_4jst, temperature-display_no-rtic,
              ]
 
         brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
