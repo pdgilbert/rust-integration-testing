@@ -122,8 +122,8 @@ htu21df-sensor     = "0.1.4"
 #htu21df-sensor     = { git = "https://gitlab.com/phgsng/htu21df-sensor" }
 #xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "d0debd2" }
 #xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
-#xca9548a         = ">=1.0.0"
-xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
+xca9548a         = ">=1.0.0"
+#xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
 ens160           = { git = "https://github.com/teamplayer3/ens160", default-features = false }
 #ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
 
@@ -613,6 +613,10 @@ path = "examples/misc-i2c-drivers/ina219-display.rs"
 name = "xca9548a"
 path = "examples/misc-i2c-drivers/xca9548a.rs"
 
+[[example]]
+name = "xca9548a_hdc2080"
+path = "examples/misc-i2c-drivers/xca9548a_hdc2080.rs"
+
 
 # examples/projects
 
@@ -635,3 +639,11 @@ path = "examples/projects/temperature-display_4jst.rs"
 [[example]]
 name = "iaq_ens160aht21_display"
 path = "examples/projects/iaq_ens160aht21_display.rs"
+
+[[example]]
+name = "lora_show_ping"
+path = "examples/projects/lora_show_ping.rs"
+
+[[example]]
+name = "lora_show_ping_v1"
+path = "examples/projects/lora_show_ping_v1.rs"

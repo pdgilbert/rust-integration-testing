@@ -80,6 +80,8 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use rtic::app;
+use rtic_monotonics::systick_monotonic;
+systick_monotonic!(Mono, 1000); 
 
 #[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
 #[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
@@ -95,15 +97,16 @@ use rtic::app;
 
 mod app {
 
+    use rtic;
+    use crate::Mono;
+    use rtic_monotonics::systick::prelude::*;
+
     // Note that hprintln is for debugging with usb probe and semihosting. 
     // It needs semihosting, which CAUSES BATTERY OPERATION TO STALL.
     //use cortex_m_semihosting::{debug, hprintln};
     //use cortex_m_semihosting::{hprintln};
     
     use core::fmt::Write;
-
-    use rtic;
-    use rtic_monotonics::systick::Systick;
 
     // secs() and millis() methods from https://docs.rs/fugit/latest/fugit/trait.ExtU32.html#tymethod.secs
 
@@ -466,6 +469,8 @@ use core::borrow::BorrowMut;  // bring trait is in scope
         //rprintln!("temp-humidity-display example");
         //hprintln!("temp-humidity-display example").unwrap();
 
+        Mono::start(cx.core.SYST, MONOCLOCK);
+
         //  sensors use this delay (not systick)
         let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
 
@@ -547,9 +552,6 @@ use core::borrow::BorrowMut;  // bring trait is in scope
         read_and_display::spawn().unwrap();
         //hprintln!("init done").unwrap();
 
-        let mono_token = rtic_monotonics::create_systick_token!();
-        Systick::start(cx.core.SYST, MONOCLOCK, mono_token);
-
         return(Shared { led, },   Local {display, ina, sensor });
     }
 
@@ -559,7 +561,8 @@ use core::borrow::BorrowMut;  // bring trait is in scope
        let sensor = cx.local.sensor;
 
        loop {
-          Systick::delay(READ_INTERVAL.secs()).await;
+          Mono.delay_ms(READ_INTERVAL * 1000);  
+          //Systick::delay(READ_INTERVAL.secs()).await;
           blink::spawn(BLINK_DURATION).ok();
           //hprintln!("read_and_display").unwrap();
           
@@ -577,7 +580,8 @@ use core::borrow::BorrowMut;  // bring trait is in scope
    #[task(shared = [led] )]
     async fn blink(_cx: blink::Context, duration: u32) {
         crate::app::led_on::spawn().unwrap();
-        Systick::delay(duration.millis()).await;
+        Mono.delay_ms(duration); 
+        //Systick::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();
     }
 

@@ -37,18 +37,21 @@
 #![no_std]
 #![no_main]
 
-use aht10::{AHT10};  //, Humidity, Temperature, Error as aht10Error};
+use hdc20xx::{Hdc20xx, SlaveAddr as HdcSlaveAddr, mode::OneShot};
+//use aht10::{AHT10, Humidity, Temperature, Error as aht10Error}; 
 
 //use embedded_hal::i2c::Operation::{Read, Write};   // WriteRead, , Write
+use core::fmt::Write;
 //use embedded_hal::prelude::_embedded_hal_blocking_i2c_Write;  // need trait for switch.write
-use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Read;
-use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
-use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
+//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Read;
+//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
+//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
 
 //use embedded_io;
 //use embedded_io::{Read, Write, WriteRead};
 
-use xca9548a::{Error as xca9548aError, SlaveAddr, Xca9548a, I2cSlave};   //Error as xca9548aError, 
+use xca9548a::{Error::I2C, Error as XcaError, SlaveAddr as XcaSlaveAddr, Xca9548a, I2cSlave}; 
+//use crate::XcaError::{I2C};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -58,7 +61,6 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use core::fmt::Write;
 
 // Need to run with debug console if printing is uncommented. 
 // Running standalone stalls waiting to print.
@@ -111,8 +113,7 @@ type  ScreenType = [heapless::String<DISPLAY_COLUMNS>; DISPLAY_LINES];
 ///////////////////////////////////////////////////////////////
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c2Type, DelayNs};
-
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, DelayNs, I2c, I2C1};
 use rust_integration_testing_of_examples::alt_delay::AltDelay; //cortex_m::asm::delay with traits
 
 
@@ -123,8 +124,6 @@ use stm32h7xx_hal::{
    i2c::{Error},
 }; 
 
-
-type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2c2Type>, I2c2Type>, AltDelay>;
 
 
 ///////////////////////////////////////////////////////////////
@@ -217,7 +216,7 @@ fn main() -> ! {
     led.blink(2000_u16, &mut delay1); // Blink LED to indicate setup finished.
 
     /////////////////////   ssd
-    let interface = I2CDisplayInterface::new(i2c1);
+    let interface = I2CDisplayInterface::new(i2c2);
 
     //common display sizes are 128x64 and 128x32
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, ROTATION)
@@ -236,16 +235,15 @@ fn main() -> ! {
     let mut screen: ScreenType = [R_VAL; DISPLAY_LINES];
 
     
-    /////////////////////  xca   multiple devices on i2c2 bus
+    /////////////////////  xca   multiple devices on i2c bus
     let slave_address = 0b010_0000; // example slave address
     let write_data = [0b0101_0101, 0b1010_1010]; // some data to be sent
 
-    let mut switch1 = Xca9548a::new(i2c2, SlaveAddr::default());
+    let mut switch1 = Xca9548a::new(i2c1, XcaSlaveAddr::default());
 
     // Enable channel 0
     switch1.select_channels(0b0000_0001).unwrap();
 
-use embedded_hal::i2c::I2c;
     // write to device connected to channel 0 using the I2C switch
     if switch1.write(slave_address, &write_data).is_err() {
         //hprintln!("Error write channel 0!").unwrap();
@@ -269,8 +267,22 @@ use embedded_hal::i2c::I2c;
 
     /////////////////////  AHT10s on xca    // Start the sensors.
     
-    const SENSITER: Option::<SensType> = None;      //const gives this `static lifetime
-    let mut sensors: [Option<SensType>; 16] = [SENSITER; 16];
+use embedded_hal::i2c::{I2c, ErrorType};
+
+//type SensType<'a> =AHT10<I2cSlave<'a,  Xca9548a<I2c2Type>, I2c2Type>, AltDelay>;
+
+//type SensType<'a> = Hdc20xx<I2cSlave<'a, Xca9548a<I2c<I2C1, Error = XcaError<ErrorType>>,  // I2C: ehal::I2c<Error = E>,
+//                                         Error = ErrorType>, OneShot>;                     //  E: ehal::Error,
+
+//    type SensType<'a> = Hdc20xx<I2cSlave<'a, Xca9548a<I2c<I2C1, Error = XcaError<ErrorType>>>, I2c<I2C1, Error = XcaError<ErrorType>>>, OneShot>;
+//    type SensType<'a> = Hdc20xx<I2cSlave<'a, 
+//                                         Xca9548a<I2c<I2C1, Error = XcaError<ErrorType>>>, I2C1> ,
+//                                OneShot>;
+
+//    const SENSITER: Option::<SensType> = None;      //const gives this `static lifetime
+//    let mut sensors: [Option<SensType>; 16] = [SENSITER; 16];
+
+//    let mut sensors: [SensType; 16];
 
     // Split the device and pass the virtual I2C devices to AHT10 driver
     let switch1parts = switch1.split();
@@ -280,28 +292,34 @@ use embedded_hal::i2c::I2c;
                 //  switch2parts.i2c0, switch2parts.i2c1, switch2parts.i2c2, switch2parts.i2c3,
                 //  switch2parts.i2c4, switch2parts.i2c5, switch2parts.i2c6, switch2parts.i2c7];
 
-    let mut i = 0;  // not very elegant
-    for  prt in parts {
-       //hprintln!("i  {}", i).unwrap();
-       let z = AHT10::new(prt, AltDelay{});
-       screen[0].clear();
-       match z {
-           Ok(mut v) => {v.reset().expect("sensor01 reset failed");  //should handle this 
-                         sensors[i] = Some(v);
-                         //hprintln!("sensor J{} in use", i).unwrap();
-                         write!(screen[0], "J{} in use", i).unwrap();
-                       },
-           Err(_e)   => {//hprintln!("J{} unused", i).unwrap();
-                         write!(screen[0], "J{} unused", i).unwrap();
-                        },
-       }
-       //hprintln!("screen {:?}", screen).unwrap();
-       show_screen(&screen, &mut display);
-       delay1.delay_ms(500);
-       
-       i += 1;
-       //hprintln!("i+1 {}", i).unwrap();
-    };
+     let mut  sensors1 = Hdc20xx::new(parts[0], HdcSlaveAddr::default());
+     let mut  sensors2 = Hdc20xx::new(parts[1], HdcSlaveAddr::default());
+
+//    let mut i = 0;  // not very elegant
+//    for  prt in parts {
+//       sensors[i] = Hdc20xx::new(prt, HdcSlaveAddr::default());
+//       //hprintln!("i  {}", i).unwrap();
+//    let mut z = Hdc20xx::new(prt, HdcSlaveAddr::default());
+//       //let z = AHT10::new(prt, AltDelay{});
+//
+//       screen[0].clear();
+//       match z {
+//           Ok(mut v) => {v.reset().expect("sensor01 reset failed");  //should handle this 
+//                         sensors[i] = Some(v);
+//                         //hprintln!("sensor J{} in use", i).unwrap();
+//                         write!(screen[0], "J{} in use", i).unwrap();
+//                       },
+//           Err(_e)   => {//hprintln!("J{} unused", i).unwrap();
+//                         write!(screen[0], "J{} unused", i).unwrap();
+//                        },
+//       }
+//       //hprintln!("screen {:?}", screen).unwrap();
+//       show_screen(&screen, &mut display);
+//       delay1.delay_ms(500);
+//       
+//       i += 1;
+//       //hprintln!("i+1 {}", i).unwrap();
+//    };
 
     screen[0].clear();
     write!(screen[0], "    °C %RH").unwrap();
@@ -309,27 +327,30 @@ use embedded_hal::i2c::I2c;
     //hprintln!("entering loop").unwrap();
     loop {   // Read humidity and temperature.
       let mut ln = 1;  // screen line to write. rolls if number of sensors exceed DISPLAY_LINES
-      for  i in 0..7 {
-          match   &mut sensors[i] {
-               None       => {},  //skip
-   
-               Some(sens) => {screen[ln].clear();
-                              match sens.read() {
+//      for  i in 0..7 {
+//          match   &mut sensors[i] {
+//               None       => {},  //skip
+//   
+//               Some(sens) => {screen[ln].clear();
+//                              match sens.read() {
+                              match sensors1.read() {
                                    Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
-                                                 write!(screen[ln], "J{} {:.1} {:.0}", i, t.celsius(), h.rh()).unwrap();
+//                                                 write!(screen[ln], "J{} {:.1} {:.0}", i, t.celsius(), h.rh()).unwrap();
+                                                 write!(screen[ln], "J{} {:.1} {:.0}", 0, t.celsius(), h.rh()).unwrap();
                                                 },
                                    Err(e)    => {sens.reset().unwrap();
                                                  //hprintln!("read error {:?}", e).unwrap();
-                                                 write!(screen[ln], "J{} read error. Reset{:?}", i, e).unwrap();
+//                                                 write!(screen[ln], "J{} read error. Reset{:?}", i, e).unwrap();
+                                                 write!(screen[ln], "J{} read error. Reset{:?}", 0, e).unwrap();
                                                 }
                                    };
                               show_screen(&screen, &mut display);
                               ln += 1;
                               ln = ln % DISPLAY_LINES;
                               delay1.delay_ms(500);
-                              },
-           };          
-       };
+//                              },
+//           };          
+//       };
        delay1.delay_ms(5000);
     }
 }
