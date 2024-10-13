@@ -1,3 +1,8 @@
+//!  To Do:
+//!   - get working when dispaly is not present
+//!   - delay between first 8 and second 8 display
+//!  
+
 //!  Transmit a simple message with LoRa using crate radio_sx127x (on SPI).
 //!  Display on ssd if it is detected on I2C2.
 //!  Status: WIP, adapted from lora_spi_send. Intend to incorporate into sensor projects.
@@ -100,6 +105,8 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED, MONOCLOCK, I
 
 use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
 //use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
+use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM5, };
+use rust_integration_testing_of_examples::lora::Base;
 
 
 //    /////////////////////   constants and types
@@ -139,6 +146,44 @@ type  DisplayType = Ssd1306<I2CInterface<I2c2Type>, DisplaySize, BufferedGraphic
 
 //   //////////////////////////////////////////////////////////////////////
 
+type LoraType = Sx127x<Base<Spi<SPI1>, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, halDelay<TIM5, 1000000>>>;
+
+    fn send(
+        lora: &mut LoraType,
+        message: &[u8], 
+        disp: &mut Option<DisplayType>,
+        ) -> () {
+        
+        match lora.start_transmit(message) {
+            Ok(_b)   => {//show_message("start_transmit ok", disp);
+                         //hprintln!("lora.start ok").unwrap()
+                        } 
+            Err(_e)  => {show_message("start_transmit error", disp);
+                         //hprintln!("Error in lora.start_transmit()").unwrap()
+                        }
+        };
+        //hprintln!("... done").unwrap();
+
+        lora.delay_ms(10); // treated as seconds. Without some delay next returns bad. (interrupt may also be an option)
+
+        match lora.check_transmit() {
+            Ok(b)   => {if b {show_message("TX good", disp);
+                              //hprintln!("TX good").unwrap(); 
+                             }
+                        else {show_message("TX bad", disp);
+                              //hprintln!("TX bad").unwrap()
+                             }
+                       }
+            Err(_e) => {show_message("check_transmit Fail", disp);
+                        //hprintln!("check_transmit() Error. Should return True or False.").unwrap()
+                       }
+        };
+        //hprintln!("check_transmit done").unwrap();
+       ()
+    }
+
+//   //////////////////////////////////////////////////////////////////////
+
 #[entry]
 fn main() -> ! {
     let dp =Peripherals::take().unwrap();
@@ -158,17 +203,11 @@ fn main() -> ! {
     //hprintln!("match z.init()  ...").unwrap();
 
 // stalls here if there is no display but works when display is present
-//    let mut disp: Option<DisplayType> = match z.init() {
-//            Ok(_d)  => {Some(z.into_buffered_graphics_mode())} 
-//            Err(_e) => {None}
-//    };
-
-    let mut zz = z.init();
-   // hprintln!("z.init() done  ...").unwrap();
-    let mut disp: Option<DisplayType> = match zz {
-            Ok(d)  => {Some(z.into_buffered_graphics_mode())} 
+    let mut disp: Option<DisplayType> = match z.init() {
+            Ok(_d)  => {Some(z.into_buffered_graphics_mode())} 
             Err(_e) => {None}
     };
+
 
     //hprintln!("disp set  ...").unwrap();
  
@@ -198,8 +237,7 @@ fn main() -> ! {
 
     //delay is now available in lora BUT treats arg as seconds not ms!!
     lora.delay_ms(1);  // this is being treated as seconds
-    
-   
+       
     // print out configuration (for debugging)
 //    hprintln!("frequency          {:?}", lora.get_frequency());
 
@@ -219,7 +257,7 @@ fn main() -> ! {
 //    hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
 
 
-    /////////////////////   transmit
+    /////////////////////   transmit loop
 
     let message = b"Hello, LoRa!";
 
@@ -231,31 +269,7 @@ fn main() -> ! {
     loop {
 
         //hprintln!("start_transmit ...").unwrap();
-        match lora.start_transmit(message) {
-            Ok(_b)   => {//show_message("start_transmit ok", &mut disp);
-                         //hprintln!("lora.start ok").unwrap()
-                        } 
-            Err(_e)  => {show_message("start_transmit error", &mut disp);
-                         //hprintln!("Error in lora.start_transmit()").unwrap()
-                        }
-        };
-        //hprintln!("... done").unwrap();
-
-        lora.delay_ms(10); // treated as seconds. Without some delay next returns bad. (interrupt may also be an option)
-
-        match lora.check_transmit() {
-            Ok(b)   => {if b {show_message("TX good", &mut disp);
-                              //hprintln!("TX good").unwrap(); 
-                             }
-                        else {show_message("TX bad", &mut disp);
-                              //hprintln!("TX bad").unwrap()
-                             }
-                       }
-            Err(_e) => {show_message("check_transmit Fail", &mut disp);
-                        //hprintln!("check_transmit() Error. Should return True or False.").unwrap()
-                       }
-        };
-        //hprintln!("check_transmit done").unwrap();
+        send(&mut lora, message, &mut disp);
 
         lora.delay_ms(READ_INTERVAL);  // treated as seconds
         //hprintln!("re-loop").unwrap();

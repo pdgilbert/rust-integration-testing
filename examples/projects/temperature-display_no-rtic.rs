@@ -1,7 +1,7 @@
 //! Measure temperature on sixteen 10k thermistor sensors (NTC 3950 10k thermistors probes) 
 //! using four 4-channel adc's sharing I2C1 and crate ads1x1x. Display using SSD1306 on I2C2.
 //! See additional documentation in temperature-display_4jst.
-//! Eventually, transmit with LoRa.
+//! Transmit with LoRa.
 
 //! Compare 
 //!    temperature-display_4jst which uses rtic but reads only 4 ADCs and does not need share the bus. (It has more documentation.)
@@ -11,9 +11,12 @@
 //!    htu2xd_rtic which has sensor on shared bus and 'static,  but the htu2xd crate is not using e-h 1.0.
 //!    ccs811-co2-voc  uses  RefCell  for sensor and rtic  AND SEE NOTES  Jan 2024,  but the ccs811 crate is not using e-h 1.0.
 //!    temp-humidity-display
+//!    lora_show_ping for debugging lora transmition code.
 
+//!  To Do:
+//!    - improve calculation of sensor mv to degree C.
+//!    - compare lora_show_ping   and get working when dispaly is not present
 
-//!  WORK IN PROGRESS.
 
 //! https://www.ametherm.com/thermistor/ntc-thermistor-beta
 
@@ -31,21 +34,29 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-    //use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, TargetAddr};
-    use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
-
     //use cortex_m_semihosting::{debug, hprintln};
-    use cortex_m_semihosting::{hprintln};
-    //use cortex_m::asm;
+    //use cortex_m_semihosting::{hprintln};
+    use cortex_m::asm; // for delay
 
     use core::fmt::Write;
 
+    ///////////////////// 
+
+    const ID:  [u8;3] = *b"T01";  //dereferenced byte string literal   // module id to indicate source of transmition
+
+    const READ_INTERVAL:  u32 = 5;  // used as seconds  but 
+    const BLINK_DURATION: u32 = 1;  // used as seconds  but  ms would be better
+    const S_FMT:       usize  = 12;
+    const MESSAGE_LEN: usize  = 16 * S_FMT;  
+
+
+    /////////////////////   adc
+    //use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, TargetAddr};
+    use ads1x1x::{Ads1x1x, channel, FullScaleRange, TargetAddr};
+
 
     /////////////////////   ssd
-    // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html
-    // regarding font sizes
-
-    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+    // See https://docs.rs/embedded-graphics/0.7.1/embedded_graphics/mono_font/index.html re fonts
 
     use embedded_graphics::{
         mono_font::{iso_8859_1::FONT_8X13 as FONT, MonoTextStyleBuilder}, 
@@ -54,22 +65,35 @@ use cortex_m_rt::entry;
         text::{Baseline, Text},
     };
 
-    const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x64 = DisplaySize128x64;
+    type  DisplaySize = ssd1306::prelude::DisplaySize128x64;
+    type  DisplayType = Ssd1306<I2CInterface<I2c2Type>, DisplaySize, BufferedGraphicsMode<DisplaySize>>;
+
+    //common display sizes are 128x64 and 128x32
+    const DISPLAYSIZE: DisplaySize = DisplaySize128x64;
 
     //const DISPLAY_LINES: usize = 3; 
     //const VPIX:i32 = 12; // vertical pixels for a line, including space
 
+    use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
 
-    /////////////////////  
 
+    /////////////////////  lora
 
-    //use rust_integration_testing_of_examples::setup::{Peripherals, MONOCLOCK, LED, LedType, I2c1Type, I2c2Type};
-    use rust_integration_testing_of_examples::setup::{Peripherals, LED};
-    use rust_integration_testing_of_examples::setup;
+    //use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+    use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 
-    use embedded_hal::delay::DelayNs;
+    use radio_sx127x::{
+        Transmit,  // trait needs to be in scope to find  methods start_transmit and check_transmit.
+        //Error as sx127xError, // Error name conflict with hals
+        prelude::*, // prelude has Sx127x,
+        //device::regs::Register, // for config examination on debugging
+        // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,
+    
+    };
 
-    use nb::block;
+    use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM5, };
+    use rust_integration_testing_of_examples::lora::Base;
+
 
     /////////////////////  bus sharing
 
@@ -77,11 +101,17 @@ use cortex_m_rt::entry;
     use embedded_hal_bus::i2c;  // has RefCellDevice;
 
 
-    ///////////////////// 
 
-    const READ_INTERVAL:  u32 = 5000;  // used as milliseconds
-    const BLINK_DURATION: u32 = 20;    // used as milliseconds
+    /////////////////////  general
+    //use rust_integration_testing_of_examples::setup::{Peripherals, MONOCLOCK, LED, LedType, I2c1Type, I2c2Type};
+    use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c2Type};
+    use rust_integration_testing_of_examples::setup;
 
+    use embedded_hal::delay::DelayNs;
+
+    use nb::block;
+
+   ///////////////////// 
     
     // The units of measurement are  [32767..-32768] for 16-bit devices (and  [2047..-2048] for 12-bit devices)
     // but only half the range is used for single-ended measurements. (Precision could be improved by using
@@ -103,13 +133,13 @@ use cortex_m_rt::entry;
 
 //   //////////////////////////////////////////////////////////////////
 
-    fn show_display<S>(
+    fn show_display(
         t: [i64; 16],
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        disp: &mut Option<DisplayType>,
     ) -> ()
-    where
-        S: DisplaySize,
     {    
+     if disp.is_some() { // show_message does nothing if disp is None. 
        let mut line: heapless::String<128> = heapless::String::new(); // \n to separate lines
            
        // Consider handling error in next. If line is too short then attempt to write it crashes
@@ -132,25 +162,90 @@ use cortex_m_rt::entry;
 
        show_message(&line, disp);
        ()
+     };
     }
 
-    fn show_message<S>(
-        text: &str,   //text_style: MonoTextStyle<BinaryColor>,
-        disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-    ) -> ()
-    where
-        S: ssd1306::size::DisplaySize,  //trait
-    {
-       
-       // workaround. build here because text_style cannot be shared
-       let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
-    
-       disp.clear_buffer();
-       Text::with_baseline( &text, Point::new(0,0), text_style, Baseline::Top)
-               .draw(&mut *disp)
-               .unwrap();
 
-       disp.flush().unwrap();
+
+    fn show_message(
+        text: &str,   //text_style: MonoTextStyle<BinaryColor>,
+        //disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
+        disp: &mut Option<DisplayType>,
+    ) -> ()
+    {
+       if disp.is_some() { // show_message does nothing if disp is None. 
+           //let mut disp = *disp;   
+           // workaround. build here because text_style cannot be shared
+           let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
+        
+           disp.as_mut().expect("REASON").clear_buffer();
+           Text::with_baseline( &text, Point::new(0, 0), text_style, Baseline::Top)
+                   .draw(disp.as_mut().expect("REASON"))
+                   .unwrap();
+
+           disp.as_mut().expect("REASON").flush().unwrap();
+       };
+       ()
+    }
+
+    fn form_temp(
+            t: [i64; 16],
+           ) -> heapless::Vec<u8, MESSAGE_LEN> {
+
+        let mut line: heapless::Vec<u8, MESSAGE_LEN> = heapless::Vec::new(); 
+        let mut temp: heapless::Vec<u8, S_FMT> = heapless::Vec::new(); 
+
+        // Consider handling error in next. If line is too short then attempt to write it crashes
+        
+        for i in 0..ID.len() { line.push(ID[i]).unwrap()};
+        line.push(b'<').unwrap();
+        
+        // t is long enough for 16 sensors - J1 to J16 on a module ID
+        for i in 0..t.len() {
+                temp.clear();
+                //hprintln!(" J{}:{:3}.{:1}",      i, t[i]/10, t[i].abs() %10).unwrap();
+                write!(temp,  " J{}:{:3}.{:1}",  i, t[i]/10, t[i].abs() %10).unwrap(); // must not exceed S_FMT
+                //hprintln!("temp {:?}  temp.len {}", temp, temp.len()).unwrap();
+                for j in 0..temp.len() {line.push(temp[j]).unwrap()};
+        };
+
+        line.push(b'>').unwrap();
+         
+        line
+     }
+
+
+    type LoraType = Sx127x<Base<Spi<SPI1>, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, halDelay<TIM5, 1000000>>>;
+
+    fn send(
+            lora: &mut LoraType,
+            m:  heapless::Vec<u8, MESSAGE_LEN>,
+            disp: &mut Option<DisplayType>,
+           ) -> () {
+        
+        match lora.start_transmit(&m) {
+            Ok(_b)   => {//show_message("start_transmit ok", disp);
+                         //hprintln!("lora.start ok").unwrap()
+                        } 
+            Err(_e)  => {show_message("start_transmit error", disp);
+                         //hprintln!("Error in lora.start_transmit()").unwrap()
+                        }
+        };
+
+        lora.delay_ms(10); // treated as seconds. Without some delay next returns bad. (interrupt may also be an option)
+
+        match lora.check_transmit() {
+            Ok(b)   => {if b {show_message("TX good", disp);
+                              //hprintln!("TX good").unwrap(); 
+                             }
+                        else {show_message("TX bad", disp);
+                              //hprintln!("TX bad").unwrap()
+                             }
+                       }
+            Err(_e) => {show_message("check_transmit Fail", disp);
+                        //hprintln!("check_transmit() Error. Should return True or False.").unwrap()
+                       }
+        };
        ()
     }
 
@@ -162,24 +257,33 @@ fn main() -> ! {
         //hprintln!("temperature-display_no-rtic example").unwrap();
 
         let dp = Peripherals::take().unwrap();
-        let (i2c1, i2c2, mut led, mut delay) = setup::i2c1_i2c2_led_delay_from_dp(dp);
-        //hprintln!("setup done.").unwrap();
-
-        led.on(); 
-        delay.delay_ms(1000u32);
+        let (i2c1, i2c2, mut led, spi, spiext, mut delay) = setup::i2c1_i2c2_led_spi_spiext_delay_from_dp(dp);
+        led.off();
+        delay.delay_ms(2000); // treated as ms
+        
+        led.on();
+        delay.delay_ms(BLINK_DURATION); // treated as ms
         led.off();
 
+        /////////////////////   ssd
+
         let interface = I2CDisplayInterface::new(i2c2); //default address 0x3C
-        let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
-            .into_buffered_graphics_mode();
 
-        display.init().unwrap();
+        let mut z = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0);
 
-        show_message(" temp.._no-rtic", &mut display);
-        delay.delay_ms(2000u32);
+        let mut disp: Option<DisplayType> = match z.init() {
+            Ok(_d)  => {Some(z.into_buffered_graphics_mode())} 
+            Err(_e) => {None}
+        };
+
+        show_message(" temp.._no-rtic", &mut disp);
+
+        delay.delay_ms(2000); // treated as ms
         //hprintln!("display initialized.").unwrap();
 
          
+        /////////////////////   adc
+
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
         // Connect ADDR pin to GND for 0x48(1001000) , to VCC for 0x49. to SDA for 0x4A, and to SCL for 0x4B.
 
@@ -191,7 +295,7 @@ fn main() -> ! {
         let mut adc_d = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Scl);
 
         //hprintln!("adc initialized.").unwrap();
-        show_message("adc initialized.", &mut display);
+        show_message("adc initialized.", &mut disp);
 
         // set FullScaleRange to measure expected max voltage.
         // This is very small if measuring diff across low value shunt resistors for current
@@ -201,7 +305,7 @@ fn main() -> ! {
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         match adc_a.set_full_scale_range(FullScaleRange::Within4_096V) {  
             Ok(())  =>  (),
-            Err(_e)  =>  {show_message("range error.", &mut display);
+            Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
                          //hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                          //panic!("panic")
@@ -210,7 +314,7 @@ fn main() -> ! {
 
         match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(())  =>  (),
-            Err(_e)  =>  {show_message("range error.", &mut display);
+            Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
                          //hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                          //panic!("panic")
@@ -219,7 +323,7 @@ fn main() -> ! {
 
         match adc_c.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(())  =>  (),
-            Err(_e)  =>  {show_message("range error.", &mut display);
+            Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
                          //hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                          //panic!("panic")
@@ -228,13 +332,36 @@ fn main() -> ! {
 
         match adc_d.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(())  =>  (),
-            Err(_e)  =>  {show_message("range error.", &mut display);
+            Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
                          //hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
                          //panic!("panic")
                         },
         };
 
+        /////////////////////   lora
+
+        // cs is named nss on many radio_sx127x module boards
+        let z = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, 
+                       &CONFIG_RADIO ); 
+
+        let mut lora =  match z {
+            Ok(lr)  => {show_message("lora setup ok", &mut disp);
+                        //hprintln!("lora setup completed.").unwrap();
+                        lr
+                       } 
+            Err(e)  => {show_message("lora setup Error", &mut disp);
+                        //hprintln!("Error in lora setup. {:?}", e).unwrap();
+                        asm::bkpt();
+                        panic!("{:?}", e) 
+                       }
+        };
+ 
+
+        //delay consumed by lora. It is available in lora BUT treats arg as seconds not ms!!
+        lora.delay_ms(1);  // arg is being treated as seconds
+
+        /////////////////////   loop
 
        //COMPARE temperature-display_4jst REGARDING CALCULATION HERE
        //  REALLY DO BETTER APROX.
@@ -245,13 +372,10 @@ fn main() -> ! {
        let b = -34i64;   //  -34 mv/degree   
        // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
 
-       loop {
-          delay.delay_ms(READ_INTERVAL);
-          //hprintln!("read_and_display").unwrap();
- 
+       loop { 
           // blink
           led.on(); 
-          delay.delay_ms(BLINK_DURATION);
+          lora.delay_ms(BLINK_DURATION);  // arg is being treated as seconds
           led.off();
           
           // note the range can be switched if needed, (and switched back) eg.
@@ -295,9 +419,9 @@ fn main() -> ! {
           //If the mv value is over 3000 (temperature < about -19.0 C ) then the thermistor is probably missing.
           
           //hprintln!(" mv{:?} = values_a mv ", values_a).unwrap();
-          hprintln!(" mv{:?} =      mv     ", mv).unwrap();
+          //hprintln!(" mv{:?} =      mv     ", mv).unwrap();
 
-          //show_display(mv, &mut display);
+          //show_display(mv, &mut disp);
 
  //         for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
  //         //hprintln!(" mv {:?}", mv).unwrap();
@@ -308,9 +432,16 @@ fn main() -> ! {
           //for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) }; // loses the decimal rounding division
           for i in 0..t.len() { t[i] =  10 * a  + (10 * mv[i]) / b };
  
-          hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+          //hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+          
+          let message = form_temp(t);
+          //hprintln!("message {:?}", message).unwrap();
 
-          show_display(t, &mut display);
+          show_display(t, &mut disp);
+          send(&mut lora,message, &mut disp);
+
+          //delay.delay_ms(READ_INTERVAL);// treated as ms
+          lora.delay_ms(READ_INTERVAL);  // treated as seconds
 
        }
 }
