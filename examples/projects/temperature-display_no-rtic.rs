@@ -16,7 +16,7 @@
 //!  To Do:
 //!    - improve calculation of sensor mv to degree C.
 //!    - compare lora_show_ping   and get working when dispaly is not present
-
+//!    - make ID specification an argument in build so code does not need change for each module.
 
 //! https://www.ametherm.com/thermistor/ntc-thermistor-beta
 
@@ -44,11 +44,14 @@ use cortex_m_rt::entry;
 
     const ID:  [u8;3] = *b"T01";  //dereferenced byte string literal   // module id to indicate source of transmition
 
-    const READ_INTERVAL:  u32 = 5;  // used as seconds  but 
+    const READ_INTERVAL:  u32 = 300;  // used as seconds  but 
     const BLINK_DURATION: u32 = 1;  // used as seconds  but  ms would be better
     const S_FMT:       usize  = 12;
     const MESSAGE_LEN: usize  = 16 * S_FMT;  
 
+    // Could do conversion from sensor module connection J# to sensor indicator code using something like
+    //   const Jcode = ['A0', 'A1', 'A2','A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF'];
+    // and  replace J# in write, but this is different for every module so easer to do in receiving program.
 
     /////////////////////   adc
     //use ads1x1x::{Ads1x1x, ic::Ads1115, ic::Resolution16Bit, channel, FullScaleRange, TargetAddr};
@@ -203,7 +206,7 @@ use cortex_m_rt::entry;
         // t is long enough for 16 sensors - J1 to J16 on a module ID
         for i in 0..t.len() {
                 temp.clear();
-                //hprintln!(" J{}:{:3}.{:1}",      i, t[i]/10, t[i].abs() %10).unwrap();
+                //hprintln!(" J{}:{:3}.{:1}",      i+1, t[i]/10, t[i].abs() %10).unwrap(); // t[0] is for J1
                 write!(temp,  " J{}:{:3}.{:1}",  i, t[i]/10, t[i].abs() %10).unwrap(); // must not exceed S_FMT
                 //hprintln!("temp {:?}  temp.len {}", temp, temp.len()).unwrap();
                 for j in 0..temp.len() {line.push(temp[j]).unwrap()};
