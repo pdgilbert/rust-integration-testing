@@ -121,8 +121,8 @@ ina219           = { git = "https://github.com/tdittr/ina219", branch = "add-con
 htu21df-sensor     = "0.1.4"
 #htu21df-sensor     = { git = "https://gitlab.com/phgsng/htu21df-sensor" }
 #xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "d0debd2" }
-#xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
-xca9548a         = ">=1.0.0"
+xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
+#xca9548a         = ">=1.0.0"
 #xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
 ens160           = { git = "https://github.com/teamplayer3/ens160", default-features = false }
 #ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
