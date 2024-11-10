@@ -34,6 +34,7 @@
 use aht10::{AHT10, Humidity, Temperature, Error as aht10Error}; 
 
 
+use embedded_hal::i2c::{Read, Write};   // WriteRead, , Write
 //use embedded_hal::i2c::Operation::{Read, Write};   // WriteRead, , Write
 //use core::fmt::Write;
 //use embedded_hal::prelude::_embedded_hal_blocking_i2c_Write;  // need trait for switch.write
@@ -45,7 +46,7 @@ use aht10::{AHT10, Humidity, Temperature, Error as aht10Error};
 //use embedded_hal::i2c::Operation::{Read, Write};
 //use embedded_hal_async::i2c::Operation::{Read, Write};
 
-use embedded_io::{Read, Write};
+//use embedded_io::{Read, Write};
 
 use embedded_hal_02::blocking::i2c::WriteRead;
 
