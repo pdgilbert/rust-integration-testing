@@ -42,7 +42,7 @@ use cortex_m_rt::entry;
 
     ///////////////////// 
 
-    const ID:  [u8;3] = *b"T01";  //dereferenced byte string literal   // module id to indicate source of transmition
+    const ID:  [u8;3] = *b"T02";  //dereferenced byte string literal   // module id to indicate source of transmition
 
     const READ_INTERVAL:  u32 = 300;  // used as seconds  but 
     const BLINK_DURATION: u32 = 1;  // used as seconds  but  ms would be better
@@ -207,7 +207,7 @@ use cortex_m_rt::entry;
         for i in 0..t.len() {
                 temp.clear();
                 //hprintln!(" J{}:{:3}.{:1}",      i+1, t[i]/10, t[i].abs() %10).unwrap(); // t[0] is for J1
-                write!(temp,  " J{}:{:3}.{:1}",  i, t[i]/10, t[i].abs() %10).unwrap(); // must not exceed S_FMT
+                write!(temp,  " J{}:{:3}.{:1}",  i+1, t[i]/10, t[i].abs() %10).unwrap(); // must not exceed S_FMT
                 //hprintln!("temp {:?}  temp.len {}", temp, temp.len()).unwrap();
                 for j in 0..temp.len() {line.push(temp[j]).unwrap()};
         };
