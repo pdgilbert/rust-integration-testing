@@ -3,7 +3,7 @@
 
 on:
   push:
-    branches: [ main, dev, eh-1, eh-1-dev ]
+    branches: [ main, dev  ]
   pull_request:
   schedule:
     - cron: 0 1 * * 1
@@ -691,10 +691,10 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [ads_ina_ssd,             
+        eg:  [aht20-semi,    aht20-em-semi,     sht30-em-semi,    
               aht10-display,           aht20-display,       
               ds18b20,                 hdc1080-display,
-              htu2xd-display,          
+              htu2xd-display,          ads_ina_ssd,      
               vl53lox-display,         ens160-co2-voc-iaq-display,
               ina219-display,         
               xca9548a,                one_wire_bus_find_devices,        onewire,
