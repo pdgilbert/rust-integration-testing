@@ -1,4 +1,6 @@
-//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!   NOT HARDWARE TESTED SUCCESFULLY SINCE EMBEDDED-HAL V1.0.0 CHANGES
+//!    FAILS STARTING SENSOR
+
 //! Continuously read temperature from AHT10 and display on SSD1306 OLED.
 //! The AHT10 does not work with other devices on the i2c bus 
 //! (see https://www.electroschematics.com/temperature-sensor) so this example
@@ -15,6 +17,8 @@
 #![no_std]
 #![no_main]
 
+//use cortex_m_semihosting_05::hprintln;
+
 use aht10::AHT10;
 //use aht10_async::AHT10;
 
@@ -28,7 +32,7 @@ use cortex_m_rt::entry;
 
 use core::fmt::Write;
 //use rtt_target::{rprintln, rtt_init_print};
-use cortex_m_semihosting::hprintln;
+
 
 use embedded_graphics::{
     mono_font::{ascii::FONT_5X8 as FONT, MonoTextStyleBuilder},
@@ -42,10 +46,11 @@ use rust_integration_testing_of_examples::setup;
 
 use rust_integration_testing_of_examples::setup::{Peripherals, CorePeripherals, LED};
 
+use embedded_hal::delay::DelayNs;  //trait for `delay_ms`
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
-    timer::SysTimerExt,
+    timer::{SysTimerExt},
 };
 
 #[cfg(feature = "stm32g4xx")]
@@ -65,16 +70,18 @@ use stm32h7xx_hal::{
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    //hprintln!("AHT10 example");
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
 
     let (i2c1, i2c2, mut led, mut delay, clocks) = setup::i2c1_i2c2_led_delay_clocks_from_dp(dp);
-    let delay2 = cp.SYST.delay(&clocks); // this DelayMs works with non-eh-1 sensor crate
+    let delay2 = cp.SYST.delay(&clocks); 
 
     // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re manager)
     
-    led.blink(2000_u16, &mut delay); // Blink LED to indicate setup finished.
+    led.blink(3000_u16, &mut delay); // Blink LED to indicate setup finished.
+    delay.delay_ms(2000_u32);  
+    //led.blink(3000_u16, &mut delay2); // Blink LED to indicate setup finished.
 
     let interface = I2CDisplayInterface::new(i2c1);
 
@@ -97,44 +104,52 @@ fn main() -> ! {
     //delay.delay(2000u32);    
 
     led.blink(500_u16, &mut delay); // Blink LED to indicate Ssd1306 initialized.
-    hprintln!("Text::with_baseline").unwrap();
+    //hprintln!("Text::with_baseline");
 
     // Start the sensor.
     // HARDWARE DOES NOT SEEM TO ALLOW SHARING THE BUS 
     // See https://www.electroschematics.com/temperature-sensor re default address 0x38  (vs possible alt 0x39)
     //   and "No  other devices on the I2C bus". So use i2c2 bus
+    //hprintln!("mut sensor");
     let mut sensor = AHT10::new(i2c2, delay2).expect("sensor failed");
-    hprintln!("mut sensor").unwrap();
+    //hprintln!("mut sensor done");
+    Text::with_baseline(   "aht10 initialized", Point::zero(), text_style, Baseline::Top )
+          .draw(&mut display).unwrap();
+    display.flush().unwrap();
 
-    //let z = sensor.reset();
-    //hprintln!("reset()  {:?}", z).unwrap();
+    let _z = sensor.reset();
+    //hprintln!("reset()  {:?}", z);
+    Text::with_baseline(   "aht10 reset", Point::zero(), text_style, Baseline::Top )
+          .draw(&mut display).unwrap();
+    display.flush().unwrap();
 
     loop {
         //rprintln!("loop i");
-        hprintln!("loop i").unwrap();
+        //hprintln!("loop i").unwrap();
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 
         // Read humidity and temperature.
         // let (h, t) = sensor.read().unwrap();
+        //hprintln!("sensor.read()").unwrap();
         let z = sensor.read();
         lines[0].clear();
         lines[1].clear();
-        hprintln!("match z").unwrap();
+        //hprintln!("match z").unwrap();
         // next recovers from sda disconnect/reconnect but not scl disconnect/reconnect
         match z {
-            Ok((h,t)) => {hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+            Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
                           write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
                           write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
                          },
-            Err(e)    => {hprintln!("Error {:?}", e).unwrap();
+            Err(e)    => {//hprintln!("Error {:?}", e).unwrap();
                           write!(lines[0], "sensor read error. Resetting.").unwrap();
                           write!(lines[1], "code {:?}", e).unwrap();
                           sensor.reset().unwrap();
                          }
         }
 
-        hprintln!(" matched").unwrap();
+        //hprintln!(" matched");
       
         display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {

@@ -14,6 +14,8 @@
 #![no_std]
 #![no_main]
 
+use cortex_m_semihosting_05::hprintln;
+
 use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
 
 #[cfg(debug_assertions)]
@@ -66,9 +68,7 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 #[entry]
 fn main() -> ! {
-    //rtt_init_print!();
-    //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    hprintln!("AHT20-em example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -77,7 +77,9 @@ fn main() -> ! {
     let mut delay2 = cp.SYST.delay(&clocks); 
 
     // Blink LED to indicate initializing.
-    led.blink(1000_u16, &mut delay);
+    led.blink(1000_u16, &mut delay); // Blink LED to indicate setup finished.
+    delay.delay_ms(2000_u32);  
+    //led.blink(3000_u16, &mut delay2); // and check delay2
 
     /////////////////////   ssd
     let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
@@ -93,25 +95,31 @@ fn main() -> ! {
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
     let mut lines: [heapless::String<32>; 2] = [heapless::String::new(), heapless::String::new()];
     
-    Text::with_baseline(   "aht20-display", Point::zero(), text_style, Baseline::Top )
+    Text::with_baseline(   "aht20-em-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
    
+    hprintln!("delay.delay_ms(2000)");
     delay.delay_ms(2000);    
 
     /////////////////////   aht
 
+    hprintln!("Start the sensor");
     // Start the sensor.
-    let mut aht  = Aht20::new(&mut i2c2, DEFAULT_I2C_ADDRESS, &mut delay).unwrap();
+    let mut aht  = Aht20::new(&mut i2c2, DEFAULT_I2C_ADDRESS, &mut delay).expect("sensor initialization failed.");
+    hprintln!("Start the sensor");
 
     loop {
-        //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        hprintln!("loop i");
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
+        
+        hprintln!("aht.measure()");
 
         // Read humidity and temperature.
         let th = aht.measure().unwrap();
+
+        hprintln!("lines[0].clear");
 
         lines[0].clear();
         lines[1].clear();

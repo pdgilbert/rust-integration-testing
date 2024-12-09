@@ -12,6 +12,8 @@
 #![no_std]
 #![no_main]
 
+use cortex_m_semihosting::hprintln;
+
 use aht20::{Aht20};
 
 #[cfg(debug_assertions)]
@@ -100,6 +102,7 @@ fn main() -> ! {
 
     /////////////////////   aht
 
+    hprintln!("Start the sensor").unwrap();
     // Start the sensor.
     let mut aht = Aht20::new(&mut i2c2, &mut delay);
     //let mut aht = Aht20::new(&mut aht_rcd, &mut delay).unwrap();  //.expect("aht device failed")
@@ -111,10 +114,12 @@ fn main() -> ! {
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 
+        hprintln!("aht.read()").unwrap();
         // Read humidity and temperature.
         let (h, t) = aht.read().unwrap();
         //let (h, t) = aht.end_read().unwrap();
 
+        hprintln!("lines[0].clear()").unwrap();
         lines[0].clear();
         lines[1].clear();
         write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
