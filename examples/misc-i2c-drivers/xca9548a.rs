@@ -37,7 +37,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 // Need to run with debug console if hprintln is uncommented, otherwise stalls waiting to print.
-use cortex_m_semihosting::hprintln;
+use cortex_m_semihosting_05::hprintln;
 
 use cortex_m_rt::entry;
 

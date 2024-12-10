@@ -319,8 +319,11 @@ jobs:
       - name: Example aht20-em-semi
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-em-semi
 
-      - name: Example sht20-em-semi
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example sht20-em-semi
+      - name: Example sht30-em-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example sht30-em-semi
+
+      - name: Example shtcx-em-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example shtcx-em-semi
 
       - name: Example ina219-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219-display
@@ -691,7 +694,7 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [aht20-semi,    aht20-em-semi,     sht30-em-semi,    
+        eg:  [aht20-semi,    aht20-em-semi,     sht30-em-semi, shtcx-semi,   
               aht10-display,           aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          ads_ina_ssd,      

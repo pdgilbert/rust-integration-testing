@@ -22,7 +22,7 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   ssd
-use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306};
+use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 const DISPLAYSIZE:ssd1306::prelude::DisplaySize128x32 = DisplaySize128x32;
 const VPIX:i32 = 12; // vertical pixels for a line, including space
