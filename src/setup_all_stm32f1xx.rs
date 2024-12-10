@@ -20,7 +20,7 @@ pub use stm32f1xx_hal::{
       rcc::Clocks,
       timer::{TimerExt, Delay as halDelay},
       i2c::{DutyCycle, Mode as i2cMode},   //BlockingI2c, //Pins
-      spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
+    //  spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
       serial::{Config},
       gpio::{Alternate, Pin,
              gpioa::{PA1, PA8},
@@ -49,10 +49,12 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
-pub type I2c1Type = I2c<I2C1, (PB6<Alternate<OpenDrain>>, PB7<Alternate<OpenDrain>>)>;
+//pub type I2c1Type = I2c<I2C1, (PB6<Alternate<OpenDrain>>, PB7<Alternate<OpenDrain>>)>;
 //pub type I2c1Type = I2c<I2C1, impl Pins<I2C1> >;
-pub type I2c2Type = I2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
+//pub type I2c2Type = I2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
 //pub type I2c2Type = I2c<I2C2, impl Pins<I2C2> >;
+pub type I2c1Type = I2c<I2C1>;
+pub type I2c2Type = I2c<I2C2>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
@@ -67,7 +69,8 @@ pub type Rx2Type = Rx<USART2>;
 pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
-pub type SpiType =  Spi<SPI1, Spi1NoRemap, impl SpiPins<Spi1NoRemap>, u8>;
+//pub type SpiType =  Spi<SPI1, Spi1NoRemap, impl SpiPins<Spi1NoRemap>>;
+pub type SpiType =  Spi<SPI1, u8>;
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, //UNTESTED
                     pub busy:  Pin<'B', 8>, 
                     pub ready: Pin<'B', 9>, 
@@ -132,7 +135,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
     //afio  needed for i2c1 (PB8, PB9) but not i2c2
     //let i2c1 = BlockingI2c::i2c1(
-    let i2c1 = I2c::i2c1(
+    let i2c1 = I2c::i2c1::new(
         dp.I2C1,
         (gpiob.pb6.into_alternate_open_drain(&mut gpiob.crl), 
          gpiob.pb7.into_alternate_open_drain(&mut gpiob.crl)

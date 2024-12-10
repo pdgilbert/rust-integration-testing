@@ -13,8 +13,8 @@ edition = "2021"
 #  hal versions using git
                                           
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
-#stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
-stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true, branch = "ehal" }
+stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
+#stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true, branch = "ehal" }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
 #stm32f4xx-hal = { version = "0.20.0", optional = true } 
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true }
@@ -225,8 +225,8 @@ cortex-m-rt = ">=0.7.0"
 
 # for driver-examples based on https://github.com/eldruin/driver-examples
 
-panic-rtt-target = { version =  "0.1.1", features = ["cortex-m"] }
-rtt-target = { version =  ">=0.3.1", features = ["cortex-m"] }
+panic-rtt-target = { version =  "0.2.0"}
+rtt-target = { version =  ">=0.6.1" }
 
 cortex-m-semihosting-05   = { package = "cortex-m-semihosting", version = ">=0.5.0" } # uses eh-1 but no unwrap()
 cortex-m-semihosting = { version = "0.3.7" }   #test carefully when updating. Version change can break many examples
@@ -241,7 +241,7 @@ panic-halt           = { version = ">=0.2.0" }
 # rtic does not work on stm32f0xx and stm32l0xx devices ??
 #stm32f0xx = ["stm32f0xx-hal/rt" , "shared-bus-rtic"]
 stm32f0xx = ["stm32f0xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32f1xx = ["stm32f1xx-hal/rt", "rtic", "rtic-monotonics" ]
+stm32f1xx = ["stm32f1xx-hal", "rtic", "rtic-monotonics" ]
 stm32f3xx = ["stm32f3xx-hal/rt", "rtic", "rtic-monotonics" ]
 #stm32f4xx = ["stm32f4xx-hal/rt", "rtic", "dwt-systick-monotonic"]
 stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics", "rtic-sync" ] 
