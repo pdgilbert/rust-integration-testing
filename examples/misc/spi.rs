@@ -16,7 +16,7 @@ use panic_halt as _;
 
 //use panic_rtt_target as _;  THIS CAUSE LINK PROBLEM ... undefined symbol: _SEGGER_RTT
 
-use embedded_hal::spi::{Mode, Phase, Polarity};
+//use embedded_hal::spi::{Mode, Phase, Polarity}; THIS CONFLICTS WITH VERSION FROM HAL
 pub const MODE: Mode = Mode {
     phase: Phase::CaptureOnSecondTransition,
     polarity: Polarity::IdleHigh,
@@ -68,12 +68,14 @@ use stm32f1xx_hal::{
     gpio::{Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Pins, Spi, Spi1NoRemap},
+    spi::{Spi, Mode, Phase, Polarity},
 };
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
-    Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
+    Spi<SPI1, u8>,
+    //Spi<SPI1, (impl SckPin<SPI1>, impl MisoPin<SPI1>, impl MosiPin<SPI1>), u8>,
+    //Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
     PA4<Output<PushPull>>,
 ) {
     //fn setup() -> (Spi<SPI1, Spi1NoRemap, (PA5<Alternate<PushPull>>, PA6<Input<Floating>>, PA7<Alternate<PushPull>>), u8>,
@@ -81,11 +83,10 @@ fn setup() -> (
     let dp = Peripherals::take().unwrap();
 
     let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    let rcc = dp.RCC.constrain();
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain();
     let mut gpioa = dp.GPIOA.split();
 
     // SPI1
@@ -93,15 +94,15 @@ fn setup() -> (
     let miso = gpioa.pa6;
     let mosi = gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl);
     let cs = gpioa.pa4.into_push_pull_output(&mut gpioa.crl);
+//let spi = dp
+//        .SPI1
+//        //.remap(&mut afio.mapr) // if you want to use PB3, PB4, PB5
+//        .spi((Some(sck), Some(miso), Some(mosi)), MODE, 1.MHz(), &clocks);
 
-    let spi = Spi::spi1(
-        dp.SPI1,
-        (sck, miso, mosi),
-        &mut afio.mapr,
-        MODE,
-        1_u32.mhz(),
-        clocks,
-    );
+    let spi =  dp
+                .SPI1
+                //.remap(&mut afio.mapr) // if you want to use PB3, PB4, PB5
+                .spi((Some(sck), Some(miso), Some(mosi)),  MODE, 1.MHz(), &clocks );
 
     (spi, cs)
 }
