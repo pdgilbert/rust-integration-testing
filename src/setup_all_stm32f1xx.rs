@@ -20,7 +20,8 @@ pub use stm32f1xx_hal::{
       rcc::Clocks,
       timer::{TimerExt, Delay as halDelay},
       i2c::{DutyCycle, Mode as i2cMode},   //BlockingI2c, //Pins
-    //  spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
+      spi::{Mode, Phase, Polarity},
+      //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
       serial::{Config},
       gpio::{Alternate, Pin,
              gpioa::{PA1, PA8},
@@ -28,7 +29,9 @@ pub use stm32f1xx_hal::{
              gpioc::{PC13 as LEDPIN}},
 };
 
-use embedded_hal::spi::{Mode, Phase, Polarity};
+//use embedded_hal::spi::{Mode, Phase, Polarity};
+//note: `Mode` and `Mode` have similar names, but
+
 
 //   //////////////////////////////////////////////////////////////////////
 pub use embedded_hal::delay::DelayNs;
@@ -108,7 +111,7 @@ pub fn all_from_dp(dp: Peripherals) ->
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
     let mut flash = dp.FLASH.constrain();
     let rcc = dp.RCC.constrain();
-    let mut afio = dp.AFIO.constrain();
+    //let mut afio = dp.AFIO.constrain();
     let clocks = rcc
         .cfgr
         //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
@@ -135,24 +138,24 @@ pub fn all_from_dp(dp: Peripherals) ->
 
     //afio  needed for i2c1 (PB8, PB9) but not i2c2
     //let i2c1 = BlockingI2c::i2c1(
-    let i2c1 = I2c::i2c1::new(
+    let i2c1 = I2c::new(
         dp.I2C1,
         (gpiob.pb6.into_alternate_open_drain(&mut gpiob.crl), 
          gpiob.pb7.into_alternate_open_drain(&mut gpiob.crl)
         ),
-        &mut afio.mapr,
+       // &mut afio.mapr,  //need this for i2c1 (PB8, PB9)
         i2cMode::Fast {
             frequency: 100_000_u32.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
-        clocks,
+        &clocks,
         //1000,
         //10,
         //1000,
         //1000,
     );
 
-    let i2c2 = I2c::i2c2(
+    let i2c2 = I2c::new(
         dp.I2C2,
         (
             gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
@@ -163,7 +166,7 @@ pub fn all_from_dp(dp: Peripherals) ->
             frequency: 400_000_u32.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
-        clocks,
+        &clocks,
         //1000,
         //10,
         //1000,
@@ -173,14 +176,17 @@ pub fn all_from_dp(dp: Peripherals) ->
     let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     led.off();
 
-   let spi1 =  Spi::spi1(
-       dp.SPI1,
-        (gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl), //   sck 
-         gpioa.pa6.into_floating_input(&mut gpioa.crl),      //   miso
-         gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
+   let spi1 =  dp.SPI1
+        //.remap(&mut afio.mapr) // if you want to use PB3, PB4, PB5
+        .spi((
+           Some(gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl)), //   sck 
+           Some(gpioa.pa6.into_floating_input(&mut gpioa.crl)),      //   miso
+           Some(gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl)), //   mosi
         ),
-       &mut afio.mapr,
-       MODE, 8.MHz(), clocks,
+       //&mut afio.mapr,
+       MODE,
+       8.MHz(), 
+       &clocks,
    );
    
    let spiext = SpiExt {
@@ -194,22 +200,14 @@ pub fn all_from_dp(dp: Peripherals) ->
     //let delay = dp.TIM5.delay(&clocks);
     let delay = dp.TIM3.delay::<1000000_u32>(&clocks);
 
-    // NOTE, try to figure out the proper way to deal with this:
-    // Using gpiob (PB6-7) for serial causes a move problem because gpiob is also used for i2c.
-    // (There can also a move problem with afio if setup_i2c1() takes afio rather than &mut afio,
-    // but that can be resolved by just doing serial() before setup_i2c1().)
-
-    let (tx1, rx1) = Serial::new(
-       dp.USART1,
-       // (gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl), 
-       //  gpiob.pb7,
-       (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
-        gpioa.pa10,
-       ),
-       &mut afio.mapr,
-       Config::default().baudrate(115200.bps()), 
-       &clocks,
-    ).split();
+    let (tx1, rx1) = dp.USART1
+                       .serial(
+                           (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh),
+                            gpioa.pa10,
+                           ),
+                           Config::default().baudrate(115200.bps()), 
+                           &clocks,
+                        ).split();
     
     let (tx2, rx2) = Serial::new( 
         dp.USART2,
@@ -217,7 +215,6 @@ pub fn all_from_dp(dp: Peripherals) ->
             gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), 
             gpioa.pa3,  // probably need alt
         ), 
-        &mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
         &clocks,
     )
@@ -226,7 +223,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let adc1: AdcSensor1Type = AdcSensor {
         ch:  gpioa.pa1.into_analog(&mut gpioa.crl), //channel
-        adc: Adc::adc1(dp.ADC1, clocks),
+        adc: Adc::adc1(dp.ADC1, &clocks),
    }; 
 
    (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)

@@ -66,14 +66,15 @@ type DhtType = OpenDrainType;
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     pac::TIM2,
-    timer::{Delay as halDelay},  //TimerExt, 
-    //timer::DelayMs,
+    timer::{TimerExt, Delay as halDelay},  //TimerExt, 
+    timer::DelayMs,
     //timer::SysTimerExt,  // trait
     //rcc::Clocks,
 };
 
 #[cfg(feature = "stm32f1xx")]
 type DelayMsType =  halDelay<TIM2, 1000000_u32>;  // this fails, I think because dht want DelayMs not DelayNs ???
+//type DelayMsType =  DelayMs<TIM2>;
 //type DelayMsType =  TimerExt::delay_ms<TIM2, 1000000_u32>;
 
 #[cfg(feature = "stm32f1xx")]
@@ -92,7 +93,8 @@ pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType) {
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    //let delay = cp.SYST.delay(&clocks);  //SysDelay  System Timer  delay (SysTick)
-   let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+   //let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+   let delay = dp.TIM2.delay(&clocks);
 
    (dht, delay)
 }
