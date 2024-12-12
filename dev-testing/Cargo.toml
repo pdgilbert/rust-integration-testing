@@ -109,16 +109,18 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
 #aht10-async           = { git = "https://github.com/jneem/aht10-async" }  
 
-#aht20           = { git = "https://github.com/mythmon/aht20" } # this appears to not be actively updated
-#aht20           = { git = "https://github.com/nim65s/aht20" } 
+#aht20           = { git = "https://github.com/mythmon/aht20" } # this does not appears to be actively updated
+#aht20           = { git = "https://github.com/nim65s/aht20" }  # eh 0.2.6
 aht20           = { git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
 
 embedded-aht20   = { git = "https://github.com/ghismary/embedded-aht20" }
 #embedded-aht20   = "0.1.3"     #eh-1 and both sync and async
 
-aht20-async     = "1.0.0"
-#aht20-async        = { git = "https://github.com/fmckeogh/aht20-async" } 
-#  CHECK https://github.com/anglerud/aht20-driver/blob/main/Cargo.toml  HAS EH-1 RELEASE
+aht20-async       = "1.0.0"
+#aht20-async      = { git = "https://github.com/fmckeogh/aht20-async" } 
+
+aht20-driver     = { version = "2.0.0", default-features = false } #eh-1 
+#aht20-driver    = { git = "https://github.com/anglerud/aht20-driver", default-features = false }
 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
@@ -604,6 +606,10 @@ path = "examples/misc-i2c-drivers/shtcx-semi.rs"
 [[example]]
 name = "aht20-em-semi"
 path = "examples/misc-i2c-drivers/aht20-em-semi.rs"
+
+[[example]]
+name = "aht20-dr-semi"
+path = "examples/misc-i2c-drivers/aht20-dr-semi.rs"
 
 [[example]]
 name = "ens160-co2-voc-iaq-display"

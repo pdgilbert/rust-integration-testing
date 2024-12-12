@@ -11,7 +11,7 @@
 use cortex_m_semihosting_05::hprintln;
 use cortex_m::asm;
 
-use aht20::{Aht20};
+use aht20_driver::{AHT20, SENSOR_ADDRESS}; 
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -54,7 +54,7 @@ fn main() -> ! {
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
 
-    let (mut i2c1, _i2c2, _led, mut delay, clocks) = setup::i2c1_i2c2_led_delay_clocks_from_dp(dp);
+    let (i2c1, _i2c2, _led, mut delay, clocks) = setup::i2c1_i2c2_led_delay_clocks_from_dp(dp);
 
     let mut delay2 = cp.SYST.delay(&clocks); 
 
@@ -67,18 +67,19 @@ fn main() -> ! {
     hprintln!("Start the sensor...");
     // Start the sensor.   address 0x38 cannot be changed
 
-//  asm::bkpt(); 
-    let mut aht = Aht20::new(&mut i2c1, &mut delay);
+ // asm::bkpt();  
+    let mut aht20_uninit = AHT20::new(i2c1, SENSOR_ADDRESS);
+    let mut aht = aht20_uninit.init(&mut delay).unwrap();
+
     hprintln!("Sensor started.");
 
     loop {
         hprintln!("loop i");      
         
-        hprintln!("aht.read()");
-//    asm::bkpt(); 
-        let (h, t) = aht.read().unwrap();
+        hprintln!("aht.measure()");
+        let th = aht.measure(&mut delay).unwrap();  
 
-        hprintln!("{:.3}C  {}% RH", t.celsius(), h.rh());
+        hprintln!("{:.2}C  {:.2}% RH", th.temperature, th.humidity);
 
         delay2.delay_ms(5000); 
     }

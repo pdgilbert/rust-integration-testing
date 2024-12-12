@@ -36,7 +36,7 @@ use stm32g4xx_hal::{
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
    timer::Timer,
-   delay::DelayFromCountDownTimer,
+   delay::{DelayExt, DelayFromCountDownTimer},
    pac::{TIM2, TIM5},
 };
 
@@ -67,7 +67,7 @@ fn main() -> ! {
     hprintln!("Start the sensor...");
     // Start the sensor.   address 0x38 cannot be changed
 
-     asm::bkpt();  //SWIITCH I2C TO TEST
+  asm::bkpt();  
     let mut aht  = Aht20::new(&mut i2c1, DEFAULT_I2C_ADDRESS, &mut delay).expect("sensor initialization failed.");
     //let mut aht  = Aht20::new(&mut i2c2, DEFAULT_I2C_ADDRESS, Delay {}).expect("sensor initialization failed.");
     hprintln!("Sensor started.");

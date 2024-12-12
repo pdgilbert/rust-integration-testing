@@ -161,7 +161,8 @@ in place then in one window run
 ```
 openocd -f interface/$INTERFACE.cfg -f target/$PROC.cfg 
 ```
-where INTERFACE is set for your probe, for example, `export INTERFACE=stlink-v2` for a typical cheap dongle
+where INTERFACE is set for your probe, for example, `export INTERFACE=stlink-v2` 
+or newer `export INTERFACE=stlink`  for a typical cheap dongle
 or `export INTERFACE=stlink-v2-1` for a slightly newer version.
 Note that sometimes, if an rtic or other program with sleep while idle is in the MCU flash, then
 it may be necessary to hold boot0 and press nrst in order to get openocd to take control
