@@ -36,7 +36,7 @@ use stm32g4xx_hal::{
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
    timer::Timer,
-   delay::DelayFromCountDownTimer,
+   delay::{DelayExt, DelayFromCountDownTimer},
    pac::{TIM2, TIM5},
 };
 

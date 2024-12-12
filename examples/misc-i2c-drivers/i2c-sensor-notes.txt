@@ -1,0 +1,58 @@
+Notes on various issues as of Dec. 2024.
+
+To simplify testing the examples *semi* use only the sensor crate and report results
+with semihosting. This means the example does not need ssd or anything that would may
+the example actually useable. (This is prompted by what seems to be a run time bug in stm32f4xx.)
+
+At present there appears to be a run time bug in hal stm32f4xx affecting I2C.
+
+The crate xca9548a provides multiplexing of sensors with the same address.
+It is now converted to embedded-hal v1.0.0. That seems to mean that
+crates for devices attached to the multiplexer also need to use eh-1.
+(At least it is difficult if not impossible when they use older eh.
+The problem is with trait bounds not being satisfied, which appears to come
+from having two versions of eh.)
+
+Thus sensor crates should:
+
+ - Be using eh-1 and be no_std.
+ - Sensor intialization should return a Result so that it is posible to identify.
+     when some sensors are not attached.
+ - Allow for software reset so individual sensors can be reset without power cycle.
+ - Syncronous is necessary (at the moment because of rtic difficulties) but the
+     feature of getting both sync and async from the same crate is nice.
+ - Preferably the sensor should borrow rather than consume delay. If the delay is
+   consumed then with multiplexing a large number of delays are used. This can
+   be done with cortex_m::asm::delay but that adds unnecessary complication.
+
+So, by above criteria:
+(*semi* examples used for compiled/works remarks)
+
+AHT10 - There are not yet any eh-1 crates. 
+      - Crate aht10-async (https://github.com/jneem/aht10-async)
+            uses  embedded-hal-async = "1.0.0"  but is only async.
+  
+AHT20 - Crate aht20  (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
+        so not good for xca9548a use. Also it consumes delay.  
+        It works with stm32g4xx on stm32g474xE. 
+        It compiles with stm32f4xx on stm32f411 but run fails.
+
+
+      - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
+        returns Result, and has feature option for sync or async. 
+        It works with stm32g4xx on stm32g474xE. 
+        It compiles with stm32f4xx on stm32f401 but run fails.
+
+      - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
+        does not consume delay. Result returned by .init method.
+        It works with stm32g4xx on stm32g474xE. 
+        It compiles with stm32f4xx on stm32f401 but run fails.
+
+
+AHT21 - There are not yet any eh-1 crates. 
+
+SHT3embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
+
+shtcx         =  { git = "https://github.com/dbrgn/shtcx-rs" } #  eh 1.0
+#embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
+embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
