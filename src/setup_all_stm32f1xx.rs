@@ -19,7 +19,7 @@ pub use stm32f1xx_hal::{
       pac::{TIM2, TIM3}, 
       rcc::Clocks,
       timer::{TimerExt, Delay as halDelay},
-      i2c::{DutyCycle, Mode as i2cMode},   //BlockingI2c, //Pins
+      i2c::{DutyCycle, Mode as i2cMode, BlockingI2c,},   // //Pins
       spi::{Mode, Phase, Polarity},
       //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
       serial::{Config},
@@ -31,6 +31,7 @@ pub use stm32f1xx_hal::{
 
 //use embedded_hal::spi::{Mode, Phase, Polarity};
 //note: `Mode` and `Mode` have similar names, but
+//use embedded_hal::i2c::ErrorType;
 
 
 //   //////////////////////////////////////////////////////////////////////
@@ -56,8 +57,10 @@ pub type OpenDrainType = PA8<Output<OpenDrain>>;
 //pub type I2c1Type = I2c<I2C1, impl Pins<I2C1> >;
 //pub type I2c2Type = I2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
 //pub type I2c2Type = I2c<I2C2, impl Pins<I2C2> >;
-pub type I2c1Type = I2c<I2C1>;
-pub type I2c2Type = I2c<I2C2>;
+pub type I2c1Type = BlockingI2c<I2C1>;
+pub type I2c2Type = BlockingI2c<I2C2>;
+//pub type I2c1Type = I2c<I2C1, Error = ErrorType>;
+//pub type I2c2Type = I2c<I2C2, Error = ErrorType>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
@@ -74,9 +77,13 @@ pub type RxType = Rx1Type;
 
 //pub type SpiType =  Spi<SPI1, Spi1NoRemap, impl SpiPins<Spi1NoRemap>>;
 pub type SpiType =  Spi<SPI1, u8>;
+//pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, //UNTESTED
+//                    pub busy:  Pin<'B', 8>, 
+//                    pub ready: Pin<'B', 9>, 
+//                    pub reset: Pin<'A', 0, Output>
 pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, //UNTESTED
-                    pub busy:  Pin<'B', 8>, 
-                    pub ready: Pin<'B', 9>, 
+                    pub busy:  Pin<'B', 0>, 
+                    pub ready: Pin<'B', 1>, 
                     pub reset: Pin<'A', 0, Output>
 }
 
@@ -136,42 +143,55 @@ pub fn all_from_dp(dp: Peripherals) ->
     let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
     pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-    //afio  needed for i2c1 (PB8, PB9) but not i2c2
-    //let i2c1 = BlockingI2c::i2c1(
-    let i2c1 = I2c::new(
-        dp.I2C1,
-        (gpiob.pb6.into_alternate_open_drain(&mut gpiob.crl), 
-         gpiob.pb7.into_alternate_open_drain(&mut gpiob.crl)
-        ),
-       // &mut afio.mapr,  //need this for i2c1 (PB8, PB9)
-        i2cMode::Fast {
-            frequency: 100_000_u32.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        &clocks,
-        //1000,
-        //10,
-        //1000,
-        //1000,
-    );
+    //afio  needed for alt remap of (PB8, PB9) but not (PB6,PB7) because they are not alt
 
-    let i2c2 = I2c::new(
-        dp.I2C2,
-        (
-            gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
-            gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
-        ),
-        //&mut afio.mapr,  need this for i2c1 (PB8, PB9) but //NOT i2c2
-        i2cMode::Fast {
-            frequency: 400_000_u32.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        &clocks,
-        //1000,
-        //10,
-        //1000,
-        //1000,
-    );
+    //let i2c1 = BlockingI2c::<I2C1>::new(
+    //    dp.I2C1,
+    //    (
+    //     gpiob.pb6, 
+    //     gpiob.pb7
+    //    ),
+    //    i2cMode::Fast {
+    //        frequency: 100_000_u32.Hz(),
+    //        duty_cycle: DutyCycle::Ratio2to1,
+    //    },
+    //    &clocks,  //1000, 10, 1000, 1000,
+    //);
+
+    let mut afio = dp.AFIO.constrain();
+
+    // still only on branch = "rmp-new"
+    let i2c1 = BlockingI2c::<I2C1>::new(
+                  dp.I2C1
+                  .remap(&mut afio.mapr),  // add this for PB8, PB9
+                  (
+                   gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh),  // scl 
+                   gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)   // sda
+                  ),
+                  i2cMode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9,},
+                  &clocks, 1000, 10, 1000, 1000,);
+    // or
+    //let i2c1 = dp
+    //    .I2C1
+    //    .remap(&mut afio.mapr) // add this for PB8, PB9
+    //    .blocking_i2c(
+    //      (
+    //       gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh), 
+    //       gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)
+    //      ),
+    //      Mode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9, },
+    //      &clocks, 1000, 10, 1000, 1000,
+    //    );
+ 
+
+    let i2c2 = BlockingI2c::<I2C2>::new(
+                 dp.I2C2,
+                 (
+                  gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl 
+                  gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
+                 ),
+                 i2cMode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
+                 &clocks, 1000, 10, 1000, 1000,);
 
     let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     led.off();
@@ -191,13 +211,12 @@ pub fn all_from_dp(dp: Peripherals) ->
    
    let spiext = SpiExt {
         cs:    gpioa.pa11.into_push_pull_output(&mut gpioa.crh), //CsPin         //pa11 UNTESTED
-        busy:  gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DI00 
-        ready: gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DI01 
+        busy:  gpiob.pb0.into_floating_input(&mut gpiob.crl),   //BusyPin  DI00 
+        ready: gpiob.pb1.into_floating_input(&mut gpiob.crl),   //ReadyPin DI01 
         reset: gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin   
         };   
 
     //let delay = DelayType{};
-    //let delay = dp.TIM5.delay(&clocks);
     let delay = dp.TIM3.delay::<1000000_u32>(&clocks);
 
     let (tx1, rx1) = dp.USART1

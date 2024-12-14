@@ -2,14 +2,12 @@
 //!
 //! The "semi" examples simplify testing of the sensor crate alone, without display complications.
 
-//! Using crate embedded-aht20
-
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
 
 use cortex_m_semihosting_05::hprintln;
-use cortex_m::asm;
+//use cortex_m::asm;
 
 use aht20::{Aht20};
 
@@ -22,6 +20,11 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   hals
+
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    timer::{SysTimerExt, },
+};
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
@@ -49,7 +52,7 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 #[entry]
 fn main() -> ! {
-    hprintln!("AHT20-em example");
+//    hprintln!("AHT20-em example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -72,12 +75,8 @@ fn main() -> ! {
     hprintln!("Sensor started.");
 
     loop {
-        hprintln!("loop i");      
-        
-        hprintln!("aht.read()");
-//    asm::bkpt(); 
+        hprintln!("aht.read()"); 
         let (h, t) = aht.read().unwrap();
-
         hprintln!("{:.3}C  {}% RH", t.celsius(), h.rh());
 
         delay2.delay_ms(5000); 

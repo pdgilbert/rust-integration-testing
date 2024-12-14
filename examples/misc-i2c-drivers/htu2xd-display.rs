@@ -50,6 +50,11 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 //use rust_integration_testing_of_examples::alt_delay::{AltDelay as OldDelayType};
 
 
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    timer::SysTimerExt,
+};
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     timer::SysTimerExt,

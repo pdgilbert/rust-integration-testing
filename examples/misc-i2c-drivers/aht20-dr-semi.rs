@@ -9,7 +9,7 @@
 #![no_main]
 
 use cortex_m_semihosting_05::hprintln;
-use cortex_m::asm;
+//use cortex_m::asm;
 
 use aht20_driver::{AHT20, SENSOR_ADDRESS}; 
 
@@ -22,6 +22,11 @@ use panic_halt as _;
 use cortex_m_rt::entry;
 
 /////////////////////   hals
+
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    timer::{SysTimerExt},
+};
 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{

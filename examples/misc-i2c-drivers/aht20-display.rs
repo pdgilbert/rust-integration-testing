@@ -40,6 +40,11 @@ use embedded_graphics::{
 
 /////////////////////   hals
 
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    timer::SysTimerExt,
+};
+
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     timer::SysTimerExt,

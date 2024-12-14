@@ -44,7 +44,8 @@ AHT20 - Crate aht20  (https://github.com/blueluna/aht20) uses eh-1 but a Result 
         It compiles with stm32f4xx on stm32f401 but run fails.
 
       - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
-        does not consume delay. Result returned by .init method.
+        does not consume delay. Result returned by .init method. It has an option to use
+        Integer rather than Floating point. It is only sync.
         It works with stm32g4xx on stm32g474xE. 
         It compiles with stm32f4xx on stm32f401 but run fails.
 

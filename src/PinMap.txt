@@ -29,8 +29,10 @@ PC13 as LEDPIN   gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
 PA8     opendrain     gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
         
-PB6    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
-PB7    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
+ not PB6    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
+ not PB7    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
+PB8    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
+PB9    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
 
 PB10   scl2   dp.I2C2,  gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh),
 PB11   sda2             gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh),
@@ -49,9 +51,10 @@ PA7     mosi              gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //
 
 
 PA11 ?4  UNTESTED   CsPin     Sx127x::spi(     gpioa.pa11.into_push_pull_output(&mut gpioa.crl), //CsPin        
-PB8  ?   BusyPin         gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
-PB9  ?   ReadyPin        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
+B0  not PB8  ?   BusyPin         gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
+B1  not PB9  ?   ReadyPin        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
 PA0     ResetPin         gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
+
 
 PA1     adc1  AdcSensor1Type    ch:   gpioa.pa1.into_analog(&mut gpioa.crl), //channel
 

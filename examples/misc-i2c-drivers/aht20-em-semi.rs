@@ -23,6 +23,11 @@ use cortex_m_rt::entry;
 
 /////////////////////   hals
 
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+    timer::{SysTimerExt},
+};
+ 
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     timer::SysTimerExt,
@@ -72,12 +77,9 @@ fn main() -> ! {
     //let mut aht  = Aht20::new(&mut i2c2, DEFAULT_I2C_ADDRESS, Delay {}).expect("sensor initialization failed.");
     hprintln!("Sensor started.");
 
-    loop {
-        hprintln!("loop i");      
-        
+    loop {        
         hprintln!("aht.measure()");
         let th = aht.measure().unwrap();   // Read humidity and temperature.
-
         hprintln!("{:.3}C  {}% RH", th.temperature.celcius(), th.relative_humidity);
 
         delay2.delay_ms(5000); 

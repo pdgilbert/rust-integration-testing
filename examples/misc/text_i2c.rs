@@ -65,12 +65,12 @@ fn setup() -> I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>> {
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
     pac::{Peripherals, I2C2},
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},
+    i2c::{BlockingI2c, DutyCycle, Mode},
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
-fn setup() -> BlockingI2c<I2C2, impl Pins<I2C2>> {
+fn setup() -> BlockingI2c<I2C2> {
     let p = Peripherals::take().unwrap();
     let rcc = p.RCC.constrain();
 
@@ -83,18 +83,17 @@ fn setup() -> BlockingI2c<I2C2, impl Pins<I2C2>> {
     //     or   (scl, sda) using I2C2  on (PB10, PB11)
 
     // return i2c
-    BlockingI2c::i2c2(
+    BlockingI2c::new(
         p.I2C2,
         (
             gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
             gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
         ),
-        //&mut afio.mapr,  need this for i2c1 but not i2c2
         Mode::Fast {
             frequency: 400_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
-        clocks,
+        &clocks,
         1000,
         10,
         1000,
