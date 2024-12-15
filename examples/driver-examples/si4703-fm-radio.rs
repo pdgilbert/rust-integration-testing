@@ -132,6 +132,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
+    pac::I2C1,
     //timer::Delay,
     //timer::SysDelay as Delay,
     gpio::{
@@ -158,7 +159,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut delay = dp.TIM2.delay_us(&clocks);
+    let mut delay = dp.TIM3.delay_us(&clocks);
 
     let mut afio = dp.AFIO.constrain();
 
@@ -172,20 +173,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
     let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
 
-    let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
-        (scl, sda),
-        &mut afio.mapr,
-        Mode::Fast {
-            frequency: 400_000.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
+   // still only on branch = "rmp-new"
+    let i2c = BlockingI2c::<I2C1>::new(
+                  dp.I2C1
+                  .remap(&mut afio.mapr),  // add this for PB8, PB9
+                  (scl, sda),
+                  Mode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9,},
+                  &clocks, 1000, 10, 1000, 1000,);
 
     let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),

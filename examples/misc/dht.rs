@@ -55,7 +55,7 @@ use dht_sensor::dht22::{read, Reading};
 
 //use dht_sensor::Delay;  // trait, whereas timer::Delay is a type
 
-use rust_integration_testing_of_examples::setup::{Peripherals, OpenDrainType, DelayNs, GpioExt, prelude::*,};
+use rust_integration_testing_of_examples::setup::{Peripherals, OpenDrainType,  GpioExt, prelude::*,};
 use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 
@@ -66,16 +66,17 @@ type DhtType = OpenDrainType;
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     pac::TIM2,
-    timer::{TimerExt, Delay as halDelay},  //TimerExt, 
-    timer::DelayMs,
+    timer::{TimerExt, Delay as halDelay}, 
+    //timer::DelayMs,
     //timer::SysTimerExt,  // trait
     //rcc::Clocks,
 };
 
 #[cfg(feature = "stm32f1xx")]
-type DelayMsType =  halDelay<TIM2, 1000000_u32>;  // this fails, I think because dht want DelayMs not DelayNs ???
+type DelayMsType =  halDelay<TIM2, 1000000_u32>;  
+//type DelayMsType =  halDelay<TIM2, 1000000_u32>;  // this fails, I think because dht want DelayMs not DelayNs ???
 //type DelayMsType =  DelayMs<TIM2>;
-//type DelayMsType =  TimerExt::delay_ms<TIM2, 1000000_u32>;
+//type DelayMsType =  TimerExt::delay_ms<TIM2, 1000000_u32>; //trait
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup(dp: Peripherals, _cp: CorePeripherals) ->  (DhtType, DelayMsType) {

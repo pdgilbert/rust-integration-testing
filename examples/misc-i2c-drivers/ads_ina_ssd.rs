@@ -40,7 +40,7 @@ use embedded_hal::{
 };
 
 use rust_integration_testing_of_examples::
-                     setup::{Peripherals, DelayNs, prelude::*, block, RccExt};
+       setup::{Peripherals, DelayNs, prelude::*, block, I2C1, RccExt, DutyCycle, i2cMode, BlockingI2c,};
 
 
 
@@ -59,6 +59,34 @@ use stm32h7xx_hal::{
    //pwr::PwrExt,
 };
 
+
+
+#[cfg(feature = "stm32f1xx")]            
+pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
+
+   let mut flash = dp.FLASH.constrain();
+   let rcc = dp.RCC.constrain();
+   let clocks = rcc.cfgr.freeze(&mut flash.acr);
+
+   let mut gpiob = dp.GPIOB.split();
+   let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh); 
+   let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh); 
+
+   let mut afio = dp.AFIO.constrain();
+
+   // still only on branch = "rmp-new"
+   let i2c = BlockingI2c::<I2C1>::new(
+                  dp.I2C1
+                  .remap(&mut afio.mapr),  // add this for PB8, PB9
+                  (scl, sda),
+                  i2cMode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9,},
+                  &clocks, 1000, 10, 1000, 1000,);
+
+   // need  ::<1000000_u32>  for `FREQ` of the method `delay   WHY?
+   let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+
+   (i2c, delay)
+}
 
 
 #[cfg(feature = "stm32f4xx")]            

@@ -104,12 +104,12 @@ use stm32f1xx_hal::{
     gpio::{gpioa::PA4,Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
-    spi::{Pins, Spi, Spi1NoRemap},
+    spi::{Spi,},
 };
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
-    Spi<SPI1, Spi1NoRemap, impl Pins<Spi1NoRemap>, u8>,
+    Spi<SPI1, u8>,
     PA4<Output<PushPull>>,
     LedType,
     impl DelayNs,
@@ -121,7 +121,7 @@ fn setup() -> (
 
     let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain();
+    //let mut afio = dp.AFIO.constrain();
     let mut gpioa = dp.GPIOA.split();
     let mut gpioc = dp.GPIOC.split();
 
@@ -133,13 +133,13 @@ fn setup() -> (
 
     cs.set_high();
 
-    let spi = Spi::spi1(
-        dp.SPI1,
-        (sck, miso, mosi),
-        &mut afio.mapr,
-        mcp4x::MODE,
-        1_u32.MHz(),
-        clocks,
+    let spi =  dp.SPI1
+        //.remap(&mut afio.mapr) // if you want to use PB3, PB4, PB5
+        .spi((Some(sck), Some(miso), Some(mosi)),
+        //&mut afio.mapr,
+        mcp4x::MODE.into(),
+        1.MHz(),
+        &clocks,
     );
 
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
