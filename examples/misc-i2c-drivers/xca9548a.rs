@@ -1,10 +1,12 @@
-//! CHANGING TO Aht20 which is eh-1
-
-//! Continuously read temperature from multiple AHT10s and display on SSD1306 OLED.
-//! The display is on i2c2 and the AHT10s are multiplexed on i2c1 using  xca9548a.
+//! Continuously read temperature from multiple sensors and display on SSD1306 OLED.
+//! The display is on i2c2 and the sensors are multiplexed on i2c1 using  xca9548a.
+//! The xca9548a uses embedded-hal v1 which requires that sensor crates do also.
+//! (At least it seems very difficult if they do not.)
+//! For this reason this example now uses Aht20 but some comments may refer to AHT10.
 //!
-//! Each  AHT10 consumes a DelayMs so these delays are generated with AltDelay.
-//! It would be better to not consume delay. See htu2xd-display.
+//! AHT10 sensors and some others use a DelayMs rather than DelayNs, which complicates things.
+//! Some sensors consumes a Delay so these delays are generated with AltDelay.
+//! It is probably better for the sensor to borrow rather than consume a delay.
 //! 
 //!  Beware that switch1parts.i2c2 is the third multiplexed device on the i2c1.
 //! 

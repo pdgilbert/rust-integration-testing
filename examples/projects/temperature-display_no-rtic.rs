@@ -94,9 +94,24 @@ use cortex_m_rt::entry;
     
     };
 
-    use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM5, };
+    use rust_integration_testing_of_examples::setup::{Pin, Output, Delay, SpiType,};
     use rust_integration_testing_of_examples::lora::Base;
 
+    // consider moving this to setup
+    #[cfg(feature = "stm32f1xx")]
+    type LoraType = Sx127x<Base<SpiType, Pin<'A', 11, Output>, Pin<'B', 0>, Pin<'B', 1>, Pin<'A', 0, Output>, Delay>>;
+    // this would be nice:  type LoraType = Sx127x<Base<SpiType, SpiExtType, Delay>>;
+
+    #[cfg(feature = "stm32f4xx")]
+    type LoraType = Sx127x<Base<SpiType, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, Delay>>;
+
+    #[cfg(feature = "stm32g4xx")]
+    type LoraType = Sx127x<Base<SpiType, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, Delay>>;
+    // no Pin in stm32g4xx" but next needs  lots of impots. Solved by moving this to setup?
+    //type LoraType = Sx127x<Base<SpiType, PA4<Output<PushPull>>, PB4<Input<Floating>>, PB5<Input<Floating>>, PA0<Output<PushPull>>, Delay>>;
+
+    #[cfg(feature = "stm32h7xx")]
+    type LoraType = Sx127x<Base<SpiType, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, Delay>>;
 
     /////////////////////  bus sharing
 
@@ -217,8 +232,6 @@ use cortex_m_rt::entry;
         line
      }
 
-
-    type LoraType = Sx127x<Base<Spi<SPI1>, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, halDelay<TIM5, 1000000>>>;
 
     fn send(
             lora: &mut LoraType,

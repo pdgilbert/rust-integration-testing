@@ -1,8 +1,8 @@
-Notes on various issues as of Dec. 2024.
+Notes on various sensor crate issues as of Dec. 2024.
 
 To simplify testing the examples *semi* use only the sensor crate and report results
-with semihosting. This means the example does not need ssd or anything that would may
-the example actually useable. (This is prompted by what seems to be a run time bug in stm32f4xx.)
+with semihosting. This means the example does not need ssd or anything that would make
+the example actually useable. 
 
 At present there appears to be a run time bug in hal stm32f4xx affecting I2C.
 
@@ -13,33 +13,35 @@ crates for devices attached to the multiplexer also need to use eh-1.
 The problem is with trait bounds not being satisfied, which appears to come
 from having two versions of eh.)
 
-Thus sensor crates should:
+So, for multiplexing a sensor crates should:
 
  - Be using eh-1 and be no_std.
- - Sensor intialization should return a Result so that it is posible to identify.
+ - Sensor intialization should return a Result so that it is posible to identify
      when some sensors are not attached.
- - Allow for software reset so individual sensors can be reset without power cycle.
- - Syncronous is necessary (at the moment because of rtic difficulties) but the
-     feature of getting both sync and async from the same crate is nice.
+ - Allow for software reset so individual sensors can be reset without a power cycle.
+ - Syncronous (blocking) is necessary (at the moment because of rtic difficulties) but
+     the feature of getting both sync and async from the same crate is nice.
  - Preferably the sensor should borrow rather than consume delay. If the delay is
    consumed then with multiplexing a large number of delays are used. This can
    be done with cortex_m::asm::delay but that adds unnecessary complication.
+ - It would be nice if there were a release version rather than just github.
 
-So, by above criteria:
-(*semi* examples used for compiled/works remarks)
 
-AHT10 - There are not yet any eh-1 crates. 
+By above criteria:
+(*semi* examples are the basis for compiled/works status below)
+
+AHT10 - There are not yet any eh-1 syncronous/blocking crates. 
       - Crate aht10-async (https://github.com/jneem/aht10-async)
             uses  embedded-hal-async = "1.0.0"  but is only async.
   
 AHT20 - Crate aht20  (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
-        so not good for xca9548a use. Also it consumes delay.  
+        so it is not good for xca9548a use. Also it consumes delay.  
         It works with stm32g4xx on stm32g474xE. 
         It compiles with stm32f4xx on stm32f411 but run fails.
 
 
       - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
-        returns Result, and has feature option for sync or async. 
+        returns Result, and has feature option for sync or async. It consumes delay.
         It works with stm32g4xx on stm32g474xE. 
         It compiles with stm32f4xx on stm32f401 but run fails.
 
@@ -57,3 +59,15 @@ SHT3embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
 shtcx         =  { git = "https://github.com/dbrgn/shtcx-rs" } #  eh 1.0
 #embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
+
+
+Other notes:
+
+#aht10  = { git = "https://github.com/heyitsanthony/aht10" }  #original but not being updated.
+aht10   = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" } # not eh-1
+#aht10-async           = { git = "https://github.com/jneem/aht10-async" }  
+
+#aht20           = { git = "https://github.com/mythmon/aht20" } # this does not appears to be actively updated
+#aht20           = { git = "https://github.com/nim65s/aht20" }  # eh 0.2.6
+aht20           = { git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
+

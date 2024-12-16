@@ -14,8 +14,7 @@ edition = "2021"
                                           
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 #stm32f1xx-hal = { version = "0.10.0", optional = true }
-#stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
-stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", branch = "rmp-new", optional = true }
+stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
 #stm32f4xx-hal = { version = "0.20.0", optional = true } 
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true }
@@ -105,17 +104,14 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 
 
 # examples/misc-i2c-drivers/
+# See  examples/misc-i2c-drivers/i2c-sensor-notes.txt regarding various sensor crate notes.
 
-#aht10           = { git = "https://github.com/heyitsanthony/aht10" }  #original but not being updated.
 aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
-#aht10-async           = { git = "https://github.com/jneem/aht10-async" }  
 
-#aht20           = { git = "https://github.com/mythmon/aht20" } # this does not appears to be actively updated
-#aht20           = { git = "https://github.com/nim65s/aht20" }  # eh 0.2.6
 aht20           = { git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
 
-embedded-aht20   = { git = "https://github.com/ghismary/embedded-aht20" }
-#embedded-aht20   = "0.1.3"     #eh-1 and both sync and async
+#embedded-aht20   = { git = "https://github.com/ghismary/embedded-aht20" }
+embedded-aht20   = "0.1.3"     #eh-1 and both sync and async
 
 aht20-async       = "1.0.0"
 #aht20-async      = { git = "https://github.com/fmckeogh/aht20-async" } 

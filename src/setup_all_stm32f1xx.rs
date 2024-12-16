@@ -21,7 +21,7 @@ pub use stm32f1xx_hal::{
       timer::{TimerExt, Delay as halDelay},
       i2c::{DutyCycle, Mode as i2cMode, BlockingI2c,},   // //Pins
       spi::{Mode, Phase, Polarity},
-      //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},  //Mode
+      //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},
       serial::{Config},
       gpio::{Alternate, Pin,
              gpioa::{PA1, PA8},
@@ -30,7 +30,7 @@ pub use stm32f1xx_hal::{
 };
 
 //use embedded_hal::spi::{Mode, Phase, Polarity};
-//note: `Mode` and `Mode` have similar names, but
+//note: `Mode` and `Mode` have similar names, but...
 //use embedded_hal::i2c::ErrorType;
 
 

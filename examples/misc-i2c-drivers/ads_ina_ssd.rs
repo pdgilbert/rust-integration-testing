@@ -40,9 +40,14 @@ use embedded_hal::{
 };
 
 use rust_integration_testing_of_examples::
-       setup::{Peripherals, DelayNs, prelude::*, block, I2C1, RccExt, DutyCycle, i2cMode, BlockingI2c,};
+       setup::{Peripherals, DelayNs, prelude::*, block, RccExt,};
 
 
+#[cfg(feature = "stm32f1xx")]
+use stm32f1xx_hal::{
+      pac::I2C1,
+      i2c::{DutyCycle, Mode as i2cMode, BlockingI2c,}, 
+};
 
 
 #[cfg(feature = "stm32g4xx")]
