@@ -92,6 +92,15 @@ pub trait SEEK {
     //fn stcint(&mut self) -> ;
 }
 
+#[cfg(any(feature = "stm32f1xx", ))]
+impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+    fn seekup(&mut self) -> bool {
+        self.p_seekup.is_high()
+    }
+    fn seekdown(&mut self) -> bool {
+        self.p_seekdown.is_high()   
+    }
+}
 
 #[cfg(feature = "stm32f4xx")]
 impl SEEK for SeekPins<PB12<Input>, PB11<Input>> {
@@ -113,7 +122,7 @@ impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
     }
 }
 
-#[cfg(not(any(feature = "stm32f3xx", feature = "stm32f4xx",feature = "stm32h7xx")))]
+#[cfg(not(any(feature = "stm32f1xx", feature = "stm32f3xx", feature = "stm32f4xx",feature = "stm32h7xx")))]
 impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high().unwrap()
@@ -189,10 +198,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(mut dp: Peripherals) -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
+    pac::{I2C1, I2C2},
     //timer::Delay,
     //timer::SysDelay as Delay,
     gpio::{
-        gpiob::{PB10, PB11, PB6},
+        gpiob::{PB10, PB11, PB6, PB12, PB13},
         Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode},
@@ -221,8 +231,6 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let mut gpiob = dp.GPIOB.split();
     let mut gpioc = dp.GPIOC.split();
 
-    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
     let mut rst = gpiob.pb7.into_push_pull_output(&mut gpiob.crl);
@@ -231,24 +239,26 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
     let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
 
-    let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
-        (scl, sda),
-        &mut afio.mapr,
-        Mode::Fast {
-            frequency: 400_000.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
+    let i2c1 = BlockingI2c::<I2C1>::new(
+                  dp.I2C1.remap(&mut afio.mapr),  // add this for PB8, PB9
+                  (scl, sda),
+                  Mode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio2to1,},
+                  &clocks, 1000, 10, 1000, 1000,);
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
-        p_seekup: gpiob.pb10.into_pull_down_input(&mut gpiob.crh),
-        p_seekdown: gpiob.pb11.into_pull_down_input(&mut gpiob.crh),
+    let i2c2 = BlockingI2c::<I2C2>::new(
+                 dp.I2C2,
+                 (gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl 
+                  gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
+                 ),
+                 Mode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
+                 &clocks, 1000, 10, 1000, 1000,);
+
+    let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
+
+    // may not be good pins for this
+    let buttons: SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> = SeekPins {
+        p_seekup: gpiob.pb12.into_pull_down_input(&mut gpiob.crh),
+        p_seekdown: gpiob.pb13.into_pull_down_input(&mut gpiob.crh),
     };
 
     (i2c1, i2c2, led, delay, buttons, stcint)

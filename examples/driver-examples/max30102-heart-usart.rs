@@ -139,9 +139,9 @@ fn setup() -> (
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
     timer::SysDelay as Delay,
-    pac::USART1,
+    pac::{USART1},
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},
+    i2c::{BlockingI2c, DutyCycle, Mode},
     pac::{CorePeripherals, Peripherals, I2C1},
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
@@ -159,7 +159,7 @@ impl LED for PC13<Output<PushPull>> {
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (
-    BlockingI2c<I2C1, impl Pins<I2C1>>,
+    BlockingI2c<I2C1>,
     impl LED,
     Delay,
     Tx<USART1>,
@@ -178,27 +178,18 @@ fn setup() -> (
         .pclk1(36.MHz())
         .freeze(&mut flash.acr);
 
-    let mut afio = dp.AFIO.constrain();
-
     let mut gpiob = dp.GPIOB.split();
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
+    let mut afio = dp.AFIO.constrain();
 
-    let i2c = BlockingI2c::i2c1(
-        dp.I2C1,
+    let i2c = BlockingI2c::<I2C1>::new(
+        dp.I2C1.remap(&mut afio.mapr), 
         (scl, sda),
-        &mut afio.mapr,
-        Mode::Fast {
-            frequency: 400_000.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
+        Mode::Fast {frequency: 400_000.Hz(), duty_cycle: DutyCycle::Ratio2to1},
+        &clocks, 1000, 10, 1000, 1000,);
+
 
     let mut gpioc = dp.GPIOC.split();
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
@@ -209,7 +200,7 @@ fn setup() -> (
     let serial = Serial::new(
         dp.USART1,
         (tx, rx),
-        &mut afio.mapr,
+        //&mut afio.mapr,
         Config::default().baudrate(9600.bps()),
         &clocks,
     );

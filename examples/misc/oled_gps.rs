@@ -92,7 +92,7 @@ fn setup() -> (
 use stm32f1xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     timer::SysDelay as Delay,
-    i2c::{BlockingI2c, DutyCycle, Mode, Pins},
+    i2c::{BlockingI2c, DutyCycle, Mode},
     prelude::*,
     serial::{Config, Rx, Serial, Tx}, //, StopBits
 };
@@ -101,7 +101,7 @@ use stm32f1xx_hal::{
 fn setup() -> (
     Tx<USART2>,
     Rx<USART2>,
-    BlockingI2c<I2C2, impl Pins<I2C2>>,
+    BlockingI2c<I2C2>,
     impl DelayNs,
 ) {
     let cp = CorePeripherals::take().unwrap();
@@ -119,29 +119,21 @@ fn setup() -> (
             gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2  for GPS
             gpioa.pa3,                                          //rx pa3  for GPS
         ),
-        &mut afio.mapr,
+        //&mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
         &clocks,
     )
     .split();
 
-    let i2c = BlockingI2c::i2c2(
-        p.I2C2,
-        (
-            gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl on PB10
-            gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda on PB11
-        ),
-        //&mut afio.mapr,  need this for i2c1 but not i2c2
-        Mode::Fast {
-            frequency: 400_000.Hz(),
-            duty_cycle: DutyCycle::Ratio2to1,
-        },
-        clocks,
-        1000,
-        10,
-        1000,
-        1000,
-    );
+    let i2c = BlockingI2c::<I2C2>::new(
+                 p.I2C2,
+                 (
+                  gpiob.pb10.into_alternate_open_drain(&mut gpiob.crh), // scl 
+                  gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
+                 ),
+                 Mode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
+                 &clocks, 1000, 10, 1000, 1000,);
+
 
     (tx, rx, i2c, cp.SYST.delay(&clocks))
 }
