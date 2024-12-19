@@ -46,7 +46,8 @@ use cortex_m_rt::entry;
 //use embedded_hal::i2c::{I2c};
 
 
-use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+//use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+use aht20_driver::{AHT20, AHT20Initialized, SENSOR_ADDRESS}; 
 
 use core::fmt::Write;
 
@@ -223,26 +224,33 @@ fn main() -> ! {
 
     /////////////////////  AHT20s on xca    // Start the sensors.
     
-    type SensType<'a> =Aht20<I2cSlave<'a,  Xca9548a<I2c1Type>, I2c1Type>, AltDelay>;
-
-    const SENSER: Option::<SensType> = None;      //const gives this `static lifetime
-    let mut sensors: [Option<SensType>; 8] = [SENSER; 8];
-
-
     // Split the device and pass the virtual I2C devices to sensor driver
     let switch1parts = switch1.split();
 
+    // pity it is so hard to iterate over fields of switch1parts.
     let parts  = [switch1parts.i2c0, switch1parts.i2c1, switch1parts.i2c2, switch1parts.i2c3,
                   switch1parts.i2c4, switch1parts.i2c5, switch1parts.i2c6, switch1parts.i2c7];
 
+    //type SensType<'a> =AHT20<I2cSlave<'a,  Xca9548a<I2c1Type>, I2c1Type>, AltDelay>;
+    type SensType<'a> =AHT20Initialized<'a,  I2cSlave<'a,  Xca9548a<I2c1Type>, I2c1Type>>;
+
+    //const SENSER: Option::<SensType> = None;      //const gives this `static lifetime
+    //typeSenser: Option::<SensType> = None;      
+    let mut sensors: [Option<SensType>; 8];
+
+
 hprintln!("prt in parts");
-    let mut i = 0;  // not very elegant
-    for  prt in parts {
+    //let mut i = 0;  // not very elegant
+    //for  prt in parts {
+    for (i, prt) in  parts.iter().enumerate() {
        hprintln!("screen[0].clear()");
        screen[0].clear();
        //  AltDelay{} is used below to generate a Delay for each sensor.
        hprintln!("prt {}", i);
-       let z = Aht20::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{});
+       //let z = Aht20::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{});
+        let mut z_uninit = AHT20::new(prt, SENSOR_ADDRESS);
+       //hprintln!("init the sensor...");
+       let mut z = z_uninit.init(&mut delay1);
        hprintln!("match z");
        match z {
            Ok(v) => {sensors[i] = Some(v);
@@ -254,7 +262,7 @@ hprintln!("prt in parts");
        show_screen(&screen, &mut display);
        delay1.delay_ms(500);
        
-       i += 1;
+      // i += 1;
     };
 
     screen[0].clear();
@@ -269,10 +277,11 @@ hprintln!("loop");
                None       => {},  //skip
    
                Some(sens) => {screen[ln].clear();
-                              match sens.measure() {
-                                   Ok(m) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                              //match sens.measure() {
+                              match sens.measure(&mut delay1) {
+                                   Ok(m) => {//hprintln!("{} deg C, {}% RH", m.temperature,m.humidity).unwrap();
                                              write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, m.temperature.celcius(), m.relative_humidity).unwrap();
+                                                          i, m.temperature, m.humidity).unwrap();
                                             },
                                    Err(e)    => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
                                                  //hprintln!("read error {:?}", e).unwrap();

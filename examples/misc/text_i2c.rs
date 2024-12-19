@@ -17,6 +17,7 @@
 
 use cortex_m_rt::entry;
 //use cortex_m_rt::{entry, exception, ExceptionFrame};
+use cortex_m_semihosting_05::hprintln;
 
 // old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
 // builtin include FONT_6X10, FONT_8X13, ....
@@ -374,12 +375,16 @@ fn setup() -> I2c<I2C2, (impl SclPin<I2C2>, impl SdaPin<I2C2>)> {
 
 #[entry]
 fn main() -> ! {
+    hprintln!("text_i2c example");
     let i2c = setup();
+    hprintln!("done setup()");
 
     let interface = I2CDisplayInterface::new(i2c);
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
     display.init().unwrap();
+
+    hprintln!("done interface");
 
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT_6X10)
@@ -389,6 +394,7 @@ fn main() -> ! {
     Text::with_baseline("Hello world!", Point::zero(), text_style, Baseline::Top)
         .draw(&mut display)
         .unwrap();
+    hprintln!("done Hello world!");
 
     Text::with_baseline("Hello Rust!", Point::new(0, 16), text_style, Baseline::Top)
         .draw(&mut display)
@@ -396,6 +402,7 @@ fn main() -> ! {
 
     display.flush().unwrap();
 
+    hprintln!("enter loop {}");
     loop {}
 }
 

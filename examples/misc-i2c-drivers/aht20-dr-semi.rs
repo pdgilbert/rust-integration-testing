@@ -2,14 +2,27 @@
 //!
 //! The "semi" examples simplify testing of the sensor crate alone, without display complications.
 
-//! Using crate embedded-aht20
+//! Using crate aht20-driver   
+
+//! Status Dec 17, 2024
+//!   Compiles with and without --release using stm32f1xx_hal,  stm32f4xx_hal, and stm32g4xx_hal
+//! 
+//!   Too large to load without  --release on bluepill 128K flash.
+//!   Panics at aht20_uninit.init() with  --release on bluepill 128K flash
+//! 
+//!   Runs with --release using stm32f4xx_hal on blackpill stm32f401 and stm32f411,
+//!       both  aht.measure and aht.measure_no_fp.
+//!   Fails running  (disappears aht20_uninit.init()) without  --release
+//!        using stm32f4xx_hal on blackpill stm32f401 and stm32f411,
+//! 
+//!   Runs with and without --release using stm32g4xx_hal on stm32g474xE.
 
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
 
 use cortex_m_semihosting_05::hprintln;
-//use cortex_m::asm;
+use cortex_m::asm;
 
 use aht20_driver::{AHT20, SENSOR_ADDRESS}; 
 
@@ -72,8 +85,9 @@ fn main() -> ! {
     hprintln!("Start the sensor...");
     // Start the sensor.   address 0x38 cannot be changed
 
- // asm::bkpt();  
+  asm::bkpt();  
     let mut aht20_uninit = AHT20::new(i2c1, SENSOR_ADDRESS);
+    hprintln!("init the sensor...");
     let mut aht = aht20_uninit.init(&mut delay).unwrap();
 
     hprintln!("Sensor started.");
@@ -82,8 +96,9 @@ fn main() -> ! {
         hprintln!("loop i");      
         
         hprintln!("aht.measure()");
-        let th = aht.measure(&mut delay).unwrap();  
-
+        let th = aht.measure(&mut delay).unwrap();
+        // no floating point should make binary smaller on some MCUs
+        //let th = aht.measure_no_fp(&mut delay).unwrap(); 
         hprintln!("{:.2}C  {:.2}% RH", th.temperature, th.humidity);
 
         delay2.delay_ms(5000); 

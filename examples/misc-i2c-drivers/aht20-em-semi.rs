@@ -4,6 +4,18 @@
 
 //! Using crate embedded-aht20
 
+//! Status Dec 17, 2024
+//!   Compiles with and without --release using stm32f1xx_hal,  stm32f4xx_hal, and stm32g4xx_hal
+//! 
+//!   Too large to load without  --release on bluepill 128K flash.
+//!   Panics at Aht20::new() with  --release on bluepill 128K flash
+//! 
+//!   Fails running  (disappears Aht20::new()) with and without  --release
+//!        using stm32f4xx_hal on blackpill  stm32f411
+//! 
+//!   Runs with  --release using stm32g4xx_hal on stm32g474xE.
+//!   Fails running  (disappears at aht.measure()) on stm32g474xE without  --release
+
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
