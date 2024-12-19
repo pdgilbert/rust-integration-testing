@@ -9,7 +9,7 @@
 use cortex_m_semihosting_05::hprintln;
 //use cortex_m::asm;
 
-use aht20::{Aht20};
+use aht20_bl::{Aht20};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;

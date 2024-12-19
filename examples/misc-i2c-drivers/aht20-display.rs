@@ -14,7 +14,7 @@
 
 use cortex_m_semihosting::hprintln;
 
-use aht20::{Aht20};
+use aht20_bl::{Aht20};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;

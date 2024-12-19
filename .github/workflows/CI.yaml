@@ -313,11 +313,14 @@ jobs:
       - name: Example aht20-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display
 
-      - name: Example aht20-semi
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-semi
+      - name: Example aht20-bl-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-bl-semi
 
       - name: Example aht20-em-semi
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-em-semi
+
+      - name: Example aht20-dr-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-dr-semi
 
       - name: Example sht30-em-semi
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example sht30-em-semi
@@ -694,7 +697,7 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [aht20-semi,    aht20-em-semi,     sht30-em-semi, shtcx-semi,   
+        eg:  [aht20-bl-semi,    aht20-em-semi,  aht20-dr-semi,   sht30-em-semi, shtcx-semi,   
               aht10-display,           aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          ads_ina_ssd,      

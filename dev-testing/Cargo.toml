@@ -108,7 +108,7 @@ veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
 
 aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" }
 
-aht20           = { git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
+aht20-bl          = { package = "aht20", git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
 
 #embedded-aht20   = { git = "https://github.com/ghismary/embedded-aht20" }
 embedded-aht20   = "0.1.3"     #eh-1 and both sync and async
@@ -589,16 +589,8 @@ path = "examples/rtic/serial-dma.rs"
 # examples/misc-i2c-drivers
 
 [[example]]
-name = "aht20-semi"
-path = "examples/misc-i2c-drivers/aht20-semi.rs"
-
-[[example]]
-name = "sht30-em-semi"
-path = "examples/misc-i2c-drivers/sht30-em-semi.rs"
-
-[[example]]
-name = "shtcx-semi"
-path = "examples/misc-i2c-drivers/shtcx-semi.rs"
+name = "aht20-bl-semi"
+path = "examples/misc-i2c-drivers/aht20-bl-semi.rs"
 
 [[example]]
 name = "aht20-em-semi"
@@ -607,6 +599,14 @@ path = "examples/misc-i2c-drivers/aht20-em-semi.rs"
 [[example]]
 name = "aht20-dr-semi"
 path = "examples/misc-i2c-drivers/aht20-dr-semi.rs"
+
+[[example]]
+name = "sht30-em-semi"
+path = "examples/misc-i2c-drivers/sht30-em-semi.rs"
+
+[[example]]
+name = "shtcx-semi"
+path = "examples/misc-i2c-drivers/shtcx-semi.rs"
 
 [[example]]
 name = "ens160-co2-voc-iaq-display"
@@ -655,8 +655,16 @@ name = "ina219-display"
 path = "examples/misc-i2c-drivers/ina219-display.rs"
 
 [[example]]
-name = "xca9548a"
-path = "examples/misc-i2c-drivers/xca9548a.rs"
+name = "xca9548a-aht20-bl"
+path = "examples/misc-i2c-drivers/xca9548a-aht20-bl.rs"
+
+[[example]]
+name = "xca9548a-aht20-em"
+path = "examples/misc-i2c-drivers/xca9548a-aht20-em.rs"
+
+[[example]]
+name = "xca9548a-aht20-dr"
+path = "examples/misc-i2c-drivers/xca9548a-aht20-dr.rs"
 
 [[example]]
 name = "xca9548a_hdc2080"

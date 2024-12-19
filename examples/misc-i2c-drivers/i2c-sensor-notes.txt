@@ -16,6 +16,7 @@ from having two versions of eh.)
 So, for multiplexing a sensor crates should:
 
  - Be using eh-1 and be no_std.
+ - The binary should not be overly big, so other things can also be done on an MCU with limited flash.
  - Sensor intialization should return a Result so that it is posible to identify
      when some sensors are not attached.
  - Allow for software reset so individual sensors can be reset without a power cycle.
@@ -28,28 +29,31 @@ So, for multiplexing a sensor crates should:
 
 
 By above criteria:
-(*semi* examples are the basis for compiled/works status below)
 
 AHT10 - There are not yet any eh-1 syncronous/blocking crates. 
       - Crate aht10-async (https://github.com/jneem/aht10-async)
             uses  embedded-hal-async = "1.0.0"  but is only async.
   
-AHT20 - Crate aht20  (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
-        so it is not good for xca9548a use. Also it consumes delay.  
-        It works with stm32g4xx on stm32g474xE. 
-        It compiles with stm32f4xx on stm32f411 but run fails.
+AHT20 - Crate aht20 used here as aht20-bl (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
+        so it is difficult for xca9548a use. (All sensors must be present.) Also it consumes delay.  
+        Example aht20-bl-semi works with stm32g4xx on stm32g474xE. 
+        Example aht20-bl-semi compiles with stm32f4xx on stm32f411 but run fails.
+        Example aht20-bl-semi compiles with stm32f1xx on bluepill but run fails.
+        Example xca9548a-aht20-bl
 
 
       - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
         returns Result, and has feature option for sync or async. It consumes delay.
-        It works with stm32g4xx on stm32g474xE. 
-        It compiles with stm32f4xx on stm32f401 but run fails.
+        Example aht20-em-semi works with stm32g4xx on stm32g474xE. 
+        Example aht20-em-semi compiles with stm32f4xx on stm32f401 but run fails.
+        Example xca9548a-aht20-em compiles with stm32f1xx, stm32f4xx, and stm32g474xE
 
       - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
         does not consume delay. Result returned by .init method. It has an option to use
         Integer rather than Floating point. It is only sync.
-        It works with stm32g4xx on stm32g474xE. 
-        It compiles with stm32f4xx on stm32f401 but run fails.
+        Example aht20-dr-semi works with stm32g4xx on stm32g474xE. 
+        Example aht20-dr-semi compiles with stm32f4xx on stm32f401 but run fails.
+        Example xca9548a-aht20-dr
 
 
 AHT21 - There are not yet any eh-1 crates. 
@@ -65,9 +69,14 @@ Other notes:
 
 #aht10  = { git = "https://github.com/heyitsanthony/aht10" }  #original but not being updated.
 aht10   = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" } # not eh-1
-#aht10-async           = { git = "https://github.com/jneem/aht10-async" }  
+#aht10-async           = { git = "https://github.com/jneem/aht10-async" } # aysnc only
 
 #aht20           = { git = "https://github.com/mythmon/aht20" } # this does not appears to be actively updated
 #aht20           = { git = "https://github.com/nim65s/aht20" }  # eh 0.2.6
-aht20           = { git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
 
+
+//!  As of March 17, 2024 example xca9548a  compiled and runs on and ran blackpill stm32f401 both with and without --release
+//!    using up to 4 AHT10s all on the first xca9548a.
+//!    Testing with DisplaySize128x32 and then changed to DisplaySize128x64 rotated. 
+//!    Works with USB dongle power, USB 5v battery power,  and 3.2v battery power,
+//!    using 4 sensors on long wires.
