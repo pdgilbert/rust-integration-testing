@@ -325,8 +325,8 @@ jobs:
       - name: Example sht30-em-semi
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example sht30-em-semi
 
-      - name: Example shtcx-em-semi
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example shtcx-em-semi
+      - name: Example shtcx-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example shtcx-semi
 
       - name: Example ina219-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ina219-display
@@ -340,8 +340,14 @@ jobs:
 #      - name: Example mlx9064x
 #        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx9064x
 #
-#      - name: Example xca9548a
-#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a
+#      - name: Example xca9548a-aht20-bl
+#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a-aht20-bl
+
+      - name: Example xca9548a-aht20-em
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a-aht20-em
+
+      - name: Example xca9548a-aht20-dr
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example xca9548a-aht20-dr
 
 
      #####  sx127x examples  #####
@@ -703,8 +709,8 @@ jobs:
               htu2xd-display,          ads_ina_ssd,      
               vl53lox-display,         ens160-co2-voc-iaq-display,
               ina219-display,         
-              xca9548a,                one_wire_bus_find_devices,        onewire,
-              iaq_ens160aht21_display
+              iaq_ens160aht21_display, one_wire_bus_find_devices,        onewire,
+              xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr,  xca9548a_hdc2080,
              ]
              
              # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
