@@ -1,10 +1,10 @@
-Notes on various sensor crate issues as of Dec. 2024.
+Notes on various sensor crates
 
 To simplify testing the examples *semi* use only the sensor crate and report results
 with semihosting. This means the example does not need ssd or anything that would make
 the example actually useable. 
 
-At present there appears to be a run time bug in hal stm32f4xx affecting I2C.
+At present there appears to be a run time bug in hal stm32f4xx affecting I2C initialization.
 
 The crate xca9548a provides multiplexing of sensors with the same address.
 It is now converted to embedded-hal v1.0.0. That seems to mean that
@@ -28,32 +28,73 @@ So, for multiplexing a sensor crates should:
  - It would be nice if there were a release version rather than just github.
 
 
-By above criteria:
+issues as of Dec. 2024.By above criteria:
 
 AHT10 - There are not yet any eh-1 syncronous/blocking crates. 
       - Crate aht10-async (https://github.com/jneem/aht10-async)
             uses  embedded-hal-async = "1.0.0"  but is only async.
   
-AHT20 - Crate aht20 used here as aht20-bl (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
-        so it is difficult for xca9548a use. (All sensors must be present.) Also it consumes delay.  
-        Example aht20-bl-semi works with stm32g4xx on stm32g474xE. 
-        Example aht20-bl-semi compiles with stm32f4xx on stm32f411 but run fails.
-        Example aht20-bl-semi compiles with stm32f1xx on bluepill but run fails.
-        Example xca9548a-aht20-bl
+AHT20
+ - Crate aht20 used here as aht20-bl (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
+     so it is difficult for xca9548a use. (All sensors must be present.) Also it consumes delay.  
+
+        Example aht20-bl-semi compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411) 
+            and stm32g4xx (stm32g474xE).
+        Example aht20-bl-semi run fails on stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411).
+   *    Example aht20-bl-semi runs with stm32g4xx on stm32g474xE. 
+
+        Example xca9548a-aht20-bl compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401),
+            and stm32g4xx (stm32g474xE).
+        Example xca9548a-aht20-bl fails on stm32f4xx (blackpill stm32f401). 
+            (in xca9548a-aht20-bl loop at i=0  match sens.read() { 
 
 
-      - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
-        returns Result, and has feature option for sync or async. It consumes delay.
-        Example aht20-em-semi works with stm32g4xx on stm32g474xE. 
-        Example aht20-em-semi compiles with stm32f4xx on stm32f401 but run fails.
-        Example xca9548a-aht20-em compiles with stm32f1xx, stm32f4xx, and stm32g474xE
+ - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
+     returns Result, and has feature option for sync or async. It consumes delay.
 
-      - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
-        does not consume delay. Result returned by .init method. It has an option to use
-        Integer rather than Floating point. It is only sync.
-        Example aht20-dr-semi works with stm32g4xx on stm32g474xE. 
-        Example aht20-dr-semi compiles with stm32f4xx on stm32f401 but run fails.
-        Example xca9548a-aht20-dr
+        Example aht20-em-semi compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411/401) 
+            and stm32g4xx (stm32g474xE).
+        Example aht20-em-semi run fails on stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401).
+   *    Example aht20-em-semi runs with stm32g4xx on stm32g474xE. 
+
+        Example xca9548a-aht20-em compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401),
+            and stm32g4xx (stm32g474xE).
+        Example xca9548a-aht20-em fails on stm32f4xx (blackpill stm32f401). (in loop at i=0  Aht20::new(prt, .. 
+             in embedded_aht20::Aht20<xca9548a::p* L132  PC: 0x8006822
+                  132  while !dev.check_status().await?.is_calibrated() {
+                   In: embedded_aht20::Aht20<xca9548a::p* L208  PC: 0x80066e0 
+                  208    self.i2c 
+extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x80090b2
+487          self.write_wo_prepare(bytes)
+
+
+ - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
+     does not consume delay. Result returned by .init method. It has an option to use
+     Integer rather than Floating point. It is only sync.
+
+        Example aht20-dr-semi compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411) 
+            and stm32g4xx (stm32g474xE).
+   *    Example aht20-dr-semi runs with stm32g4xx (stm32g474xE). 
+        Example aht20-dr-semi run fails on stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401).
+
+extended-r Remote target In: aht20_driver::AHT20<stm32f4xx_hal* L361  PC: 0x800268e
+extended-r Remote target In: aht20_driver::AHT20<stm32f4xx_hal* L389  PC: 0x8002562 
+389          self.i2c                                                     
+390              .read(self.address, &mut read_buffer)       
+
+
+        Example xca9548a-aht20-dr compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411) 
+            and stm32g4xx (stm32g474xE).
+        Example xca9548a-aht20-dr fails on stm32f4xx (blackpill stm32f401). 
+
+extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x8004e1
+
+485      pub fn write(&mut self, addr: impl Into<Address>, bytes: &[u8]) -> 
+486          self.prepare_write(addr.into())?;                              
+487          self.write_wo_prepare(bytes)                                   
+488      }                                        
+
+
 
 
 AHT21 - There are not yet any eh-1 crates. 

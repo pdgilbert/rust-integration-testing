@@ -172,7 +172,7 @@ fn main() -> ! {
 //        //hprintln!("Error write_read!").unwrap();
 //    }
 
-    show_message(&"Sensors on xca", &mut display);
+    show_message(&"Sens xca", &mut display);
 
     /////////////////////  AHT20s on xca    // Start the sensors.
 

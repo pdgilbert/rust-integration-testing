@@ -15,6 +15,8 @@ use panic_halt as _;
 
 // Need to run with debug console if hprintln is uncommented, otherwise stalls waiting to print.
 use cortex_m_semihosting_05::hprintln;
+//use cortex_m::asm;   //for asm::bkpt();  debugging
+
 
 use cortex_m_rt::entry;
 use core::fmt::Write;
@@ -194,10 +196,11 @@ fn main() -> ! {
        hprintln!("screen[0].clear()");
        screen[0].clear();
        hprintln!("prt {}", i);
-       let z = Aht20::new(prt, AltDelay{});  // crate assumes address, no Result so must assume ok
+       let z = Aht20::new(prt, AltDelay{});  // crate assumes address,
       
-       sensors[i] = z;
-       write!(screen[0], "J{} assumed in use", i).unwrap();
+       //sensors[i] = Some(z);                 // no Result so must assume ok
+       if i < 1 {sensors[i] = Some(z)};        // test with only first sensor[0] in J1 
+       write!(screen[0], "J{} assumed", i).unwrap();
        show_screen(&screen, &mut display);
        delay1.delay_ms(500);
        
@@ -209,8 +212,12 @@ fn main() -> ! {
 
     hprintln!("loop");
     loop {   // Read humidity and temperature.
+      let mut ln = 1;  // screen line to write. Should make this roll if number of sensors exceed DISPLAY_LINES
     
       for  i in 0..sensors.len() {
+          hprintln!("i {}", i);
+//asm::bkpt(); 
+          //if sensors[i].is_none() {hprintln!("None")};
           match   &mut sensors[i] {
                None       => {},  //skip
    
