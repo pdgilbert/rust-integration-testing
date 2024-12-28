@@ -23,9 +23,9 @@ pub use stm32f1xx_hal::{
       spi::{Mode, Phase, Polarity},
       //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},
       serial::{Config},
-      gpio::{Alternate, Pin,
-             gpioa::{PA1, PA8},
-             gpiob::{PB6, PB7, PB8, PB9, PB10, PB11},
+      gpio::{Alternate, Pin, Input, 
+             gpioa::{PA0, PA1, PA8, PA11},
+             gpiob::{PB0, PB1, PB6, PB7, PB8, PB9, PB10, PB11},
              gpioc::{PC13 as LEDPIN}},
 };
 
@@ -81,10 +81,21 @@ pub type SpiType =  Spi<SPI1, u8>;
 //                    pub busy:  Pin<'B', 8>, 
 //                    pub ready: Pin<'B', 9>, 
 //                    pub reset: Pin<'A', 0, Output>
-pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, //UNTESTED
-                    pub busy:  Pin<'B', 0>, 
-                    pub ready: Pin<'B', 1>, 
-                    pub reset: Pin<'A', 0, Output>
+//pub struct SpiExt { pub cs:    Pin<'A', 11, Output>, //UNTESTED
+//                    pub busy:  Pin<'B', 0>, 
+//                    pub ready: Pin<'B', 1>, 
+//                    pub reset: Pin<'A', 0, Output>
+//}
+// these should just be in SpiExt, but radio Sx127x still wants them separately
+pub type Cs    = PA11<Output<PushPull>>;
+pub type Busy  = PB0<Input<>>;
+pub type Ready = PB1<Input<>>;
+pub type Reset = PA0<Output<PushPull>>;
+
+pub struct SpiExt { pub cs:    Cs, 
+                    pub busy:  Busy, 
+                    pub ready: Ready, 
+                    pub reset: Reset
 }
 
 

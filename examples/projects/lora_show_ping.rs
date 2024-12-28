@@ -53,7 +53,7 @@ use panic_halt as _;
 //use panic_reset;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::*;
+//use cortex_m_semihosting::*;
 use cortex_m::asm; // for delay
 
 //use cortex_m_semihosting::{debug, hprintln};
@@ -70,11 +70,10 @@ use radio_sx127x::{
 };
 
 // for config examination on debugging
-use radio_sx127x::{
-    device::regs::Register,
-   // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,
-    
-};
+//use radio_sx127x::{
+//    device::regs::Register,
+//   // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,  
+//};
 
 
 //    /////////////////////  ssd
@@ -101,12 +100,12 @@ use radio_sx127x::{
 //   //////////////////////////////////////////////////////////////////////
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, MONOCLOCK, I2c2Type};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c2Type};
 
 use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
 //use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
-use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM5, };
-use rust_integration_testing_of_examples::lora::Base;
+//use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM2, };
+use rust_integration_testing_of_examples::lora::{LoraType};
 
 
 //    /////////////////////   constants and types
@@ -145,8 +144,6 @@ type  DisplayType = Ssd1306<I2CInterface<I2c2Type>, DisplaySize, BufferedGraphic
     }
 
 //   //////////////////////////////////////////////////////////////////////
-
-type LoraType = Sx127x<Base<Spi<SPI1>, Pin<'A', 4, Output>, Pin<'B', 4>, Pin<'B', 5>, Pin<'A', 0, Output>, halDelay<TIM5, 1000000>>>;
 
     fn send(
         lora: &mut LoraType,

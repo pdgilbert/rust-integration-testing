@@ -39,7 +39,7 @@ use embedded_graphics::{
 
 type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 
-const ROTATION: DisplayRotation = DisplayRotation::Rotate90;   // 0, 90, 180, 270
+const ROTATION: DisplayRotation = DisplayRotation::Rotate0;   // 0, 90, 180, 270
 const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
 const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate90

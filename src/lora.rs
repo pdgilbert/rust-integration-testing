@@ -4,7 +4,6 @@
 
 //    //////////////////////////////////////////
 
-
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
 
@@ -20,19 +19,27 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 use radio_sx127x::{
    // base::Base,
     device::lora::{
-        Bandwidth, CodingRate, FrequencyHopping, LoRaChannel, LoRaConfig, PayloadCrc,
+        Bandwidth, CodingRate, FrequencyHopping, PayloadCrc,
         PayloadLength, SpreadingFactor,
     },
-    device::{Channel, Modem, PaConfig, PaSelect},
+    device::{ PaConfig, PaSelect},
     //Error as sx127xError, // Error name conflict with hals
-   // prelude::*, // prelude has Sx127x,
 };
 
 // trait needs to be in scope to find  methods start_transmit and check_transmit.
 //pub use radio::{Receive, Transmit};
-pub use radio_sx127x::{Receive, Transmit, base::Base};
+pub use radio_sx127x::{Receive, Transmit, 
+                       base::Base,
+                       prelude::*, // prelude has Sx127x, Modem, Channel,  LoRaChannel, LoRaConfig
+};
+
 
 // lora and radio parameters
+
+use crate::setup::{Delay2Type, SpiType, Cs, Busy, Ready, Reset};
+
+pub type LoraType = Sx127x<Base<SpiType, Cs, Busy, Ready, Reset, Delay2Type>>;
+
 
 pub const MODE: Mode = Mode {
     //  SPI mode for radio

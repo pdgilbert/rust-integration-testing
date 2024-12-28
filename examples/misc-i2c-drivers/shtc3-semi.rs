@@ -1,5 +1,11 @@
-//! Continuously read temperature from SHTC3 and with semihosting hprintln.
+//! Continuously read temperature from SHTC3 and with semihosting hprintln. SHTC3 sensor.
 //!
+//! Dec 21, 2024
+//!Compiles and runs on blackpill stm32f411.
+//!Compiles on stm32g4xx (stm32g474xE) but run panicked at shtcx-semi.rs:86:65:
+//!    Normal mode measurement failed: I2c(Nack)
+//!Compiles on stm32f1xx (bluepill) but run panicked at shtcx-semi.rs after Sensor started.
+
 //! The "semi" examples simplify testing of the sensor crate alone, without display complications.
 
 //! Using crate embedded-aht20
@@ -55,7 +61,7 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 #[entry]
 fn main() -> ! {
-    hprintln!("AHT20-em example");
+    hprintln!("shtcx-semi example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -76,8 +82,8 @@ fn main() -> ! {
     // asm::bkpt();  
     let mut sen  = shtcx::shtc3(&mut i2c1);
     hprintln!("Sensor started.");    // does not return Result
-    sen.wakeup(&mut delay).expect("Wakeup failed");
-    hprintln!("Sensor awake.");    // handle Result
+    sen.wakeup(&mut delay).expect("Wakeup failed");  // handle Result
+    hprintln!("Sensor awake.");    
 
     loop {
         hprintln!("loop i");      
@@ -91,7 +97,8 @@ fn main() -> ! {
         //hprintln!("sen.measure() PowerMode  mode ");
         //sen.sleep().expect("Sleep command failed");
         //let th = sen.measure(PowerMode::NormalMode, &mut delay).expect("PowerMode mode measurement failed");
-        //hprintln!("{:.2}C  {:.2}% RH", th.temperature.as_degrees_celsius(), th.humidity.as_percent());
+        
+        hprintln!("{:.2}C  {:.2}% RH", th.temperature.as_degrees_celsius(), th.humidity.as_percent());
 
         delay2.delay_ms(5000); 
     }

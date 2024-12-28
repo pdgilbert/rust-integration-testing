@@ -1,4 +1,4 @@
-Notes on various sensor crates
+## Notes on various sensor crates
 
 To simplify testing the examples *semi* use only the sensor crate and report results
 with semihosting. This means the example does not need ssd or anything that would make
@@ -28,14 +28,14 @@ So, for multiplexing a sensor crates should:
  - It would be nice if there were a release version rather than just github.
 
 
-issues as of Dec. 2024.By above criteria:
+## issues as of Dec. 2024.By above criteria:
 
-AHT10 - There are not yet any eh-1 syncronous/blocking crates. 
+## AHT10 - There are not yet any eh-1 syncronous/blocking crates. 
       - Crate aht10-async (https://github.com/jneem/aht10-async)
             uses  embedded-hal-async = "1.0.0"  but is only async.
   
-AHT20
- - Crate aht20 used here as aht20-bl (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
+## AHT20
+###   aht20 used here as aht20-bl (https://github.com/blueluna/aht20) uses eh-1 but a Result not returned
      so it is difficult for xca9548a use. (All sensors must be present.) Also it consumes delay.  
 
         Example aht20-bl-semi compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411) 
@@ -49,7 +49,7 @@ AHT20
             (in xca9548a-aht20-bl loop at i=0  match sens.read() { 
 
 
- - Crate embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
+###  embedded-aht20  (https://github.com/ghismary/embedded-aht20) uses eh-1, and
      returns Result, and has feature option for sync or async. It consumes delay.
 
         Example aht20-em-semi compiles with stm32f1xx (bluepill), stm32f4xx (blackpill stm32f411/401) 
@@ -64,11 +64,9 @@ AHT20
                   132  while !dev.check_status().await?.is_calibrated() {
                    In: embedded_aht20::Aht20<xca9548a::p* L208  PC: 0x80066e0 
                   208    self.i2c 
-extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x80090b2
-487          self.write_wo_prepare(bytes)
 
 
- - Crate aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
+###  aht20-driver (https://github.com/anglerud/aht20-driver) uses eh-1, and
      does not consume delay. Result returned by .init method. It has an option to use
      Integer rather than Floating point. It is only sync.
 
@@ -77,8 +75,51 @@ extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x8009
    *    Example aht20-dr-semi runs with stm32g4xx (stm32g474xE). 
         Example aht20-dr-semi run fails on stm32f1xx (bluepill), stm32f4xx (blackpill stm32f401).
 
+
+
+### AHT21 - There are not yet any eh-1 crates. 
+
+
+
+### SHTC3  shtcx =  { git = "https://github.com/dbrgn/shtcx-rs" }  Uses eh-1.
+        A Result is returned by .wakeup(). Does not consumes delay.
+
+   *    Example shtcx-semi Compiles and runs on blackpill stm32f411. 
+        Example shtcx-semi Compiles on stm32g4xx (stm32g474xE) but run panicked at shtcx-semi.rs:86:65:
+                     Normal mode measurement failed: I2c(Nack)
+        Example shtcx-semi Compiles on stm32f1xx (bluepill) but run panicked after Sensor started.
+
+
+### SHT3x    embedded-sht3x  https://gitlab.com/ghislainmary/embedded-sht3x/   Uses eh-1
+        but a Result not returned so it is difficult for xca9548a use.  Also it consumes delay.
+
+   *    Example sht30-em-semi compiles and runs on blackpill stm32f411.
+        Example sht30-em-semi compiles on stm32g4xx (stm32g474xE) but run panicked after sen.measure(). 
+        Example sht30-em-semi compiles on stm32f1xx (bluepill) but run panicked after sen.measure().
+
+
+### HDC1080
+embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
+
+
+
+
+## Debugging notes:
+
+### embedded-aht20
+extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x80090b2
+487          self.write_wo_prepare(bytes)
+
+
+### aht20-bl-semi
+break /home/paul/githubClones/stm32f4xx-hal/src/i2c.rs:439
+break /home/paul/githubClones/stm32f4xx-hal/src/i2c.rs:175   ??
+
+
+
+### aht20-dr-semi
 extended-r Remote target In: aht20_driver::AHT20<stm32f4xx_hal* L361  PC: 0x800268e
-extended-r Remote target In: aht20_driver::AHT20<stm32f4xx_hal* L389  PC: 0x8002562 
+sextended-r Remote target In: aht20_driver::AHT20<stm32f4xx_hal* L389  PC: 0x8002562 
 389          self.i2c                                                     
 390              .read(self.address, &mut read_buffer)       
 
@@ -95,18 +136,40 @@ extended-r Remote target In: stm32f4xx_hal::i2c::I2c<stm32f4_s* L487  PC: 0x8004
 488      }                                        
 
 
+ aht20-dr-semi
+break /home/paul/githubClones/stm32f4xx-hal/src/i2c.rs:439
 
 
-AHT21 - There are not yet any eh-1 crates. 
+### aht20-em-semi
+break /home/paul/githubClones/stm32f4xx-hal/src/i2c.rs:334
 
-SHT3embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
-
-shtcx         =  { git = "https://github.com/dbrgn/shtcx-rs" } #  eh 1.0
-#embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
-embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
+ignore breakpoint-number COUNT
+ignore 5 200
 
 
-Other notes:
+###SHT3
+embedded-sht3x   =  https://gitlab.com/ghislainmary/embedded-sht3x/
+break ...stry/src/index.crates.io-6f17d22bba15001f/embedded-sht3x-0.1.0/src/lib.rs:216
+
+xca9548a-aht20-dr on g4
+disappears after sensor 0
+ at match z.init(&mut delay)
+panicked at examples/misc-i2c-drivers/xca9548a-aht20-dr.rs:132:20:
+called `Result::unwrap()` on an `Err` value: BusWriteError
+
+xca9548a-aht20-em on g4
+disappears after prt 0
+embedded-aht20-0.1.3/src/lib.rs
+ >   132          while !dev.check_status().await?.is_calibrated() { 
+ >>   208          self.i2c     
+
+xca9548a-rs-ae9747938cfab30c/f7ef250/src/device_impl.rs\u2500
+>    70                  f(dev) 
+
+
+
+
+## Other notes:
 
 #aht10  = { git = "https://github.com/heyitsanthony/aht10" }  #original but not being updated.
 aht10   = { git = "https://github.com/andy31415/aht10", branch = "fix_status_check" } # not eh-1

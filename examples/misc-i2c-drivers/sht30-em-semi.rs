@@ -1,8 +1,12 @@
-//! Continuously read temperature from SHT30 and with semihosting hprintln.
+//! Continuously read temperature from SHT30 and with semihosting hprintln. Using sensor sht30-D.
 //!
-//! The "semi" examples simplify testing of the sensor crate alone, without display complications.
-
-//! Using crate embedded-aht20
+//! Dec 21, 2024
+//!Compiles and runs on blackpill stm32f411.
+//!Compiles on stm32g4xx (stm32g474xE) but run panicked after sen.measure()
+//!   
+//!Compiles on stm32f1xx (bluepill) but run panicked after sen.measure()
+//!
+//!
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -54,7 +58,7 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 
 #[entry]
 fn main() -> ! {
-    hprintln!("AHT20-em example");
+    hprintln!("sht30-em-semi example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -72,7 +76,7 @@ fn main() -> ! {
     hprintln!("Start the sensor...");
     // Start the sensor.   address 0x38 cannot be changed
 
-     asm::bkpt();  
+    //  asm::bkpt();  
     let mut sen  = Sht3x::new(&mut i2c1, DEFAULT_I2C_ADDRESS, &mut delay);
     hprintln!("Sensor started.");    // does not return Result
     sen.repeatability = High;

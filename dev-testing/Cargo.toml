@@ -16,8 +16,9 @@ stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = 
 #stm32f1xx-hal = { version = "0.10.0", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-#stm32f4xx-hal = { version = "0.20.0", optional = true } 
+#stm32f4xx-hal = { version = "0.22.1", optional = true } 
 stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true }
+#stm32f4xx-hal = {path = "/home/paul/githubClones/stm32f4xx-hal", optional = true }
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 #stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
@@ -204,6 +205,7 @@ embedded-io         = "0.6.1"
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
+
 #embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-hal-02 = { package = "embedded-hal", version = "0.2.7", features = ["unproven"] }
@@ -605,8 +607,8 @@ name = "sht30-em-semi"
 path = "examples/misc-i2c-drivers/sht30-em-semi.rs"
 
 [[example]]
-name = "shtcx-semi"
-path = "examples/misc-i2c-drivers/shtcx-semi.rs"
+name = "shtc3-semi"
+path = "examples/misc-i2c-drivers/shtc3-semi.rs"
 
 [[example]]
 name = "ens160-co2-voc-iaq-display"
@@ -665,6 +667,14 @@ path = "examples/misc-i2c-drivers/xca9548a-aht20-em.rs"
 [[example]]
 name = "xca9548a-aht20-dr"
 path = "examples/misc-i2c-drivers/xca9548a-aht20-dr.rs"
+
+[[example]]
+name = "xca9548a-sht30"
+path = "examples/misc-i2c-drivers/xca9548a-sht30.rs"
+
+[[example]]
+name = "xca9548a-shtc3"
+path = "examples/misc-i2c-drivers/xca9548a-shtc3.rs"
 
 [[example]]
 name = "xca9548a_hdc2080"

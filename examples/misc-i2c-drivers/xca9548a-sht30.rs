@@ -1,7 +1,7 @@
 //! Continuously read temperature from multiple sensors and display on SSD1306 OLED.
 //! The display is on i2c2 and the senssors are multiplexed on i2c1 using  xca9548a.
 //!
-//! With aht20_bl each sensor consumes a delay so these delays are generated with AltDelay.
+//! With sensor crates consumes a delay so these delays are generated with AltDelay.
 
 #![deny(unsafe_code)]
 #![no_std]
@@ -19,7 +19,7 @@ use cortex_m_semihosting_05::hprintln;
 use cortex_m_rt::entry;
 use core::fmt::Write;
 
-use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+use embedded_sht3x::{Repeatability::High, Sht3x, DEFAULT_I2C_ADDRESS}; 
 
 use xca9548a::{SlaveAddr as XcaSlaveAddr, Xca9548a, I2cSlave}; 
 
@@ -39,7 +39,7 @@ use embedded_graphics::{
 
 type DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 
-const ROTATION: DisplayRotation = DisplayRotation::Rotate0;   // 0, 90, 180, 270
+const ROTATION: DisplayRotation = DisplayRotation::Rotate90;   // 0, 90, 180, 270
 const DISPLAYSIZE: DisplaySizeType = ssd1306::prelude::DisplaySize128x64;
 const PPC: usize = 12;  // verticle pixels per character plus space for FONT_6X10 
 const DISPLAY_LINES: usize = 12;     // in characters for 128x64   Rotate90
@@ -134,7 +134,7 @@ fn main() -> ! {
     display.flush().unwrap();
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
-    Text::with_baseline(   "xca5948a \nxca9548a-aht20-em", Point::zero(), text_style, Baseline::Top )
+    Text::with_baseline(   "xca5948a \n aht10-display", Point::zero(), text_style, Baseline::Top )
           .draw(&mut display).unwrap();
     display.flush().unwrap();
 
@@ -174,9 +174,9 @@ fn main() -> ! {
 
     show_message(&"Sens xca", &mut display);
 
-    /////////////////////  AHT20s on xca    // Start the sensors.
+    /////////////////////  sensors on xca    // Start the sensors.
 
-    type SensType<'a> =Aht20<I2cSlave<'a,  Xca9548a<I2c1Type>, I2c1Type>, AltDelay>;
+    type SensType<'a> =Sht3x<I2cSlave<'a,  Xca9548a<I2c1Type>, I2c1Type>, AltDelay>;
 
     const SENSER: Option::<SensType> = None;      //const gives this `static lifetime
     let mut sensors: [Option<SensType>; 8] = [SENSER; 8];
@@ -187,20 +187,30 @@ fn main() -> ! {
     let parts  = [switch1parts.i2c0, switch1parts.i2c1, switch1parts.i2c2, switch1parts.i2c3,
                   switch1parts.i2c4, switch1parts.i2c5, switch1parts.i2c6, switch1parts.i2c7];
 
-hprintln!("prt in parts");
+
+    hprintln!("prt in parts");
     let mut i = 0;  // not very elegant
     for  prt in parts {
        hprintln!("screen[0].clear()");
        screen[0].clear();
        hprintln!("prt {}", i);
-       let z = Aht20::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{});
-       hprintln!("match z");
-       match z {
-           Ok(v)    => {sensors[i] = Some(v);
+       let mut z =  Sht3x::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{}); // does not return Result
+       hprintln!("Sensor started.");    
+       z.repeatability = High;
+
+       let th = z.single_measurement();   // Read humidity and temperature and use Result
+
+       hprintln!("match ");
+       match th {
+           Ok(v)    => {sensors[i] = Some(z);
                         write!(screen[0], "J{} in use", i).unwrap();
+                        hprintln!("{} deg C, {}% RH", v.temperature, v.humidity);
                        },
-           Err(_e)  => {write!(screen[0], "J{} unused", i).unwrap();},
-       }
+           Err(_e)  => {write!(screen[0], "J{} unused", i).unwrap();
+                        hprintln!("single_measurement() error.");
+                       },
+       };
+
        show_screen(&screen, &mut display);
        delay1.delay_ms(500);
        
@@ -217,15 +227,15 @@ hprintln!("loop");
       for  i in 0..sensors.len() {
           match   &mut sensors[i] {
                None       => {},  //skip
-   
+  
                Some(sens) => {screen[ln].clear();
-                              match sens.measure() {
-                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                              match sens.single_measurement() {
+                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", m.temperature, m.humidity).unwrap();
                                                   write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, m.temperature.celcius(), m.relative_humidity).unwrap();
+                                                          i, m.temperature, m.humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
-                                                  //hprintln!("read error {:?}", e).unwrap();
+                                                  //hprintln!("Normal mode measurement failed{:?}", e).unwrap();
                                                   write!(screen[ln], "J{} read error. Reset{:?}", 0, e).unwrap();
                                                  }
                                    };
