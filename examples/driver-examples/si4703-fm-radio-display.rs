@@ -93,7 +93,7 @@ pub trait SEEK {
 }
 
 #[cfg(any(feature = "stm32f1xx", ))]
-impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+impl SEEK for SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high()
     }

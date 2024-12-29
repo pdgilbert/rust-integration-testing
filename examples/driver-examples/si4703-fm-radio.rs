@@ -66,7 +66,7 @@ impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
 }
 
 #[cfg(any(feature = "stm32f1xx", ))]
-impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
+impl SEEK for SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high()
     }
@@ -146,7 +146,7 @@ use stm32f1xx_hal::{
     //timer::Delay,
     //timer::SysDelay as Delay,
     gpio::{
-        gpiob::{PB10, PB11, PB6, PB12, PB13},
+        gpiob::{PB6, PB12, PB13},
         Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode},
