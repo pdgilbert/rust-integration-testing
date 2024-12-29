@@ -83,10 +83,16 @@ pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1, Enabled>;
-pub struct SpiExt { pub cs:    PA11<Output<PushPull>>,   //pa11 UNTESTED
-                    pub busy:  PB4<Input>, 
-                    pub ready: PB5<Input>, 
-                    pub reset: PA0<Output<PushPull>>
+
+pub type Cs    = PA11<Output<PushPull>>;  //pa11 UNTESTED
+pub type Busy  = PB4<Input>;
+pub type Ready = PB5<Input>;
+pub type Reset = PA0<Output<PushPull>>;
+
+pub struct SpiExt { pub cs:    Cs, 
+                    pub busy:  Busy, 
+                    pub ready: Ready, 
+                    pub reset: Reset
 }
 
 

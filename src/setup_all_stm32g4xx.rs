@@ -75,10 +75,17 @@ pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1,(PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternate<5>>)>;
-pub struct SpiExt { pub cs:    PA4<Output<PushPull>>, 
-                    pub busy:  PB4<Input<Floating>>, 
-                    pub ready: PB5<Input<Floating>>, 
-                    pub reset: PA0<Output<PushPull>>
+// these should just be in SpiExt, but radio Sx127x still wants them separately
+
+pub type Cs    = PA4<Output<PushPull>>;
+pub type Busy  = PB4<Input<Floating>>;
+pub type Ready = PB5<Input<Floating>>;
+pub type Reset = PA0<Output<PushPull>>;
+
+pub struct SpiExt { pub cs:    Cs, 
+                    pub busy:  Busy, 
+                    pub ready: Ready, 
+                    pub reset: Reset
 }
 
 
