@@ -136,9 +136,9 @@ htu21df-sensor     = "0.1.4"
 vl53l0x          = { git = "https://github.com/copterust/vl53l0x" }
 #mlx9064x         = { git = "https://github.com/paxswill/mlx9064x-rs", branch = "main", features = ["libm"], default-features = false } 
 #ina219           = {  version = "0.1.0" }
-#ina219           = { git = "https://github.com/scttnlsn/ina219" }
+ina219           = { git = "https://github.com/scttnlsn/ina219" }
 #ina219           = { git = "https://github.com/sndnvaps/ina219_rs" }
-ina219           = { git = "https://github.com/tdittr/ina219" }
+#ina219           = { git = "https://github.com/tdittr/ina219" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
 #xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "d0debd2" }
 xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
