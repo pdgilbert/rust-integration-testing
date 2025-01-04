@@ -29,8 +29,8 @@ PC13 as LEDPIN   gpiox.pc13.into_push_pull_output(&mut gpiox.crh);
 PA8     opendrain     gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
 
         
- not PB6    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
- not PB7    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
+ not PB6    scl1 
+ not PB7    sda1 
 PB8    scl1   dp.I2C1,  gpiob.pb8.into_alternate_open_drain(&mut gpiob.crl), 
 PB9    sda1             gpiob.pb9.into_alternate_open_drain(&mut gpiob.crl)
 
@@ -179,9 +179,8 @@ PC13   as LEDPIN gpiox.pc13.into_push_pull_output();
 
 PA8     opendrain      gpioa.pa8.into_open_drain_output();
 
-PB9    sda1       I2C1.i2c(     (gpiob.pb8.into_alternate_open_drain(),  // scl
-PB8    scl1                      gpiob.pb9.into_alternate_open_drain()   // sda
-                                      ), 400.kHz(), &clocks);
+PB8    scl1                      gpiob.pb9.into_alternate_open_drain() ), 400.kHz(), &clocks);
+PB9    sda1       I2C1.i2c(     (gpiob.pb8.into_alternate_open_drain(), 
 
 PF0   sda2       I2C2.i2c(     (gpiof.pf0.into_alternate().set_open_drain(), // scl
 PF1    scl2                      gpiof.pf1.into_alternate().set_open_drain()   // sda

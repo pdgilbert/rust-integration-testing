@@ -8,6 +8,28 @@ name = "rust-integration-testing-of-examples"
 version = "0.3.0"
 edition = "2021"
 
+
+[profile.dev] 
+debug = true 
+lto = true 
+opt-level = 1
+
+[profile.release] 
+debug = true 
+lto = true 
+opt-level = "s" 
+
+#[profile.zero]   # opt-level = 0 can cause trouble from things that should be optimized out
+#debug = true 
+#lto = true 
+#opt-level = 0
+#
+#[profile.squish] # make things as small as possible
+#debug = false 
+#lto = false 
+#opt-level = "s" 
+
+
 [dependencies]
 
 #  hal versions using git
