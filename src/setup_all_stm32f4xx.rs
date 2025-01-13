@@ -66,13 +66,13 @@ pub type SpiType =  Spi<SPI1>;
 //pub struct SpiExt { pub cs:    Pin<'A', 4, Output>, 
 //                    pub busy:  Pin<'B', 4>, 
 //                    pub ready: Pin<'B', 5>, 
-//                    pub reset: Pin<'A', 0, Output>
+//                    pub reset: Pin<'A', 1, Output>
 //}
 // these should just be in SpiExt, but radio Sx127x still wants them separately
 pub type Cs    = PA4<Output<PushPull>>;
 pub type Busy  = PB4<Input<>>;
 pub type Ready = PB5<Input<>>;
-pub type Reset = PA0<Output<PushPull>>;
+pub type Reset = PA1<Output<PushPull>>;
 
 pub struct SpiExt { pub cs:    Cs, 
                     pub busy:  Busy, 
@@ -90,7 +90,7 @@ pub const MODE: Mode = Mode {
 
 pub struct AdcSensor<U, A> { ch: U, adc: A }
 
-pub type AdcSensor1Type = AdcSensor<PA1<Analog>, Adc<ADC1>>; 
+pub type AdcSensor1Type = AdcSensor<PA0<Analog>, Adc<ADC1>>; 
 
 pub trait ReadAdc {
     // for reading on channel(self.ch) in mV.
@@ -149,7 +149,7 @@ pub fn all_from_dp(dp: Peripherals) ->
         cs:    gpioa.pa4.into_push_pull_output(), //CsPin         
         busy:  gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
         ready: gpiob.pb5.into_floating_input(),   //ReadyPin DI01 
-        reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
+        reset: gpioa.pa1.into_push_pull_output(), //ResetPin   
         };   
 
    let (tx1, rx1) = Serial::new(dp.USART1, 
@@ -167,7 +167,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    let delay = dp.TIM5.delay(&clocks);
 
    let adc1: AdcSensor1Type = AdcSensor {
-        ch:  gpioa.pa1.into_analog(), //channel
+        ch:  gpioa.pa0.into_analog(), //channel
         adc: Adc::adc1(dp.ADC1, true, AdcConfig::default()),
    }; 
 

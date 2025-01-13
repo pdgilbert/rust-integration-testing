@@ -50,13 +50,13 @@ PA6     miso               gpioa.pa6.into_floating_input(&mut gpioa.crl),      /
 PA7     mosi              gpioa.pa7.into_alternate_push_pull(&mut gpioa.crl), //   mosi
 
 
-PA11  UNTESTED   CsPin     Sx127x::spi(     gpioa.pa11.into_push_pull_output(&mut gpioa.crl), //CsPin        
+PA4  UNTESTED   CsPin     Sx127x::spi(     gpioa.pa11.into_push_pull_output(&mut gpioa.crl), //CsPin       CONSIDER PA4 AS ON F401  
 PB0      BusyPin         gpiob.pb8.into_floating_input(&mut gpiob.crh),   //BusyPin  DIO0
 PB1      ReadyPin        gpiob.pb9.into_floating_input(&mut gpiob.crh),   //ReadyPin DIO1
-PA0     ResetPin         gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin     
+PA1     ResetPin         gpioa.pa0.into_push_pull_output(&mut gpioa.crl), //ResetPin      
 
 
-PA1     adc1  AdcSensor1Type    ch:   gpioa.pa1.into_analog(&mut gpioa.crl), //channel
+PA0     adc1  AdcSensor1Type    ch:   gpioa.pa1.into_analog(&mut gpioa.crl), //channel
 
 
 UNTESTED  For seek pins in si4703-fm-radio-displaysi4703-fm-radio-display
@@ -65,11 +65,13 @@ PB13  seekdown    p_seekdown: gpiob.pbxx.into_pull_down_input(),// possibly not 
 
 PC13
 PB0 PB1 PB6 PB7 PB8 PB9 PB10 PB11 PB12 PB13
-PA0 PA1 PA2 PA3 PA5 PA6  PA7  PA8  PA9 PA10 PA11 
+PA0 PA1 PA2 PA3 PA4 PA5 PA6  PA7  PA8  PA9 PA10 PA11 
 
 
 ///////////////////////////////  stm32f4xx  /////////////////////////////// 
 https://stm32world.com/wiki/Black_Pill
+The clone Black Pill boards are wired up different. 
+The DO (MISO) is not wired up to PB4 as on WeAct but rather PA6.
 
 TIM5   delay = dp.TIM5.delay::<1000000_u32>(&clocks);
 
@@ -93,12 +95,12 @@ PA2    tx2           USART2    gpioa.pa2.into_alternate(),
 PA3    rx2                     gpioa.pa3.into_alternate(), 
                                 Config::default().baudrate(9600.bps()),
 
-PA11   tx3    on     USART6    gpioa.pa11.into_alternate(),  TRY TO RESOLVE CONFILICT WITH CsPin below
+PA11   tx3    on     USART6    gpioa.pa11.into_alternate(),  
 PA12   rx3                     gpioa.pa12.into_alternate(),
 
 
 PA5     sck1       dp.SPI1      gpioa.pa5.into_alternate(), // sck  
-PA6     miso1                   gpioa.pa6.into_alternate(), // miso 
+PA6     miso1                   gpioa.pa6.into_alternate(), // miso   SEE The clone Black Pill note above
 PA7     mosi1                  gpioa.pa7.into_alternate(), // mosi    MODE,  8.MHz(),
 
 Regarding hardware vs software nss see 
@@ -106,12 +108,12 @@ https://stackoverflow.com/questions/35780290/how-can-i-use-hardware-nss-spi-on-s
 
 Use PA4  nss1  in place of pa11 (cspin)  works on stm32f411, SEPT 5, 2024
 PA4     CsPin     Sx127x::spi( gpioa.pa4.into_push_pull_output(), //CsPin     
-PB4     BusyPin                gpiob.pb4.into_floating_input(),   //BusyPin  DIO0 triggers RxDone/TxDone status.
+PB4     BusyPin                gpiob.pb4.into_floating_input(),   //BusyPin  DIO0 triggers RxDone/TxDone status. SEE The clone Black Pill note above
 PB5     ReadyPin               gpiob.pb5.into_floating_input(),   //ReadyPin DIO1 triggers RxTimeout and other errors status.
-PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
-                                    delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
+PA1     ResetPin               gpioa.pa1.into_push_pull_output(), //ResetPin      
+                                    delay, &CONFIG_RADIO,  ).unwrap();  MOVED FROM PA0 TO PA1 since PA0 is reset/wkup for mcu
 
-PA1     adc1  AdcSensor1Type    ch:  gpioa.pa1.into_analog(),
+PA0     adc1  AdcSensor1Type    ch:  gpioa.pa0.into_analog(),  MOVE FROM PA1 TO PA0 or B0 B1
 
 For seek pins in si4703-fm-radio-displaysi4703-fm-radio-display
 PB12  seekup      p_seekup: gpiob.pb12.into_pull_down_input(),   // possibly not right pin for this function
@@ -120,7 +122,7 @@ PB11  seekdown    p_seekdown: gpiob.pb11.into_pull_down_input(),
 
 PC13
 PB3 PB8 PB9 PB10 PB11 PB12
-PA0 PA1 PA2 PA3 PA5 PA6 PA7 PA8  PA9 PA10 PA11 PA12
+PA0 PA1 PA2 PA3 PA4 PA5 PA6 PA7 PA8  PA9 PA10 PA11 PA12
 
 
 ///////////////////////////////  stm32g4xx  /////////////////////////////// 
@@ -160,14 +162,14 @@ Use PA4  nss1  in place of pa11 (cspin)  works on stm32g474, SEPT 5, 2024
 PA4     CsPin        Sx127x     gpioa.pa4.into_push_pull_output(), //CsPin         
 PB4     BusyPin                 gpiob.pb4.into_floating_input(),   //BusyPin  DI00 
 PB5     ReadyPin                gpiob.pb5.into_floating_input(),   //ReadyPin DI01
-PA0     ResetPin                gpioa.pa0.into_push_pull_output(), //ResetPin      
-                                delay,  &CONFIG_RADIO, ).unwrap(); // should handle error
+PA1     ResetPin                gpioa.pa1.into_push_pull_output(), //ResetPin      
+                                delay,  &CONFIG_RADIO, ).unwrap(); //  MOVED FROM PA0 TO PA1 since PA0 is reset/wkup for mcu
 
-PA1     adc1  AdcSensor1Type    ch:  gpioa.pa1.into_analog(),
+PA0     adc1  AdcSensor1Type    ch:  gpioa.pa0.into_analog(),  OR B0 B1
 
 PC4, PC13
 PB4, PB5, PB7, PB8, PB9, PB10, PB11    
-PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8, PA9, PA10, PA11
+PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8, PA9, PA10, PA11
     
 
 
@@ -199,15 +201,17 @@ PA6     miso                   gpioa.pa6.into_alternate(), // miso
 PA7     mosi                   gpioa.pa7.into_alternate(), // mosi 
                                 MODE,  8.MHz(),
 
-PA1?4     CsPin     Sx127x::spi( gpioa.pa1.into_push_pull_output(), //CsPin         
+PA4     CsPin     Sx127x::spi( gpioa.pa4.into_push_pull_output(), //CsPin         
 PB4     BusyPin                gpiob.pb8.into_floating_input(),   //BusyPin  DI00 triggers RxDone/TxDone status.
 PB5     ReadyPin               gpiob.pb9.into_floating_input(),   //ReadyPin DI01 triggers RxTimeout and other errors status.
-PA0     ResetPin               gpioa.pa0.into_push_pull_output(), //ResetPin      
+PA1     ResetPin               gpioa.pa1.into_push_pull_output(), //ResetPin      
                                     delay, &CONFIG_RADIO,  ).unwrap(); // should handle error
+
+PA0     adc1  AdcSensor1Type    ch:  gpioa.pa0.into_analog(),
 
 PF0, PF1
 PC13
 PB4, PB5, PB8, PB9
-PA0, PA1, PA2, PA3, PA5, PA6, PA7, PA8,  PA9, PA10
+PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8,  PA9, PA10
 
     
