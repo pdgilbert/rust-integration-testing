@@ -46,7 +46,7 @@ mod app {
     use crate::Mono;
     use rtic_monotonics::systick::prelude::*;
 
-    //use core::fmt::Write;
+    use core::fmt::Write;
 
     use embedded_graphics::{
         mono_font::{iso_8859_1::FONT_6X10 as FONT, MonoTextStyleBuilder},  //FONT_6X10  FONT_8X13  FONT_10X20
@@ -171,11 +171,11 @@ mod app {
 
            let mut lines: [heapless::String<32>; 5] = [heapless::String::new(), heapless::String::new(),
                               heapless::String::new(), heapless::String::new(), heapless::String::new(), ];
-           lines[0] = "stuff".into();
-           lines[1] = "t".into();
-           lines[2] = "u".into();
-           lines[3] = "f".into();
-           lines[4] = "f".into();
+           write!(lines[0], "stuff").unwrap();
+           write!(lines[1], "t").unwrap();
+           write!(lines[2], "u").unwrap();
+           write!(lines[3], "f").unwrap();
+           write!(lines[4], "f").unwrap();
 
            //show_display(*cx.local.text_style, &mut cx.local.display);
            //show_display(&lines, cx.local.display);
