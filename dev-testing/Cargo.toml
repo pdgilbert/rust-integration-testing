@@ -230,8 +230,6 @@ embedded-io         = "0.6.1"
 
 #embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
-embedded-hal-02 = { package = "embedded-hal", version = "0.2.7", features = ["unproven"] }
-
 embedded-graphics = ">=0.7"
 
 shared-bus = { version = "0.3.1", features = ["cortex-m"] } 

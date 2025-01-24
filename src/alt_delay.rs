@@ -5,7 +5,6 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 use embedded_hal::delay::DelayNs;
-use embedded_hal_02::blocking::delay::{DelayUs, DelayMs};  //for sensor crates that need old delay
 
 // A delay is used in some sensor initializations and read operationes (eg dht). 
 // Systick is used by monotonic (for spawn), so delay needs to use a timer other than Systick
@@ -62,19 +61,5 @@ impl DelayNs for AltDelay {
     }
     fn delay_ms(&mut self, ms: u32) {
         delay((ms as u32) * (ALTCLOCK / 1000)); 
-    }
-}
-
-
-impl DelayUs<u16> for AltDelay {
-    fn delay_us(&mut self, t:u16) {
-       delay((t as u32) * (ALTCLOCK / 1_000_000)); 
-    }
-}
-
-
-impl DelayMs<u16> for AltDelay {
-    fn delay_ms(&mut self, ms: u16) {
-       delay((ms as u32) * (ALTCLOCK / 1000)); 
     }
 }
