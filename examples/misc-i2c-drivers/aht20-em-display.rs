@@ -128,7 +128,7 @@ fn main() -> ! {
 
         lines[0].clear();
         lines[1].clear();
-        write!(lines[0], "temperature: {}C", th.temperature.celcius()).unwrap();
+        write!(lines[0], "temperature: {}C", th.temperature.celsius()).unwrap();
         write!(lines[1], "relative humidity: {0}%", th.relative_humidity).unwrap();
         
         display.clear_buffer();

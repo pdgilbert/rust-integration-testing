@@ -92,7 +92,7 @@ fn main() -> ! {
     loop {        
         hprintln!("aht.measure()");
         let th = aht.measure().unwrap();   // Read humidity and temperature.
-        hprintln!("{:.3}C  {}% RH", th.temperature.celcius(), th.relative_humidity);
+        hprintln!("{:.3}C  {}% RH", th.temperature.celsius(), th.relative_humidity);
 
         delay2.delay_ms(5000); 
     }

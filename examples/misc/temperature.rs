@@ -478,7 +478,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     let gpiob = p.GPIOB.split();
 
     let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, true, AdcConfig::default()),
+        ad_1st: Adc::new(p.ADC1, true, AdcConfig::default()),
     };
 
     // no channel  one-shot conversion

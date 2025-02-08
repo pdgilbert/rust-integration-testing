@@ -119,7 +119,7 @@ pub fn all_from_dp(dp: Peripherals) ->
           (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.constrain();
-   let clocks = rcc.clocks;  // not sure if this is right
+   let clocks = rcc.clocks; 
 
    let gpioa = dp.GPIOA.split(&mut rcc);
    let gpiob = dp.GPIOB.split(&mut rcc);

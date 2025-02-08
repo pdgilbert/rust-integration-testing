@@ -46,8 +46,9 @@ stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = 
 #stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
 #stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true, branch = "hal-1" }
 
-stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1" }
+#stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1" }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1-up" }
+stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
 
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
@@ -134,7 +135,7 @@ aht10           = { git = "https://github.com/andy31415/aht10", branch = "fix_st
 aht20-bl          = { package = "aht20", git = "https://github.com/blueluna/aht20" } #eh-1 now but errors are not returned, and consumes delay.
 
 #embedded-aht20   = { git = "https://github.com/ghismary/embedded-aht20" }
-embedded-aht20   = "0.1.3"     #eh-1 and both sync and async
+embedded-aht20   = "0.2.0"     #eh-1 and both sync and async
 
 aht20-async       = "1.0.0"
 #aht20-async      = { git = "https://github.com/fmckeogh/aht20-async" } 

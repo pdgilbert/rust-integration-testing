@@ -222,7 +222,7 @@ hprintln!("loop");
                               match sens.measure() {
                                    Ok(m)      => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
                                                   write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, m.temperature.celcius(), m.relative_humidity).unwrap();
+                                                          i, m.temperature.celsius(), m.relative_humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
                                                   //hprintln!("read error {:?}", e).unwrap();

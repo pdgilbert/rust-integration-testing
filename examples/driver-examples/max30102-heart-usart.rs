@@ -506,11 +506,13 @@ fn setup() -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    time::{RateExtU32},
-    delay::Delay,
+    time::{ExtU32, RateExtU32},
+    timer::{Timer, CountDownTimer},
+    delay::DelayFromCountDownTimer,
+    //delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Config},
-    stm32::{CorePeripherals, Peripherals, I2C2, USART2},
+    pac::{Peripherals, I2C2, USART2, TIM2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
     gpio::{Alternate,  AlternateOD,
@@ -521,6 +523,9 @@ use stm32g4xx_hal::{
 impl LED for PC13<Output<PushPull>> {}
 
 #[cfg(feature = "stm32g4xx")]
+type Delay = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
+
+#[cfg(feature = "stm32g4xx")]
 fn setup() -> (
     I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,   //I2c<I2C2, impl Pins<I2C2>>,
     impl LED,
@@ -528,10 +533,10 @@ fn setup() -> (
     Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>,
     Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>,
 ) {
-    let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
     let mut rcc = dp.RCC.constrain();
+    let clocks = rcc.clocks;  
 
     let gpioa = dp.GPIOA.split(&mut  rcc);
 
@@ -539,7 +544,8 @@ fn setup() -> (
     let sda = gpioa.pa8.into_alternate_open_drain(); 
     let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
 
-    let delay = cp.SYST.delay(&mut rcc.clocks);
+    let timerx = Timer::new(dp.TIM2, &clocks);
+    let delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
 
     // led
     let gpioc = dp.GPIOC.split(&mut  rcc);
