@@ -37,6 +37,7 @@ use cortex_m_semihosting::hprintln;
 //use core::ascii;
 //use nb::block;
 
+// see  embedded-hal/embedded-io/src/lib.rs re Read, Write, BufRead
 use embedded_io::{Read, Write};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -553,8 +554,9 @@ fn main() -> ! {
         // Previously this was byte by byte. Now, embedded-hal 1.0 support read() for a buffer.
         // But the GPS serial is slow so the buffer usually has 0 or 1 char in each pass of the loop.
 
-        let len = rx_gps.read(&mut buffer_r);
-        //let len = rx_gps.read(&mut buffer);
+        // See https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+        let len = embedded_io::Read::read(&mut rx_gps, &mut buffer_r);
+        //let len = rx_gps.read(&mut buffer_r);
         // hprintln!(" buffer_r {:?}",  buffer_r).unwrap();
         // hprintln!(" buffer {:?}",  buffer).unwrap();
         // hprintln!(" buffer len {:?}",  buffer.len()).unwrap();
@@ -563,12 +565,15 @@ fn main() -> ! {
           Ok(length) => {  if length != 0 {
                               //if buffer[0]  == 36  {//  $ is 36. start of a line (sentence) in GPS protocol
                               if buffer_r[0]  == 36  {//  $ is 36. start of a line (sentence) in GPS protocol
-                                 tx_con.write(&[gt]).unwrap();  // show > for new sentence
+                                 //tx_con.write(&[gt]).unwrap();  // show > for new sentence
+                                 embedded_io::Write::write(&mut tx_con, &[gt]).unwrap();  // show > for new sentence
                               };
                               // possibly write_all() should be used, but something does not work.
                               // With write() part of the buffer may be lost?
-                              tx_con.write(&buffer_r).unwrap(); // echo everything to console
-                              let _ = tx_con.flush();
+                              //tx_con.write(&buffer_r).unwrap(); // echo everything to console
+                              embedded_io::Write::write(&mut tx_con, &buffer_r).unwrap(); // echo everything to console
+                              //let _ = tx_con.flush();
+                              let _ = embedded_io::Write::flush(&mut tx_con);
                               //tx_con.write_all(&buffer).unwrap(); // echo everything to console
                            };
                         },
