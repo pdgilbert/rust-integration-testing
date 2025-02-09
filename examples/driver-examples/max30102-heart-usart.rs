@@ -17,15 +17,6 @@
 //!  See  https://datasheets.maximintegrated.com/en/ds/MAX30102.pdf
 //!       https://www.instructables.com/Pulse-Oximeter-With-Much-Improved-Precision/
 //!
-//! Bluepill setting are 
-//! ```
-//! BP   <-> MAX30102 <-> Serial
-//! GND  <-> GND      <-> GND
-//! 3.3V <-> VCC      <-> VDD
-//! PB6 (TX)          <-> RX    9600 baud  PB7 (RX) is not used
-//! PB8  <-> SCL
-//! PB9  <-> SDA
-//!  need also LED power connections, etc.
 //! ```
 //!
 //! Run with:
@@ -51,10 +42,11 @@ use cortex_m_semihosting::hprintln;
 
 //use nb::block;
 
-use embedded_io::{Write};
+//use embedded_io::{Write};
 
 /////////////////////////////////////////////////////////////////////
 use embedded_hal::digital::OutputPin;
+use embedded_hal::delay::DelayNs;
 
 pub trait LED: OutputPin {
     // depending on board wiring, on may be set_high or set_low, with off also reversed
@@ -69,7 +61,7 @@ pub trait LED: OutputPin {
         self.set_high().unwrap()
     }
 
-    fn blink(&mut self, time: u16, delay: &mut Delay) -> () {
+    fn blink(&mut self, time: u16, delay: &mut impl DelayNs) -> () {
         self.on();
         delay.delay_ms(time.into());
         self.off();
@@ -138,7 +130,6 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f1xx")]
 use stm32f1xx_hal::{
-    timer::SysDelay as Delay,
     pac::{USART1},
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{BlockingI2c, DutyCycle, Mode},
@@ -161,7 +152,7 @@ impl LED for PC13<Output<PushPull>> {
 fn setup() -> (
     BlockingI2c<I2C1>,
     impl LED,
-    Delay,
+    impl DelayNs,
     Tx<USART1>,
     Rx<USART1>,
 ) {
@@ -195,8 +186,9 @@ fn setup() -> (
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     let delay = cp.SYST.delay(&clocks);
 
-    let tx = gpiob.pb6.into_alternate_push_pull(&mut gpiob.crl);
-    let rx = gpiob.pb7;
+    let mut gpioa = dp.GPIOA.split();
+    let tx = gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh);
+    let rx = gpioa.pa10;
     let serial = Serial::new(
         dp.USART1,
         (tx, rx),
@@ -293,11 +285,11 @@ fn setup() -> (
 
 #[cfg(feature = "stm32f4xx")] // eg Nucleo-64  stm32f411
 use stm32f4xx_hal::{
-    timer::SysDelay as Delay,
-    gpio::{gpioc::PC13, Output, PushPull},
+    gpio::{gpioc::PC13, Output, PushPull, GpioExt},
     i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},
     prelude::*,
+    rcc::RccExt,
     serial::{config::Config, Rx, Serial, Tx},
 };
 
@@ -319,7 +311,7 @@ impl LED for PC13<Output<PushPull>> {
 fn setup() -> (
     I2c<I2C2>,
     impl LED,
-    Delay,
+    impl DelayNs,
     Tx<USART1>,
     Rx<USART1>,
 ) {
@@ -348,7 +340,7 @@ fn setup() -> (
 
     let gpioa = dp.GPIOA.split();
 
-    dp.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
+    dp.USART1.cr1().modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx, rx) = Serial::new(
         dp.USART1,
         (
@@ -507,12 +499,11 @@ fn setup() -> (
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     time::{ExtU32, RateExtU32},
-    timer::{Timer, CountDownTimer},
+    timer::{Timer},
     delay::DelayFromCountDownTimer,
-    //delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{I2c, Config},
-    pac::{Peripherals, I2C2, USART2, TIM2},
+    pac::{Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
     gpio::{Alternate,  AlternateOD,
@@ -523,13 +514,10 @@ use stm32g4xx_hal::{
 impl LED for PC13<Output<PushPull>> {}
 
 #[cfg(feature = "stm32g4xx")]
-type Delay = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
-
-#[cfg(feature = "stm32g4xx")]
 fn setup() -> (
     I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,   //I2c<I2C2, impl Pins<I2C2>>,
     impl LED,
-    Delay,
+    impl DelayNs,
     Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>,
     Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>,
 ) {
@@ -860,7 +848,9 @@ fn main() -> ! {
     //rprintln!("test write to console ...");
     hprintln!("test write to console ...").unwrap();
 
-    tx.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap(); 
+    //this syntax works with stm32g4xx_hal but needs to be disambiguated for others
+    //tx.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();
+    embedded_io::Write::write(&mut tx, "\r\nconsole connect check.\r\n".as_bytes()).unwrap();
 //    for byte in b"\r\nconsole connect check.\r\n" {
 //        block!(tx.write(*byte)).ok();
 //    }
@@ -879,7 +869,8 @@ fn main() -> ! {
 
     max30102.clear_fifo().unwrap();
 
-    tx.write(b"\r\n").unwrap(); 
+    //tx.write("\r\n".as_bytes()).unwrap(); 
+    embedded_io::Write::write(&mut tx, "\r\n".as_bytes()).unwrap();
 //    for byte in b"\r\n" { block!(tx.write(*byte)).unwrap(); }
 
     let mut data = [0_u32; 16];
@@ -902,14 +893,16 @@ fn main() -> ! {
 
         for i in 0..read.into() {
               hprintln!("data {}", data[i]).unwrap();
-              tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
+              //tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
+              embedded_io::Write::write(&mut tx, &[data[i] as u8]).unwrap();     // this may need fmt
               //write!(buf, "data[i] {}\r", data[i]);  // but no luck let with this
               //tx.write(&buf).unwrap();  
               //writeln!(tx, "{}\r", data[i],).unwrap();  
               //block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
         }
 
-        tx.write(b"\r\n").unwrap(); 
+        //tx.write(b"\r\n").unwrap(); need to disambiguate
+        embedded_io::Write::write(&mut tx, b"\r\n").unwrap(); 
 //        for byte in b"\r\n" { block!(tx.write(*byte)).ok(); }
 
         delay.delay_ms(3000_u32.into());

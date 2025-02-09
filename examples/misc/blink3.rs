@@ -273,17 +273,15 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay<TIM2>) {
 use stm32g4xx_hal::{
     //delay::Delay,  //SysDelay
     time::{ExtU32},
-    timer::{Timer, CountDownTimer},
+    timer::{Timer},
     delay::DelayFromCountDownTimer,
     gpio::{
         gpiob::{PB13, PB14, PB15},
         Output, PushPull,
     },
-    pac::{Peripherals, TIM2},
+    pac::{Peripherals},
     prelude::*,
 };
-
-type Delay = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 
 #[cfg(feature = "stm32g4xx")]
 impl LED for PB13<Output<PushPull>> {}
@@ -293,7 +291,7 @@ impl LED for PB14<Output<PushPull>> {}
 impl LED for PB15<Output<PushPull>> {}
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> (impl LED, impl LED, impl LED, Delay) {
+fn setup() -> (impl LED, impl LED, impl LED, impl DelayNs) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let clocks = rcc.clocks;  
@@ -302,7 +300,6 @@ fn setup() -> (impl LED, impl LED, impl LED, Delay) {
 
     let timerx = Timer::new(dp.TIM2, &clocks);
     let delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
-    //cp.SYST.delay(&rcc.clocks),
 
     // return (led1, led2, led3, delay)
     (
