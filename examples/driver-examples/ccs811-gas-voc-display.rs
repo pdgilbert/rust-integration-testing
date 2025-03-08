@@ -110,7 +110,7 @@ fn main() -> ! {
     delay.delay_ms(1000);
 
     let cr = ccs811.software_reset();
-    let  z = cr.unwrap();
+    let  _z = cr.unwrap();
     //hprintln!("software_reset done: {:?}", z).unwrap();
     delay.delay_ms(1000);  
 

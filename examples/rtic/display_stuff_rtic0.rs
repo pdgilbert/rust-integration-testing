@@ -4,7 +4,7 @@
 //!   display_stuff_rtic  has only the display on the i2c bus but is set up to share the bus.
 //!   displayX2_rtic  has two displays on two i2c buses and is set up shares the buses.
 //! 
-//! Compare also example dht_rtic and soeveral others that read sensors and display results.
+//! Compare also example dht_rtic and several others that read sensors and display results.
 //! 
 //! Blink (onboard) LED with short pulse very read.
 //! On startup the LED is set on for about (at least) 5 seconds in the init process.
@@ -36,7 +36,7 @@ systick_monotonic!(Mono, 1000);
 #[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
 
 mod app {
@@ -62,9 +62,7 @@ mod app {
 
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::
-                         setup::{MONOCLOCK, I2cType, LED, LedType,};
-
-//    use embedded_hal::i2c::I2c as I2cTrait; 
+                         setup::{MONOCLOCK, I2c1Type, LED, LedType,};
 
 
 
@@ -72,14 +70,12 @@ mod app {
         //text: &[heapless::String<32>; 1],
         //text_style: TextStyle,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
-        //disp: DisplayType,
+        //disp: &mut DisplayType,
     ) -> ()
     where
         S: DisplaySize,
     {
-       let lines: [heapless::String<32>; 1] = [
-           heapless::String::new(),
-       ];
+       let lines: [heapless::String<32>; 1] = [heapless::String::new(),];
     
        // Many SSD1306 modules have a yellow strip at the top of the display, so first line may be yellow.
        // It is possible to use \n in place of separate writes, with one line rather than vector.
@@ -106,6 +102,10 @@ mod app {
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////
+    pub type DisplayType = Ssd1306<I2CInterface<I2c1Type>, 
+                          ssd1306::prelude::DisplaySize128x64, 
+                          BufferedGraphicsMode<DisplaySize128x64>>;
     #[shared]
     struct Shared {
         led: LedType,
@@ -113,31 +113,26 @@ mod app {
 
     #[local]
     struct Local {
-        display: Ssd1306<I2CInterface<I2cType>, 
-                          ssd1306::prelude::DisplaySize128x64, 
-                          BufferedGraphicsMode<DisplaySize128x64>>,
+        display: DisplayType,
         //text_style: TextStyle,
         //text_style: MonoTextStyle<'static, BinaryColor>,
         // see https://github.com/jamwaffles/ssd1306/issues/164
     }
 
 
+    ////////////////////////////////////////////////////////////////////////////////////
+
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-       hprintln!("display_stuff_rtic example").unwrap();
-
        Mono::start(cx.core.SYST, MONOCLOCK);
 
-       //rtt_init_print!();
-       //rprintln!("isplay_stuff_rtic example");
-       hprintln!("display_stuff_rtic example").unwrap();
+       hprintln!("display_stuff_rtic0 example").unwrap();
 
        let (i2c1, mut led) = setup::i2c_led_from_dp(cx.device);
 
        led.on();
 
-       let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
-       //let interface = I2CDisplayInterface::new_custom_address(i2c1,   0x3D);  //alt address
+       let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C  alt address 0x3D
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
