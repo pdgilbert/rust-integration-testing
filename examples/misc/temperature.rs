@@ -258,8 +258,8 @@ fn setup() -> (
     let mut gpiob = p.GPIOB.split();
 
     let adcs: AdcsType = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, &clocks),
-        ad_2nd: Adc::adc2(p.ADC2, &clocks),
+        ad_1st: Adc::new(p.ADC1, &clocks),
+        ad_2nd: Adc::new(p.ADC2, &clocks),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel.

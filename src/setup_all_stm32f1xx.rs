@@ -253,7 +253,7 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let adc1: AdcSensor1Type = AdcSensor {
         ch:  gpioa.pa0.into_analog(&mut gpioa.crl), //channel
-        adc: Adc::adc1(dp.ADC1, &clocks),
+        adc: Adc::new(dp.ADC1, &clocks),
    }; 
 
    (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)

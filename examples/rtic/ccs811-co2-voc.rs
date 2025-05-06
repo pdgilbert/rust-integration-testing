@@ -65,9 +65,9 @@ mod app {
  
     //https://github.com/michaelbeaumont/dht-sensor
     #[cfg(not(feature = "dht22"))]
-    use dht_sensor::dht11::{read, Reading};
+    use dht_sensor::dht11::{blocking::read, Reading};
     #[cfg(feature = "dht22")]
-    use dht_sensor::dht22::{read, Reading};
+    use dht_sensor::dht22::{blocking::read, Reading};
     //use dht_sensor::*;
 
     use core::fmt::Write;

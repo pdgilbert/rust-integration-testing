@@ -68,9 +68,9 @@ use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306, mode::BufferedGraphicsMo
 
 //https://github.com/michaelbeaumont/dht-sensor
 #[cfg(not(feature = "dht22"))]
-use dht_sensor::dht11::{read, Reading};
+use dht_sensor::dht11::{blocking::read, Reading};
 #[cfg(feature = "dht22")]
-use dht_sensor::dht22::{read, Reading};
+use dht_sensor::dht22::{blocking::read, Reading};
 //use dht_sensor::Delay;  // trait, whereas timer::Delay is a type does not yet use DelayNs
 
 use rust_integration_testing_of_examples::setup;

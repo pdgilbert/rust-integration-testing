@@ -43,12 +43,12 @@ stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = 
 #stm32f4xx-hal = {path = "/home/paul/githubClones/stm32f4xx-hal", optional = true }
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
-#stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
-#stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true, branch = "hal-1" }
 
+stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
+#stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true, branch = "hal-1" }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1" }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1-up" }
-stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
+#stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
 
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
