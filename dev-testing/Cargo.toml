@@ -83,12 +83,7 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 #ssd1306         = { git = "https://github.com/embedevices-rs/ssd1306", branch = "async"  } 
 ssd1306         = { git = "https://github.com/sjoerdsimons/ssd1306", branch = "master"  } # embedded-hal-1.0.0
 
-# experiments with onewire so far only using stm32f1xx BUT compile problems can cause
-# problems with src/onewire...  that prevent other examples from compiling
-#onewire         = { git = "https://github.com/kellerkindt/onewire" }
-#onewire         = { git = "https://github.com/asdfuser/onewire" }   # src/ libs compiled circa June 2023
-onewire         = { git = "https://github.com/katyo/onewire" }       # src/ libs compiled circa Aug  2023
-#katyo has an eh1 branch
+onewire         = { git = "https://github.com/kellerkindt/onewire" }
 
 #one-wire-bus     = ">=0.1.1" 
 #one-wire-bus    = { git = "https://github.com/fuchsnj/one-wire-bus" }
