@@ -29,7 +29,7 @@ pub use stm32g4xx_hal::{
            gpioa::{PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC6 as LEDPIN}},  // weact-stm32g474CEU6 has onboard led on PC6
-    adc::{config::{SampleTime}, Disabled, AdcClaim, ClockSource},
+    adc::{config::{SampleTime, AdcConfig}, Disabled, Configured, AdcClaim, AdcCommonExt},
 };
 
 
@@ -98,7 +98,7 @@ pub const MODE: Mode = Mode {
 
 pub struct AdcSensor<U, A> { ch: U, adc: A }
 
-pub type AdcSensor1Type = AdcSensor<PA0<Analog>, Adc<ADC1, Disabled>>; // possibly needs to be Active
+pub type AdcSensor1Type = AdcSensor<PA0<Analog>, Adc<ADC1, Configured>>; 
 
 pub trait ReadAdc {
     // for reading on channel(self.ch) in mV.
@@ -168,10 +168,10 @@ pub fn all_from_dp(dp: Peripherals) ->
    let timerx = Timer::new(dp.TIM3, &clocks);
    let mut delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
 
-
+   let adc12_common = dp.ADC12_COMMON.claim(Default::default(), &mut rcc);
    let adc1: AdcSensor1Type = AdcSensor {
        ch:  gpioa.pa0.into_analog(),
-       adc: dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
+       adc: adc12_common.claim_and_configure(dp.ADC1, AdcConfig::default(), &mut delay),
    }; 
 
    (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)

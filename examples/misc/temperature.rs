@@ -73,7 +73,7 @@ type AdcsType =  Adcs<Adc<ADC1>>;
 type AdcsType =  Adcs<Adc<ADC1>, Adc<ADC3>>;
 
 #[cfg(feature = "stm32g4xx")]
-type AdcsType =  Adcs<Adc<ADC1, Active>, Adc<ADC2, Disabled>>;
+type AdcsType =  Adcs<Adc<ADC1, Active>, Adc<ADC2, Configured>>;
 
 
 #[cfg(feature = "stm32h7xx")]
@@ -630,8 +630,8 @@ use stm32g4xx_hal::{
     timer::Timer,
     time::{ExtU32},
     delay::DelayFromCountDownTimer,
-    adc::{config::{SampleTime, Continuous, Sequence, Resolution}, 
-          Adc, Active, Disabled, AdcClaim, ClockSource, Temperature, Vref},
+    adc::{config::{SampleTime, AdcConfig, Continuous, Sequence, Resolution}, 
+          Adc, Active, Configured, AdcClaim, AdcCommonExt, temperature::Temperature, Vref},
     gpio::{gpioa::{PA0, PA4}, Analog},
     pac::{Peripherals, ADC1, ADC2},
     prelude::*,
@@ -689,10 +689,11 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
 
     let pa0 = gpioa.pa0.into_analog();
 
-    let mut adc1 = dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true);
+    let mut adc12_common = dp.ADC12_COMMON.claim(Default::default(), &mut rcc);
+    let mut adc1 = adc12_common.claim(dp.ADC1, &mut delay);
 
-    adc1.enable_temperature(&dp.ADC12_COMMON);
-    adc1.enable_vref(&dp.ADC12_COMMON);
+    adc12_common.enable_temperature();
+    adc12_common.enable_vref();
     adc1.set_auto_delay(true);
     adc1.set_continuous(Continuous::Continuous);
     adc1.reset_sequence();
@@ -706,7 +707,7 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, AdcsType) {
     let mcutemp: Sensor<McuTemperatureType> = Sensor { ch: pa0 }; 
 
     let pa4 = gpioa.pa4.into_analog();
-    let adc2 = dp.ADC2.claim(ClockSource::SystemClock, &rcc, &mut delay, true);
+    let adc2 = adc12_common.claim_and_configure(dp.ADC2, AdcConfig::default(), &mut delay );
 
     let adcs: AdcsType = Adcs {
         ad_1st: adc1,
