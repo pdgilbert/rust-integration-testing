@@ -388,7 +388,7 @@ fn setup() -> (
     );
 
     let mut cs = gpioa.pa8.into_push_pull_output();
-    cs.set_high().unwrap();
+    cs.set_high();
 
     let led = gpioc.pc6.into_push_pull_output();
 

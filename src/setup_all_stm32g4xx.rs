@@ -17,7 +17,7 @@ pub use hal::{
 
 pub use stm32g4xx_hal::{
     pac::{TIM2, TIM3}, 
-    i2c::{Config},// SDAPin, SCLPin},
+    i2c::{Config, SDAPin, SCLPin},
     rcc::{Clocks},
     time::{ExtU32, RateExtU32},
     timer::Timer,
@@ -25,7 +25,7 @@ pub use stm32g4xx_hal::{
     delay::DelayFromCountDownTimer,
     spi::{Mode, Phase, Polarity},
     serial::{FullConfig, NoDMA},
-    gpio::{Alternate, AlternateOD, Input, Floating,
+    gpio::{Alternate, Input, 
            gpioa::{PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC6 as LEDPIN}},  // weact-stm32g474CEU6 has onboard led on PC6
@@ -47,24 +47,13 @@ pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PB7<Output<OpenDrain>>;
 
-pub type I2c1Type = I2c<I2C1, PB9<AlternateOD<4_u8>>, PB8<AlternateOD<4_u8>>>;
-//pub type I2c1Type = I2c<I2C1, impl SCLPin<I2C1>, impl SDAPin<I2C1>>;
-pub type I2c2Type = I2c<I2C2, PA8<AlternateOD<4_u8>>, PC4<AlternateOD<4_u8>>>;
-//pub type I2c2Type = I2c<I2C2, impl SCLPin<I2C2>, impl SDAPin<I2C2>>;
+pub type I2c1Type = I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>;
+pub type I2c2Type = I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
-impl LED for LedType {  // not default
-        fn on(&mut self) -> () {
-            self.set_high().unwrap()
-        }
-        fn off(&mut self) -> () {
-            self.set_low().unwrap()
-        }
-    }
-
-//pub type TxType = Tx<USART1, PA9<Output<PushPull>>, NoDMA >;
+impl LED for LedType {}
 
 pub type Tx1Type = Tx<USART1, PA9<Alternate<7_u8>>, NoDMA>;
 pub type Rx1Type = Rx<USART1, PA10<Alternate<7_u8>>, NoDMA>;
@@ -78,8 +67,8 @@ pub type SpiType =  Spi<SPI1,(PA5<Alternate<5>>, PA6<Alternate<5>>, PA7<Alternat
 // these should just be in SpiExt, but radio Sx127x still wants them separately
 
 pub type Cs    = PA4<Output<PushPull>>;
-pub type Busy  = PB4<Input<Floating>>;
-pub type Ready = PB5<Input<Floating>>;
+pub type Busy  = PB4<Input<>>;
+pub type Ready = PB5<Input<>>;
 pub type Reset = PA1<Output<PushPull>>;
 
 pub struct SpiExt { pub cs:    Cs, 
@@ -126,7 +115,7 @@ pub fn all_from_dp(dp: Peripherals) ->
    let gpioc = dp.GPIOC.split(&mut rcc);
 
    let mut pin = gpiob.pb7.into_open_drain_output();
-   pin.set_high().unwrap(); // Pull high to avoid confusing the sensor when initializing.
+   pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
    let scl = gpiob.pb8.into_alternate_open_drain(); 

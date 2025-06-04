@@ -73,7 +73,7 @@ use si4703::{
 
 /////////////////////  setup
 
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, Delay, DelayNs};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, Delay, DelayNs}; 
 
 //use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
 //              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};
@@ -112,23 +112,23 @@ impl SEEK for SeekPins<PB12<Input>, PB11<Input>> {
     }
 }
 
-#[cfg(any(feature = "stm32f3xx", feature = "stm32h7xx"))]
+#[cfg(any(feature = "stm32f3xx", feature = "stm32g4xx", feature = "stm32h7xx"))]
 impl SEEK for SeekPins<PB10<Input>, PB11<Input>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high()
     }
     fn seekdown(&mut self) -> bool {
-        self.p_seekdown.is_high()   // SOME NEED UNWRAP BUT CHECK EH-1 CONVENTION
+        self.p_seekdown.is_high()   // SOME NEED UNWRAP 
     }
 }
 
-#[cfg(not(any(feature = "stm32f1xx", feature = "stm32f3xx", feature = "stm32f4xx",feature = "stm32h7xx")))]
+#[cfg(not(any(feature = "stm32f1xx", feature = "stm32f3xx", feature = "stm32f4xx", feature = "stm32g4xx", feature = "stm32h7xx")))]
 impl SEEK for SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high().unwrap()
     }
     fn seekdown(&mut self) -> bool {
-        self.p_seekdown.is_high().unwrap()   // SOME NEED UNWRAP BUT CHECK EH-1 CONVENTION
+        self.p_seekdown.is_high().unwrap()   // SOME NEED UNWRAP 
     }
 }
 
@@ -481,24 +481,27 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
+    pac::{I2C1, I2C2},
     timer::Timer,
     time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
-    gpio::{Input, PullUp, PullDown,
+    gpio::{Input,
            gpiob::{PB10, PB11, PB6},        
     },
-    i2c::{Config as i2cConfig,},
+    i2c::{I2c, Config as i2cConfig, SDAPin, SCLPin,},
     prelude::*,
 };
+
 
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
-    I2c2Type,
+    //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
+    I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>,
     impl LED,
     Delay,
     impl SEEK,
-    PB6<Input<PullUp>>,
+    PB6<Input>,
 ) {
     let mut rcc = dp.RCC.constrain();
     let timer2 = Timer::new(dp.TIM3, &rcc.clocks);
@@ -524,7 +527,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
     let led = gpioc.pc6.into_push_pull_output();
 
-    let buttons: SeekPins<PB10<Input<PullDown>>, PB11<Input<PullDown>>> = SeekPins {
+    let buttons: SeekPins<PB10<Input>, PB11<Input>> = SeekPins {
         p_seekup: gpiob.pb10.into_pull_down_input(),
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };

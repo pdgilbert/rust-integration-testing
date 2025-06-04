@@ -350,17 +350,17 @@ use stm32g4xx_hal::{
     timer::Timer,
     time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
-    i2c::{I2c, Config},
+    i2c::{I2c, Config, SDAPin, SCLPin},
     pac::{Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
-    gpio::{Alternate, AlternateOD, gpioa::{PA2, PA3, PA8, PA9}},
+    gpio::{Alternate, gpioa::{PA2, PA3}},
 };
 
 
 #[cfg(feature = "stm32g4xx")]
 fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate<7_u8>>, NoDMA>, 
-               I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>>,  //I2c<I2C2, impl Pins<I2C2>>, 
+               I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>, 
                impl DelayNs) {
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();

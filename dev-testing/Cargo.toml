@@ -188,6 +188,10 @@ fugit = { version = "0.3.3", optional = true }
 #  include *also* thumbv6 support. It seems shared-bus-rtic is no longer needed.
 # shared-bus-rtic = { git = "https://github.com/ryan-summers/shared-bus-rtic", features = ["thumbv6"], optional = true }
 
+## NB syntax for workspace 
+#lora-phy = { git = "https://github.com/lora-rs/lora-rs/", optional = true }
+# optional causes "undeclared crate or module `lora_phy`" problem compiling example (but Cargo does not complain)
+lora-phy = { git = "https://github.com/lora-rs/lora-rs/" }
 
 # NB seems important to use the same version of radio that is used by radio-sx127x
 #  It would be nice if radio-sx127x re-exported traits Transmit and  Receive so radio is not needed.

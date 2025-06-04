@@ -58,7 +58,10 @@ use panic_halt as _;
 //use panic_reset;
 
 use cortex_m_rt::entry;
-use cortex_m_semihosting::*;
+
+// semihosting for debugging  requires connection to computer and openocd. 
+// Comment out next and hprintln statements to run on battery.
+//use cortex_m_semihosting::*;
 
 //use cortex_m_semihosting::{debug, hprintln};
 //use cortex_m_semihosting::{hprintln};
@@ -97,19 +100,21 @@ fn main() -> ! {
     let (mut led, spi, spiext, mut delay) = setup::led_spi_spiext_delay_from_dp(dp); 
     led.off();
 
-    hprintln!("start delay.delay_ms(5)").unwrap();
+    //hprintln!("start delay.delay_ms(5)").unwrap();
     delay.delay_ms(5);
-    hprintln!(" end  delay.delay_ms(5)").unwrap();
+    //hprintln!(" end  delay.delay_ms(5)").unwrap();
 
     // cs should be called nss
     let lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, 
                        &CONFIG_RADIO ); 
 
     let mut lora =  match lora {
-            Ok(lr)  => { hprintln!("lora setup completed.").unwrap();
-                        lr } 
-            Err(e) => { hprintln!("Error in lora setup. {:?}", e).unwrap();
-                         panic!("{:?}", e) }
+            Ok(lr)  => { //hprintln!("lora setup completed.").unwrap();
+                         lr
+                       } 
+            Err(e) =>  { //hprintln!("Error in lora setup. {:?}", e).unwrap();
+                         panic!("{:?}", e)
+                       }
     };
  
     //let mut lora = lora.unwrap();
@@ -149,25 +154,29 @@ fn main() -> ! {
 
     loop {
         match lora.start_transmit(message) {
-            Ok(_b)   => { hprintln!("start_transmit").unwrap() } 
-            Err(_e) => { hprintln!("Error in lora.start_transmit()").unwrap() }
+            Ok(_b)   => { //hprintln!("start_transmit").unwrap()
+                        } 
+            Err(_e)  => { //hprintln!("Error in lora.start_transmit()").unwrap()
+                        }
         };
-        hprintln!("start_transmit done").unwrap();
+        //hprintln!("start_transmit done").unwrap();
 
         lora.delay_ms(1); // without some delay next returns bad. (interrupt may also be an option)
 
         match lora.check_transmit() {
-            Ok(b)   => {if b {hprintln!("TX good").unwrap() } 
-                        else {hprintln!("TX bad").unwrap() }
+            Ok(b)   => {if b {//hprintln!("TX good").unwrap()
+                             } 
+                        else {//hprintln!("TX bad").unwrap()
+                             }
                        }
             Err(_e) => {
-                hprintln!("Error in lora.check_transmit(). Should return True or False.").unwrap()
-                }
+                        //hprintln!("Error in lora.check_transmit(). Should return True or False.").unwrap()
+                       }
         };
-        hprintln!("check_transmit done").unwrap();
+        //hprintln!("check_transmit done").unwrap();
 
         //lora.delay_ms(5000);
         lora.delay_ms(5);
-        hprintln!("re-loop").unwrap();
+        //hprintln!("re-loop").unwrap();
     }
 }

@@ -227,14 +227,13 @@ fn setup() -> I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>> {
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     time::{RateExtU32},
-    i2c::{I2c, Config},
+    i2c::{I2c, Config, SDAPin, SCLPin},
     pac::{Peripherals, I2C2},
     prelude::*,
-    gpio::{AlternateOD, gpioa::{PA8, PA9}},
 };
 
 #[cfg(feature = "stm32g4xx")]
-fn setup() -> I2c<I2C2, PA8<AlternateOD<4_u8>>, PA9<AlternateOD<4_u8>>> {   //impl Pins<I2C2>>
+fn setup() -> I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>> { 
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
     let gpioa = dp.GPIOA.split(&mut rcc);

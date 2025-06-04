@@ -260,10 +260,10 @@ pub type DelayType = DelayFromCountDownTimer<CountDownTimer<TIM2>>;
 #[cfg(feature = "stm32g4xx")]
     impl LED for PC6<Output<PushPull>> {
         fn on(&mut self) -> () {
-            self.set_high().unwrap()
+            self.set_high()
         }
         fn off(&mut self) -> () {
-            self.set_low().unwrap()
+            self.set_low()
         }
     }
 
