@@ -49,6 +49,13 @@ pub type OpenDrainType = PB7<Output<OpenDrain>>;
 
 pub type I2c1Type = I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>;
 pub type I2c2Type = I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>;
+// Above work in nightly-2025-01-01. Need nightly and #![feature(type_alias_impl_trait)]
+// With nightly-2025-01-01 they work in function signatures but here 
+//   give "unconstrained opaque type...must be used in combination with a concrete type within the same crate"
+//pub type I2c1Type = I2c<I2C1, PB9<I2C1>, PB8<I2C1>>;
+//pub type I2c2Type = I2c<I2C2, PA8<I2C2>, PC4<I2C2>>;
+//pub type I2c1Type = I2c<I2C1>;
+//pub type I2c2Type = I2c<I2C2>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
@@ -105,7 +112,10 @@ impl ReadAdc for AdcSensor1Type {
 
 
 pub fn all_from_dp(dp: Peripherals) -> 
-          (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
+          (OpenDrainType, 
+           I2c1Type,  //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>, 
+           I2c2Type,  //I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>, 
+           LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.constrain();
    let clocks = rcc.clocks; 

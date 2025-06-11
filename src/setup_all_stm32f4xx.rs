@@ -138,9 +138,9 @@ pub fn all_from_dp(dp: Peripherals) ->
    let spi1 = Spi::new(
        dp.SPI1,
        (
-           gpioa.pa5.into_alternate(), // sck  
-           gpioa.pa6.into_alternate(), // miso 
-           gpioa.pa7.into_alternate(), // mosi 
+           Some(gpioa.pa5.into_alternate()), // sck  
+           Some(gpioa.pa6.into_alternate()), // miso 
+           Some(gpioa.pa7.into_alternate()), // mosi 
        ),
        MODE, 8.MHz(), &clocks,
    );

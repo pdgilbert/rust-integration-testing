@@ -53,14 +53,10 @@ pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
-//pub type I2c1Type = I2c<I2C1, (PB6<Alternate<OpenDrain>>, PB7<Alternate<OpenDrain>>)>;
-//pub type I2c1Type = I2c<I2C1, impl Pins<I2C1> >;
-//pub type I2c2Type = I2c<I2C2, (PB10<Alternate<OpenDrain>>, PB11<Alternate<OpenDrain>>)>;
-//pub type I2c2Type = I2c<I2C2, impl Pins<I2C2> >;
+//pub type I2c1Type = I2c<I2C1>;
+//pub type I2c2Type = I2c<I2C2>;
 pub type I2c1Type = BlockingI2c<I2C1>;
 pub type I2c2Type = BlockingI2c<I2C2>;
-//pub type I2c1Type = I2c<I2C1, Error = ErrorType>;
-//pub type I2c2Type = I2c<I2C2, Error = ErrorType>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
@@ -171,9 +167,9 @@ pub fn all_from_dp(dp: Peripherals) ->
 
     let mut afio = dp.AFIO.constrain();
 
-    // still only on branch = "rmp-new"
+    //let i2c1 = I2c::<I2C1>::new(
     let i2c1 = BlockingI2c::<I2C1>::new(
-                  dp.I2C1
+                 dp.I2C1
                   .remap(&mut afio.mapr),  // add this for PB8, PB9
                   (
                    gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh),  // scl 

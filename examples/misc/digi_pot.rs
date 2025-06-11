@@ -243,9 +243,9 @@ fn setup() -> (
     let spi = Spi::new(
         dp.SPI1,
         (
-            gpioa.pa5.into_alternate(), // sck   on PA5
-            gpioa.pa6.into_alternate(), // miso  on PA6
-            gpioa.pa7.into_alternate(), // mosi  on PA7
+            Some(gpioa.pa5.into_alternate()), // sck   on PA5
+            Some(gpioa.pa6.into_alternate()), // miso  on PA6
+            Some(gpioa.pa7.into_alternate()), // mosi  on PA7
         ),
         mcp4x::MODE,
         8.MHz(),
