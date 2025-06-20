@@ -219,6 +219,7 @@ use stm32f4xx_hal::{
     gpio::{gpioa::PA1, Output, PushPull},
     pac::{Peripherals, SPI1},
     prelude::*,
+    rcc::Config,
     spi::{Spi, TransferModeNormal},
 };
 
@@ -231,11 +232,10 @@ fn setup() -> (
 ) {
     let dp = Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.sysclk(64.MHz()).pclk1(32.MHz()).freeze();
+    let mut rcc = dp.RCC.constrain();
 
-    let gpioa = dp.GPIOA.split();
-    let gpioc = dp.GPIOC.split(); 
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc); 
 
     // There is a problem with this because gpioa is move and then needed for cs below.
     //let spi = setup_spi(dp.SPI1, gpioa,  &clocks);
@@ -249,7 +249,7 @@ fn setup() -> (
         ),
         mcp4x::MODE,
         8.MHz(),
-        &clocks,
+        &mut rcc,
     );
 
     let mut cs = gpioa.pa1.into_push_pull_output();
@@ -257,8 +257,10 @@ fn setup() -> (
 
     let led = gpioc.pc13.into_push_pull_output();
 
-    //let delay = cp.SYST.delay(&clocks);
-    let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+    //let delay = cp.SYST.delay(&mut rcc.clocks);
+    let delay = dp.TIM2.delay::<1000000_u32>(&mut rcc);
+
+    rcc.freeze(Config::hsi() .sysclk(64.MHz()) .pclk1(32.MHz()) );
 
     (spi, cs, led, delay)
 }

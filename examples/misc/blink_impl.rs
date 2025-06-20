@@ -165,6 +165,7 @@ use stm32f4xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull},
     //gpio::{gpioa::PA5, Output, PushPull,},
     pac::{CorePeripherals, Peripherals},
+    rcc::Config,
     prelude::*,
 };
 
@@ -178,21 +179,23 @@ impl LED for PC13<Output<PushPull>>{}
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc
-        .cfgr
-        .hclk(48.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .pclk2(24.MHz())
-        .freeze();
+    let mut rcc = p.RCC.constrain();
 
-    let gpioc = p.GPIOC.split();
+    let gpioc = p.GPIOC.split(&mut rcc);
+    let delay = cp.SYST.delay(&mut rcc.clocks);
+
+    rcc.freeze(
+        Config::hsi()
+           .hclk(48.MHz())
+            .sysclk(48.MHz())
+            .pclk1(24.MHz())
+            .pclk2(24.MHz()),
+    );
 
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(), // led on pc13 with on/off
-        cp.SYST.delay(&clocks),
+        delay,
     )
 }
 

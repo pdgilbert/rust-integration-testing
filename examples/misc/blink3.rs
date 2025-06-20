@@ -160,6 +160,7 @@ use stm32f4xx_hal::{
         Output, PushPull,
     },
     pac::{CorePeripherals, Peripherals},
+    rcc::Config,
     prelude::*,
 };
 
@@ -174,23 +175,25 @@ impl LED for PB15<Output<PushPull>> {}
 fn setup() -> (impl LED, impl LED, impl LED, Delay) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc
-        .cfgr
-        .hclk(48.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .pclk2(24.MHz())
-        .freeze();
+    let mut rcc = p.RCC.constrain();
+    let delay = cp.SYST.delay(&mut rcc.clocks);
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
+
+    rcc.freeze(
+        Config::hsi()
+           .hclk(48.MHz())
+           .sysclk(48.MHz())
+           .pclk1(24.MHz())
+           .pclk2(24.MHz()),
+    );
 
     // return (led1, led2, led3, delay)
     (
         gpiob.pb13.into_push_pull_output(), // led on pb13
         gpiob.pb14.into_push_pull_output(), // led on pb14
         gpiob.pb15.into_push_pull_output(), // led on pb15
-        cp.SYST.delay(&clocks),
+        delay,
     )
 }
 

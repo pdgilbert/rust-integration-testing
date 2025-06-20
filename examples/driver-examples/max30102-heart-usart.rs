@@ -289,7 +289,7 @@ use stm32f4xx_hal::{
     i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART1},
     prelude::*,
-    rcc::RccExt,
+    rcc::{RccExt, Config as rccConfig},
     serial::{config::Config, Rx, Serial, Tx},
 };
 
@@ -318,10 +318,9 @@ fn setup() -> (
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let mut rcc = dp.RCC.constrain();
 
-    let gpiob = dp.GPIOB.split(); // for i2c
+    let gpiob = dp.GPIOB.split(&mut rcc); // for i2c
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
@@ -329,16 +328,16 @@ fn setup() -> (
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
+    let i2c = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &mut rcc);
 
     //let delay = Delay::new(cp.SYST, &clocks);
-    let delay = cp.SYST.delay(&clocks);
+    let delay = cp.SYST.delay(&mut rcc.clocks);
 
     // led
-    let gpioc = dp.GPIOC.split();
+    let gpioc = dp.GPIOC.split(&mut rcc);
     let led = gpioc.pc13.into_push_pull_output();
 
-    let gpioa = dp.GPIOA.split();
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
     dp.USART1.cr1().modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
     let (tx, rx) = Serial::new(
@@ -348,10 +347,12 @@ fn setup() -> (
             gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();
+
+    rcc.freeze(rccConfig::hsi() .sysclk(64.MHz()) );
 
     (i2c, led, delay, tx, rx)
 }

@@ -326,6 +326,7 @@ use stm32f4xx_hal::{
            gpiob::{PB11, PB12, PB6},        
     },
     i2c::{I2c},
+    rcc::Config,
     prelude::*,
 };
 
@@ -338,14 +339,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     impl SEEK,
     PB6<Input>,
 ) {
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    //let mut delay = Delay::new(cp.SYST, &clocks);
-    //let mut delay = cp.SYST.delay(&clocks);
-    let mut delay = dp.TIM5.delay_us(&clocks);
+    let mut rcc = dp.RCC.constrain();
+    //let mut delay = Delay::new(cp.SYST, &mut rcc);
+    //let mut delay = cp.SYST.delay(&mut rcc);
+    let mut delay = dp.TIM5.delay_us(&mut rcc);
 
-    let gpiob = dp.GPIOB.split(); // for i2c
-    let gpioc = dp.GPIOC.split(); 
+    let gpiob = dp.GPIOB.split(&mut rcc); // for i2c
+    let gpioc = dp.GPIOC.split(&mut rcc); 
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
@@ -358,11 +358,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate().set_open_drain();
     let stcint = gpiob.pb6.into_pull_up_input();
 
-    let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+    let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &mut rcc);
 
     let scl = gpiob.pb10.into_alternate_open_drain();
     let sda = gpiob.pb3.into_alternate_open_drain();
-    let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
+    let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output();
 
@@ -370,6 +370,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
         p_seekup: gpiob.pb12.into_pull_down_input(),   // possibly not right pin for this function
         p_seekdown: gpiob.pb11.into_pull_down_input(),
     };
+    rcc.freeze(Config::hsi() .sysclk(64.MHz()) );
 
     (i2c1, i2c2, led, delay, buttons, stcint)
 }

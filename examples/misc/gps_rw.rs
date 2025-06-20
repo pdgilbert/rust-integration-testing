@@ -182,14 +182,16 @@ fn setup_from_dp(dp: Peripherals) -> (
 use stm32f4xx_hal::{
     pac::Peripherals,
     pac::{USART1, USART2},
+    rcc::Config as rccConfig,
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx, Error},
 };
 
 #[cfg(feature = "stm32f4xx")]
 fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {
-    let clocks = dp.RCC.constrain().cfgr.freeze();
-    let gpioa = dp.GPIOA.split();
+    let mut rcc = dp.RCC.constrain();
+
+    let gpioa = dp.GPIOA.split(&mut rcc);
     let (tx1, rx1) = Serial::new(
         dp.USART1,
         (
@@ -197,7 +199,7 @@ fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USA
             gpioa.pa10.into_alternate(), //rx pa10  for console
         ),
         Config::default().baudrate(9600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();
@@ -211,10 +213,12 @@ fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USA
             gpioa.pa3.into_alternate(), //rx pa3  for GPS
         ),
         Config::default().baudrate(9600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();
+
+    rcc.freeze(rccConfig::hsi() );
 
     (tx1, rx1, tx2, rx2)
 }

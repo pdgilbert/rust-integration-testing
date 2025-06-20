@@ -107,18 +107,20 @@ pub fn setup(dp: Peripherals) ->  (DhtType, impl DelayNs) {
 #[cfg(feature = "stm32f4xx")]
 use stm32f4xx_hal::{
     gpio::{gpioa::PA8 as DhtPin},
+    rcc::Config,
 };
 
 #[cfg(feature = "stm32f4xx")]
 pub fn setup(dp: Peripherals) ->  (DhtType, impl DelayNs) {
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
+   let mut rcc = dp.RCC.constrain();
 
-   let gpioa = dp.GPIOA.split();
+   let gpioa = dp.GPIOA.split(&mut rcc);
    let mut dht = gpioa.pa8.into_open_drain_output();
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-   let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+   let delay = dp.TIM2.delay::<1000000_u32>(&mut rcc);
+   
+   rcc.freeze(Config::hsi() );
 
    (dht, delay)
 }

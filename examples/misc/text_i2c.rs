@@ -140,15 +140,16 @@ fn setup() -> I2c<I2C1, (impl SclPin<I2C1>, impl SdaPin<I2C1>)> {
 use stm32f4xx_hal::{
     i2c::{I2c},
     pac::{Peripherals, I2C2},
+    rcc::Config,
     prelude::*,
 };
 
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> I2c<I2C2> {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let gpiob = p.GPIOB.split();
+    let mut rcc = p.RCC.constrain();
+    //let clocks = rcc.cfgr.freeze();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
@@ -156,8 +157,10 @@ fn setup() -> I2c<I2C2> {
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    // return i2c
-    I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks)
+    let i2c = I2c::new(p.I2C2, (scl, sda), 400.kHz(), &mut rcc);
+
+    rcc.freeze(Config::hsi() );
+    i2c
 }
 
 

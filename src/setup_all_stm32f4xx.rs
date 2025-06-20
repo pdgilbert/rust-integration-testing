@@ -108,17 +108,16 @@ impl ReadAdc for AdcSensor1Type {
 pub fn all_from_dp(dp: Peripherals) -> 
           (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
+   let mut rcc = dp.RCC.constrain();
 
    // according to  https://github.com/rtic-rs/rtic/blob/master/examples/stm32f411_rtc_interrupt/src/main.rs
    // 25 MHz must be used for HSE on the Blackpill-STM32F411CE board according to manual
    // let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
 
    
-   let gpioa = dp.GPIOA.split();
-   let gpiob = dp.GPIOB.split();
-   let gpioc   = dp.GPIOC.split();
+   let gpioa = dp.GPIOA.split(&mut rcc);
+   let gpiob = dp.GPIOB.split(&mut rcc);
+   let gpioc = dp.GPIOC.split(&mut rcc);
 
    let mut pin = gpioa.pa8.into_open_drain_output();
    pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -126,11 +125,11 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let scl = gpiob.pb8.into_alternate_open_drain(); 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
-   let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &clocks);
+   let i2c1 = I2c::new(dp.I2C1, (scl, sda), 400.kHz(), &mut rcc);
 
    let scl = gpiob.pb10.into_alternate_open_drain();
    let sda = gpiob.pb3.into_alternate_open_drain();
-   let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &clocks);
+   let i2c2 = I2c::new(dp.I2C2, (scl, sda), 400.kHz(), &mut rcc);
 
    let mut led = gpioc.pc13.into_push_pull_output();
    led.off();
@@ -142,7 +141,7 @@ pub fn all_from_dp(dp: Peripherals) ->
            Some(gpioa.pa6.into_alternate()), // miso 
            Some(gpioa.pa7.into_alternate()), // mosi 
        ),
-       MODE, 8.MHz(), &clocks,
+       MODE, 8.MHz(), &mut rcc,
    );
    
    let spiext = SpiExt {
@@ -156,22 +155,24 @@ pub fn all_from_dp(dp: Peripherals) ->
                       (gpioa.pa9.into_alternate(),
                        gpioa.pa10.into_alternate()
                       ),
-                      Config::default().baudrate(115200.bps()), &clocks).unwrap().split();
+                      Config::default().baudrate(115200.bps()), &mut rcc).unwrap().split();
 
     let (tx2, rx2) = Serial::new( dp.USART2,
                        (gpioa.pa2.into_alternate(), 
                         gpioa.pa3.into_alternate(),
                        ),
-                       Config::default().baudrate(9600.bps()),&clocks).unwrap().split();
+                       Config::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
-   let delay = dp.TIM5.delay(&clocks);
+   let delay = dp.TIM5.delay(&mut rcc);
 
    let adc1: AdcSensor1Type = AdcSensor {
         ch:  gpioa.pa0.into_analog(), //channel
-        adc: Adc::new(dp.ADC1, true, AdcConfig::default()),
+        adc: Adc::new(dp.ADC1, true, AdcConfig::default(), &mut rcc),
    }; 
 
-   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
+   //let clocks = rcc.cfgr().freeze();
+
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay,  rcc.clocks, adc1)
 }
 
 

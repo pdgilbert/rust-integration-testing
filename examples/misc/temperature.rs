@@ -421,6 +421,7 @@ use stm32f4xx_hal::{
     adc::{config::AdcConfig, Adc, Temperature}, //SampleTime
     gpio::{gpiob::PB1, Analog},
     pac::{Peripherals, ADC1}, //ADC2},          // 405 has ADC2 but 401 and 411 have only one adc
+    rcc::Config,
     prelude::*,
 };
 
@@ -462,23 +463,15 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     // and https://docs.rs/stm32f4xx-hal/0.8.3/stm32f4xx_hal/adc/struct.Adc.html#method.adc2
 
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
+    let mut rcc = p.RCC.constrain();
 
     //from datasheet:To synchronize A/D conversion and timers, the ADCs could be triggered by
     //any of TIM1,TIM2, TIM3, TIM4 or TIM5 timer.
 
-    let _clocks = rcc
-        .cfgr
-        .hclk(48.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .pclk2(24.MHz())
-        .freeze();
-
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::new(p.ADC1, true, AdcConfig::default()),
+        ad_1st: Adc::new(p.ADC1, true, AdcConfig::default(), &mut rcc),
     };
 
     // no channel  one-shot conversion
@@ -489,6 +482,14 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     let tmp36: Sensor<PB1<Analog>> = Sensor {
         ch: gpiob.pb1.into_analog(),
     };
+
+    rcc.freeze(
+        Config::hsi()
+           .hclk(48.MHz())
+            .sysclk(48.MHz())
+            .pclk1(24.MHz())
+            .pclk2(24.MHz()),
+    );
 
     (mcutemp, tmp36, adcs)
 }
