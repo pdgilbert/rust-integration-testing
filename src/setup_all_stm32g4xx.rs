@@ -49,9 +49,10 @@ pub type OpenDrainType = PB7<Output<OpenDrain>>;
 
 pub type I2c1Type = I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>;
 pub type I2c2Type = I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>;
-// Above work in nightly-2025-01-01. Need nightly and #![feature(type_alias_impl_trait)]
-// With nightly-2025-01-01 they work in function signatures but here 
-//   give "unconstrained opaque type...must be used in combination with a concrete type within the same crate"
+// These need nightly and #![feature(type_alias_impl_trait)]
+// As of 1.89.0-nightly (circa May-June 2025) the change to  unstable TAITs (type alias impl trait) 
+//  requires [define_opaque(I2c1Type, I2c2Type)] attribute to defining function below.
+//   See link mentioned in https://github.com/stm32-rs/stm32g4xx-hal/issues/211
 //pub type I2c1Type = I2c<I2C1, PB9<I2C1>, PB8<I2C1>>;
 //pub type I2c2Type = I2c<I2C2, PA8<I2C2>, PC4<I2C2>>;
 //pub type I2c1Type = I2c<I2C1>;
@@ -110,7 +111,7 @@ impl ReadAdc for AdcSensor1Type {
 
 //   //////////////////////////////////////////////////////////////////////
 
-
+#[define_opaque(I2c1Type, I2c2Type)]
 pub fn all_from_dp(dp: Peripherals) -> 
           (OpenDrainType, 
            I2c1Type,  //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>, 
