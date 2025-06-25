@@ -489,15 +489,21 @@ use stm32g4xx_hal::{
     gpio::{Input,
            gpiob::{PB10, PB11, PB6},        
     },
-    i2c::{I2c, Config as i2cConfig, SDAPin, SCLPin,},
+    i2c::{I2c,  Config as i2cConfig, SDAPin, SCLPin,},
     prelude::*,
 };
 
+//#[cfg(feature = "stm32g4xx")]
+//use embedded_hal::i2c::I2c;
 
+//#[define_opaque(I2c1Type, I2c2Type)]
 #[cfg(feature = "stm32g4xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2c1Type,
-    //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
+    //impl I2c<I2C1>,
+    //I2c1Type,
+    I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
+    //impl I2c<I2C2>,
+    //I2c2Type,
     I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>,
     impl LED,
     Delay,
