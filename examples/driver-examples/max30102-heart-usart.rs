@@ -134,6 +134,7 @@ use stm32f1xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull},
     i2c::{BlockingI2c, DutyCycle, Mode},
     pac::{CorePeripherals, Peripherals, I2C1},
+    rcc::Config as rccConfig,
     prelude::*,
     serial::{Config, Rx, Serial, Tx},
 };
@@ -159,34 +160,34 @@ fn setup() -> (
     let cp = CorePeripherals::take().unwrap();
     let dp = Peripherals::take().unwrap();
 
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
+    let mut rcc = dp.RCC.constrain().freeze(
+                           rccConfig::hse(8.MHz()) .sysclk(72.MHz()) .pclk1(36.MHz()),
+                           &mut dp.FLASH.constrain().acr );
+    //let clocks = rcc
+    //    .cfgr
+    //    .use_hse(8.MHz())
+    //    .sysclk(72.MHz())
+    //    .pclk1(36.MHz())
+    //    .freeze(&mut flash.acr);
 
-    let clocks = rcc
-        .cfgr
-        .use_hse(8.MHz())
-        .sysclk(72.MHz())
-        .pclk1(36.MHz())
-        .freeze(&mut flash.acr);
-
-    let mut gpiob = dp.GPIOB.split();
+    let mut gpiob = dp.GPIOB.split(&mut rcc);
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let sda = gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh);
-    let mut afio = dp.AFIO.constrain();
+    let mut afio = dp.AFIO.constrain(&mut rcc);
 
     let i2c = BlockingI2c::<I2C1>::new(
         dp.I2C1.remap(&mut afio.mapr), 
         (scl, sda),
         Mode::Fast {frequency: 400_000.Hz(), duty_cycle: DutyCycle::Ratio2to1},
-        &clocks, 1000, 10, 1000, 1000,);
+        &mut rcc, 1000, 10, 1000, 1000,);
 
 
-    let mut gpioc = dp.GPIOC.split();
+    let mut gpioc = dp.GPIOC.split(&mut rcc);
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
-    let delay = cp.SYST.delay(&clocks);
+    let delay = cp.SYST.delay(&mut rcc.clocks);
 
-    let mut gpioa = dp.GPIOA.split();
+    let mut gpioa = dp.GPIOA.split(&mut rcc);
     let tx = gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh);
     let rx = gpioa.pa10;
     let serial = Serial::new(
@@ -194,7 +195,7 @@ fn setup() -> (
         (tx, rx),
         //&mut afio.mapr,
         Config::default().baudrate(9600.bps()),
-        &clocks,
+        &mut rcc,
     );
     let (tx, rx) = serial.split();
 

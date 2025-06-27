@@ -195,6 +195,7 @@ use stm32f1xx_hal::{
     adc::Adc,
     gpio::{gpiob::PB1, Analog},
     pac::{Peripherals, ADC1, ADC2},
+    rcc::Config,
     prelude::*,
 };
 
@@ -204,6 +205,7 @@ use stm32f1xx_hal::{
     adc::Adc,
     gpio::{gpiob::PB1, Analog},
     pac::{Peripherals, ADC1},
+    rcc::Config,
     prelude::*,
 };
 
@@ -243,23 +245,24 @@ fn setup() -> (
     //fn setup() ->  (Sensor<PB1<Analog>>,  Sensor<PB1<Analog>>,   AdcsType) {
 
     let p = Peripherals::take().unwrap();
-    let mut flash = p.FLASH.constrain();
-    let rcc = p.RCC.constrain();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi(), &mut p.FLASH.constrain().acr);
 
-    let clocks = rcc.cfgr.adcclk(2.MHz()).freeze(&mut flash.acr);
-
+    // NEED TO CHECK
     // with above on bluepill  clocks.sysclk() is  8 Mhz and  clocks.adcclk() is  2 Mhz
     // with below on bluepill  clocks.sysclk() is 56 Mhz and  clocks.adcclk() is 14 Mhz
     // The mcu temp does not seem to be affected by this difference
     // but the external analog temperature (tmp36) is high by 6-7deg C with clock below.
     //let clocks = rcc.cfgr.use_hse(8.mhz()).sysclk(56.mhz())
     //    .pclk1(28.mhz()).adcclk(14.mhz()).freeze(&mut flash.acr);
+    //let mut rcc = p.RCC.constrain().freeze(
+    //                       Config::hsE() .hclk(8.MHz()) .sysclk(48.MHz()) .pclk1(28.MHz()) .pclk2(24.MHz()),
+    //                       &mut p.FLASH.constrain().acr );
 
-    let mut gpiob = p.GPIOB.split();
+    let mut gpiob = p.GPIOB.split(&mut rcc);
 
     let adcs: AdcsType = Adcs {
-        ad_1st: Adc::new(p.ADC1, &clocks),
-        ad_2nd: Adc::new(p.ADC2, &clocks),
+        ad_1st: Adc::new(p.ADC1, &mut rcc),
+        ad_2nd: Adc::new(p.ADC2, &mut rcc),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel.
@@ -304,15 +307,12 @@ fn setup() -> (impl ReadTempC, impl ReadTempC + ReadMV, Adcs<Adc<ADC1>>) {
     type McuTemperatureType = ();
 
     let p = Peripherals::take().unwrap();
-    let mut flash = p.FLASH.constrain();
-    let rcc = p.RCC.constrain();
-
-    let clocks = rcc.cfgr.adcclk(2.MHz()).freeze(&mut flash.acr);
-
-    let mut gpiob = p.GPIOB.split();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi().adcclk(2.MHz()), &mut p.FLASH.constrain().acr);
+ 
+    let mut gpiob = p.GPIOB.split(&mut rcc);
 
     let adcs: Adcs<Adc<ADC1>> = Adcs {
-        ad_1st: Adc::adc1(p.ADC1, clocks),
+        ad_1st: Adc::adc1(p.ADC1, &mut rcc),
     };
 
     //The MCU temperature sensor is internally connected to the ADC12_IN16 input channel

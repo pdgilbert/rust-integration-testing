@@ -206,6 +206,7 @@ use stm32f1xx_hal::{
         Input, PullDown, PullUp,
     },
     i2c::{BlockingI2c, DutyCycle, Mode},
+    rcc::Config,
     prelude::*,
 };
 
@@ -220,16 +221,14 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 ) {
 
     let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
+    let mut rcc = dp.RCC.constrain().freeze(Config::hsi(), &mut dp.FLASH.constrain().acr);
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let mut delay = dp.TIM2.delay_us(&mut rcc);
 
-    let mut delay = dp.TIM2.delay_us(&clocks);
+    let mut afio = dp.AFIO.constrain(&mut rcc);
 
-    let mut afio = dp.AFIO.constrain();
-
-    let mut gpiob = dp.GPIOB.split();
-    let mut gpioc = dp.GPIOC.split();
+    let mut gpiob = dp.GPIOB.split(&mut rcc);
+    let mut gpioc = dp.GPIOC.split(&mut rcc);
 
     let scl = gpiob.pb8.into_alternate_open_drain(&mut gpiob.crh);
     let mut sda = gpiob.pb9.into_push_pull_output(&mut gpiob.crh);
@@ -243,7 +242,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
                   dp.I2C1.remap(&mut afio.mapr),  // add this for PB8, PB9
                   (scl, sda),
                   Mode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio2to1,},
-                  &clocks, 1000, 10, 1000, 1000,);
+                  &mut rcc, 1000, 10, 1000, 1000,);
 
     let i2c2 = BlockingI2c::<I2C2>::new(
                  dp.I2C2,
@@ -251,7 +250,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
                   gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
                  ),
                  Mode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
-                 &clocks, 1000, 10, 1000, 1000,);
+                 &mut rcc, 1000, 10, 1000, 1000,);
 
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 

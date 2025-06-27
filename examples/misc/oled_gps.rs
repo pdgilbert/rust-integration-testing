@@ -93,6 +93,7 @@ use stm32f1xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
     timer::SysDelay as Delay,
     i2c::{BlockingI2c, DutyCycle, Mode},
+    rcc::Config as rccConfig,
     prelude::*,
     serial::{Config, Rx, Serial, Tx}, //, StopBits
 };
@@ -106,12 +107,11 @@ fn setup() -> (
 ) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain();
+    let mut rcc = p.RCC.constrain().freeze(rccConfig::hsi(), &mut p.FLASH.constrain().acr);
+    let mut afio = p.AFIO.constrain(&mut rcc);
 
-    let mut gpioa = p.GPIOA.split();
-    let mut gpiob = p.GPIOB.split();
+    let mut gpioa = p.GPIOA.split(&mut rcc);
+    let mut gpiob = p.GPIOB.split(&mut rcc);
 
     let (tx, rx) = Serial::new(
         p.USART2,
@@ -121,7 +121,7 @@ fn setup() -> (
         ),
         //&mut afio.mapr,
         Config::default().baudrate(9_600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .split();
 
@@ -132,10 +132,10 @@ fn setup() -> (
                   gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
                  ),
                  Mode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
-                 &clocks, 1000, 10, 1000, 1000,);
+                 &mut rcc, 1000, 10, 1000, 1000,);
 
 
-    (tx, rx, i2c, cp.SYST.delay(&clocks))
+    (tx, rx, i2c, cp.SYST.delay(&mut rcc.clocks))
 }
 
 

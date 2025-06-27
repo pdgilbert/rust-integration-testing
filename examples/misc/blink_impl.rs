@@ -100,6 +100,7 @@ fn setup() -> (impl LED, impl DelayNs) {
 use stm32f1xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals},
+    rcc::Config,
     prelude::*,
 };
 
@@ -110,14 +111,14 @@ impl LED for PC13<Output<PushPull>> {}
 fn setup() -> (impl LED, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut gpioc = p.GPIOC.split();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi(), &mut p.FLASH.constrain().acr);
+
+    let mut gpioc = p.GPIOC.split(&mut rcc);
 
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(&mut gpioc.crh), // led on pc13 with on/off
-        cp.SYST.delay(&clocks),
+        cp.SYST.delay(&mut rcc.clocks),
     )
 }
 

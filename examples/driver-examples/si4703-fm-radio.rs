@@ -149,30 +149,30 @@ use stm32f1xx_hal::{
         gpiob::{PB6, PB12, PB13},
         Input, PullDown, PullUp,
     },
-    i2c::{BlockingI2c, DutyCycle, Mode},
+    i2c::{I2c, DutyCycle, Mode},  //BlockingI2c,
+    rcc::Config,
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
-    I2cType,
+    //I2cType,
+    //BlockingI2c<I2C1>,
+    I2c<I2C1>,
     impl LED,
     Delay,
     impl SEEK,
     PB6<Input<PullUp>>,
 ) {
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
+    let mut rcc = dp.RCC.constrain().freeze(Config::hsi(), &mut dp.FLASH.constrain().acr);
 
-    let mut gpiob = dp.GPIOB.split();
-    let mut gpioc = dp.GPIOC.split();
+    let mut gpiob = dp.GPIOB.split(&mut rcc);
+    let mut gpioc = dp.GPIOC.split(&mut rcc);
 
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    //let mut delay = dp.TIM3.delay_us(&mut rcc);
+    let mut delay = dp.TIM3.delay(&mut rcc);
 
-    //let mut delay = dp.TIM3.delay_us(&clocks);
-    let mut delay = dp.TIM3.delay(&clocks);
-
-    let mut afio = dp.AFIO.constrain();
+    let mut afio = dp.AFIO.constrain(&mut rcc);
 
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
@@ -184,11 +184,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let sda = sda.into_alternate_open_drain(&mut gpiob.crh);
     let stcint = gpiob.pb6.into_pull_up_input(&mut gpiob.crl);
 
-    let i2c = BlockingI2c::<I2C1>::new(
+    //let i2c = BlockingI2c::<I2C1>::new(
+    let i2c = I2c::<I2C1>::new(
                   dp.I2C1.remap(&mut afio.mapr),  // add this for PB8, PB9
                   (scl, sda),
                   Mode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9,},
-                  &clocks, 1000, 10, 1000, 1000,);
+                  &mut rcc, //1000, 10, 1000, 1000,
+                  );
 
     let buttons: SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> = SeekPins {
         p_seekup: gpiob.pb12.into_pull_down_input(&mut gpiob.crh),

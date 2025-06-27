@@ -103,6 +103,7 @@ use stm32f1xx_hal::{
     //timer::SysDelay as Delay,
     gpio::{gpioa::PA4,Output, PushPull},
     pac::{Peripherals, SPI1},
+    rcc::Config,
     prelude::*,
     spi::{Spi,},
 };
@@ -116,14 +117,11 @@ fn setup() -> (
 ) {
     let dp = Peripherals::take().unwrap();
 
-    let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
-
-    let clocks = rcc.cfgr.freeze(&mut flash.acr);
+    let mut rcc = dp.RCC.constrain().freeze(Config::hsi(), &mut dp.FLASH.constrain().acr);
 
     //let mut afio = dp.AFIO.constrain();
-    let mut gpioa = dp.GPIOA.split();
-    let mut gpioc = dp.GPIOC.split();
+    let mut gpioa = dp.GPIOA.split(&mut rcc);
+    let mut gpioc = dp.GPIOC.split(&mut rcc);
 
     // SPI1
     let sck = gpioa.pa5.into_alternate_push_pull(&mut gpioa.crl);
@@ -139,13 +137,13 @@ fn setup() -> (
         //&mut afio.mapr,
         mcp4x::MODE.into(),
         1.MHz(),
-        &clocks,
+        &mut rcc,
     );
 
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
-    //let delay = cp.SYST.delay(&clocks);
-    let delay = dp.TIM2.delay_us(&clocks);
+    //let delay = cp.SYST.delay(&mut rcc);
+    let delay = dp.TIM2.delay_us(&mut rcc);
 
     (spi, cs, led, delay)
 }
@@ -232,7 +230,7 @@ fn setup() -> (
 ) {
     let dp = Peripherals::take().unwrap();
 
-    let mut rcc = dp.RCC.constrain();
+    let mut rcc = dp.RCC.constrain().freeze(Config::hsi() .sysclk(64.MHz()) .pclk1(32.MHz()) );
 
     let gpioa = dp.GPIOA.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc); 
@@ -259,8 +257,6 @@ fn setup() -> (
 
     //let delay = cp.SYST.delay(&mut rcc.clocks);
     let delay = dp.TIM2.delay::<1000000_u32>(&mut rcc);
-
-    rcc.freeze(Config::hsi() .sysclk(64.MHz()) .pclk1(32.MHz()) );
 
     (spi, cs, led, delay)
 }

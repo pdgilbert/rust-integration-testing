@@ -83,23 +83,21 @@ use hal::{
 use stm32f1xx_hal::{
     timer::TimerExt, 
     gpio::{gpioa::PA8 as DhtPin},
+    rcc::Config,
 };
 
 #[cfg(feature = "stm32f1xx")]
 pub fn setup(dp: Peripherals) ->  (DhtType, impl DelayNs) {
-   let mut flash = dp.FLASH.constrain();
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr
+   let mut rcc = dp.RCC.constrain().freeze(Config::hsi(), &mut dp.FLASH.constrain().acr);
         //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
         //.sysclk(64.mhz()) // system clock 8 MHz default, max 72MHz
         //.pclk1(32.mhz())  // system clock 8 MHz default, max 36MHz ?
-        .freeze(&mut flash.acr);
 
-   let mut gpioa = dp.GPIOA.split();
+   let mut gpioa = dp.GPIOA.split(&mut rcc);
    let mut dht = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
    dht.set_high(); // Pull high to avoid confusing the sensor when initializing.
 
-   let delay = dp.TIM2.delay::<1000000_u32>(&clocks);
+   let delay = dp.TIM2.delay::<1000000_u32>(&mut rcc);
 
    (dht, delay)
 }

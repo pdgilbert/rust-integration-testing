@@ -18,7 +18,7 @@ pub use hal::{
 
 pub use stm32f4xx_hal::{
     pac::{TIM2, TIM5},
-    rcc::{Clocks},
+    rcc::{Clocks, Config as rccConfig},
     timer::{TimerExt},
     serial::{config::Config},
     gpio::{Pin}, 
@@ -108,7 +108,8 @@ impl ReadAdc for AdcSensor1Type {
 pub fn all_from_dp(dp: Peripherals) -> 
           (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
-   let mut rcc = dp.RCC.constrain();
+   let mut rcc = dp.RCC.constrain().freeze(rccConfig::hsi() );
+   //let mut rcc = dp.RCC.constrain().freeze(rccConfig::hsi() .sysclk(64.MHz()) .pclk1(32.MHz()) );
 
    // according to  https://github.com/rtic-rs/rtic/blob/master/examples/stm32f411_rtc_interrupt/src/main.rs
    // 25 MHz must be used for HSE on the Blackpill-STM32F411CE board according to manual
@@ -169,8 +170,6 @@ pub fn all_from_dp(dp: Peripherals) ->
         ch:  gpioa.pa0.into_analog(), //channel
         adc: Adc::new(dp.ADC1, true, AdcConfig::default(), &mut rcc),
    }; 
-
-   //let clocks = rcc.cfgr().freeze();
 
    (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay,  rcc.clocks, adc1)
 }

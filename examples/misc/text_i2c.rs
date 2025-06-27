@@ -67,18 +67,18 @@ fn setup() -> I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>> {
 use stm32f1xx_hal::{
     pac::{Peripherals, I2C2},
     i2c::{BlockingI2c, DutyCycle, Mode},
+    rcc::Config,
     prelude::*,
 };
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> BlockingI2c<I2C2> {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi(), &mut p.FLASH.constrain().acr);
 
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
     //let mut afio = p.AFIO.constrain(&mut rcc.apb2);  // for i2c1
 
-    let mut gpiob = p.GPIOB.split();
+    let mut gpiob = p.GPIOB.split(&mut rcc);
 
     // can have (scl, sda) using I2C1  on (PB8, PB9 ) or on  (PB6, PB7)
     //     or   (scl, sda) using I2C2  on (PB10, PB11)
@@ -94,7 +94,7 @@ fn setup() -> BlockingI2c<I2C2> {
             frequency: 400_000.Hz(),
             duty_cycle: DutyCycle::Ratio2to1,
         },
-        &clocks,
+        &mut rcc,
         1000,
         10,
         1000,

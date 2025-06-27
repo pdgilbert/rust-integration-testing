@@ -18,6 +18,7 @@ pub use hal::{
 pub use stm32f1xx_hal::{
       pac::{TIM2, TIM3}, 
       rcc::Clocks,
+      rcc::Config as rccConfig,
       timer::{TimerExt, Delay as halDelay},
       i2c::{DutyCycle, Mode as i2cMode, BlockingI2c,},   // //Pins
       spi::{Mode, Phase, Polarity},
@@ -124,15 +125,8 @@ pub fn all_from_dp(dp: Peripherals) ->
                (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
     let mut flash = dp.FLASH.constrain();
-    let rcc = dp.RCC.constrain();
-    //let mut afio = dp.AFIO.constrain();
-    let clocks = rcc
-        .cfgr
-        //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
-        //.sysclk(64.mhz()) // system clock 8 MHz default, max 72MHz
-        //.pclk1(32.mhz())  // system clock 8 MHz default, max 36MHz ?
-        .freeze(&mut flash.acr);
-    //let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
+    let mut rcc = dp.RCC.constrain().freeze(rccConfig::hsi(), &mut flash.acr );
+    //let mut rcc = dp.RCC.constrain().freeze(rccConfig::hsi() .sysclk(64.MHz()) .pclk1(32.MHz()), &mut flash.acr  ) ;
 
     //hprintln!("hclk {:?}",   clocks.hclk()).unwrap();
     //hprintln!("sysclk {:?}", clocks.sysclk()).unwrap();
@@ -143,9 +137,9 @@ pub fn all_from_dp(dp: Peripherals) ->
     //hprintln!("adcclk {:?}",    clocks.adcclk()).unwrap();
     ////hprintln!("usbclk_valid {:?}", clocks.usbclk_valid()).unwrap(); not fo all MCUs
 
-    let mut gpioa = dp.GPIOA.split();
-    let mut gpiob = dp.GPIOB.split();
-    let mut gpioc = dp.GPIOC.split();
+    let mut gpioa = dp.GPIOA.split(&mut rcc);
+    let mut gpiob = dp.GPIOB.split(&mut rcc);
+    let mut gpioc = dp.GPIOC.split(&mut rcc);
 
     let mut pin = gpioa.pa8.into_open_drain_output(&mut gpioa.crh);
     pin.set_high(); // Pull high to avoid confusing the sensor when initializing.
@@ -162,10 +156,10 @@ pub fn all_from_dp(dp: Peripherals) ->
     //        frequency: 100_000_u32.Hz(),
     //        duty_cycle: DutyCycle::Ratio2to1,
     //    },
-    //    &clocks,  //1000, 10, 1000, 1000,
+    //    &mut rcc,  //1000, 10, 1000, 1000,
     //);
 
-    let mut afio = dp.AFIO.constrain();
+    let mut afio = dp.AFIO.constrain(&mut rcc);
 
     //let i2c1 = I2c::<I2C1>::new(
     let i2c1 = BlockingI2c::<I2C1>::new(
@@ -176,7 +170,7 @@ pub fn all_from_dp(dp: Peripherals) ->
                    gpiob.pb9.into_alternate_open_drain(&mut gpiob.crh)   // sda
                   ),
                   i2cMode::Fast {frequency: 400.kHz(), duty_cycle: DutyCycle::Ratio16to9,},
-                  &clocks, 1000, 10, 1000, 1000,);
+                  &mut rcc, 1000, 10, 1000, 1000,);
     // or
     //let i2c1 = dp
     //    .I2C1
@@ -198,7 +192,7 @@ pub fn all_from_dp(dp: Peripherals) ->
                   gpiob.pb11.into_alternate_open_drain(&mut gpiob.crh), // sda
                  ),
                  i2cMode::Fast {frequency: 400_000_u32.Hz(), duty_cycle: DutyCycle::Ratio2to1,},
-                 &clocks, 1000, 10, 1000, 1000,);
+                 &mut rcc, 1000, 10, 1000, 1000,);
 
     let mut led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
     led.off();
@@ -213,7 +207,7 @@ pub fn all_from_dp(dp: Peripherals) ->
        //&mut afio.mapr,
        MODE,
        8.MHz(), 
-       &clocks,
+       &mut rcc,
    );
    
    let spiext = SpiExt {
@@ -224,7 +218,7 @@ pub fn all_from_dp(dp: Peripherals) ->
         };   
 
     //let delay = DelayType{};
-    let delay = dp.TIM3.delay::<1000000_u32>(&clocks);
+    let delay = dp.TIM3.delay::<1000000_u32>(&mut rcc);
 
     let (tx1, rx1) = dp.USART1
                        .serial(
@@ -232,7 +226,7 @@ pub fn all_from_dp(dp: Peripherals) ->
                             gpioa.pa10,
                            ),
                            Config::default().baudrate(115200.bps()), 
-                           &clocks,
+                           &mut rcc,
                         ).split();
     
     let (tx2, rx2) = Serial::new( 
@@ -242,16 +236,21 @@ pub fn all_from_dp(dp: Peripherals) ->
             gpioa.pa3,  // probably need alt
         ), 
         Config::default().baudrate(9_600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .split();
     
 
    let adc1: AdcSensor1Type = AdcSensor {
         ch:  gpioa.pa0.into_analog(&mut gpioa.crl), //channel
-        adc: Adc::new(dp.ADC1, &clocks),
+        adc: Adc::new(dp.ADC1, &mut rcc),
    }; 
+   
+        //.use_hse(8.mhz()) // high-speed external clock 8 MHz on bluepill
+        //.sysclk(64.mhz()) // system clock 8 MHz default, max 72MHz
+        //.pclk1(32.mhz())  // system clock 8 MHz default, max 36MHz ?
 
-   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, clocks, adc1)
+
+   (pin, i2c1, i2c2, led, tx1, rx1,  tx2, rx2, spi1, spiext,  delay, rcc.clocks, adc1)
 }
 

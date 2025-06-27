@@ -88,6 +88,7 @@ fn setup() -> (PC13<Output<PushPull>>, Delay) {
 use stm32f1xx_hal::{
     gpio::{gpioc::PC13, Output, PushPull},
     pac::{CorePeripherals, Peripherals},
+    rcc::Config,
     prelude::*,
 };
 
@@ -98,9 +99,12 @@ impl LED for PC13<Output<PushPull>> {}
 fn setup() -> (PC13<Output<PushPull>>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut gpioc = p.GPIOC.split();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi(), &mut p.FLASH.constrain().acr);
+    //let mut rcc = p.RCC.constrain().freeze(
+    //                       Config::hsi() .hclk(48.MHz()) .sysclk(48.MHz()) .pclk1(24.MHz()) .pclk2(24.MHz()),
+    //                       &mut p.FLASH.constrain().acr );
+
+    let mut gpioc = p.GPIOC.split(&mut rcc);
 
     // see examples in https://github.com/stm32-rs/stm32f1xx-hal/examples/
     //  for other (better) ways to do delay
@@ -108,7 +112,7 @@ fn setup() -> (PC13<Output<PushPull>>, impl DelayNs) {
     // return tuple  (led, delay)
     (
         gpioc.pc13.into_push_pull_output(&mut gpioc.crh), // led on pc13 with on/off
-        cp.SYST.delay(&clocks)
+        cp.SYST.delay(&rcc.clocks)
     )
 }
 
@@ -173,20 +177,14 @@ impl LED for PC13<Output<PushPull>> {}
 fn setup() -> (PC13<Output<PushPull>>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let mut rcc = p.RCC.constrain();
+
+    // let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
+    let mut rcc = p.RCC.constrain().freeze(Config::hsi() .hclk(48.MHz()) .sysclk(48.MHz()) .pclk1(24.MHz()) .pclk2(24.MHz()) );
 
     let gpioc = p.GPIOC.split(&mut rcc);
     let delay = cp.SYST.delay(&mut rcc.clocks);
     //let delay = p.TIM2.delay::<1000000_u32>(&mut rcc);
 
-    // let clocks = rcc.cfgr.use_hse(25.MHz()).freeze();
-    rcc.freeze(
-        Config::hsi()
-           .hclk(48.MHz())
-            .sysclk(48.MHz())
-            .pclk1(24.MHz())
-            .pclk2(24.MHz()),
-    );
 
     // return tuple  (led, delay)
     (
