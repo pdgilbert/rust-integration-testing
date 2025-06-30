@@ -51,6 +51,11 @@ use stm32f1xx_hal::{
 };
 
 
+#[cfg(feature = "stm32f4xx")]
+use stm32f4xx_hal::{
+      rcc::Config,
+};
+
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     timer::Timer,
@@ -95,17 +100,16 @@ pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { /
 
 #[cfg(feature = "stm32f4xx")]            
 pub fn setup_from_dp(dp: Peripherals) ->  ( impl I2cTrait<u8>, impl DelayNs) { // NEEDS u8 NOT I2C1 Why?
-   let rcc = dp.RCC.constrain();
-   let clocks = rcc.cfgr.freeze();
-
-   let gpiob = dp.GPIOB.split();
+   let mut rcc = dp.RCC.constrain().freeze(Config::hsi() .hclk(48.MHz()) .sysclk(48.MHz()) .pclk1(24.MHz()) .pclk2(24.MHz()) );
+ 
+   let gpiob = dp.GPIOB.split(&mut rcc);
    let scl = gpiob.pb8.into_alternate_open_drain(); 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
 
-   let i2c = dp.I2C1.i2c( (scl, sda), 400.kHz(), &clocks);
+   let i2c = dp.I2C1.i2c( (scl, sda), 400.kHz(), &mut rcc);
 
    // need  ::<1000000_u32>  for `FREQ` of the method `delay   WHY?
-   let delay = dp.TIM5.delay::<1000000_u32>(&clocks);
+   let delay = dp.TIM5.delay::<1000000_u32>(&mut rcc);
 
    (i2c, delay)
 }

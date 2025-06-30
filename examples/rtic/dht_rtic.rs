@@ -78,9 +78,10 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306,
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
+    use embedded_hal::delay::DelayNs;
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::
-                         setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType, Delay, prelude::*,};
+                         setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType};
 
 
 
@@ -135,6 +136,9 @@ mod app {
        ()
     }
 
+    type Delay = impl DelayNs;
+
+    #[define_opaque(Delay)]
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();
@@ -186,6 +190,7 @@ mod app {
 // see disply_stuff_rtic and  https://github.com/jamwaffles/ssd1306/issues/164 regarding
 // problem Shared local text_style. Workaroound by building in the task (may not be very efficient).
 
+ 
     #[local]
     struct Local {
         dht:   OpenDrainType,
