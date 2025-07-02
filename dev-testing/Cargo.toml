@@ -82,6 +82,8 @@ dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branc
 #ssd1306         = { git = "https://github.com/embedevices-rs/ssd1306", branch = "master"  } #eh-1 display-interface 0.5.0
 #ssd1306         = { git = "https://github.com/embedevices-rs/ssd1306", branch = "async"  } 
 ssd1306         = { git = "https://github.com/sjoerdsimons/ssd1306", branch = "master"  } # embedded-hal-1.0.0
+# next would be preffered but need to sort out a version conflict
+#ssd1306         = { git = "https://https://github.com/rust-embedded-community/ssd1306", branch = "master"  }
 
 onewire         = { git = "https://github.com/kellerkindt/onewire" }
 

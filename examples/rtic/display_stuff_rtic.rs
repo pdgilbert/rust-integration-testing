@@ -111,8 +111,11 @@ mod app {
 
     ////////////////////////////////////////////////////////////////////////////////////
 
- NOT USING SHARED_BUS?? where does this come from?
-    pub type DisplayType = Ssd1306<I2CInterface<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>, 
+ //NOT USING SHARED_BUS?? where does this come from?
+ //   pub type DisplayType = Ssd1306<I2CInterface<shared_bus::I2cProxy<'static,  Mutex<RefCell<I2c1Type>>>>, 
+ //                         ssd1306::prelude::DisplaySize128x64, 
+ //                         BufferedGraphicsMode<DisplaySize128x64>>;
+    pub type DisplayType = Ssd1306<I2CInterface<Mutex<RefCell<I2c1Type>>>, 
                           ssd1306::prelude::DisplaySize128x64, 
                           BufferedGraphicsMode<DisplaySize128x64>>;
     #[shared]
@@ -149,13 +152,16 @@ mod app {
        let (i2c1, mut led) = setup::i2c_led_from_dp(cx.device);
 
        led.on();
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
 
        //let i2c1_rc: RefCell<'static, I2c1Type>   = RefCell::new(i2c1);
-  //     let i2c1_rc   = RefCell::new(i2c1);
-  //     let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
+       let i2c1_rc   = RefCell::new(i2c1);
+       let i2c1_rcd  = RefCellDevice::new(&i2c1_rc); 
        
-       let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); 
-       let interface = I2CDisplayInterface::new(manager.acquire_i2c()); //default address 0x3C  alt address 0x3D
+  //     let manager: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap(); 
+  //     let interface = I2CDisplayInterface::new(manager.acquire_i2c()); //default address 0x3C  alt address 0x3D
+       let interface = I2CDisplayInterface::new(i2c1_rcd, 0x3C); //default address 0x3C  alt address 0x3D
 
        let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
