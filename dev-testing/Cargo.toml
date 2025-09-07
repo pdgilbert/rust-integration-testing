@@ -239,7 +239,7 @@ shared-bus = { version = "0.3.1", features = ["cortex-m"] }
 #shared-bus = {  git = "https://github.com/Rahix/shared-bus", features = ["cortex-m"] } 
 # next not really rc3 yet (Jan 3, 2024 )
 #shared-bus = {  git = "https://github.com/TeyKey1/shared-bus", features = ["cortex-m", "embedded-hal-alpha"] } 
-heapless = "0.8"
+heapless = "0.9"
 #nb = ">=0.1.2"
 nb = ">=1.1.0"
 libm = "0.2"

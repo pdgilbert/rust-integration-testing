@@ -384,7 +384,13 @@ fn main() -> ! {
     let interface = I2CDisplayInterface::new(i2c);
     let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
         .into_buffered_graphics_mode();
-    display.init().unwrap();
+    hprintln!("start init()");
+    match display.init() {
+          Ok(_v) => {hprintln!("done init()")},
+          Err(e) => {hprintln!("init() error {:?}", e);
+                     panic!("{:#?}", e)
+                    },
+    };
 
     hprintln!("done interface");
 
