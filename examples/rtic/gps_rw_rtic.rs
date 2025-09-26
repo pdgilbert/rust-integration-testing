@@ -83,7 +83,7 @@ mod app {
         // byte buffer up to 80  u8 elements on stack
         let mut buffer: [u8; 80] = [0; 80];
         //let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-        //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
+        //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()); //0 of 80
         //buffer.clear();
         
         // transmit to console, receive from gps
@@ -94,7 +94,7 @@ mod app {
         // note that putting hprintln! in loop slows it too much and data is lost.
      
         // read gps on usart2
-        hprintln!("starting read GPS").unwrap();
+        hprintln!("starting read GPS");
         read_gps::spawn().unwrap();
 
         (Shared {buffer}, Local {tx_con, rx_gps} )
@@ -109,10 +109,10 @@ mod app {
             //let len = buffer.lock(|buf| {rx_gps.read(buf)});
             let mut bf: [u8; 80] = [0; 80];
             let len = rx_gps.read(&mut bf);
-        hprintln!("len {:?}", len).unwrap();  // indicates len Err(Overrun)
+        hprintln!("len {:?}", len);  // indicates len Err(Overrun)
             match len {
                Ok(length) => {  if length != 0 {write_con::spawn().unwrap();};},
-               Err(_error) =>  {hprintln!(">").unwrap();
+               Err(_error) =>  {hprintln!(">");
                                }, // skip, but might be good to have actual error
             };
           

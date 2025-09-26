@@ -192,10 +192,10 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //hprintln!("temperature-display_4jst example").unwrap();
+        //hprintln!("temperature-display_4jst example");
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
-        //hprintln!("setup done.").unwrap();
+        //hprintln!("setup done.");
 
         led.on(); 
         Mono.delay_ms(1000u32);
@@ -209,7 +209,7 @@ mod app {
 
         show_message("4jst temperature", &mut display);
         Mono.delay_ms(2000u32);    
-        //hprintln!("display initialized.").unwrap();
+        //hprintln!("display initialized.");
 
          
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
@@ -221,26 +221,26 @@ mod app {
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Sda);
         //let mut adc = Ads1x1x::new_ads1115(i2c1,  TargetAddr::Scl);
 
-        //hprintln!("adc initialized.").unwrap();
+        //hprintln!("adc initialized.");
         show_message("adc initialized.", &mut display);
 
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         //asm::bkpt();
 
         let z = adc.set_full_scale_range(FullScaleRange::Within4_096V);
-        //hprintln!("z {:?} from adc.set_full_scale_range().", z).unwrap(); 
+        //hprintln!("z {:?} from adc.set_full_scale_range().", z); 
         match z {  
             Ok(())   =>  (),
             Err(_e) =>  {show_message("range error.", &mut display);
                         Mono.delay_ms(2000u32);    
-                        // hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                        // hprintln!("Error {:?} in adc.set_full_scale_range(). Check i2c is on proper pins.", e); 
                         //panic!("panic")
                        },
         };
 
         read_and_display::spawn().unwrap();
 
-       //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+       //hprintln!("start, interval {}s", READ_INTERVAL);
 
         (Shared {led}, Local {adc, display})
     }
@@ -258,7 +258,7 @@ mod app {
 
     #[idle()]
     fn idle(_cx: idle::Context) -> ! {
-        //hprintln!("idle with wfi started").unwrap();
+        //hprintln!("idle with wfi started");
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). Sleep may affect debugging.
            rtic::export::wfi()
         }
@@ -266,7 +266,7 @@ mod app {
 
     #[task(shared = [led], local = [adc, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
-       //hprintln!("read_and_display started").unwrap();
+       //hprintln!("read_and_display started");
 
        //  REALLY DO BETTER APROX.
        // very crude linear aproximation mv to degrees C using 
@@ -274,11 +274,11 @@ mod app {
        // t = a + v/b , v in mV, b inverse slope
        let a = 72i64;    //  72 deg
        let b = -34i64;   //  -34 mv/degree   
-       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
+       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE);
           
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
-          //hprintln!("read_and_display").unwrap();
+          //hprintln!("read_and_display");
           blink::spawn(BLINK_DURATION).ok();
 
           let v = [
@@ -290,7 +290,7 @@ mod app {
             
           let mut mv:[i64; 4] = [-100; 4] ;
           for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
-          //hprintln!(" mv {:?}", mv).unwrap();
+          //hprintln!(" mv {:?}", mv);
 
           // t in tenths of a degrees C, so it is an int  but t[0]/10, t[0].abs() %10 give a degree with one decimal.
           let mut t:[i64; 4] = [-100; 4] ;
@@ -298,7 +298,7 @@ mod app {
           //for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) }; // loses the decimal rounding division
           for i in 0..t.len() { t[i] =  10 * a  + (10 * mv[i]) / b };
  
-          //hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+          //hprintln!(" t {:?} = 10 * degrees", t);
 
           show_display(mv, t, &mut cx.local.display);
        }

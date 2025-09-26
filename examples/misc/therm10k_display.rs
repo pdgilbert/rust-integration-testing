@@ -121,7 +121,7 @@ where
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("therm10k_display example");
-    //hprintln!("therm10k_display example").unwrap();
+    //hprintln!("therm10k_display example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -156,16 +156,16 @@ fn main() -> ! {
         // Read 10k probe on adc
         let mv = sens.read_mv();
         let temp:i64  = a - (mv / b) as i64 ;
-        //hprintln!("probe  {}mV  {}C ", mv, temp).unwrap();
+        //hprintln!("probe  {}mV  {}C ", mv, temp);
 
         let z = read(&mut delay, &mut dht);
         let (dht_temp, dht_humidity) = match z {
             Ok(Reading {temperature, relative_humidity,})
-               =>  {//hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+               =>  {//hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity);
                     (temperature, relative_humidity)
                    },
             Err(_e) 
-               =>  {//hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
+               =>  {//hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40); 
                     //panic!("Error reading DHT"),
                     (25, 40)  //supply default values
                    },

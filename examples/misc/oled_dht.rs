@@ -111,7 +111,7 @@ where
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("oled_dht example");
-    //hprintln!("oled_dht example").unwrap();
+    //hprintln!("oled_dht example");
 
     let dp = Peripherals::take().unwrap();
     let (mut dht, i2c, mut led, mut delay) = setup::pin_i2c_led_delay_from_dp(dp);
@@ -137,10 +137,10 @@ fn main() -> ! {
             Ok(Reading {
                 temperature,
                 relative_humidity,}) 
-               => {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
+               => {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity);
                    show_display(temperature, relative_humidity, text_style, &mut display)},
             Err(_e) 
-               =>  {//hprintln!("Error {:?}", e).unwrap(); 
+               =>  {//hprintln!("Error {:?}", e); 
                     panic!("Error reading DHT")},
         }
 

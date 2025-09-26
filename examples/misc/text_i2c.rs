@@ -17,7 +17,7 @@
 
 use cortex_m_rt::entry;
 //use cortex_m_rt::{entry, exception, ExceptionFrame};
-use cortex_m_semihosting_05::hprintln;
+use cortex_m_semihosting::hprintln;
 
 // old builtin include Font6x6, Font6x8, Font6x12, Font8x16, Font12x16, Font24x32
 // builtin include FONT_6X10, FONT_8X13, ....

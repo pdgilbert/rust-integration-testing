@@ -145,7 +145,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         //rtt_init_print!();
         //rprintln!("htu2xd_rtic example");
-        //hprintln!("htu2xd_rtic example").unwrap();
+        //hprintln!("htu2xd_rtic example");
 
         Mono::start(cx.core.SYST, MONOCLOCK);
 
@@ -175,7 +175,7 @@ mod app {
         let mut ina = SyncIna219::new( i2c2, Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
         ina.calibrate(UnCalibrated).unwrap();
 
-        //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+        //hprintln!("let mut ina addr {:?}", INA219_ADDR);  // crate's  INA219_ADDR prints as 65
 
         Mono.delay_ms(15u32);     // Wait for sensor
 
@@ -244,7 +244,7 @@ mod app {
     async fn blink(_cx: blink::Context, duration: u32) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        //hprintln!("blink {}", duration).unwrap();
+        //hprintln!("blink {}", duration);
         crate::app::led_on::spawn().unwrap();
         Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();

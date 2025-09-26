@@ -105,11 +105,11 @@ mod app {
         // intial dht reading
         let (temperature, humidity) = match read(&mut delay, &mut dht) {  //NEEDS NON SYSTICK DELAY
             Ok(Reading {temperature, relative_humidity,})
-               =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+               =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity);
                     (temperature, relative_humidity)
                    },
             Err(e) 
-               =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
+               =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40); 
                     //panic!("Error reading DHT"),
                     (25, 40)  //supply default values
                    },
@@ -134,23 +134,23 @@ mod app {
         //        .into_buffered_graphics_mode();
 
         let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
-        hprintln!("let mut ccs811 = Ccs811Awake::new(").unwrap();
+        hprintln!("let mut ccs811 = Ccs811Awake::new(");
         ccs811.software_reset().unwrap();
-        hprintln!("_reset").unwrap();
+        hprintln!("_reset");
 
         delay.delay_ms(3000);  // Delay while ccs811 resets
-        hprintln!("delay.delay_ms(3000u32)").unwrap();
+        hprintln!("delay.delay_ms(3000u32)");
 
         let mut ccs811 = ccs811.start_application().ok().unwrap();
-        hprintln!("let mut ccs811 = ccs811.start_application(").unwrap();
+        hprintln!("let mut ccs811 = ccs811.start_application(");
         ccs811.set_environment(temperature.into(), humidity.into()).unwrap(); //i8 into f32, u8 into f32
         ccs811.set_mode(MeasurementMode::ConstantPower1s).unwrap();
-        hprintln!("ccs811.set_mode(3000u32)").unwrap();
+        hprintln!("ccs811.set_mode(3000u32)");
 
         // make certain this does not start sooner than end of systick timer led check above
         measure::spawn().unwrap();
 
-        hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+        hprintln!("start, interval {}s", READ_INTERVAL);
         writeln!(tx, "start\r",).unwrap();
 
         (Shared {led}, Local {dht, ccs811, tx, delay })
@@ -176,7 +176,7 @@ mod app {
 
     #[idle()]
     fn idle(_cx: idle::Context) -> ! {
-        hprintln!("idle with wfi started").unwrap();
+        hprintln!("idle with wfi started");
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). It may affect debugging.
            rtic::export::wfi()
         }
@@ -192,27 +192,27 @@ mod app {
        loop {
            Mono::delay(READ_INTERVAL.secs()).await;
 
-           //hprintln!("measure").unwrap();
+           //hprintln!("measure");
            blink::spawn(BLINK_DURATION).ok();
 
            let z = read(delay, dht);
            let (temperature, humidity) = match z {
                Ok(Reading {temperature, relative_humidity,})
-                  =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity).unwrap();
+                  =>  {hprintln!("temperature:{}, humidity:{}, ", temperature, relative_humidity);
                        (temperature, relative_humidity)
                       },
                Err(e) 
-                  =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40).unwrap(); 
+                  =>  {hprintln!("dht Error {:?}. Using default temperature:{}, humidity:{}", e, 25, 40); 
                        //panic!("Error reading DHT"),
                        (25, 40)  //supply default values
                       },
            };
-           //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity).unwrap();
+           //hprintln!("temperature:{}, humidity:{}, ", temperature, humidity);
 
            //let data = cx.share.ccs811.lock(|ccs811| block!(ccs811.data())).unwrap_or(AlgorithmResult::default());
            let data = block!(cx.local.ccs811.data()).unwrap_or(AlgorithmResult::default());
            hprintln!("ccs811 data eco2:{}, etvoc:{}, raw_current:{}, raw_volt:{}", 
-                             data.eco2, data.etvoc, data.raw_current, data.raw_voltage).unwrap();
+                             data.eco2, data.etvoc, data.raw_current, data.raw_voltage);
 
            //cx.share.ccs811.lock(|ccs811| ccs811.set_environment(temperature.into(), humidity.into())).unwrap();
            cx.local.ccs811.set_environment(temperature.into(), humidity.into()).unwrap();
@@ -244,7 +244,7 @@ mod app {
 
     #[task(shared = [led], priority=1 )]
     async fn blink(_cx: blink::Context, duration: u32) {
-        //hprintln!("blink {}", duration).unwrap();
+        //hprintln!("blink {}", duration);
         crate::app::led_on::spawn().unwrap();
         Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();

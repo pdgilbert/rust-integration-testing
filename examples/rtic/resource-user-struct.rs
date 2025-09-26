@@ -99,7 +99,7 @@ mod app {
     // `shared` cannot be accessed from this context
     #[idle]
     fn idle(_cx: idle::Context) -> ! {
-        hprintln!("about to  debug::EXIT_SUCCESS").unwrap();
+        hprintln!("about to  debug::EXIT_SUCCESS");
         debug::exit(debug::EXIT_SUCCESS);
 
         // error: no `shared` field in `idle::Context`
@@ -116,7 +116,7 @@ mod app {
             *shared
         });
 
-        hprintln!("USART1: shared = {}", shared).unwrap();
+        hprintln!("USART1: shared = {}", shared);
     }
 
     // `shared` can be accessed from this context
@@ -127,6 +127,6 @@ mod app {
             *shared
         });
 
-        hprintln!("USART2: shared = {}", shared).unwrap();
+        hprintln!("USART2: shared = {}", shared);
     }
 }

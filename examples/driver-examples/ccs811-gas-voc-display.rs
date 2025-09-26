@@ -103,27 +103,27 @@ fn main() -> ! {
     display.flush().unwrap();
 
     /////////////////////   ccs
-    //hprintln!("ccs setup starting").unwrap();
+    //hprintln!("ccs setup starting");
 
     let mut ccs811 = Ccs811Awake::new(i2c2, SlaveAddr::default());
-    //hprintln!("Ccs811Awake done").unwrap();
+    //hprintln!("Ccs811Awake done");
     delay.delay_ms(1000);
 
     let cr = ccs811.software_reset();
     let  _z = cr.unwrap();
-    //hprintln!("software_reset done: {:?}", z).unwrap();
+    //hprintln!("software_reset done: {:?}", z);
     delay.delay_ms(1000);  
 
     let mut ccs811 = ccs811.start_application().ok().unwrap();
-    //hprintln!("ccs811.start_application done").unwrap();
+    //hprintln!("ccs811.start_application done");
     delay.delay_ms(2000);
 
     ccs811.set_environment(22.0, 50.0).unwrap();  // temp and humidity used in calibration
-    //hprintln!("set_environment done").unwrap();
+    //hprintln!("set_environment done");
     delay.delay_ms(2000);
 
     ccs811.set_mode(MeasurementMode::ConstantPower1s).unwrap();
-    //hprintln!("set_mode done").unwrap();
+    //hprintln!("set_mode done");
     led.blink(2000_u16, &mut delay);  // also delay for set_mode
 
     ///////////////////// set defaults and loop variables
@@ -136,7 +136,7 @@ fn main() -> ! {
 
     let mut lines: [String<32>; 2] = [String::new(), String::new()];
 
-    //hprintln!("loop").unwrap();
+    //hprintln!("loop");
 
     /////////////////////    measure and display in loop
     loop {

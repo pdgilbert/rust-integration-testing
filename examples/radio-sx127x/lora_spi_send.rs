@@ -100,19 +100,19 @@ fn main() -> ! {
     let (mut led, spi, spiext, mut delay) = setup::led_spi_spiext_delay_from_dp(dp); 
     led.off();
 
-    //hprintln!("start delay.delay_ms(5)").unwrap();
+    //hprintln!("start delay.delay_ms(5)");
     delay.delay_ms(5);
-    //hprintln!(" end  delay.delay_ms(5)").unwrap();
+    //hprintln!(" end  delay.delay_ms(5)");
 
     // cs should be called nss
     let lora = Sx127x::spi(spi, spiext.cs,  spiext.busy, spiext.ready, spiext.reset, delay, 
                        &CONFIG_RADIO ); 
 
     let mut lora =  match lora {
-            Ok(lr)  => { //hprintln!("lora setup completed.").unwrap();
+            Ok(lr)  => { //hprintln!("lora setup completed.");
                          lr
                        } 
-            Err(e) =>  { //hprintln!("Error in lora setup. {:?}", e).unwrap();
+            Err(e) =>  { //hprintln!("Error in lora setup. {:?}", e);
                          panic!("{:?}", e)
                        }
     };
@@ -129,17 +129,17 @@ fn main() -> ! {
  //   use radio_sx127x::device::regs::Register;
  //
 //    let v = lora.lora_get_config();
-//    hprintln!("configuration {:?}", v).unwrap();
+//    hprintln!("configuration {:?}", v);
 // 
-//    hprintln!("channel      {}", lora.get_channel()).unwrap();
+//    hprintln!("channel      {}", lora.get_channel());
 // 
-//    hprintln!("mode             {}",    lora.get_mode()).unwrap();
-//    hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr())).unwrap();
-//    hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth()).unwrap();
-//    hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4()).unwrap();
-//    hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
-//    hprintln!("invert_iq        {:?}",  lora.get_invert_iq()).unwrap();
-//    hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
+//    hprintln!("mode             {}",    lora.get_mode());
+//    hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr()));
+//    hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth());
+//    hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4());
+//    hprintln!("spreading_factor {:?}",  lora.get_spreading_factor());
+//    hprintln!("invert_iq        {:?}",  lora.get_invert_iq());
+//    hprintln!("tx_power         {:?}",  lora.get_tx_power());
 
     // transmit something
 
@@ -154,29 +154,29 @@ fn main() -> ! {
 
     loop {
         match lora.start_transmit(message) {
-            Ok(_b)   => { //hprintln!("start_transmit").unwrap()
+            Ok(_b)   => { //hprintln!("start_transmit")
                         } 
-            Err(_e)  => { //hprintln!("Error in lora.start_transmit()").unwrap()
+            Err(_e)  => { //hprintln!("Error in lora.start_transmit()")
                         }
         };
-        //hprintln!("start_transmit done").unwrap();
+        //hprintln!("start_transmit done");
 
         lora.delay_ms(1); // without some delay next returns bad. (interrupt may also be an option)
 
         match lora.check_transmit() {
-            Ok(b)   => {if b {//hprintln!("TX good").unwrap()
+            Ok(b)   => {if b {//hprintln!("TX good")
                              } 
-                        else {//hprintln!("TX bad").unwrap()
+                        else {//hprintln!("TX bad")
                              }
                        }
             Err(_e) => {
-                        //hprintln!("Error in lora.check_transmit(). Should return True or False.").unwrap()
+                        //hprintln!("Error in lora.check_transmit(). Should return True or False.")
                        }
         };
-        //hprintln!("check_transmit done").unwrap();
+        //hprintln!("check_transmit done");
 
         //lora.delay_ms(5000);
         lora.delay_ms(5);
-        //hprintln!("re-loop").unwrap();
+        //hprintln!("re-loop");
     }
 }

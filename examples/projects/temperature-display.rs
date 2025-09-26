@@ -223,10 +223,10 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local) {
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //hprintln!("temperature-display example").unwrap();
+        //hprintln!("temperature-display example");
 
         let (i2c1, i2c2, mut led, _delay) = setup::i2c1_i2c2_led_delay_from_dp(cx.device);
-        //hprintln!("setup done.").unwrap();
+        //hprintln!("setup done.");
 
         led.on(); 
         Mono.delay_ms(1000u32);
@@ -256,7 +256,7 @@ mod app {
 
         show_message(" temperature", &mut display);
         Mono.delay_ms(2000u32);    
-        //hprintln!("display initialized.").unwrap();
+        //hprintln!("display initialized.");
 
          
         // ADS11x5 chips allows four different I2C addresses using one address pin ADDR. 
@@ -276,7 +276,7 @@ mod app {
        // let mut adc_c = Ads1x1x::new_ads1115(adc_c_rcd, TargetAddr::Sda);
        // let mut adc_d = Ads1x1x::new_ads1115(adc_d_rcd, TargetAddr::Scl);
 
-        //hprintln!("adc initialized.").unwrap();
+        //hprintln!("adc initialized.");
         show_message("adc initialized.", &mut display);
 
         // set FullScaleRange to measure expected max voltage.
@@ -289,7 +289,7 @@ mod app {
             Ok(())  =>  (),
             Err(e)  =>  {show_message("range error.", &mut display);
                          Mono.delay_ms(2000u32);    
-                         //hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -298,7 +298,7 @@ mod app {
             Ok(())  =>  (),
             Err(e)  =>  {show_message("range error.", &mut display);
                          Mono.delay_ms(2000u32);    
-                         //hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -307,7 +307,7 @@ mod app {
             Ok(())  =>  (),
             Err(e)  =>  {show_message("range error.", &mut display);
                          Mono.delay_ms(2000u32);    
-                         //hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -316,21 +316,21 @@ mod app {
             Ok(())  =>  (),
             Err(e)  =>  {show_message("range error.", &mut display);
                          Mono.delay_ms(2000u32);    
-                         //hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
 
         read_and_display::spawn().unwrap();
 
-        //hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+        //hprintln!("start, interval {}s", READ_INTERVAL);
 
         (Shared {led}, Local {adc_a, adc_b, adc_c, adc_d, display})
     }
 
     #[idle()]
     fn idle(_cx: idle::Context) -> ! {
-        //hprintln!("idle with wfi started").unwrap();
+        //hprintln!("idle with wfi started");
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). Sleep may affect debugging.
            rtic::export::wfi()
         }
@@ -338,10 +338,10 @@ mod app {
 
     #[task(shared = [led], local = [adc_a, adc_b, adc_c, adc_d, display], priority=1 )]
     async fn read_and_display(mut cx: read_and_display::Context) {
-       //hprintln!("read_and_display started").unwrap();
+       //hprintln!("read_and_display started");
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
-          //hprintln!("read_and_display").unwrap();
+          //hprintln!("read_and_display");
           blink::spawn(BLINK_DURATION).ok();
 
 //         these are set in init but can be switched (and switched back)

@@ -21,7 +21,7 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_semihosting_05::hprintln;
+use cortex_m_semihosting::hprintln;
 use cortex_m::asm;
 
 use aht20_driver::{AHT20, SENSOR_ADDRESS}; 

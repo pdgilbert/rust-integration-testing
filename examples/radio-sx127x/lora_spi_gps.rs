@@ -45,22 +45,22 @@ fn main() -> ! {
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
     let mut buf2: heapless::Vec<u8, 80> = heapless::Vec::new();
 
-    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
-    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity()).unwrap();  //0 of 80
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity());  //0 of 80
+    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity());  //0 of 80
     buffer.clear();
     buf2.clear();
 
     let mut received: [u8; 80] = [0; 80];
 
-    //hprintln!("going into write/read loop ^C to exit ...").unwrap();
+    //hprintln!("going into write/read loop ^C to exit ...");
 
     //let e: u8 = 9; // replace char errors with "9"
     let mut good = false; // true while capturing a line
 
     //let mut size: usize;   // buffer size should not be needed
     //size = buffer.len();   //packet size
-    //hprintln!("read buffer {} of {}", size, buffer.capacity()).unwrap();
-    hprintln!("entering transmit loop").unwrap();
+    //hprintln!("read buffer {} of {}", size, buffer.capacity());
+    hprintln!("entering transmit loop");
 
     loop {
        let _len = rx_gps.read(&mut received);   //stm32f4xx_hal fails here with 
@@ -85,14 +85,14 @@ fn main() -> ! {
             if buffer.push(byte).is_err() || byte == 13 {
                 //transmit if end of line. \r is 13, \n is 10
 
-                //hprintln!("{:?}", &buffer).unwrap();
+                //hprintln!("{:?}", &buffer);
 
                 // this transmits the whole GPS message string
 
                 match lora.start_transmit(&buffer) {
                     Ok(b) => b, // b is ()
                     Err(_err) => {
-                        hprintln!("Error returned from lora.start_transmit().").unwrap();
+                        hprintln!("Error returned from lora.start_transmit().");
                         panic!("should reset in release mode.");
                     }
                 };
@@ -112,13 +112,13 @@ fn main() -> ! {
                         buf2.push(*v).unwrap();
                     } // [32..45] is east/west
 
-                    //hprintln!("{:?}", &buf2).unwrap();
-                    hprint!(".").unwrap(); // print "."  on transmit of $GPRMC message (but not others)
+                    //hprintln!("{:?}", &buf2);
+                    hprint!("."); // print "."  on transmit of $GPRMC message (but not others)
 
                     match lora.start_transmit(&buf2) {
                         Ok(b) => b, // b is ()
                         Err(_err) => {
-                            hprintln!("Error returned from lora.start_transmit().").unwrap();
+                            hprintln!("Error returned from lora.start_transmit().");
                             panic!("should reset in release mode.");
                         }
                     };
@@ -135,12 +135,12 @@ fn main() -> ! {
                 match lora.check_transmit() {
                     Ok(b) => {
                         if !b {
-                            hprintln!("TX not complete").unwrap();
+                            hprintln!("TX not complete");
                             // if multible times then panic!("should reset in release mode.");
                         }
                     }
                     Err(_err) => {
-                        hprintln!("Error returned from lora.check_transmit().").unwrap();
+                        hprintln!("Error returned from lora.check_transmit().");
                         panic!("should reset in release mode.");
                     }
                 };

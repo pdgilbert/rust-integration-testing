@@ -775,7 +775,7 @@ fn setup() -> (
 #[entry]
 fn main() -> ! {
     //see  examples/echo_by_char.rs for additional comments.
-    hprintln!("initializing ...").unwrap();
+    hprintln!("initializing ...");
 
     let mut received:  [u8; 80] = [0; 80];
     let mut received2: [u8; 80] = [0; 80];
@@ -783,7 +783,7 @@ fn main() -> ! {
 
     let (mut tx1, _rx1, mut tx2, mut rx2, mut tx3, mut rx3) = setup();
 
-    hprintln!("test write to console ...").unwrap();
+    hprintln!("test write to console ...");
     tx1.write_all("\r\nconsole connect check.\r\n".as_bytes()).unwrap();
 //    for byte in b"\r\nconsole connect check.\r\n" {
 //        #[cfg(feature = "stm32f4xx")]
@@ -792,8 +792,8 @@ fn main() -> ! {
 //        block!(tx1.write_byte(*byte)).ok();
 //    }
 
-    hprintln!("testing  tx2 to rx3").unwrap();
-    hprintln!("   sending on tx2 ...").unwrap();
+    hprintln!("testing  tx2 to rx3");
+    hprintln!("   sending on tx2 ...");
 
     let send = b'X';
 
@@ -801,14 +801,14 @@ fn main() -> ! {
     tx2.write_all(&[send]).unwrap(); 
     tx2.flush().unwrap(); 
 
-    hprintln!("   receiving on rx3 ...").unwrap();
+    hprintln!("   receiving on rx3 ...");
 
     // Read the byte that was just send. Blocks until the read is complete
     // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
     let len = rx3.read(&mut received).unwrap();
 
-    hprintln!("   length received on rx3: {}", len).unwrap();
-    hprintln!("   checking tx2 to rx3 received = send,  {:?} = {:?} byte", received[0], send ).unwrap();
+    hprintln!("   length received on rx3: {}", len);
+    hprintln!("   checking tx2 to rx3 received = send,  {:?} = {:?} byte", received[0], send );
 
     // The send byte should be the one received
     //assert_eq!( received, send,   "testing received = send,  {} = {}", received, send );
@@ -822,9 +822,9 @@ fn main() -> ! {
     hprintln!("      tx2 to rx3[0]  characters,  {} = {}",
         from_utf8(&[received[0]]).unwrap(),
         from_utf8(&[send]).unwrap()
-    ).unwrap();
+    );
 
-    hprintln!("   sending received to console on tx1 ...").unwrap();
+    hprintln!("   sending received to console on tx1 ...");
 
     tx1.write_all("\r\ntx2 to rx3 with X\r\n".as_bytes()).unwrap();
     tx1.write_all(&received).unwrap();
@@ -835,8 +835,8 @@ fn main() -> ! {
 
 
 
-    hprintln!("testing  tx3 to rx2").unwrap();
-    hprintln!("   sending on tx3 ...").unwrap();
+    hprintln!("testing  tx3 to rx2");
+    hprintln!("   sending on tx3 ...");
     tx1.write_all("\r\ntx3 to rx2 with Y\r\n".as_bytes()).unwrap();
 
     let send = b'Y';
@@ -847,20 +847,20 @@ fn main() -> ! {
     tx3.flush().unwrap(); 
 
     // hprintln here can slow enough that transmition is missed
-    //hprintln!("   receiving on rx2 ...").unwrap();
+    //hprintln!("   receiving on rx2 ...");
 
     // Read the byte that was just send. Blocks until the read is complete
 
     let len = match rx2.read(&mut received2) {  
         Ok(length)   =>  length,
-        Err(e) =>  {hprintln!("   rx2.read error {:?}", e).unwrap();    
+        Err(e) =>  {hprintln!("   rx2.read error {:?}", e);    
                     //panic!("panic");
                     999
                    },
     };
 
-    hprintln!("   length received on rx2: {}", len).unwrap();
-    hprintln!("   checking tx3 to rx2 received = send,  {:?} = {:?}  byte", received2[0], send).unwrap();
+    hprintln!("   length received on rx2: {}", len);
+    hprintln!("   checking tx3 to rx2 received = send,  {:?} = {:?}  byte", received2[0], send);
 
     // The send byte should be the one received
     //assert_eq!(received2[0], send, "testing received2 = send,  {} = {}", received2[0], send);
@@ -868,9 +868,9 @@ fn main() -> ! {
     hprintln!("      tx3 to rx2[0] characters,  {} = {}",
         from_utf8(&[received2[0]]).unwrap(),
         from_utf8(&[send]).unwrap()
-    ).unwrap();
+    );
 
-    hprintln!("   sending received from rx2  to console on tx1 ...").unwrap();
+    hprintln!("   sending received from rx2  to console on tx1 ...");
 
     tx1.write_all(b"tx3 to rx2 test with Y\r\n").unwrap();
     tx1.write_all(&received2).unwrap();
@@ -879,6 +879,6 @@ fn main() -> ! {
     // Trigger a breakpoint to inspect the values
     //asm::bkpt();
 
-    hprintln!("entering empty loop. ^C to exit.").unwrap();
+    hprintln!("entering empty loop. ^C to exit.");
     loop {}
 }

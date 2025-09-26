@@ -88,7 +88,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("example");
-    //hprintln!("ens160-co2-voc-iaq-display example").unwrap();
+    //hprintln!("ens160-co2-voc-iaq-display example");
 
     let dp =Peripherals::take().unwrap();
     let (i2c1, i2c2, mut led, spi, spiext, delay) = setup::i2c1_i2c2_led_spi_spiext_delay_from_dp(dp); 
@@ -102,15 +102,15 @@ fn main() -> ! {
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
     let mut buf2: heapless::Vec<u8, 80> = heapless::Vec::new();
 
-    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
-    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity()).unwrap();  //0 of 80
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity());  //0 of 80
+    //hprintln!("buf2   at {} of {}",   buf2.len(),   buf2.capacity());  //0 of 80
     buffer.clear();
     buf2.clear();
 
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
 
     /////////////////////   ssd
-    //hprintln!("ssd start").unwrap();
+    //hprintln!("ssd start");
 
     let interface = I2CDisplayInterface::new(i2c1);
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -138,15 +138,15 @@ fn main() -> ! {
 
     /////////////////////   ens
 
-    //hprintln!("ens start").unwrap();
+    //hprintln!("ens start");
     //let mut ens = Ens160::new(manager.acquire_i2c(), 0x53);  //0x52 Ens160,  0x53 Ens160+Aht21
     let mut ens = Ens160::new(i2c2, 0x53);  //0x52 Ens160,  0x53 Ens160+Aht21
  
     let z = ens.reset();
 
     match z {
-            Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
-            Err(e)  =>  {hprintln!(" ens.reset() Error {:?}. ", e).unwrap(); 
+            Ok(v)   =>  {hprintln!("v:{:?}, ",v)},
+            Err(e)  =>  {hprintln!(" ens.reset() Error {:?}. ", e); 
                          //panic!("Error reading"),
                          //(25, 40)  //supply default values
                         },
@@ -156,8 +156,8 @@ fn main() -> ! {
     let z = ens.operational();
 
     match z {
-            Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
-            Err(e)  =>  {hprintln!(" ens.operational() Error {:?}. ", e).unwrap(); 
+            Ok(v)   =>  {hprintln!("v:{:?}, ",v)},
+            Err(e)  =>  {hprintln!(" ens.operational() Error {:?}. ", e); 
                          //panic!("Error reading"),
                          //(25, 40)  //supply default values
                         },
@@ -185,7 +185,7 @@ fn main() -> ! {
 
     /////////////////////    measure and display in loop
 
-    //hprintln!("loop start").unwrap();
+    //hprintln!("loop start");
     loop {
         // Blink LED to check that everything is actually running.
         // If the LED is off, something went wrong.
@@ -208,12 +208,12 @@ fn main() -> ! {
                 aqi1 = AirQualityIndex::try_from(eco2).unwrap();  // from eco2
                 aqi2 = ens.air_quality_index().unwrap();  // directly
          //       (temp, humd) = ens.temp_and_hum().unwrap();
-                //hprintln!("tvoc:{:?}, ", tvoc).unwrap();
-                //hprintln!("eco2:{:?}, ", eco2).unwrap();
-                //hprintln!("aqi1:{:?}, ", aqi1).unwrap();
-                //hprintln!("aqi2:{:?}, ", aqi2).unwrap();
-                //hprintln!("temp:{:?}, ", temp).unwrap();
-                //hprintln!("humd:{:?}, ", humd).unwrap();
+                //hprintln!("tvoc:{:?}, ", tvoc);
+                //hprintln!("eco2:{:?}, ", eco2);
+                //hprintln!("aqi1:{:?}, ", aqi1);
+                //hprintln!("aqi2:{:?}, ", aqi2);
+                //hprintln!("temp:{:?}, ", temp);
+                //hprintln!("humd:{:?}, ", humd);
 
 
         /////////////////////   send over lora   THIS IS NOT COMPLETE
@@ -223,7 +223,7 @@ fn main() -> ! {
                match lora.start_transmit(&buffer) {
                     Ok(b) => b, // b is ()
                     Err(_err) => {
-                        hprintln!("Error returned from lora.start_transmit().").unwrap();
+                        hprintln!("Error returned from lora.start_transmit().");
                         panic!("should reset in release mode.");
                     }
                 };
@@ -231,12 +231,12 @@ fn main() -> ! {
                 match lora.check_transmit() {
                     Ok(b) => {
                         if !b {
-                            hprintln!("transmit not complete").unwrap();
+                            hprintln!("transmit not complete");
                             // if multible times then panic!("should reset in release mode.");
                         }
                     }
                     Err(_err) => {
-                        hprintln!("Error returned from lora.check_transmit().").unwrap();
+                        hprintln!("Error returned from lora.check_transmit().");
                         panic!("should reset in release mode.");
                     }
                 };
@@ -273,7 +273,7 @@ fn main() -> ! {
         }
     
         lora.delay_ms(5000);
-        //hprintln!("loop end").unwrap();
+        //hprintln!("loop end");
     }
     //let i2c = ens.release(); // destruct driver to re-use bus
 }

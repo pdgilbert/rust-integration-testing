@@ -58,7 +58,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("BMI160 example");
-    //hprintln!("BMI160 example").unwrap();
+    //hprintln!("BMI160 example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -104,7 +104,7 @@ fn main() -> ! {
     };
 
     loop {
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         // Blink LED 0 to check that everything is actually running.
         // If the LED is off, something went wrong.
         led.blink(20_u16, &mut delay);

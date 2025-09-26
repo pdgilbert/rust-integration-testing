@@ -17,7 +17,7 @@
 #![no_std]
 #![no_main]
 
-//use cortex_m_semihosting_05::hprintln;
+//use cortex_m_semihosting::hprintln;
 
 use aht10::AHT10;
 //use aht10_async::AHT10;
@@ -130,24 +130,24 @@ fn main() -> ! {
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 
         // Read humidity and temperature.
         // let (h, t) = sensor.read().unwrap();
-        //hprintln!("sensor.read()").unwrap();
+        //hprintln!("sensor.read()");
         let z = sensor.read();
         lines[0].clear();
         lines[1].clear();
-        //hprintln!("match z").unwrap();
+        //hprintln!("match z");
         // next recovers from sda disconnect/reconnect but not scl disconnect/reconnect
         match z {
-            Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+            Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh());
                           write!(lines[0], "temperature: {}C", t.celsius()).unwrap();
                           write!(lines[1], "relative humidity: {0}%", h.rh()).unwrap();
                          },
-            Err(e)    => {//hprintln!("Error {:?}", e).unwrap();
+            Err(e)    => {//hprintln!("Error {:?}", e);
                           write!(lines[0], "sensor read error. Resetting.").unwrap();
                           write!(lines[1], "code {:?}", e).unwrap();
                           sensor.reset().unwrap();

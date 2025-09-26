@@ -535,7 +535,7 @@ fn main() -> ! {
     let mut buffer_r: [u8; 80] = [0; 80];
 
     //let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap(); //0 of 80
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()); //0 of 80
     //buffer.clear();
 
     let dp = Peripherals::take().unwrap();
@@ -547,8 +547,8 @@ fn main() -> ! {
     tx_con.write_all(&[gt]).unwrap();
 
     // read gps on usart2
-    hprintln!("about to read GPS").unwrap();
-    hprintln!("going into GPS read/write loop ^C to exit ...").unwrap();
+    hprintln!("about to read GPS");
+    hprintln!("going into GPS read/write loop ^C to exit ...");
 
     // note that putting hprintln! in loop slows it too much and loses data.
      
@@ -561,9 +561,9 @@ fn main() -> ! {
         // See https://github.com/stm32-rs/stm32f4xx-hal/issues/721
         let len = embedded_io::Read::read(&mut rx_gps, &mut buffer_r);
         //let len = rx_gps.read(&mut buffer_r);
-        // hprintln!(" buffer_r {:?}",  buffer_r).unwrap();
-        // hprintln!(" buffer {:?}",  buffer).unwrap();
-        // hprintln!(" buffer len {:?}",  buffer.len()).unwrap();
+        // hprintln!(" buffer_r {:?}",  buffer_r);
+        // hprintln!(" buffer {:?}",  buffer);
+        // hprintln!(" buffer len {:?}",  buffer.len());
 
         match len {
           Ok(length) => {  if length != 0 {
@@ -583,7 +583,7 @@ fn main() -> ! {
                         },
           Err(_error) =>  {//tx_con.write("x".as_bytes()).unwrap(); // would be good to have actual error rather than assume overrun
                            // tx_con.write_all("Overrun\r\n".as_bytes()).unwrap(); // would be good to have actual error rather than assume overrun
-                           //hprintln!("{:?}", error).unwrap(); //this is so slow it causes overrun in next pass of loop
+                           //hprintln!("{:?}", error); //this is so slow it causes overrun in next pass of loop
                           },
        };
     }

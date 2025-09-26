@@ -47,7 +47,7 @@ use rust_integration_testing_of_examples::i2c_led_delay::{setup, LED};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    //hprintln!("AHT10 example");
 
     let (i2c, mut led, mut delay) = setup();
 

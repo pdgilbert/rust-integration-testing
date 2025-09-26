@@ -20,7 +20,7 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_semihosting_05::hprintln;
+use cortex_m_semihosting::hprintln;
 use cortex_m::asm;
 
 use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 

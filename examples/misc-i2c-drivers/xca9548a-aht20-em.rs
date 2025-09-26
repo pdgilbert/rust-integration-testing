@@ -14,7 +14,7 @@ use panic_semihosting as _;
 use panic_halt as _;
 
 // Need to run with debug console if hprintln is uncommented, otherwise stalls waiting to print.
-use cortex_m_semihosting_05::hprintln;
+use cortex_m_semihosting::hprintln;
 
 use cortex_m_rt::entry;
 use core::fmt::Write;
@@ -95,14 +95,14 @@ fn show_screen<S>(
 where
     S: ssd1306::size::DisplaySize,  //trait
 {
-   //hprintln!("in show_screen").unwrap();
+   //hprintln!("in show_screen");
    
    // workaround. build here because text_style cannot be shared
    let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
    disp.clear_buffer();
    for  i in 0..DISPLAY_LINES {  // 0..2 is [0, 1] ;  0..=2 is [0, 1, 2]
-     // hprintln!("display line {}", i).unwrap();
+     // hprintln!("display line {}", i);
       if 0 != screen[i].len() {                         // 12 point per char verticle
          Text::with_baseline( &screen[i], Point::new(0, (i*PPC).try_into().unwrap()), text_style, Baseline::Top)
               .draw(&mut *disp)
@@ -155,13 +155,13 @@ fn main() -> ! {
 //
 //    // write to device connected to channel 0 using the I2C switch
 //    if switch1.write(slave_address, &write_data).is_err() {
-//        //hprintln!("Error write channel 0!").unwrap();
+//        //hprintln!("Error write channel 0!");
 //    }
 //
 //    // read from device connected to channel 0 using the I2C switch
 //    let mut read_data = [0; 2];
 //    if switch1.read(slave_address, &mut read_data).is_err() {
-//        //hprintln!("Error read channel 0!").unwrap();
+//        //hprintln!("Error read channel 0!");
 //    }
 //
 //    // write_read from device connected to channel 0 using the I2C switch
@@ -169,7 +169,7 @@ fn main() -> ! {
 //        .write_read(slave_address, &write_data, &mut read_data)
 //        .is_err()
 //    {
-//        //hprintln!("Error write_read!").unwrap();
+//        //hprintln!("Error write_read!");
 //    }
 
     show_message(&"Sens xca", &mut display);
@@ -220,12 +220,12 @@ hprintln!("loop");
    
                Some(sens) => {screen[ln].clear();
                               match sens.measure() {
-                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+                                   Ok(m)      => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh());
                                                   write!(screen[ln], "J{} {:.2} {:.2}",
                                                           i, m.temperature.celsius(), m.relative_humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
-                                                  //hprintln!("read error {:?}", e).unwrap();
+                                                  //hprintln!("read error {:?}", e);
                                                   write!(screen[ln], "J{} read error. Reset{:?}", 0, e).unwrap();
                                                  }
                                    };

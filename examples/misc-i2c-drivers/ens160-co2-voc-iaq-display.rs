@@ -50,7 +50,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("example");
-    //hprintln!("ens160-co2-voc-iaq-display example").unwrap();
+    //hprintln!("ens160-co2-voc-iaq-display example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -59,7 +59,7 @@ fn main() -> ! {
     //    let mut delay_syst = cp.SYST.delay(&clocks); 
 
     /////////////////////   ssd
-    //hprintln!("ssd start").unwrap();
+    //hprintln!("ssd start");
 
     let interface = I2CDisplayInterface::new(i2c1);
     let mut display = Ssd1306::new(interface, DISPLAYSIZE, DisplayRotation::Rotate0)
@@ -83,13 +83,13 @@ fn main() -> ! {
 
     /////////////////////   ens
 
-    //hprintln!("ens start").unwrap();
+    //hprintln!("ens start");
     let mut ens = Ens160::new(i2c2, 0x53);  //0x52 Ens160,  0x53 Ens160+Aht21
     let _z = ens.reset();
 
    // match z {
-   //         Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
-   //         Err(e)  =>  {hprintln!(" ens.reset() Error {:?}. ", e).unwrap(); 
+   //         Ok(v)   =>  {hprintln!("v:{:?}, ",v)},
+   //         Err(e)  =>  {hprintln!(" ens.reset() Error {:?}. ", e); 
    //                      //panic!("Error reading"),
    //                      //(25, 40)  //supply default values
    //                     },
@@ -99,8 +99,8 @@ fn main() -> ! {
     let _z = ens.operational();
 
    // match z {
-   //         Ok(v)   =>  {hprintln!("v:{:?}, ",v).unwrap()},
-   //         Err(e)  =>  {hprintln!(" ens.operational() Error {:?}. ", e).unwrap(); 
+   //         Ok(v)   =>  {hprintln!("v:{:?}, ",v)},
+   //         Err(e)  =>  {hprintln!(" ens.operational() Error {:?}. ", e); 
    //                      //panic!("Error reading"),
    //                      //(25, 40)  //supply default values
    //                     },
@@ -127,7 +127,7 @@ fn main() -> ! {
 
     /////////////////////    measure and display in loop
 
-    //hprintln!("loop start").unwrap();
+    //hprintln!("loop start");
     loop {
         // Blink LED to check that everything is actually running.
         // If the LED is off, something went wrong.
@@ -141,12 +141,12 @@ fn main() -> ! {
                 aqi1 = AirQualityIndex::try_from(eco2).unwrap();  // from eco2
                 aqi2 = ens.air_quality_index().unwrap();  // directly
                 (temp, humd) = ens.temp_and_hum().unwrap();
-                //hprintln!("tvoc:{:?}, ", tvoc).unwrap();
-                //hprintln!("eco2:{:?}, ", eco2).unwrap();
-                //hprintln!("aqi1:{:?}, ", aqi1).unwrap();
-                //hprintln!("aqi2:{:?}, ", aqi2).unwrap();
-                //hprintln!("temp:{:?}, ", temp).unwrap();
-                //hprintln!("humd:{:?}, ", humd).unwrap();
+                //hprintln!("tvoc:{:?}, ", tvoc);
+                //hprintln!("eco2:{:?}, ", eco2);
+                //hprintln!("aqi1:{:?}, ", aqi1);
+                //hprintln!("aqi2:{:?}, ", aqi2);
+                //hprintln!("temp:{:?}, ", temp);
+                //hprintln!("humd:{:?}, ", humd);
 
     // temp_and_hum(&mut self) -> Result<(i16, u16), E> 
     //The (temp, humd) units are scaled by 100. For example, a temperature value of 2550 represents 25.50
@@ -174,7 +174,7 @@ fn main() -> ! {
         }
     
         delay.delay_ms(5000);
-        //hprintln!("loop end").unwrap();
+        //hprintln!("loop end");
     }
     //let i2c = ens.release(); // destruct driver to re-use bus
 }

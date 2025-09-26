@@ -173,7 +173,7 @@ mod app {
 
         //rtt_init_print!();
         //rprintln!("battery_monitor_ads1015_rtic example");
-        hprintln!("battery_monitor_ads1015_rtic example").unwrap();
+        hprintln!("battery_monitor_ads1015_rtic example");
 
         let (i2c, mut led, mut delay) = setup::i2c_led_delay_from_dp(cx.device);
 
@@ -208,14 +208,14 @@ mod app {
         // wiring errors such as I2C1 on PB8-9 vs I2C2 on PB10-3 show up here as Err(I2C(ARBITRATION)) in Result
         match adc_a.set_full_scale_range(FullScaleRange::Within0_256V) {
             Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+            Err(e) =>  {hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e); 
                         panic!("panic")
                        },
         };
 
         match adc_b.set_full_scale_range(FullScaleRange::Within4_096V) {
             Ok(())   =>  (),
-            Err(e) =>  {hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+            Err(e) =>  {hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e); 
                         panic!("panic")
                        },
         };
@@ -248,7 +248,7 @@ mod app {
 ////
         read_and_display::spawn().unwrap();
 
-        hprintln!("start, interval {}s", READ_INTERVAL).unwrap();
+        hprintln!("start, interval {}s", READ_INTERVAL);
 
         ( Shared {led, transfer }, Local { adc_a, adc_b, display, buffer: second_buffer } )
     }
@@ -273,7 +273,7 @@ mod app {
 
     #[idle()]
     fn idle(_cx: idle::Context) -> ! {
-        hprintln!("idle with wfi started").unwrap();
+        hprintln!("idle with wfi started");
         loop { // Wait For Interrupt allows sleep (vs default nop which does not). It may affect debugging.
            rtic::export::wfi()
         }
@@ -281,7 +281,7 @@ mod app {
 
     #[task(shared = [led], local = [adc_a, adc_b, display], priority=1)]
     async fn read_and_display(mut cx: read_and_display::Context) {
-       //hprintln!("measure").unwrap();
+       //hprintln!("measure");
        loop {
           Mono::delay(READ_INTERVAL.secs()).await;
 
@@ -312,7 +312,7 @@ mod app {
 
            show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, &mut cx.local.display);
            
-           hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+           hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b);
        }
     }
 

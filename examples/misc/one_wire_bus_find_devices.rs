@@ -36,7 +36,7 @@ fn find_devices<P, E>(
     let mut one_wire_bus = OneWire::new(one_wire_pin).unwrap();
 
     let z = one_wire_bus.devices(false, delay);
-    //hprintln!("z = {:?}", z).unwrap();
+    //hprintln!("z = {:?}", z);
   
 // asm::bkpt();
   
@@ -51,7 +51,7 @@ fn find_devices<P, E>(
  //                 device_address.unwrap()).unwrap();
  //                   },
  //            Err(e) 
- //               =>  {hprintln!("Error reading onewire bus address {:?}", e).unwrap(); 
+ //               =>  {hprintln!("Error reading onewire bus address {:?}", e); 
  //                    //panic!("Error reading onewire bus address.")
  //                   },
  //        }
@@ -60,7 +60,7 @@ fn find_devices<P, E>(
         // If supported, another crate can be used to interact with that device at the given address
         let device_address = device_address.unwrap();
         hprintln!("Found device at address {:?} with family code: {:#x?}",
-                 device_address, device_address.family_code()).unwrap();
+                 device_address, device_address.family_code());
     }
     ()  //z
 }
@@ -77,7 +77,7 @@ fn main() -> ! {
     
 // asm::bkpt();
 
-    hprintln!("endless empty loop. ^c to kill ...").unwrap();
+    hprintln!("endless empty loop. ^c to kill ...");
     loop {
     };
 }

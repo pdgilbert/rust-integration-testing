@@ -52,25 +52,25 @@ mod app {
 
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //hprintln!("init").ok();
+        //hprintln!("init");
 
-        //hprintln!("init spawn").ok();
+        //hprintln!("init spawn");
         foobar1::spawn().unwrap();
         foobar2::spawn().unwrap();
         foobar3::spawn().unwrap();
 
-        //hprintln!("init spawn_at").ok();
+        //hprintln!("init spawn_at";
         //bar::spawn_at(monotonics::now() + 10.secs()).ok();
         //baz::spawn_at(monotonics::now() + 11.secs()).ok();
         //foo::spawn_at(monotonics::now() + 12.secs()).unwrap();
 
-        //hprintln!("init spawn_after").ok();
+        //hprintln!("init spawn_after");
         //foo::spawn_after(5.secs()).unwrap();
         //baz::spawn_after(6.secs()).ok();
         //bar::spawn_after(7.secs()).ok();
         //cdr::spawn_after(8.secs()).ok();
         
-        hprintln!("init ending").ok();
+        hprintln!("init ending");
 
         (Shared {}, Local {})
     }
@@ -114,23 +114,23 @@ mod app {
 
     #[task( )]
     async fn foo(_: foo::Context) {
-       hprintln!("foo").ok();
+       hprintln!("foo");
     }
 
     #[task( )]
     async fn bar(_: bar::Context) {
-       hprintln!("bar").ok();
+       hprintln!("bar");
     }
 
     #[task( )]
     async fn baz(_: baz::Context) {
        Mono::delay(1000.millis()).await;
-       hprintln!("baz").ok();
+       hprintln!("baz");
     }
 
     #[task( )]
     async fn cdr(_: cdr::Context) {
        Mono::delay(1000.millis()).await;
-       hprintln!("cdr").ok();
+       hprintln!("cdr");
    }
 }

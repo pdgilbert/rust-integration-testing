@@ -251,8 +251,8 @@ cortex-m-rt = ">=0.7.0"
 panic-rtt-target = { version =  "0.2.0"}
 rtt-target = { version =  ">=0.6.1" }
 
-cortex-m-semihosting-05   = { package = "cortex-m-semihosting", version = ">=0.5.0" } # uses eh-1 but no unwrap()
-cortex-m-semihosting = { version = "0.3.7" }   #test carefully when updating. Version change can break many examples
+cortex-m-semihosting  = { package = "cortex-m-semihosting", version = ">=0.5.0" } # uses eh-1 but no unwrap()
+#cortex-m-semihosting = { version = "0.3.7" }   #test carefully when updating. Version change can break many examples
 
 panic-semihosting    = { version = ">=0.5.2" }
 panic-reset          = { version = ">=0.1.0" }

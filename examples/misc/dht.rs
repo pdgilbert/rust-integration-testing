@@ -184,7 +184,7 @@ fn main() -> ! {
     // delay to ensure time between setup set_high() and sensor read.
     delay.delay_ms(1000); 
 
-    hprintln!("Reading sensor...").unwrap();
+    hprintln!("Reading sensor...");
 
     // single read before loop for debugging purposes
     
@@ -193,8 +193,8 @@ fn main() -> ! {
             Ok(Reading {
                 temperature,
                 relative_humidity,
-            }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap(),
-            Err(e) => hprintln!("Error {:?}", e).unwrap(),
+            }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity),
+            Err(e) => hprintln!("Error {:?}", e),
     }
     delay.delay_ms(5000); 
 
@@ -203,8 +203,8 @@ fn main() -> ! {
             Ok(Reading {
                 temperature,
                 relative_humidity,
-            }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap(),
-            Err(e) => hprintln!("Error {:?}", e).unwrap(),
+            }) => hprintln!("{} deg C, {}% RH", temperature, relative_humidity),
+            Err(e) => hprintln!("Error {:?}", e),
         }
 
         // (Delay at least 500ms before re-polling, 1 second or more is advised)

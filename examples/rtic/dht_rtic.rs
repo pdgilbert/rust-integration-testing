@@ -143,7 +143,7 @@ mod app {
     fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();
         //rprintln!("blink_rtic example");
-        //hprintln!("dht_rtic example").unwrap();
+        //hprintln!("dht_rtic example");
 
         let (dht, i2c, mut led, mut delay) = setup::pin_i2c_led_delay_from_dp(cx.device);
 
@@ -178,7 +178,7 @@ mod app {
 
         Mono::start(cx.core.SYST, MONOCLOCK);
 
-        //hprintln!("exit init").unwrap();
+        //hprintln!("exit init");
         (Shared { led, }, Local {dht, display, delay })
     }
 
@@ -207,19 +207,19 @@ mod app {
         let dht = cx.local.dht;
 
         loop {
-           //hprintln!("read_and_display").unwrap();
+           //hprintln!("read_and_display");
            blink::spawn(BLINK_DURATION).ok();
 
            let z = read(delay, dht);   // needs a delay other than systick
            let (_temperature, _humidity) = match z {
                Ok(Reading {temperature, relative_humidity,})
-                  =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity).unwrap();
+                  =>  {//hprintln!("{} deg C, {}% RH", temperature, relative_humidity);
                        //show_display(temperature, relative_humidity, text_style, &mut display)
                        show_display(temperature, relative_humidity, cx.local.display);
                        (temperature, relative_humidity)
                       },
                Err(_e) 
-                  =>  {//hprintln!("dht Error {:?}", e).unwrap(); 
+                  =>  {//hprintln!("dht Error {:?}", e); 
                        //panic!("Error reading DHT")
                        (25, 40)  //supply default values
                       },
@@ -233,7 +233,7 @@ mod app {
     async fn blink(_cx: blink::Context, duration: u32) {
         // note that if blink is called with ::spawn_after then the first agument is the after time
         // and the second is the duration.
-        //hprintln!("blink {}", duration).unwrap();
+        //hprintln!("blink {}", duration);
         crate::app::led_on::spawn().unwrap();
         Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();

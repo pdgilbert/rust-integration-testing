@@ -37,27 +37,27 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 fn main() -> ! {
     rtt_init_print!();
     rprintln!("DS1307 real time clock example");
-    hprintln!("DS1307 real time clock example").unwrap();
+    hprintln!("DS1307 real time clock example");
 
     let dp = Peripherals::take().unwrap();
 
     let (i2c, mut led, mut delay) = setup::i2c_led_delay_from_dp(dp);
 
-    hprintln!("rtc").unwrap();
+    hprintln!("rtc");
     let mut rtc = Ds1307::new(i2c);
-    hprintln!("begin").unwrap();
+    hprintln!("begin");
     let begin = NaiveDate::from_ymd_opt(2020, 5, 2).expect("from_ymd failed").and_hms_opt(10, 21, 34).expect("hms failed");
-    hprintln!("rtc.set_datetime").unwrap();
+    hprintln!("rtc.set_datetime");
     rtc.set_datetime(&begin).unwrap();
-    hprintln!("loop").unwrap();
+    hprintln!("loop");
     loop {
         let now = rtc.datetime().unwrap();
-        hprintln!("now {}", now).unwrap();
+        hprintln!("now {}", now);
         if (now - begin).num_seconds() < 30 {
             // this will blink for 30 seconds
-            hprintln!("blink").unwrap();
+            hprintln!("blink");
             led.blink(250_u16, &mut delay);
-            hprintln!("delay").unwrap();
+            hprintln!("delay");
             delay.delay_ms(250);
         }
     }

@@ -49,7 +49,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("INA219 example");
-    //hprintln!("INA219 example").unwrap();
+    //hprintln!("INA219 example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -76,7 +76,7 @@ fn main() -> ! {
         .into_buffered_graphics_mode();
     display.init().unwrap();
     display.flush().unwrap();
-    //hprintln!("display.flush").unwrap();
+    //hprintln!("display.flush");
 
 
     let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
@@ -87,7 +87,7 @@ fn main() -> ! {
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         // Blink LED to indicate looping.
         led.blink(20_u16, &mut delay);
 

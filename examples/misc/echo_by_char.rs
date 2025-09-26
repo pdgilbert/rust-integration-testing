@@ -382,7 +382,7 @@ fn main() -> ! {
 
     let (mut tx1, mut rx1) = setup();
 
-    hprintln!("test write to console ...").unwrap();
+    hprintln!("test write to console ...");
     //rprintln!("test write to console ...");
 
     tx1.write(b"\r\nconsole connect check.\r\n").ok();
@@ -394,7 +394,7 @@ fn main() -> ! {
 //        block!(tx1.write_byte(*byte)).ok();
 //    }
 
-    hprintln!("test read and write by char. Please type into the console ...").unwrap();
+    hprintln!("test read and write by char. Please type into the console ...");
 
     tx1.write(b"test read and write by char. Please type into the console ...").ok();
 
@@ -418,7 +418,7 @@ fn main() -> ! {
 //        #[cfg(feature = "stm32h7xx")]
 //        let received = block!(rx1.read_byte()).unwrap();
 
-        //hprintln!("received").unwrap();  // for debugging
+        //hprintln!("received");  // for debugging
 
         tx1.write(&buffer).ok();
 
@@ -427,7 +427,7 @@ fn main() -> ! {
 //        #[cfg(feature = "stm32h7xx")]
 //        block!(tx1.write_byte(received)).ok();
 
-        hprintln!("{:?}", &buffer).unwrap();
+        hprintln!("{:?}", &buffer);
         //rprintln!("{}", from_utf8(&[buffer]).unwrap());
     }
 }

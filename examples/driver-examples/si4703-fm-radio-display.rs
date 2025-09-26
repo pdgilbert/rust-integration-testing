@@ -774,13 +774,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("Si4703 example");
-    hprintln!("Si4703 example").unwrap();
+    hprintln!("Si4703 example");
 
     let dp = Peripherals::take().unwrap();
 
     let (i2c1, i2c2, mut led, mut delay, mut buttons, stcint) = setup_i2c_led_delay_buttons_stcint_using_dp(dp);
 
-    hprintln!("manage").unwrap();
+    hprintln!("manage");
 
     //Note that switching i2c1 and i2c2 requires changes to reset_si4703 in setup()
 
@@ -795,7 +795,7 @@ fn main() -> ! {
     display.init().unwrap();
     display.flush().unwrap();
 
-    hprintln!("text_style").unwrap();
+    hprintln!("text_style");
     let text_style = MonoTextStyleBuilder::new()
         .font(&FONT)
         .text_color(BinaryColor::On)
@@ -827,7 +827,7 @@ fn main() -> ! {
 
     /////////////////////
 
-    hprintln!("loop").unwrap();
+    hprintln!("loop");
     write!(buffer, "\nloop...").unwrap();
     display.clear_buffer();
     Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,).draw(&mut display).unwrap();
@@ -844,7 +844,7 @@ fn main() -> ! {
             led.blink(50_u16, &mut delay);
             led.blink(50_u16, &mut delay);
             buffer.clear();
-            hprintln!("Seeking...").unwrap();
+            hprintln!("Seeking...");
             write!(buffer, "\nSeeking...").unwrap();
 
             display.clear_buffer();
@@ -862,7 +862,7 @@ fn main() -> ! {
             buffer.clear();
             loop {
                 match radio.seek_with_stc_int_pin(SeekMode::Wrap, direction, &stcint) {
-                    Err(nb::Error::WouldBlock) => {hprintln!("x").unwrap()}
+                    Err(nb::Error::WouldBlock) => {hprintln!("x")}
                     Err(nb::Error::Other(ErrorWithPin::SeekFailed)) => {
                         write!(buffer, "Seek Failed!  ").unwrap();
                         break;
@@ -877,7 +877,7 @@ fn main() -> ! {
                         break;
                     }
                 }
-                hprintln!(".").unwrap();
+                hprintln!(".");
             }
             display.clear_buffer();
             Text::with_baseline(&buffer, Point::zero(), text_style, Baseline::Top,)

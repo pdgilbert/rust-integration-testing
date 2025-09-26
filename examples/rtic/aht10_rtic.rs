@@ -207,7 +207,7 @@ mod app {
 
         // Start the battery sensor.
         let mut ina = INA219::new(manager.acquire_i2c(), 0x40);
-        //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+        //hprintln!("let mut ina addr {:?}", INA219_ADDR);  // crate's  INA219_ADDR prints as 65
         ina.calibrate(0x0100).unwrap();
 
         delay.delay(15.millis());     // Wait for sensor
@@ -247,7 +247,7 @@ mod app {
     #[task(shared = [led, ], local = [sensor, display, ina] )]
     async fn read_and_display(cx: read_and_display::Context) {
        
-       //hprintln!("read_and_display").unwrap();
+       //hprintln!("read_and_display");
        let sensor = cx.local.sensor;
        
        loop {
@@ -260,7 +260,7 @@ mod app {
                Ok((h, t))
                   =>  (h.rh() as u8,  (10.0 * t.celsius()) as i32),
                Err(_e) 
-                  =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                  =>  {//hprintln!("sensor Error {:?}", e); 
                        //panic!("Error reading sensor")
                        (127, 127)  //supply default values that should be clearly bad
                       },
@@ -269,7 +269,7 @@ mod app {
            let (v, vs, i, p) = read_ina(cx.local.ina);
 
            show_display(t, h, v, vs, i, p, cx.local.display);
-           //hprintln!("shown").unwrap();
+           //hprintln!("shown");
 
            Mono::delay(READ_INTERVAL.secs()).await;
        }
@@ -277,7 +277,7 @@ mod app {
 
     #[task(shared = [led] )]
     async fn blink(_cx: blink::Context, duration: u32) {
-        //hprintln!("blink {}", duration).unwrap();
+        //hprintln!("blink {}", duration);
         crate::app::led_on::spawn().unwrap();
         Mono::delay(duration.millis()).await;
         crate::app::led_off::spawn().unwrap();

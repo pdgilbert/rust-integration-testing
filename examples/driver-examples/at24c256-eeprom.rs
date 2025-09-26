@@ -37,7 +37,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 fn main() -> ! {
     rtt_init_print!();
     rprintln!("AT24C256 example");
-    hprintln!("AT24C256 example").unwrap();
+    hprintln!("AT24C256 example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -45,12 +45,12 @@ fn main() -> ! {
 
     let mut eeprom = Eeprom24x::new_24x256(i2c, SlaveAddr::default()); //SlaveAddr::Alternative(true, true, true));
     let memory_address = 0x01;
-    hprintln!("program").unwrap();
+    hprintln!("program");
     eeprom
         .write_page(memory_address, &[0xAB, 0xCD, 0xEF, 0x12])
         .unwrap();
     
-    hprintln!("check").unwrap();
+    hprintln!("check");
 
     // wait maximum time necessary for write
     delay.delay_ms(5);

@@ -667,7 +667,7 @@ fn main() -> ! {
 
     // byte buffer length 80
     let mut buffer: heapless::Vec<u8, 80> = heapless::Vec::new();
-    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();  //0 of 80
+    //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity());  //0 of 80
     buffer.clear();
 
     let mut good = false;
@@ -677,7 +677,7 @@ fn main() -> ! {
     loop {
         // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
         let _len = rx_gps.read(&mut buffer);
-        //hprintln!("{}", buffer).unwrap();
+        //hprintln!("{}", buffer);
         //tx_con.write(&buffer).unwrap();  // echo everything to console
 
 //  THE LOGIC OF THIS NEEDS TO BE FIXED
@@ -691,8 +691,8 @@ let byte= 35;  //fake
             if buffer.push(byte).is_err() || byte == 13 {
                 //end of line. \r is 13, \n is 10
 
-                //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity()).unwrap();
-                //hprintln!("read buffer {:?}", to_str(&buffer)).unwrap();
+                //hprintln!("buffer at {} of {}", buffer.len(), buffer.capacity());
+                //hprintln!("read buffer {:?}", to_str(&buffer));
 
                 //if buffer[0..6] == [36, 71, 80, 84, 88, 84]   //$GPTXT
                 //if buffer[0..6] == [36, 71, 80, 82, 77, 67]   //$GPRMC
@@ -703,11 +703,11 @@ let byte= 35;  //fake
                 //if to_str(&buffer[0..6]) == "$GPRMC"           // message id
                 if &buffer[0..6] == [36, 71, 80, 82, 77, 67] {
                     // message id $GPRMC
-                    hprintln!("{}", to_str(&buffer[..])).unwrap();
+                    hprintln!("{}", to_str(&buffer[..]));
                     let north = to_str(&buffer[19..31]);
-                    hprintln!("north {}", north).unwrap();
+                    hprintln!("north {}", north);
                     let east = to_str(&buffer[32..45]);
-                    hprintln!("east {}", east).unwrap();
+                    hprintln!("east {}", east);
                     Text::new(north, Point::new(0, 0), text_style)
                         .draw(&mut display)
                         .unwrap();

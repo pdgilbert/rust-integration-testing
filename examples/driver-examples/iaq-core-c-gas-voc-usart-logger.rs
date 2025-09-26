@@ -105,7 +105,7 @@ mod app {
 
         //rtt_init_print!();
         //rprintln!("example");
-        hprintln!("iaq-core-c-gas-voc... example").unwrap();
+        hprintln!("iaq-core-c-gas-voc... example");
 
         let (i2cset, mut led, mut tx) = setup::i2c_led_tx_from_dp(cx.device);
 

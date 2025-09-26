@@ -837,7 +837,7 @@ fn main() -> ! {
     // The first use of read() and write() create 2-tuple structures (buf1, send1), (buf3, recv3), and (buf2, send2).
     // These allow the buf to be modified (even inside a loop). They are then used for additional  read() and write().
 
-    hprintln!("testing write to console").unwrap();
+    hprintln!("testing write to console");
 
     //send1 is 2-tuple structure (buf1, tx1)
     let buf1 = singleton!(: [u8; BUF_SIZE] = *b"\r\ncheck console...\r\n").unwrap();
@@ -846,7 +846,7 @@ fn main() -> ! {
     *send1.0 = *b"Display on console\r\n";    // modify buf with BUF_SIZE characters
     send1 = send1.1.write(send1.0).wait();    // write to console
 
-    hprintln!("testing  tx2 to rx3").unwrap();
+    hprintln!("testing  tx2 to rx3");
 
     // rx process should be started before tx, or rx misses the transmition and stalls waiting.
     let buf3 = singleton!(: [u8; BUF_SIZE] = [0; BUF_SIZE]).unwrap();
@@ -860,7 +860,7 @@ fn main() -> ! {
     let mut send2 = tx.wait(); //when tx is complete return 2-tuple send structure (buf2, tx2)
     let mut recv3 = rx.wait(); //when rx is complete return 2-tuple recv structure (buf3, rx3)
 
-    //hprintln!("  check received = sent,  '{}' = '{}' ", from_utf8(recv3.0), from_utf8(send2.0)).unwrap();
+    //hprintln!("  check received = sent,  '{}' = '{}' ", from_utf8(recv3.0), from_utf8(send2.0));
     assert_eq!(recv3.0, send2.0);
 
     // Now recvX and sendX structures can be modified rather than assigned
@@ -872,11 +872,11 @@ fn main() -> ! {
         *b"in for iter 3     \r\n",
     ];
 
-    hprintln!(" buf4 {:?}", &buf4).unwrap();
+    hprintln!(" buf4 {:?}", &buf4);
 
     for i in buf4.iter() {
-        hprintln!(" i is '{:?}'", i).unwrap();
-        //hprintln!(" i is '{:?}'", from_utf8(i)).unwrap();
+        hprintln!(" i is '{:?}'", i);
+        //hprintln!(" i is '{:?}'", from_utf8(i));
 
         rx = recv3.1.read(send1.0); // rx ready to receive into send1 buf
                                     // This requires buf's have the same size
@@ -885,13 +885,13 @@ fn main() -> ! {
         send2 = send2.1.write(send2.0).wait(); // tx and return
 
         recv3 = rx.wait(); // rx returns
-    hprintln!(" recv3.0 {:?}", recv3.0).unwrap();
+    hprintln!(" recv3.0 {:?}", recv3.0);
 
         //assert_eq!(recv3.0, send2.0); // check received  = sent
         
         send1 = send1.1.write(recv3.0).wait(); // send received to console
     }
 
-    hprintln!("entering empty loop. ^C to exit.").unwrap();
+    hprintln!("entering empty loop. ^C to exit.");
     loop {}
 }

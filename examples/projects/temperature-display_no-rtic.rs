@@ -164,7 +164,7 @@ use cortex_m_rt::entry;
 
    // CHECK SIGN IS CORRECT FOR -0.3 C
    // NEED TO DISPLAY THE REST
-      // hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+      // hprintln!(" t {:?} = 10 * degrees", t);
 
        show_message(&line, disp);
        ()
@@ -209,9 +209,9 @@ use cortex_m_rt::entry;
         // t is long enough for 16 sensors - J1 to J16 on a module ID
         for i in 0..t.len() {
                 temp.clear();
-                //hprintln!(" J{}:{:3}.{:1}",      i+1, t[i]/10, t[i].abs() %10).unwrap(); // t[0] is for J1
+                //hprintln!(" J{}:{:3}.{:1}",      i+1, t[i]/10, t[i].abs() %10); // t[0] is for J1
                 write!(temp,  " J{}:{:3}.{:1}",  i+1, t[i]/10, t[i].abs() %10).unwrap(); // must not exceed S_FMT
-                //hprintln!("temp {:?}  temp.len {}", temp, temp.len()).unwrap();
+                //hprintln!("temp {:?}  temp.len {}", temp, temp.len());
                 for j in 0..temp.len() {line.push(temp[j]).unwrap()};
         };
 
@@ -229,10 +229,10 @@ use cortex_m_rt::entry;
         
         match lora.start_transmit(&m) {
             Ok(_b)   => {//show_message("start_transmit ok", disp);
-                         //hprintln!("lora.start ok").unwrap()
+                         //hprintln!("lora.start ok")
                         } 
             Err(_e)  => {show_message("start_transmit error", disp);
-                         //hprintln!("Error in lora.start_transmit()").unwrap()
+                         //hprintln!("Error in lora.start_transmit()")
                         }
         };
 
@@ -240,14 +240,14 @@ use cortex_m_rt::entry;
 
         match lora.check_transmit() {
             Ok(b)   => {if b {show_message("TX good", disp);
-                              //hprintln!("TX good").unwrap(); 
+                              //hprintln!("TX good"); 
                              }
                         else {show_message("TX bad", disp);
-                              //hprintln!("TX bad").unwrap()
+                              //hprintln!("TX bad")
                              }
                        }
             Err(_e) => {show_message("check_transmit Fail", disp);
-                        //hprintln!("check_transmit() Error. Should return True or False.").unwrap()
+                        //hprintln!("check_transmit() Error. Should return True or False.")
                        }
         };
        ()
@@ -258,7 +258,7 @@ use cortex_m_rt::entry;
 #[entry]
 fn main() -> ! {
 
-        //hprintln!("temperature-display_no-rtic example").unwrap();
+        //hprintln!("temperature-display_no-rtic example");
 
         let dp = Peripherals::take().unwrap();
         let (i2c1, i2c2, mut led, spi, spiext, mut delay) = setup::i2c1_i2c2_led_spi_spiext_delay_from_dp(dp);
@@ -283,7 +283,7 @@ fn main() -> ! {
         show_message(" temp.._no-rtic", &mut disp);
 
         delay.delay_ms(2000); // treated as ms
-        //hprintln!("display initialized.").unwrap();
+        //hprintln!("display initialized.");
 
          
         /////////////////////   adc
@@ -298,7 +298,7 @@ fn main() -> ! {
         let mut adc_c = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Sda);
         let mut adc_d = Ads1x1x::new_ads1115(i2c::RefCellDevice::new(&i2c_ref_cell),  TargetAddr::Scl);
 
-        //hprintln!("adc initialized.").unwrap();
+        //hprintln!("adc initialized.");
         show_message("adc initialized.", &mut disp);
 
         // set FullScaleRange to measure expected max voltage.
@@ -311,7 +311,7 @@ fn main() -> ! {
             Ok(())  =>  (),
             Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
-                         //hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_a.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -320,7 +320,7 @@ fn main() -> ! {
             Ok(())  =>  (),
             Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
-                         //hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_b.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -329,7 +329,7 @@ fn main() -> ! {
             Ok(())  =>  (),
             Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
-                         //hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_c.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -338,7 +338,7 @@ fn main() -> ! {
             Ok(())  =>  (),
             Err(_e)  =>  {show_message("range error.", &mut disp);
                          delay.delay_ms(2000u32);
-                         //hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e).unwrap(); 
+                         //hprintln!("Error {:?} in adc_d.set_full_scale_range(). Check i2c is on proper pins.", e); 
                          //panic!("panic")
                         },
         };
@@ -351,11 +351,11 @@ fn main() -> ! {
 
         let mut lora =  match z {
             Ok(lr)  => {show_message("lora setup ok", &mut disp);
-                        //hprintln!("lora setup completed.").unwrap();
+                        //hprintln!("lora setup completed.");
                         lr
                        } 
             Err(e)  => {show_message("lora setup Error", &mut disp);
-                        //hprintln!("Error in lora setup. {:?}", e).unwrap();
+                        //hprintln!("Error in lora setup. {:?}", e);
                         asm::bkpt();
                         panic!("{:?}", e) 
                        }
@@ -374,7 +374,7 @@ fn main() -> ! {
        // t = a + v/b , v in mV, b inverse slope
        let a = 72i64;    //  72 deg
        let b = -34i64;   //  -34 mv/degree   
-       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE).unwrap();
+       // hprintln!("a {:?}  b {:?}   SCALE {:?}", a,b, SCALE);
 
        loop { 
           // blink
@@ -422,13 +422,13 @@ fn main() -> ! {
 
           //If the mv value is over 3000 (temperature < about -19.0 C ) then the thermistor is probably missing.
           
-          //hprintln!(" mv{:?} = values_a mv ", values_a).unwrap();
-          //hprintln!(" mv{:?} =      mv     ", mv).unwrap();
+          //hprintln!(" mv{:?} = values_a mv ", values_a);
+          //hprintln!(" mv{:?} =      mv     ", mv);
 
           //show_display(mv, &mut disp);
 
  //         for i in 0..mv.len() { mv[i] = v[i] as i64 / SCALE};  
- //         //hprintln!(" mv {:?}", mv).unwrap();
+ //         //hprintln!(" mv {:?}", mv);
 
           // t in tenths of a degrees C, so it is an int  but t[0]/10, t[0].abs() %10 give a degree with one decimal.
           let mut t:[i64; 16] = [-100; 16] ;
@@ -436,10 +436,10 @@ fn main() -> ! {
           //for i in 0..t.len() { t[i] = 10 * (a + mv[i] / b) }; // loses the decimal rounding division
           for i in 0..t.len() { t[i] =  10 * a  + (10 * mv[i]) / b };
  
-          //hprintln!(" t {:?} = 10 * degrees", t).unwrap();
+          //hprintln!(" t {:?} = 10 * degrees", t);
           
           let message = form_temp(t);
-          //hprintln!("message {:?}", message).unwrap();
+          //hprintln!("message {:?}", message);
 
           show_display(t, &mut disp);
           send(&mut lora,message, &mut disp);

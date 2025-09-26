@@ -128,14 +128,14 @@ fn show_screen<S>(
 where
     S: ssd1306::size::DisplaySize,  //trait
 {
-   //hprintln!("in show_screen").unwrap();
+   //hprintln!("in show_screen");
    
    // workaround. build here because text_style cannot be shared
    let text_style = MonoTextStyleBuilder::new().font(&FONT).text_color(BinaryColor::On).build();
 
    disp.clear_buffer();
    for  i in 0..DISPLAY_LINES {  // 0..2 is [0, 1] ;  0..=2 is [0, 1, 2]
-     // hprintln!("display line {}", i).unwrap();
+     // hprintln!("display line {}", i);
       if 0 != screen[i].len() {                         // 12 point per char verticle
          Text::with_baseline( &screen[i], Point::new(0, (i*PPC).try_into().unwrap()), text_style, Baseline::Top)
               .draw(&mut *disp)
@@ -201,7 +201,7 @@ fn main() -> ! {
     display.flush().unwrap();
 
     led.blink(500_u16, &mut delay1); // Blink LED to indicate Ssd1306 initialized.
-    //hprintln!("Text::with_baseline").unwrap();
+    //hprintln!("Text::with_baseline");
 
     let mut screen: ScreenType = [R_VAL; DISPLAY_LINES];
 
@@ -217,13 +217,13 @@ fn main() -> ! {
 
     // write to device connected to channel 0 using the I2C switch
     if switch1.write(slave_address, &write_data).is_err() {
-        //hprintln!("Error write channel 0!").unwrap();
+        //hprintln!("Error write channel 0!");
     }
 
     // read from device connected to channel 0 using the I2C switch
     let mut read_data = [0; 2];
     if switch1.read(slave_address, &mut read_data).is_err() {
-        //hprintln!("Error read channel 0!").unwrap();
+        //hprintln!("Error read channel 0!");
     }
 
     // write_read from device connected to channel 0 using the I2C switch
@@ -231,7 +231,7 @@ fn main() -> ! {
         .write_read(slave_address, &write_data, &mut read_data)
         .is_err()
     {
-        //hprintln!("Error write_read!").unwrap();
+        //hprintln!("Error write_read!");
     }
 
     show_message(&"AHT10s on xca", &mut display);
@@ -269,7 +269,7 @@ use embedded_hal::i2c::{I2c, ErrorType};
 //    let mut i = 0;  // not very elegant
 //    for  prt in parts {
 //       sensors[i] = Hdc20xx::new(prt, HdcSlaveAddr::default());
-//       //hprintln!("i  {}", i).unwrap();
+//       //hprintln!("i  {}", i);
 //    let mut z = Hdc20xx::new(prt, HdcSlaveAddr::default());
 //       //let z = AHT10::new(prt, AltDelay{});
 //
@@ -277,25 +277,25 @@ use embedded_hal::i2c::{I2c, ErrorType};
 //       match z {
 //           Ok(mut v) => {v.reset().expect("sensor01 reset failed");  //should handle this 
 //                         sensors[i] = Some(v);
-//                         //hprintln!("sensor J{} in use", i).unwrap();
+//                         //hprintln!("sensor J{} in use", i);
 //                         write!(screen[0], "J{} in use", i).unwrap();
 //                       },
-//           Err(_e)   => {//hprintln!("J{} unused", i).unwrap();
+//           Err(_e)   => {//hprintln!("J{} unused", i);
 //                         write!(screen[0], "J{} unused", i).unwrap();
 //                        },
 //       }
-//       //hprintln!("screen {:?}", screen).unwrap();
+//       //hprintln!("screen {:?}", screen);
 //       show_screen(&screen, &mut display);
 //       delay1.delay_ms(500);
 //       
 //       i += 1;
-//       //hprintln!("i+1 {}", i).unwrap();
+//       //hprintln!("i+1 {}", i);
 //    };
 
     screen[0].clear();
     write!(screen[0], "    °C %RH").unwrap();
 
-    //hprintln!("entering loop").unwrap();
+    //hprintln!("entering loop");
     loop {   // Read humidity and temperature.
       let mut ln = 1;  // screen line to write. rolls if number of sensors exceed DISPLAY_LINES
 //      for  i in 0..7 {
@@ -311,13 +311,13 @@ use embedded_hal::i2c::{I2c, ErrorType};
         write!(screen[0], "Temperature: {:.2}ºC  ", data.temperature).unwrap();
         write!(screen[1], "Humidity: {:.2}%  ", data.humidity.unwrap()).unwrap();
 //                              match sensors1.read() {
-//                                   Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh()).unwrap();
+//                                   Ok((h,t)) => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh());
 //                                                 write!(screen[ln], "J{} {:.1} {:.0}", i, t.celsius(), h.rh()).unwrap();
 //                                                 write!(screen[ln], "J{} {:.1} {:.0}", 0, t.celsius(), h.rh()).unwrap();
 //                                                },
 //                                   //Err(e)    => {sens.reset().unwrap();
 //                                   Err(e)    => {sensors1.reset().unwrap();
-//                                                 //hprintln!("read error {:?}", e).unwrap();
+//                                                 //hprintln!("read error {:?}", e);
 //                                                 write!(screen[ln], "J{} read error. Reset{:?}", i, e).unwrap();
 //                                                 write!(screen[ln], "J{} read error. Reset{:?}", 0, e).unwrap();
 //                                                }

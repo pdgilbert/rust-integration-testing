@@ -243,7 +243,7 @@ fn main() -> ! {
         adc_a.set_full_scale_range(FullScaleRange::Within0_256V).unwrap();
         let (bat_ma, load_ma, temp_c, values_b) = read_all(&mut adc_a, &mut adc_b);
 
-        //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b).unwrap();
+        //hprintln!("bat_mv {:4}mV bat_ma {:4}mA  load_ma {:5}mA temp_c {}   values_b {:?}", bat_mv, bat_ma, load_ma, temp_c, values_b);
 
         show_display(bat_mv, bat_ma, load_ma, temp_c, values_b, text_style, &mut display);
 

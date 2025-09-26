@@ -77,24 +77,24 @@ fn get_sensor<P, E>(
 
     let mut search_state = None;
     let mut sensor = None;
-    hprintln!("entering loop").unwrap();
+    hprintln!("entering loop");
     loop {
         let z = ow_bus.device_search(search_state.as_ref(), false, delay);
-        hprintln!("Device at {:?}", z).unwrap();
+        hprintln!("Device at {:?}", z);
        
         if let Some((device_address, state)) = ow_bus.device_search(search_state.as_ref(), false, delay)? {
             search_state = Some(state);
-            hprintln!("first if").unwrap();
+            hprintln!("first if");
             if device_address.family_code() != ds18b20::FAMILY_CODE {
                 // skip other devices
-                hprintln!("second if").unwrap();
+                hprintln!("second if");
                 continue;
             }
             sensor = Some(Ds18b20::new(device_address)?); // contains temperature and config info: resolution...
 
-           hprintln!("Device at {:?} is °C", device_address).unwrap();
+           hprintln!("Device at {:?} is °C", device_address);
         } else {
-            hprintln!("will now panic.").unwrap();
+            hprintln!("will now panic.");
             break;
         }
     }
@@ -158,7 +158,7 @@ fn main() -> ! {
     // get sensor address    
     let sensor = get_sensor(&mut delay, &mut ow_bus).unwrap();
       
-    //hprintln!("endless loop. ^c to kill ...").unwrap();
+    //hprintln!("endless loop. ^c to kill ...");
 
     loop {
         // Blink LED to check that everything is actually running.
@@ -166,7 +166,7 @@ fn main() -> ! {
 
         let sensor_data = sensor.read_data(&mut ow_bus, &mut delay);
         
-        //hprintln!("Device at {:?} is {}°C", device_address, sensor_data.temperature).unwrap();
+        //hprintln!("Device at {:?} is {}°C", device_address, sensor_data.temperature);
        
         let temperature = sensor_data.unwrap().temperature;   //_or(-300)
 

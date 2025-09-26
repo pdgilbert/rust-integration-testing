@@ -153,29 +153,29 @@ type  DisplayType = Ssd1306<I2CInterface<I2c2Type>, DisplaySize, BufferedGraphic
         
         match lora.start_transmit(message) {
             Ok(_b)   => {//show_message("start_transmit ok", disp);
-                         //hprintln!("lora.start ok").unwrap()
+                         //hprintln!("lora.start ok")
                         } 
             Err(_e)  => {show_message("start_transmit error", disp);
-                         //hprintln!("Error in lora.start_transmit()").unwrap()
+                         //hprintln!("Error in lora.start_transmit()")
                         }
         };
-        //hprintln!("... done").unwrap();
+        //hprintln!("... done");
 
         lora.delay_ms(10); // treated as seconds. Without some delay next returns bad. (interrupt may also be an option)
 
         match lora.check_transmit() {
             Ok(b)   => {if b {show_message("TX good", disp);
-                              //hprintln!("TX good").unwrap(); 
+                              //hprintln!("TX good"); 
                              }
                         else {show_message("TX bad", disp);
-                              //hprintln!("TX bad").unwrap()
+                              //hprintln!("TX bad")
                              }
                        }
             Err(_e) => {show_message("check_transmit Fail", disp);
-                        //hprintln!("check_transmit() Error. Should return True or False.").unwrap()
+                        //hprintln!("check_transmit() Error. Should return True or False.")
                        }
         };
-        //hprintln!("check_transmit done").unwrap();
+        //hprintln!("check_transmit done");
        ()
     }
 
@@ -197,7 +197,7 @@ fn main() -> ! {
 
     //z.init().unwrap();
 
-    //hprintln!("match z.init()  ...").unwrap();
+    //hprintln!("match z.init()  ...");
 
 // stalls here if there is no display but works when display is present
     let mut disp: Option<DisplayType> = match z.init() {
@@ -206,7 +206,7 @@ fn main() -> ! {
     };
 
 
-    //hprintln!("disp set  ...").unwrap();
+    //hprintln!("disp set  ...");
  
     show_message("lora_show_ping", &mut disp);
 
@@ -221,11 +221,11 @@ fn main() -> ! {
 
     let mut lora =  match z {
             Ok(lr)  => {show_message("lora setup ok", &mut disp);
-                        //hprintln!("lora setup completed.").unwrap();
+                        //hprintln!("lora setup completed.");
                         lr
                        } 
             Err(e)  => {show_message("lora setup Error", &mut disp);
-                        //hprintln!("Error in lora setup. {:?}", e).unwrap();
+                        //hprintln!("Error in lora setup. {:?}", e);
                         asm::bkpt();
                         panic!("{:?}", e) 
                        }
@@ -241,17 +241,17 @@ fn main() -> ! {
 //    use radio_sx127x::device::regs::Register;
 
 //    let v = lora.lora_get_config();
-//    hprintln!("configuration {:?}", v).unwrap();
+//    hprintln!("configuration {:?}", v);
 // 
-//    hprintln!("channel      {}", lora.get_channel()).unwrap();
+//    hprintln!("channel      {}", lora.get_channel());
 // 
-//    hprintln!("mode             {}",    lora.get_mode()).unwrap();
-//    hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr())).unwrap();
-//    hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth()).unwrap();
-//    hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4()).unwrap();
-//    hprintln!("spreading_factor {:?}",  lora.get_spreading_factor()).unwrap();
-//    hprintln!("invert_iq        {:?}",  lora.get_invert_iq()).unwrap();
-//    hprintln!("tx_power         {:?}",  lora.get_tx_power()).unwrap();
+//    hprintln!("mode             {}",    lora.get_mode());
+//    hprintln!("mode             {}",    lora.read_register(Register::RegOpMode.addr()));
+//    hprintln!("bandwidth        {:?}",  lora.get_signal_bandwidth());
+//    hprintln!("coding_rate      {:?}",  lora.get_coding_rate_4());
+//    hprintln!("spreading_factor {:?}",  lora.get_spreading_factor());
+//    hprintln!("invert_iq        {:?}",  lora.get_invert_iq());
+//    hprintln!("tx_power         {:?}",  lora.get_tx_power());
 
 
     /////////////////////   transmit loop
@@ -265,10 +265,10 @@ fn main() -> ! {
 
     loop {
 
-        //hprintln!("start_transmit ...").unwrap();
+        //hprintln!("start_transmit ...");
         send(&mut lora, message, &mut disp);
 
         lora.delay_ms(READ_INTERVAL);  // treated as seconds
-        //hprintln!("re-loop").unwrap();
+        //hprintln!("re-loop");
     }
 }

@@ -615,7 +615,7 @@ fn main() -> ! {
 
     let (mut send, recv) = setup();
 
-    hprintln!("test write to console ...").unwrap();
+    hprintln!("test write to console ...");
 
     //    *send.tup.0 = *b"\r\nSlowly type  ";  //NB. 15 characters
     //    send.tup = send.tup.2.write_all( send.tup.0, send.tup.1).wait();
@@ -626,8 +626,8 @@ fn main() -> ! {
 
     // Now read from console into  buf and echo back to console
 
-    hprintln!("Enter 15 characters in console. Repeat.").unwrap();
-    hprintln!("Use ^C in gdb to exit.").unwrap();
+    hprintln!("Enter 15 characters in console. Repeat.");
+    hprintln!("Use ^C in gdb to exit.");
 
     // Note send (write) is using buf as put into recv (read). The returned buffer in recv and
     //   the argument buffer in send are data. The argument buffer in recv may be a holding spot

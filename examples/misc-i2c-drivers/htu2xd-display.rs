@@ -85,7 +85,7 @@ use stm32h7xx_hal::{
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("htu21D-display example");
-    //hprintln!("htu21D-display example").unwrap();
+    //hprintln!("htu21D-display example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -168,7 +168,7 @@ fn main() -> ! {
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
 
         // Blink LED to indicate looping.
         led.blink(10_u16, &mut delay);
@@ -194,32 +194,32 @@ fn main() -> ! {
         //  there is a double wrapping:  Ok(Ok(Temperature(24624)))
 
 //        match z {
-//            Ok(Reading::Ok(t))     => {//hprintln!("{} deg C", t.as_degrees_celsius()).unwrap();
+//            Ok(Reading::Ok(t))     => {//hprintln!("{} deg C", t.as_degrees_celsius());
 //                                  write!(lines[0], "  {:.1} C", t.as_degrees_celsius()).unwrap(); },
 //
-//            Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low").unwrap();
+//            Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low");
 //                                  write!(lines[0], "Error or off-scale low").unwrap(); },
 //
-//            Ok(Reading::ErrorHigh) => {//hprintln!("Error or off-scale high").unwrap();
+//            Ok(Reading::ErrorHigh) => {//hprintln!("Error or off-scale high");
 //                                  write!(lines[0], "Error or off-scale high").unwrap(); },
 //
-//            Err(_)                 => {//hprintln!("Error reading temperature").unwrap();
+//            Err(_)                 => {//hprintln!("Error reading temperature");
 //                                  write!(lines[0], "Error reading temperature").unwrap(); },
 //        }
 //
 //        let z = htu.read_humidity_blocking(&mut htu_ch);
 //
 //        match z {
-//            Ok(Reading::Ok(t))     => {//hprintln!("{}% RH", t.as_percent_relative()).unwrap();
+//            Ok(Reading::Ok(t))     => {//hprintln!("{}% RH", t.as_percent_relative());
 //                                       write!(lines[1], "  {:.0}% RH", t.as_percent_relative()).unwrap();},
 //
-//            Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low").unwrap();
+//            Ok(Reading::ErrorLow)  => {//hprintln!("Error or off-scale low");
 //                                  write!(lines[1], "humidity off-scale low").unwrap(); },
 //
-//            Ok(Reading::ErrorHigh) => {//hprintln!("Error or humidity off-scale high").unwrap();
+//            Ok(Reading::ErrorHigh) => {//hprintln!("Error or humidity off-scale high");
 //                                  write!(lines[1], "humidity off-scale high").unwrap(); },
 //
-//            Err(_)                 => {//hprintln!("Error reading humidity").unwrap();
+//            Err(_)                 => {//hprintln!("Error reading humidity");
 //                                  write!(lines[1], "Error reading humidity").unwrap(); },
 //        }
 

@@ -256,7 +256,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
             // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
             let (rh, t) = match self.read() { //return order must be re-arranged
                 Ok((rh, t))  =>  (rh.rh() as u8,  (10.0 * t.celsius()) as i32), 
-                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e); 
                                   //panic!("Error reading sensor")
                                   (255, -4090)  //supply default values that should be clearly bad
                                  },
@@ -286,7 +286,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
             // 10 * deg C to give one decimal place. (10.0 * t.celsius()) as i32
             let (rh, t) = match self.read() { //return order must be re-arranged
                 Ok((rh, t))  =>  (rh.rh() as u8,  (10.0 * t.celsius()) as i32), 
-                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e).unwrap(); 
+                Err(_e)      =>  {//hprintln!("sensor Error {:?}", e); 
                                   //panic!("Error reading sensor")
                                   (255, -4090)  //supply default values that should be clearly bad
                                  },
@@ -467,7 +467,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
     fn init(cx: init::Context) -> (Shared, Local) {
         //rtt_init_print!();
         //rprintln!("temp-humidity-display example");
-        //hprintln!("temp-humidity-display example").unwrap();
+        //hprintln!("temp-humidity-display example");
 
         Mono::start(cx.core.SYST, MONOCLOCK);
 
@@ -514,7 +514,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
         let ina = SyncIna219::new(manager2.acquire_i2c(), Address::from_pins(Pin::Gnd, Pin::Gnd)).unwrap(); 
 
         //let mut ina = INA219::new(ina_rcd, 0x40);
-        //hprintln!("let mut ina addr {:?}", INA219_ADDR).unwrap();  // crate's  INA219_ADDR prints as 65
+        //hprintln!("let mut ina addr {:?}", INA219_ADDR);  // crate's  INA219_ADDR prints as 65
 
         ina.calibrate(UnCalibrated).unwrap();
         delay.delay_ms(15);     // Wait for sensor
@@ -550,7 +550,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
         sensor.init_message(&mut display);
 
         read_and_display::spawn().unwrap();
-        //hprintln!("init done").unwrap();
+        //hprintln!("init done");
 
         return(Shared { led, },   Local {display, ina, sensor });
     }
@@ -564,7 +564,7 @@ use core::borrow::BorrowMut;  // bring trait is in scope
           Mono.delay_ms(READ_INTERVAL * 1000);  
           //Systick::delay(READ_INTERVAL.secs()).await;
           blink::spawn(BLINK_DURATION).ok();
-          //hprintln!("read_and_display").unwrap();
+          //hprintln!("read_and_display");
           
           let (t, h) = sensor.read_th();
 

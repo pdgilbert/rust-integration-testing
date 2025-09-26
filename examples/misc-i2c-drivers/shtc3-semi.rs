@@ -22,7 +22,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 
-use cortex_m_semihosting_05::hprintln;
+use cortex_m_semihosting::hprintln;
 //use cortex_m::asm;
 
 use shtcx::{LowPower, PowerMode};

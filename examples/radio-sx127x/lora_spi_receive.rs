@@ -62,15 +62,15 @@ fn main() -> ! {
         match poll {
             Ok(v) if v => {
                 n = lora.get_received(&mut buff).unwrap();
-                //hprintln!("RX complete ({:?}, length: {})", info, n).unwrap();
-                //hprintln!("{:?}", &buff[..n.0]).unwrap();
+                //hprintln!("RX complete ({:?}, length: {})", info, n);
+                //hprintln!("{:?}", &buff[..n.0]);
                 // for some reason the next prints twice?
-                hprintln!("{}", to_str(&buff[..n.0])).unwrap()
+                hprintln!("{}", to_str(&buff[..n.0]))
             }
 
-            Ok(_v) => (), // hprint!(".").unwrap(),   // print "." if nothing received
+            Ok(_v) => (), // hprint!("."),   // print "." if nothing received
 
-            Err(err) => hprintln!("poll error {:?} ", err).unwrap(),
+            Err(err) => hprintln!("poll error {:?} ", err),
         };
 
         lora.delay_ms(100);

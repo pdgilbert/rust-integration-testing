@@ -53,7 +53,7 @@ use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs,};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    //hprintln!("AHT10 example");
 
     let dp = Peripherals::take().unwrap();
 
@@ -88,7 +88,7 @@ fn main() -> ! {
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 

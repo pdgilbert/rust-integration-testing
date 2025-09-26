@@ -129,7 +129,7 @@ where
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("temperature_display example");
-    hprintln!("temperature_display example").unwrap();
+    hprintln!("temperature_display example");
 
     let dp = Peripherals::take().unwrap();
     let (i2cset, mut led, mut delay) = setup::i2c_led_delay_from_dp(dp);
@@ -173,8 +173,8 @@ fn main() -> ! {
         let a2 = block!(adc.read(channel::SingleA2)).unwrap_or(8091);
         let a3 = block!(adc.read(channel::SingleA3)).unwrap_or(8091);
 
-    hprintln!("values read").unwrap();
-    hprintln!("values  {} {} {} {}", thermistor, a1, a2, a3).unwrap();
+    hprintln!("values read");
+    hprintln!("values  {} {} {} {}", thermistor, a1, a2, a3);
 
         show_display(thermistor, a1, a2, a3, text_style, &mut display);
 

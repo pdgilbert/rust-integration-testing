@@ -73,7 +73,7 @@ use rust_integration_testing_of_examples::setup::{CorePeripherals};
 fn main() -> ! {
     //rtt_init_print!();
     //rprintln!("AHT10 example");
-    //hprintln!("AHT10 example").unwrap();
+    //hprintln!("AHT10 example");
 
     let dp = Peripherals::take().unwrap();
     let cp = CorePeripherals::take().unwrap();
@@ -107,7 +107,7 @@ fn main() -> ! {
 
     /////////////////////   aht
 
-    hprintln!("Start the sensor").unwrap();
+    hprintln!("Start the sensor");
     // Start the sensor.
     let mut aht = Aht20::new(&mut i2c2, &mut delay);
     //let mut aht = Aht20::new(&mut aht_rcd, &mut delay).unwrap();  //.expect("aht device failed")
@@ -115,16 +115,16 @@ fn main() -> ! {
 
     loop {
         //rprintln!("loop i");
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         // Blink LED to indicate looping.
         //led.blink(20_u16, &mut delay);
 
-        hprintln!("aht.read()").unwrap();
+        hprintln!("aht.read()");
         // Read humidity and temperature.
         let (h, t) = aht.read().unwrap();
         //let (h, t) = aht.end_read().unwrap();
 
-        hprintln!("lines[0].clear()").unwrap();
+        hprintln!("lines[0].clear()");
         lines[0].clear();
         lines[1].clear();
         write!(lines[0], "temperature: {}C", t.celsius()).unwrap();

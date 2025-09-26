@@ -848,7 +848,7 @@ fn main() -> ! {
 
     //rtt_init_print!();
     //rprintln!("test write to console ...");
-    hprintln!("test write to console ...").unwrap();
+    hprintln!("test write to console ...");
 
     //this syntax works with stm32g4xx_hal but needs to be disambiguated for others
     //tx.write("\r\nconsole connect check.\r\n".as_bytes()).unwrap();
@@ -885,16 +885,16 @@ fn main() -> ! {
         // Blink LED to check that loop is arunning.
         led.blink(50_u16, &mut delay);
 
-        //hprintln!("loop i").unwrap();
+        //hprintln!("loop i");
         //rprintln!("{}\r", data[i]);   // rprintln requires updated probe??
         delay.delay_ms(100_u32.into());
         let read = max30102.read_fifo(&mut data).unwrap_or(0);
 
-        hprintln!("read {:?}", read).unwrap();
-        hprintln!("data {:?}", data).unwrap();
+        hprintln!("read {:?}", read);
+        hprintln!("data {:?}", data);
 
         for i in 0..read.into() {
-              hprintln!("data {}", data[i]).unwrap();
+              hprintln!("data {}", data[i]);
               //tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
               embedded_io::Write::write(&mut tx, &[data[i] as u8]).unwrap();     // this may need fmt
               //write!(buf, "data[i] {}\r", data[i]);  // but no luck let with this
