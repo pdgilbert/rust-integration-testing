@@ -224,7 +224,7 @@ radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", defau
 embedded-hal        = "1.0"
 embedded-hal-bus    = "0.3.0"
 embedded-hal-async  = "1.0.0"
-embedded-io         = "0.6.1"
+embedded-io         = "0.6.1"  #"0.7.1"  7 is breaking
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
@@ -731,3 +731,22 @@ path = "examples/projects/lora_show_ping.rs"
 [[example]]
 name = "lora_show_ping_v1"
 path = "examples/projects/lora_show_ping_v1.rs"
+
+
+# examples/mco
+
+[[example]]
+name = "sysclock"
+path = "examples/mco/sysclock.rs"
+
+[[example]]
+name = "blink_default"
+path = "examples/mco/blink_default.rs"
+
+[[example]]
+name = "blink_hsi"
+path = "examples/mco/blink_hsi.rs"
+
+[[example]]
+name = "blink_hse"
+path = "examples/mco/blink_hse.rs"
