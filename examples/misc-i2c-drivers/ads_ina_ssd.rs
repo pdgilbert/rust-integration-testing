@@ -60,7 +60,6 @@ use stm32f4xx_hal::{
 use stm32g4xx_hal::{
     timer::Timer,
     time::{ExtU32, RateExtU32},
-    i2c::Config,
     delay::DelayFromCountDownTimer,
 };
 
@@ -124,7 +123,7 @@ pub fn setup_from_dp(dp: Peripherals) ->  (impl I2cTrait<u8>, impl DelayNs,) {
    let scl = gpiob.pb8.into_alternate_open_drain(); 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
 
-   let i2c = dp.I2C1.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
+   let i2c = dp.I2C1.i2c((sda, scl), 400.kHz(), &mut rcc);
 
    let clocks = rcc.clocks;  // not sure if this is right
 

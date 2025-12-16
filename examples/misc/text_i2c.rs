@@ -230,7 +230,7 @@ fn setup() -> I2c<I2C2, PB11<Output<OpenDrain>>, PB10<Output<OpenDrain>>> {
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
     time::{RateExtU32},
-    i2c::{I2c, Config, SDAPin, SCLPin},
+    i2c::{I2c, SDAPin, SCLPin},
     pac::{Peripherals, I2C2},
     prelude::*,
 };
@@ -244,7 +244,7 @@ fn setup() -> I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>> {
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
     
-    dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc)
+    dp.I2C2.i2c((sda, scl), 400.kHz(), &mut rcc)
 }
 
 

@@ -350,7 +350,7 @@ use stm32g4xx_hal::{
     timer::Timer,
     time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
-    i2c::{I2c, Config, SDAPin, SCLPin},
+    i2c::{I2c, SDAPin, SCLPin},
     pac::{Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
@@ -375,7 +375,7 @@ fn setup() -> (Tx<USART2, PA2<Alternate<7_u8>>, NoDMA>, Rx<USART2, PA3<Alternate
 
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
+    let i2c = dp.I2C2.i2c((sda, scl), 400.kHz(), &mut rcc); 
 
     //let delay = cp.SYST.delay(&mut rcc.clocks);
     let timer2 = Timer::new(dp.TIM2, &rcc.clocks);

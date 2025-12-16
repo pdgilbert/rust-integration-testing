@@ -421,7 +421,7 @@ use stm32g4xx_hal::{
     gpio::{Input, 
            gpiob::{PB10, PB11, PB6},        
     },
-    i2c::{I2c, Config as i2cConfig, SDAPin, SCLPin,},
+    i2c::{I2c, SDAPin, SCLPin,},
     prelude::*,
 };
 
@@ -450,7 +450,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let stcint = gpiob.pb6.into_pull_up_input();
 
  //   let i2c = I2c::i2c1(dp.I2C1,  sda, scl, i2cConfig::new(400.kHz()), &mut rcc);
-    let i2c = dp.I2C1.i2c(sda, scl, i2cConfig::new(400.kHz()), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
+    let i2c = dp.I2C1.i2c((sda, scl), 400.kHz(), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
 
     let led = gpioc.pc6.into_push_pull_output();
 

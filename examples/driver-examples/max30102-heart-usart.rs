@@ -504,7 +504,7 @@ use stm32g4xx_hal::{
     timer::{Timer},
     delay::DelayFromCountDownTimer,
     gpio::{gpioc::PC13, Output, PushPull},
-    i2c::{I2c, Config, SDAPin, SCLPin},
+    i2c::{I2c, SDAPin, SCLPin},
     pac::{Peripherals, I2C2, USART2},
     prelude::*,
     serial::{FullConfig, Rx, Tx, NoDMA},
@@ -532,8 +532,8 @@ fn setup() -> (
 
     let scl = gpioa.pa9.into_alternate_open_drain(); 
     let sda = gpioa.pa8.into_alternate_open_drain(); 
-    let i2c = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc);
-
+    let i2c = dp.I2C2.i2c((sda, scl), 400.kHz(), &mut rcc);
+   
     let timerx = Timer::new(dp.TIM2, &clocks);
     let delay = DelayFromCountDownTimer::new(timerx.start_count_down(100.millis()));
 

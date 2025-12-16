@@ -130,11 +130,11 @@ pub fn all_from_dp(dp: Peripherals) ->
 
    let sda = gpiob.pb9.into_alternate_open_drain(); 
    let scl = gpiob.pb8.into_alternate_open_drain(); 
-   let i2c1 = dp.I2C1.i2c(sda, scl, Config::new(400.kHz()), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
+   let i2c1 = dp.I2C1.i2c((sda, scl), 400.kHz(), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
 
    let sda = gpioa.pa8.into_alternate_open_drain(); 
    let scl = gpioc.pc4.into_alternate_open_drain();
-   let i2c2 = dp.I2C2.i2c(sda, scl, Config::new(400.kHz()), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
+   let i2c2 = dp.I2C2.i2c((sda, scl), 400.kHz(), &mut rcc); // NOTE ORDER OF SDA,SCL REVERSED FROM stm32f4xx
 
    let mut led = gpioc.pc6.into_push_pull_output();
    led.off();
