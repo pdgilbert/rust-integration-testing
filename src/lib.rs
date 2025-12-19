@@ -60,9 +60,9 @@ pub mod  setup_all_stm3214xx;
 
 // consider putting some real tests here
 
-#[test]
+#[cfg(test)]
 #[should_panic]
 panic_halt::panic!();
 
-#[test]
+#[cfg(test)]
 assert_eq!(42, 42);
