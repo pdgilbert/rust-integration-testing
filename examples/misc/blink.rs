@@ -293,7 +293,8 @@ pub fn setup() -> (PC6<Output<PushPull>>, DelayFromCountDownTimer<CountDownTimer
 use stm32h7xx_hal::{
     delay::Delay,
     gpio::{gpioc::PC13, Output, PushPull},
-    //hal::digital::v2::OutputPin,
+    // should be able to use embedded_hal::digital::OutputPin above (for all hals )
+    //hal::digital::OutputPin,   
     pac::{CorePeripherals, Peripherals},
     prelude::*,
 };
