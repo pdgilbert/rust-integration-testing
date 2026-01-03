@@ -115,7 +115,7 @@ The examples can be built manually by setting one of these lines:
   export HAL=stm32f4xx MCU=stm32f411   TARGET=thumbv7em-none-eabihf PROC=stm32f4x  CHIP=STM32F4x  # nucleo-64           Cortex-M4
   export HAL=stm32f7xx MCU=stm32f769   TARGET=thumbv7em-none-eabihf PROC=stm32f7x  CHIP=STM32F7x  # none-stm32f769      Cortex-M7
   (                    MCU=stm32f722    no adc breaks some examples  }
-  export HAL=stm32g0xx MCU=stm32g081   TARGET=thumbv6m-none-eabi    PROC=stm32g0   CHIP=STM32G071 # none-stm32g071      Cortex-M0
+  export HAL=stm32g0xx MCU=stm32g081   TARGET=thumbv6m-none-eabi    PROC=stm32g0   CHIP=STM32G081 # none-stm32g081      Cortex-M0
   export HAL=stm32g4xx MCU=stm32g431xB TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # weact-stm32g431CBU6 Cortex-M4
   #export HAL=stm32g4xx MCU=stm32g473   TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # none-stm32g473      Cortex-M4
   export HAL=stm32g4xx MCU=stm32g474xE TARGET=thumbv7em-none-eabihf PROC=stm32g4x  CHIP=STM32G4x  # weact-stm32g474CEU6 Cortex-M4
