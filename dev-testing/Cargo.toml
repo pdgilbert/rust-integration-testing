@@ -171,7 +171,9 @@ ens160           = { git = "https://github.com/teamplayer3/ens160", default-feat
 
 ## NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
 #rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
-rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend"], optional = true  }
+rtic = { git = "https://github.com/rtic-rs/rtic", optional = true  }
+#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend"], optional = true  }
+#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv6-backend"], optional = true  }
 
 #rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
 rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
@@ -244,7 +246,8 @@ heapless = "0.9"
 #nb = ">=0.1.2"
 nb = ">=1.1.0"
 libm = "0.2"
-cortex-m = ">=0.7"
+cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }  # for cortex M0 processors ??
+#cortex-m = ">=0.7"
 cortex-m-rt = ">=0.7.0"
 
 # for driver-examples based on https://github.com/eldruin/driver-examples
@@ -261,20 +264,20 @@ panic-halt           = { version = ">=0.2.0" }
 
 
 [features]
-# rtic does not work on stm32f0xx and stm32l0xx devices ??
+# On cortexM0 devices (stm32f0xx, stm32g0xx and stm32l0xx) rtic needs "thumbv6-backend"
 #stm32f0xx = ["stm32f0xx-hal/rt" , "shared-bus-rtic"]
-stm32f0xx = ["stm32f0xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32f1xx = ["stm32f1xx-hal", "rtic", "rtic-monotonics" ]
-stm32f3xx = ["stm32f3xx-hal/rt", "rtic", "rtic-monotonics" ]
-#stm32f4xx = ["stm32f4xx-hal/rt", "rtic", "dwt-systick-monotonic"]
-stm32f4xx = ["stm32f4xx-hal", "rtic", "rtic-monotonics", "rtic-sync" ] 
-stm32f7xx = ["stm32f7xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32g0xx = ["stm32g0xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32g4xx = ["stm32g4xx-hal/rt", "rtic", "rtic-monotonics", "rtic-sync" ]
-stm32h7xx = ["stm32h7xx-hal/rt", "rtic", "rtic-monotonics", "rtic-sync" ]
-stm32l0xx = ["stm32l0xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32l1xx = ["stm32l1xx-hal/rt", "rtic", "rtic-monotonics" ]
-stm32l4xx = ["stm32l4xx-hal/rt", "rtic", "rtic-monotonics" ]
+stm32f0xx = ["stm32f0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics" ]
+stm32f1xx = ["stm32f1xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics" ]
+stm32f3xx = ["stm32f3xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
+#stm32f4xx = ["stm32f4xx-hal/rt","rtic/thumbv7-backend", "dwt-systick-monotonic"]
+stm32f4xx = ["stm32f4xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ] 
+stm32f7xx = ["stm32f7xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
+stm32g0xx = ["stm32g0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics"]
+stm32g4xx = ["stm32g4xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ]
+stm32h7xx = ["stm32h7xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ]
+stm32l0xx = ["stm32l0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics" ]
+stm32l1xx = ["stm32l1xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
+stm32l4xx = ["stm32l4xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 
 stm32f030xc   = ["stm32f0xx-hal/stm32f030xc"]
 stm32f042     = ["stm32f0xx-hal/stm32f042"  ]
@@ -287,6 +290,7 @@ stm32f405     = ["stm32f4xx-hal/stm32f405"  ]
 stm32f411     = ["stm32f4xx-hal/stm32f411"  ] 
 stm32f722     = ["stm32f7xx-hal/stm32f722"  ] # no adc in hall yet
 stm32f769     = ["stm32f7xx-hal/stm32f769"  ] # this has adc support but no access to internal channel for mcu temperature
+stm32g071     = ["stm32g0xx-hal/stm32g071"  ]
 stm32g081     = ["stm32g0xx-hal/stm32g081"  ]
 stm32g431xB   = ["stm32g4xx-hal/stm32g431"  ]
 stm32g473     = ["stm32g4xx-hal/stm32g473"  ]
