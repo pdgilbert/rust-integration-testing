@@ -49,7 +49,7 @@ pub mod  setup_all_stm32g4xx;
 pub mod  setup_all_stm32h7xx;
 
 #[cfg(feature = "stm32l0xx")]
-pub mod  setup_all_stm3210xx;
+pub mod  setup_all_stm32l0xx;
 
 #[cfg(feature = "stm32l1xx")]
 pub mod  setup_all_stm3211xx;

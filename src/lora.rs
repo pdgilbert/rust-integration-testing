@@ -36,7 +36,7 @@ pub use radio_sx127x::{Receive, Transmit,
 
 // lora and radio parameters
 
-use crate::setup::{Delay2Type, SpiType, Cs, Busy, Ready, Reset};
+pub use crate::setup::{Delay2Type, SpiType, Cs, Busy, Ready, Reset};
 
 pub type LoraType = Sx127x<Base<SpiType, Cs, Busy, Ready, Reset, Delay2Type>>;
 

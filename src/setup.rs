@@ -9,6 +9,9 @@ use panic_halt as _;
 
 //pub use  crate::setup_all_ALL::*;
 
+#[cfg(feature = "stm32f0xx")]
+pub use  crate::setup_all_stm32f0xx::*;
+
 #[cfg(feature = "stm32f1xx")]
 pub use  crate::setup_all_stm32f1xx::*;
 

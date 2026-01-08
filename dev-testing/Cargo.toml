@@ -34,6 +34,7 @@ opt-level = "s"
 
 #  hal versions using git
                                           
+#in stm32f0xx-haljust making embedded-hal = 1.0, instead of embedded-hal-1 = 1.0 does not work.
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
 #stm32f1xx-hal = { version = "0.10.0", optional = true }
 stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
@@ -52,7 +53,9 @@ stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = 
 
 stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 #stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
-stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
+#stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
+#stm32l0xx-hal = { git = "https://github.com/zheylmun/stm32l0xx-hal", optional = true, branch = "feature/embedded_hal_1_0" }
+stm32l0xx-hal = { git = "https://github.com/zheylmun/stm32l0xx-hal", optional = true, branch = "feature/rcc_cleanup" }
 #stm32l1xx-hal = { git = "https://github.com/stm32-rs/stm32l1xx-hal", optional = true, default-features = false}
 stm32l1xx-hal = { git = "https://github.com/TheCallSign/stm32l1xx-hal", optional = true, default-features = false}
 #stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
@@ -98,7 +101,7 @@ one-wire-bus    = { git = "https://github.com/daniel-larsen/one-wire-bus" }
 ds18b20         = { git = "https://github.com/pdgilbert/ds18b20" }
 #ds18b20         = { path = "/home/paul/githubClones/ds18b20" }
 
-# examples//driver-examples/
+# examples/driver-examples/
 mcp4x           = { git = "https://github.com/eldruin/mcp4x-rs" }# mcp4x = "0.1"
 #ad983x          = { git = "https://github.com/eldruin/ad983x-rs" }  # CONFLICT needs embedded-hal = "=1.0.0-alpha.8 but stm32f4xx-hal wants 11
 ads1x1x         = { git = "https://github.com/eldruin/ads1x1x-rs" }
@@ -123,6 +126,9 @@ tmp1x2          = { git = "https://github.com/eldruin/tmp1x2-rs" }
 veml6030        = { git = "https://github.com/eldruin/veml6030-rs" }
 veml6070        = { git = "https://github.com/eldruin/veml6070-rs" }
 veml6075        = { git = "https://github.com/eldruin/veml6075-rs" }
+# older xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
+xca9548a         = ">=1.0.0"
+#xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
 
 
 # examples/misc-i2c-drivers/
@@ -161,10 +167,6 @@ ina219           = { git = "https://github.com/scttnlsn/ina219" }
 #ina219           = { git = "https://github.com/sndnvaps/ina219_rs" }
 #ina219           = { git = "https://github.com/tdittr/ina219" }
 ##ina219           = { git = "https://github.com/youduda/ina219" }
-#xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "d0debd2" }
-xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs", rev = "f7ef250" } 
-#xca9548a         = ">=1.0.0"
-#xca9548a         = { git = "https://github.com/eldruin/xca9548a-rs" }
 ens160           = { git = "https://github.com/teamplayer3/ens160", default-features = false }
 #ens160         = { git = "https://github.com/pdgilbert/ens160", features = ["no-std"], default-features = false }
 
@@ -172,11 +174,12 @@ ens160           = { git = "https://github.com/teamplayer3/ens160", default-feat
 ## NB syntax for rtic-monotonics workspace in  rtic-rs/rtic repository
 #rtic = { version = "2.0.1", features=["thumbv7-backend", "rtic-monotonics"], optional = true  }
 rtic = { git = "https://github.com/rtic-rs/rtic", optional = true  }
-#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv7-backend"], optional = true  }
-#rtic = { git = "https://github.com/rtic-rs/rtic", features=["thumbv6-backend"], optional = true  }
 
 #rtic-monotonics = { version = "1.5.0", features = [ "cortex-m-systick"], optional = true }
 rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "cortex-m-systick"], optional = true }
+# Following https://github.com/rtic-rs/rtic/tree/master/examples/stm32g030f6_periodic_prints
+# next with "critical-section" is needed for cortex-M0, but it is not needed for  cortex-M4 and M7.
+portable-atomic = { version = "1", features = ["critical-section"], optional = true }
 
 #rtic-sync =  { version = "1.2.0", features = [ "unstable"], optional = true }
 rtic-sync = { git = "https://github.com/rtic-rs/rtic",  optional = true }
@@ -264,18 +267,18 @@ panic-halt           = { version = ">=0.2.0" }
 
 
 [features]
-# On cortexM0 devices (stm32f0xx, stm32g0xx and stm32l0xx) rtic needs "thumbv6-backend"
+# On cortexM0 devices (stm32f0xx, stm32g0xx and stm32l0xx) rtic needs "thumbv6-backend" and "portable-atomic"
 #stm32f0xx = ["stm32f0xx-hal/rt" , "shared-bus-rtic"]
-stm32f0xx = ["stm32f0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics" ]
+stm32f0xx = ["stm32f0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics", "portable-atomic"]
 stm32f1xx = ["stm32f1xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics" ]
 stm32f3xx = ["stm32f3xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 #stm32f4xx = ["stm32f4xx-hal/rt","rtic/thumbv7-backend", "dwt-systick-monotonic"]
 stm32f4xx = ["stm32f4xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ] 
 stm32f7xx = ["stm32f7xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
-stm32g0xx = ["stm32g0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics"]
+stm32g0xx = ["stm32g0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics", "portable-atomic"]
 stm32g4xx = ["stm32g4xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ]
 stm32h7xx = ["stm32h7xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ]
-stm32l0xx = ["stm32l0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics" ]
+stm32l0xx = ["stm32l0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics", "portable-atomic" ]
 stm32l1xx = ["stm32l1xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 stm32l4xx = ["stm32l4xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 

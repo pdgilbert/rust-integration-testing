@@ -1,18 +1,23 @@
-pub use stm32f0xx_hal as hal;
+pub use stm32f0xx_hal as hal; // THIS IS STILL 0.2 NEED stm32f0xx_hal_1, BUT IT DOES NOT LOOK TO WORK YET
 pub use hal::{
       pac::CorePeripherals,   //hopefully temperary, used in some examples
-      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
+      pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC as ADC1,TIM2, TIM3,},
       rcc::{RccExt},
+    rcc::{Clocks},
+    timer::Delay as halDelay,
       spi::{Spi},
-      pac::{I2C1, I2C2},
       i2c::I2c,
-      i2c::I2c,   //this is a type
+      //i2c::I2c,   //this is a type
+    i2c::{SdaPin, SclPin},
       serial::{Serial, Tx, Rx, Error},
-      gpio::{gpioa::{PA8, PA11}, Output, OpenDrain},
-      adc::Adc,
+      gpio::{Input, Output, OpenDrain, PushPull, Floating, Analog, GpioExt},
+      gpio::{gpioa::{PA1, PA4, PA8, PA11},
+             gpiob::{PB4, PB5},
+             gpioc::{PC13 as LEDPIN}},
+      adc::{Adc,},
       prelude::*,
       prelude,
-      block,
+      //block,
 };
 
 use embedded_hal::spi::{Mode, Phase, Polarity};
@@ -21,24 +26,27 @@ use embedded_hal::spi::{Mode, Phase, Polarity};
 
 pub use embedded_hal::delay::DelayNs;
 
-pub use crate::alt_delay::{AltDelay as Delay1Type};
-//pub type Delay1Type = Delay;
+pub type Delay1Type = halDelay<TIM2>;
+pub type Delay2Type = halDelay<TIM3>;
+pub type Delay = Delay1Type;
 
-pub use crate::alt_delay::{AltDelay as Delay2Type};
-//pub type Delay2Type = Delay;
-
-pub type Delay = Delay2Type;
+//pub use crate::alt_delay::{AltDelay as Delay1Type};
+////pub type Delay1Type = Delay;
+//
+//pub use crate::alt_delay::{AltDelay as Delay2Type};
+////pub type Delay2Type = Delay;
+//
+//pub type Delay = Delay2Type;
 
 //   //////////////////////////////////////////////////////////////////////
 
 pub const MONOCLOCK: u32 = 8_000_000; //should be set for board not for HAL
 
-pub use crate::delay::{Delay2Type as Delay};
-
 pub type OpenDrainType = PA8<Output<OpenDrain>>;
 
-pub type I2c1Type = I2c<I2C1, PB8<Alternate<AF1>>, PB7<Alternate<AF1>>>;
+//pub type I2c1Type = I2c<I2C1, PB8<Alternate<AF1>>, PB7<Alternate<AF1>>>;
 pub type I2c1Type = I2c<I2C1, impl SclPin<I2C1>, impl SdaPin<I2C1>>;
+pub type I2c2Type = I2c<I2C2, impl SclPin<I2C2>, impl SdaPin<I2C2>>;
 pub type I2cType  = I2c1Type; 
 
 pub use crate::led::LED;  // defines trait and default methods
@@ -54,11 +62,24 @@ pub type TxType = Tx1Type;
 pub type RxType = Rx1Type;
 
 pub type SpiType =  Spi<SPI1>;
-pub struct SpiExt { pub cs:    Pin<'A', 11, Output>,   //pa11 UNTESTED
-                    pub busy:  Pin<'B', 4>, 
-                    pub ready: Pin<'B', 5>, 
-                    pub reset: Pin<'A', 0, Output>
+
+// these should just be in SpiExt, but radio Sx127x still wants them separately
+pub type Cs    = PA4<Output<PushPull>>;
+pub type Busy  = PB4<Input<Floating>>;
+pub type Ready = PB5<Input<Floating>>;
+pub type Reset = PA1<Output<PushPull>>;
+
+pub struct SpiExt { pub cs:    Cs, 
+                    pub busy:  Busy, 
+                    pub ready: Ready, 
+                    pub reset: Reset
 }
+
+//pub struct SpiExt { pub cs:    Pin<'A', 1, Output>, 
+//                    pub busy:  Pin<'B', 4>, 
+//                    pub ready: Pin<'B', 5>, 
+//                    pub reset: Pin<'A', 0, Output>
+//}
 
 
 // this really should be set in example code
@@ -84,7 +105,11 @@ pub fn all_from_dp(dp: Peripherals) ->
                (OpenDrainType, I2c1Type, I2c2Type, LedType, Tx1Type, Rx1Type, Tx2Type, Rx2Type, 
            SpiType, SpiExt, Delay, Clocks, AdcSensor1Type) {
    let mut rcc = dp.RCC.configure().freeze(&mut dp.FLASH);
+   let clocks = rcc.clocks; 
+
    let gpioa = dp.GPIOA.split(&mut rcc);
+   let gpiob = dp.GPIOB.split(&mut rcc);
+   let gpioc = dp.GPIOC.split(&mut rcc);
 
    let mut pin = cortex_m::interrupt::free(move |cs| gpioa.pa8.into_open_drain_output(cs));
    pin.set_high().ok();
@@ -95,17 +120,18 @@ pub fn all_from_dp(dp: Peripherals) ->
          gpiob.pb7.into_alternate_af1(cs), // sda on PB7
         )
     });
-    let i2c1 = I2c::i2c1(i2c1, (scl, sda), 400.khz(), rcc);
+    let i2c1 = dp.I2C1.i2c((scl, sda), 400.khz(), rcc);
 
     let (scl, sda) = cortex_m::interrupt::free(move |cs| {
         (gpiob.pb10.into_alternate_af1(cs),
          gpiob.pb11.into_alternate_af1(cs),
         )
     });
-    let i2c2 = I2c::i2c2(i2c2, (scl, sda), 400.khz(), rcc);
+    let i2c2 = dp.I2C2.i2c((scl, sda), 400.khz(), rcc);
 
 
-   let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+   //let mut led = setup_led(dp.GPIOC.split(&mut rcc)); 
+   let mut led = gpioc.pc13.into_push_pull_output();  //LEDPIN is pc13. This is awkward.
    led.off();
 
    let spi1 = Spi::new(
@@ -127,8 +153,9 @@ pub fn all_from_dp(dp: Peripherals) ->
         reset: gpioa.pa0.into_push_pull_output(), //ResetPin   
         };   
 
-   let delay = DelayType{};
+   //let delay = DelayType{};
    //let delay = Delay::new(CorePeripherals::take().unwrap().SYST, &rcc);
+   let delay = dp.TIM2.delay(&mut rcc);
 
    let (tx, rx) = cortex_m::interrupt::free(move |cs| {
        (
@@ -145,13 +172,13 @@ pub fn all_from_dp(dp: Peripherals) ->
         )
     });
 
-   let (tx1, rx1) = Serial::usart1(p.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
+   let (tx1, rx1) = Serial::usart1(dp.USART1, (tx1, rx1), 9600.bps(), &mut rcc).split();
    
-   let (tx2, rx2) = Serial::usart2(p.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
+   let (tx2, rx2) = Serial::usart2(dp.USART2, (tx2, rx2), 9600.bps(), &mut rcc).split();
 
    let adc1: AdcSensor1Type = AdcSensor {
        ch:  gpioa.pa1.into_analog(),
-       adc: dp.ADC1.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
+       adc: dp.ADC.claim(ClockSource::SystemClock, &rcc, &mut delay, true),
    }; 
    impl ReadAdc for AdcSensor1Type {
        fn read_mv(&mut self)    -> u32 {  self.adc.read(&mut self.ch).unwrap() }
