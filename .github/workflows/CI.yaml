@@ -298,6 +298,21 @@ jobs:
 
      ##### misc-i2c-driver-examples  #####
 
+      - name: Example aht10-aht30-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10-aht30-semi
+
+      - name: Example aht20-aht30-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-aht30-semi
+
+      - name: Example aht25-aht30-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht25-aht30-semi
+
+      - name: Example aht30-aht30-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht30-aht30-semi
+
+      - name: Example aht40-aht30-semi
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht40-aht30-semi
+
       - name: Example ens160-co2-voc-iaq-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ens160-co2-voc-iaq-display
 
@@ -704,6 +719,7 @@ jobs:
       matrix:
 
         eg:  [aht20-bl-semi,    aht20-em-semi,  aht20-dr-semi,   sht30-em-semi, shtcx-semi,   
+              aht10-aht30-semi,  aht20-aht30-semi,  aht25-aht30-semi,  aht30-aht30-semi,  aht40-aht30-semi,  
               aht10-display,           aht20-display,       
               ds18b20,                 hdc1080-display,
               htu2xd-display,          ads_ina_ssd,      

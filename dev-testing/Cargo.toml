@@ -51,7 +51,8 @@ stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = 
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1-up" }
 #stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
 
-stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
+#stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
+stm32h7xx-hal = { git = "https://github.com/everdrone/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 #stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
 #stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l0xx-hal = { git = "https://github.com/zheylmun/stm32l0xx-hal", optional = true, branch = "feature/embedded_hal_1_0" }
@@ -146,6 +147,8 @@ aht20-async       = "1.0.0"
 
 aht20-driver     = { version = "2.0.0", default-features = false } #eh-1 
 #aht20-driver    = { git = "https://github.com/anglerud/aht20-driver", default-features = false }
+
+aht30   = { git = "https://github.com/hal-drv/aht30", default-features = false } #eh-1 and both sync and async
 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
@@ -630,6 +633,46 @@ path = "examples/misc-i2c-drivers/aht20-em-semi.rs"
 [[example]]
 name = "aht20-dr-semi"
 path = "examples/misc-i2c-drivers/aht20-dr-semi.rs"
+
+[[example]]
+name = "aht10-aht30-semi"
+path = "examples/misc-i2c-drivers/aht10-aht30-semi.rs"
+
+[[example]]
+name = "aht20-aht30-semi"
+path = "examples/misc-i2c-drivers/aht20-aht30-semi.rs"
+
+[[example]]
+name = "aht25-aht30-semi"
+path = "examples/misc-i2c-drivers/aht25-aht30-semi.rs"
+
+[[example]]
+name = "aht30-aht30-semi"
+path = "examples/misc-i2c-drivers/aht30-aht30-semi.rs"
+
+[[example]]
+name = "aht40-aht30-semi"
+path = "examples/misc-i2c-drivers/aht40-aht30-semi.rs"
+
+[[example]]
+name = "aht10Async-aht30-semi"
+path = "examples/misc-i2c-drivers/aht10Async-aht30-semi.rs"
+
+[[example]]
+name = "aht20Async-aht30-semi"
+path = "examples/misc-i2c-drivers/aht20Async-aht30-semi.rs"
+
+[[example]]
+name = "aht25Async-aht30-semi"
+path = "examples/misc-i2c-drivers/aht25Async-aht30-semi.rs"
+
+[[example]]
+name = "aht30Async-aht30-semi"
+path = "examples/misc-i2c-drivers/aht30Async-aht30-semi.rs"
+
+[[example]]
+name = "aht40Async-aht30-semi"
+path = "examples/misc-i2c-drivers/aht40Async-aht30-semi.rs"
 
 [[example]]
 name = "sht30-em-semi"

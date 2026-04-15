@@ -1,5 +1,16 @@
 ## Notes on various sensor crates
 
++++++++++++++++++++ temporary notes on crate aht30
+- should not consume delay
+- MAYBE ERROR .expect("sensor initialization failed.");
+- does aht10 support checksum?  
+- AHT25_DEFAULT_ADDR, Aht25   not in the root
+- AHT30_DEFAULT_ADDR, Aht30   not in the root
+- no calibration function in aht40. Is this not in the hardware, or not in the crate yet?
+
++++++++++++++++++++
+
+
 To simplify testing the examples *semi* use only the sensor crate and report results
 with semihosting. This means the example does not need ssd or anything that would make
 the example actually useable. 
