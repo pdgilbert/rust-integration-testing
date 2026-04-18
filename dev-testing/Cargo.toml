@@ -148,7 +148,7 @@ aht20-async       = "1.0.0"
 aht20-driver     = { version = "2.0.0", default-features = false } #eh-1 
 #aht20-driver    = { git = "https://github.com/anglerud/aht20-driver", default-features = false }
 
-aht30   = { git = "https://github.com/hal-drv/aht30", default-features = false } #eh-1 and both sync and async
+aht30   = { git = "https://github.com/hal-drv/aht30", features = ["async"], default-features = false } #eh-1 and both sync and async
 
 #hdc1080         = { git = "https://github.com/iohe/hdc1080-rs", default-features = false }  needs std
 embedded-hdc1080-rs = { git = "https://github.com/maxmarvil/hdc1080-embedded-rs" } # eh 0.2.6
@@ -323,6 +323,8 @@ aht10     = []
 aht20     = []
 dht11     = []
 dht22     = []
+
+async     = []
 
 ## example sections are needed because examples are organized in subdirectories under examples/
 
@@ -619,6 +621,10 @@ path = "examples/rtic/displayX2_rtic.rs"
 name = "serial-dma"
 path = "examples/rtic/serial-dma.rs"
 
+[[example]]
+name = "aht10-aht30_rtic"
+path = "examples/rtic/aht10-aht30_rtic.rs"
+
 
 # examples/misc-i2c-drivers
 
@@ -653,26 +659,6 @@ path = "examples/misc-i2c-drivers/aht30-aht30-semi.rs"
 [[example]]
 name = "aht40-aht30-semi"
 path = "examples/misc-i2c-drivers/aht40-aht30-semi.rs"
-
-[[example]]
-name = "aht10Async-aht30-semi"
-path = "examples/misc-i2c-drivers/aht10Async-aht30-semi.rs"
-
-[[example]]
-name = "aht20Async-aht30-semi"
-path = "examples/misc-i2c-drivers/aht20Async-aht30-semi.rs"
-
-[[example]]
-name = "aht25Async-aht30-semi"
-path = "examples/misc-i2c-drivers/aht25Async-aht30-semi.rs"
-
-[[example]]
-name = "aht30Async-aht30-semi"
-path = "examples/misc-i2c-drivers/aht30Async-aht30-semi.rs"
-
-[[example]]
-name = "aht40Async-aht30-semi"
-path = "examples/misc-i2c-drivers/aht40Async-aht30-semi.rs"
 
 [[example]]
 name = "sht30-em-semi"

@@ -7,7 +7,7 @@
 - AHT25_DEFAULT_ADDR, Aht25   not in the root
 - AHT30_DEFAULT_ADDR, Aht30   not in the root
 - no calibration function in aht40. Is this not in the hardware, or not in the crate yet?
-
+- Aht10Async should not use delay
 +++++++++++++++++++
 
 

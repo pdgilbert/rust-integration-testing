@@ -11,7 +11,7 @@
 use cortex_m_semihosting::hprintln;
 //use cortex_m::asm;
 
-use aht30::{AHT25_DEFAULT_ADDR, Aht25};
+use aht30::{AHT20_DEFAULT_ADDR as AHT25_DEFAULT_ADDR, Aht20 as Aht25};
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;

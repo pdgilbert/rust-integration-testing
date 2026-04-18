@@ -1,3 +1,8 @@
+//! Measure the temperature and humidity from sensor on i2c2.
+//! Display on ssd1306 OLED on i2c1.
+//! Compare examples dht_rtic, htu2xd_display, aht10_display.
+//  compare : diff htu2xd_rtic.rs aht10-aht30_rtic.rs
+//! 
 //! Feb 5, 2023 - This is too large to load on bluepill. It is working with USB probe and with battery
 //!        on blackpill stm32f401  with SSD1306 and HTU2XD on shared bus i2c1,
 //!                                with SSD1306 and HTU2XD on shared bus i2c2,
@@ -17,11 +22,9 @@
 //! Note that led and i2c pin settings are specific to a board pin configuration used for testing,
 //! despite the cfg feature flags suggesting it may be for a HAL.
 //! 
-//! Measure the temperature and humidity from an htu2xd and display on OLED with shared bus i2c1.
-//! Compare examples dht_rtic, htu2xd_displau.
-//! Blink (onboard) LED with short pulse evry read.
+//! Blink (onboard) LED with short pulse every read.
 //! On startup the LED is set on for a second in the init process.
-//! One main processe is scheduled. It reads the sensor and spawns itself to run after a delay.
+//! One main process is scheduled. It reads the sensor and spawns itself to run after a delay.
 //! It also spawns a `blink` process that turns the led on and schedules another process to turn it off.
 //!
 //!  A good reference on performance of humidity sensors is
@@ -42,17 +45,17 @@ use rtic::app;
 use rtic_monotonics::systick_monotonic;
 systick_monotonic!(Mono, 1000); 
 
-#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac,   dispatchers = [TIM3]))]
-#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f0xx", app(device = stm32f0xx_hal::pac, dispatchers = [TIM3]))]
+#[cfg_attr(feature = "stm32f1xx", app(device = stm32f1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f3xx", app(device = stm32f3xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f4xx", app(device = stm32f4xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32f7xx", app(device = stm32f7xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g0xx", app(device = stm32g0xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32g4xx", app(device = stm32g4xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32h7xx", app(device = stm32h7xx_hal::pac, dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l0xx", app(device = stm32l0xx_hal::pac, dispatchers = [TIM2, TIM3]))]
 #[cfg_attr(feature = "stm32l1xx", app(device = stm32l1xx_hal::pac, dispatchers = [TIM2, TIM3]))]
-#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac,   dispatchers = [TIM2, TIM3]))]
+#[cfg_attr(feature = "stm32l4xx", app(device = stm32l4xx_hal::pac, dispatchers = [TIM2, TIM3]))]
 
 mod app {
 
@@ -101,14 +104,12 @@ mod app {
 
     ////////////////////////////////////////////////////////////////////////////////////
     #[shared]
-    struct Shared {
-        led:   LedType,      //impl LED, would be nice
-    }
+    struct Shared {led: LedType}     //impl LED, would be nice
 
     #[local]
     struct Local {
         //display:  Ssd1306<I2CInterface<I2cProxy<'static, Mutex<RefCell<I2c1Type>>>>,
-        display:  Ssd1306<I2CInterface<I2c1Type>,       //I2CInterface is from ssd1306::prelude                     
+        display:  Ssd1306<I2CInterface<I2c1Type>,       //I2CInterface is from ssd1306::prelude
                           ssd1306::prelude::DisplaySize128x32, 
                           BufferedGraphicsMode<DisplaySize128x32>>,
 
@@ -120,8 +121,8 @@ mod app {
 
 
     fn show_display<S>(
-        temperature: f32,   // 10 * deg C to give one decimal place
-        relative_humidity: f32,
+        temperature: f32,        // or i32, 10 * deg C to give one decimal place
+        relative_humidity: f32,  // or  u8,
         //text_style: MonoTextStyle<BinaryColor>,
         disp: &mut Ssd1306<impl WriteOnlyDataCommand, S, BufferedGraphicsMode<S>>,
     ) -> ()
@@ -167,10 +168,6 @@ mod app {
 
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
-        //rtt_init_print!();
-        //rprintln!("htu2xd_rtic example");
-        //hprintln!("htu2xd_rtic example");
-
       
         Mono::start(cx.core.SYST, MONOCLOCK);
 
@@ -184,7 +181,7 @@ mod app {
         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
     
         /////////////////////   ssd
-        //let interface = I2CDisplayInterface::new(manager1.acquire_i2c()); //default address 0x3C
+        //let interface = I2CDisplayInterface::new(manager1.acquire_i2c());
         let interface = I2CDisplayInterface::new(i2c1); //default address 0x3C
 
         let text_style = MonoTextStyleBuilder::new().font(&FONT_10X20).text_color(BinaryColor::On).build();
@@ -201,7 +198,7 @@ mod app {
         
         Mono.delay_ms(2000u32);    
 
-        /////////////////////   htu
+        ///////////////////// sensor
         // Start the sensor.
 
         let sensor = Sensor::new(manager2.acquire_i2c(), Some(&mut delay)).expect("sensor init");
