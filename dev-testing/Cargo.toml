@@ -233,7 +233,9 @@ radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", defau
 embedded-hal        = "1.0"
 embedded-hal-bus    = "0.3.0"
 embedded-hal-async  = "1.0.0"
-embedded-io         = "0.6.1"  #"0.7.1"  7 is breaking
+embedded-io         = "0.7.1"  #"0.6.1" "0.7.1"  6 is breaking f1x and f4x  7 is breaking g4x: 80 ok ->73
+#                                    causes traits which provide `write` are implemented but not in scope
+#                                     breaking h7x  57 ok -> 50 
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
