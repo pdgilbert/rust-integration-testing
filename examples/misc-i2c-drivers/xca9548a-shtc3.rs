@@ -222,7 +222,7 @@ fn main() -> ! {
       let mut ln = 1;  // screen line to write. Should make this roll if number of sensors exceed DISPLAY_LINES
 
       for  i in 0..sensors.len() {
-         hprintln!("sensor {}, i");
+         hprintln!("sensor {}", i);
          match   &mut sensors[i] {
                None       => {},  //skip
   

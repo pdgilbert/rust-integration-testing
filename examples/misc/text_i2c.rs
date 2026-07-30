@@ -410,7 +410,7 @@ fn main() -> ! {
 
     display.flush().unwrap();
 
-    hprintln!("enter loop {}");
+    hprintln!("enter empty loop");
     loop {}
 }
 
