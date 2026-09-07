@@ -23,7 +23,7 @@
 use cortex_m_semihosting::hprintln;
 use cortex_m::asm;
 
-use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+use embedded_aht20::{Aht20, Temperature, DEFAULT_I2C_ADDRESS}; 
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -92,7 +92,8 @@ fn main() -> ! {
     loop {        
         hprintln!("aht.measure()");
         let th = aht.measure().unwrap();   // Read humidity and temperature.
-        hprintln!("{:.3}C  {}% RH", th.temperature.celsius(), th.relative_humidity);
+        //hprintln!("{:.3}C  {}% RH", th.temperature.celsius(), th.relative_humidity);
+        hprintln!("{:?}C  {:?}% RH", th.temperature.celsius(), th.relative_humidity);
 
         delay2.delay_ms(5000); 
     }

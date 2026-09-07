@@ -19,7 +19,7 @@ use cortex_m_semihosting::hprintln;
 use cortex_m_rt::entry;
 use core::fmt::Write;
 
-use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+use embedded_aht20::{Aht20, Temperature, DEFAULT_I2C_ADDRESS}; 
 
 use xca9548a::{SlaveAddr as XcaSlaveAddr, Xca9548a, I2cSlave}; 
 
@@ -221,7 +221,8 @@ hprintln!("loop");
                Some(sens) => {screen[ln].clear();
                               match sens.measure() {
                                    Ok(m)      => {//hprintln!("{} deg C, {}% RH", t.celsius(), h.rh());
-                                                  write!(screen[ln], "J{} {:.2} {:.2}",
+                                                  //write!(screen[ln], "J{} {:.2} {:.2}",
+                                                  write!(screen[ln], "J{} {:?} {:?}",
                                                           i, m.temperature.celsius(), m.relative_humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS

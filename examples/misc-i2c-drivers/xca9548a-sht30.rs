@@ -1,3 +1,4 @@
+//! Not yet tested after change to v0.2.0  Sept 5, 2026
 //! Continuously read temperature from multiple sensors and display on SSD1306 OLED.
 //! The display is on i2c2 and the senssors are multiplexed on i2c1 using  xca9548a.
 //!
@@ -194,7 +195,7 @@ fn main() -> ! {
        hprintln!("screen[0].clear()");
        screen[0].clear();
        hprintln!("prt {}", i);
-       let mut z =  Sht3x::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{}); // does not return Result
+       let mut z =  Sht3x::new(prt, DEFAULT_I2C_ADDRESS, AltDelay{}).unwrap(); //now returns Result
        hprintln!("Sensor started.");    
        z.repeatability = High;
 
@@ -204,7 +205,8 @@ fn main() -> ! {
        match th {
            Ok(v)    => {sensors[i] = Some(z);
                         write!(screen[0], "J{} in use", i).unwrap();
-                        hprintln!("{} deg C, {}% RH", v.temperature, v.humidity);
+                        //hprintln!("{} deg C, {}% RH", v.temperature, v.humidity);
+                        hprintln!("{:?} deg C, {:?}% RH", v.temperature, v.relative_humidity);
                        },
            Err(_e)  => {write!(screen[0], "J{} unused", i).unwrap();
                         hprintln!("single_measurement() error.");
@@ -231,8 +233,9 @@ hprintln!("loop");
                Some(sens) => {screen[ln].clear();
                               match sens.single_measurement() {
                                    Ok(m)      => {//hprintln!("{} deg C, {}% RH", m.temperature, m.humidity);
-                                                  write!(screen[ln], "J{} {:.2} {:.2}",
-                                                          i, m.temperature, m.humidity).unwrap();
+                                                  //write!(screen[ln], "J{} {:.2} {:.2}",
+                                                  write!(screen[ln], "J{} {:?} {:?}",
+                                                          i, m.temperature, m.relative_humidity).unwrap();
                                                  },
                                    Err(e)     => {//sens.reset().unwrap(); MAY NEED RESET WHEN THERE ARE ERRORS
                                                   //hprintln!("Normal mode measurement failed{:?}", e);

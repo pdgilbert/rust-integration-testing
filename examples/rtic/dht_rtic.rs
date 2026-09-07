@@ -78,10 +78,9 @@ mod app {
     use ssd1306::{mode::BufferedGraphicsMode, prelude::*, I2CDisplayInterface, Ssd1306,
                   prelude::DisplaySize128x32 as DISPLAYSIZE };
 
-    use embedded_hal::delay::DelayNs;
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::
-                         setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType};
+                         setup::{MONOCLOCK, OpenDrainType, I2cType, LED, LedType, Delay, DelayNs};
 
 
 
@@ -136,9 +135,6 @@ mod app {
        ()
     }
 
-    type Delay = impl DelayNs;
-
-    #[define_opaque(Delay)]
     #[init]
     fn init(cx: init::Context) -> (Shared, Local ) {
         //rtt_init_print!();

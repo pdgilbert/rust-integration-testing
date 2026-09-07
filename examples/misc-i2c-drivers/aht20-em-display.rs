@@ -16,7 +16,7 @@
 
 use cortex_m_semihosting::hprintln;
 
-use embedded_aht20::{Aht20, DEFAULT_I2C_ADDRESS}; 
+use embedded_aht20::{Aht20, Temperature, DEFAULT_I2C_ADDRESS}; 
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -128,9 +128,11 @@ fn main() -> ! {
 
         lines[0].clear();
         lines[1].clear();
-        write!(lines[0], "temperature: {}C", th.temperature.celsius()).unwrap();
-        write!(lines[1], "relative humidity: {0}%", th.relative_humidity).unwrap();
-        
+        //write!(lines[0], "temperature: {}C", th.temperature.celsius()).unwrap();
+        //write!(lines[1], "relative humidity: {0}%", th.relative_humidity).unwrap();
+        write!(lines[0], "temperature: {:?}C", th.temperature.celsius()).unwrap();
+        write!(lines[1], "relative humidity: {:?}%", th.relative_humidity).unwrap();
+       
         display.clear_buffer();
         for (i, line) in lines.iter().enumerate() {
             Text::with_baseline(

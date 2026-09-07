@@ -1,3 +1,4 @@
+//! Not yet tested after change to v0.2.0  Sept 5, 2026
 //! Continuously read temperature from SHT30 and with semihosting hprintln. Using sensor sht30-D.
 //!
 //! Dec 21, 2024
@@ -77,7 +78,7 @@ fn main() -> ! {
     // Start the sensor.   address 0x38 cannot be changed
 
     //  asm::bkpt();  
-    let mut sen  = Sht3x::new(&mut i2c1, DEFAULT_I2C_ADDRESS, &mut delay);
+    let mut sen  = Sht3x::new(&mut i2c1, DEFAULT_I2C_ADDRESS, &mut delay).unwrap();
     hprintln!("Sensor started.");    // does not return Result
     sen.repeatability = High;
     
@@ -87,7 +88,8 @@ fn main() -> ! {
         hprintln!("sen.measure()");
         let th = sen.single_measurement().unwrap();   // Read humidity and temperature.
 
-        hprintln!("{:.2}C  {:.2}% RH", th.temperature, th.humidity);
+        //hprintln!("{:.2}C  {:.2}% RH", th.temperature, th.humidity);
+        hprintln!("{:?}C  {:?}% RH", th.temperature, th.relative_humidity);
 
         delay2.delay_ms(5000); 
     }
