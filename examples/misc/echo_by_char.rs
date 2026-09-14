@@ -27,7 +27,8 @@ use cortex_m_rt::entry;
 //use embedded_hal::serial::{Write, Read};
 //use embedded_hal::serial::{Write};
 
-use embedded_io::{Read, Write};
+// {Read, Write} refererence embedded_io explicitly to disambiguate, so do not need to be imported
+//use embedded_io::{Read, Write};
 
 //use core::str::from_utf8;
 
@@ -72,20 +73,22 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     //fn setup() -> (impl WriteRead<USART1>) {
     //fn setup() -> (impl Write<USART1>, impl Read<USART1>) {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain();
-    let mut gpioa = p.GPIOA.split();
+    let mut rcc = p.RCC.constrain();
+    //let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
+    //let mut afio = p.AFIO.constrain();
+    let mut gpioa = p.GPIOA.split(&mut rcc);
+ //   let mut serial = p
+ //       .USART3
+ //       .serial((tx, rx), Config::default().baudrate(115200.bps()), &mut rcc);
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     Serial::new(
         p.USART1,
-        (
-            gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
-            gpioa.pa10,
+        (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
+         gpioa.pa10,
         ), //rx pa10
-        &mut afio.mapr,
+        //&mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1),
-        &clocks,
+        &mut rcc,
     )
     .split()
 }
@@ -135,21 +138,24 @@ use stm32f4xx_hal::{
     serial::{config::Config, Rx, Serial, Tx},
 };
 
+
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (Tx<USART1>, Rx<USART1>) {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let gpioa = p.GPIOA.split();
-    //p.USART1.cr1.modify(|_, w| w.rxneie().set_bit()); //need RX interrupt?
-    Serial::new(
+    //let mut rcc = p.RCC.freeze(rcc::Config::hse(25.MHz()));
+    let mut rcc = p.RCC.constrain();
+    let gpioa = p.GPIOA.split(&mut rcc);
+type SerialType = Serial<USART1>;
+    let z: SerialType =  Serial::new(
         p.USART1,
         (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
         Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split()
+        &mut rcc,
+    ).unwrap();
+    let (tx, rx) = z.split();
+    //let mut tx = p.USART1.tx(gpioa.pa9.into_alternate(),  9600.bps(), &mut rcc).unwrap();
+    //let mut rx = p.USART1.rx(gpioa.pa10.into_alternate(), 9600.bps(), &mut rcc).unwrap();
+    (tx, rx)
 }
 
 
@@ -385,7 +391,9 @@ fn main() -> ! {
     hprintln!("test write to console ...");
     //rprintln!("test write to console ...");
 
-    tx1.write(b"\r\nconsole connect check.\r\n").ok();
+    //tx1.write(b"\r\nconsole connect check.\r\n").ok();
+    embedded_io::Write::write(&mut tx1, b"\r\nconsole connect check.\r\n").ok();
+    //embedded_hal::Write::write(&mut tx1, b"\r\nconsole connect check.\r\n").ok();
 
 //    for byte in b"\r\nconsole connect check.\r\n" {
 //        #[cfg(not(feature = "stm32h7xx"))]
@@ -396,7 +404,9 @@ fn main() -> ! {
 
     hprintln!("test read and write by char. Please type into the console ...");
 
-    tx1.write(b"test read and write by char. Please type into the console ...").ok();
+    //tx1.write(b"test read and write by char. Please type into the console ...").ok();
+    embedded_io::Write::write(&mut tx1, b"test read and write by char. Please type into the console ...").ok();
+    //embedded_hal::Write::write(&mut tx1, b"test read and write by char. Please type into the console ...").ok();
 
     //rprintln!("test read and write by char. Please type into the console ...");
     //writeln!(tx1, "\r\nPlease type (slowly) into the console below:\r\n").unwrap();
@@ -411,7 +421,9 @@ fn main() -> ! {
 
     loop {
         // Read a byte and write
-        let _len = rx1.read(&mut buffer);
+        // let _len = rx1.read(&mut buffer);
+        let _len = embedded_io::Read::read(&mut rx1, &mut buffer);
+        //let _len = rx1.read_exact(&mut buffer);
 
 //        #[cfg(not(feature = "stm32h7xx"))]
 //        let received = block!(rx1.read()).unwrap();
@@ -420,8 +432,8 @@ fn main() -> ! {
 
         //hprintln!("received");  // for debugging
 
-        tx1.write(&buffer).ok();
-
+//        tx1.write(&buffer).ok();
+        embedded_io::Write::write(&mut tx1, &buffer).ok();
 //        #[cfg(not(feature = "stm32h7xx"))]
 //        block!(tx1.write(received)).ok();
 //        #[cfg(feature = "stm32h7xx")]
