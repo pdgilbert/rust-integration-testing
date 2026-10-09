@@ -19,7 +19,8 @@ pub use stm32f1xx_hal::{
       pac::{TIM2, TIM3}, 
       rcc::Clocks,
       rcc::Config as rccConfig,
-      timer::{TimerExt, Delay as halDelay},
+      //timer::{TimerExt, Delay as halDelay},
+      timer::{Delay as halDelay},
       i2c::{DutyCycle, Mode as i2cMode, BlockingI2c,},   // //Pins
       spi::{Mode, Phase, Polarity},
       //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},
@@ -218,7 +219,8 @@ pub fn all_from_dp(dp: Peripherals) ->
         };   
 
     //let delay = DelayType{};
-    let delay = dp.TIM3.delay::<1000000_u32>(&mut rcc);
+    //let delay = dp.TIM3.delay::<1000000_u32>(&mut rcc);
+    let delay = dp.TIM3.delay(&mut rcc);
 
     let (tx1, rx1) = dp.USART1
                        .serial(

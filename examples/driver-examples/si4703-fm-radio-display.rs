@@ -93,7 +93,7 @@ pub trait SEEK {
 }
 
 #[cfg(any(feature = "stm32f1xx", ))]
-impl SEEK for SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> {
+impl SEEK for SeekPins<PB12<Input<>>, PB13<Input<>>> {
     fn seekup(&mut self) -> bool {
         self.p_seekup.is_high()
     }
@@ -203,7 +203,7 @@ use stm32f1xx_hal::{
     //timer::SysDelay as Delay,
     gpio::{
         gpiob::{PB10, PB11, PB6, PB12, PB13},
-        Input, PullDown, PullUp,
+        Input,
     },
     i2c::{BlockingI2c, DutyCycle, Mode},
     rcc::Config,
@@ -217,7 +217,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     impl LED,
     Delay,
     impl SEEK,
-    PB6<Input<PullUp>>,
+    PB6<Input<>>,
 ) {
 
     let mut flash = dp.FLASH.constrain();
@@ -255,7 +255,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let led = gpioc.pc13.into_push_pull_output(&mut gpioc.crh);
 
     // may not be good pins for this
-    let buttons: SeekPins<PB12<Input<PullDown>>, PB13<Input<PullDown>>> = SeekPins {
+    let buttons: SeekPins<PB12<Input<>>, PB13<Input<>>> = SeekPins {
         p_seekup: gpiob.pb12.into_pull_down_input(&mut gpiob.crh),
         p_seekdown: gpiob.pb13.into_pull_down_input(&mut gpiob.crh),
     };
