@@ -77,11 +77,10 @@ use radio_sx127x::{
 };
 
 // for config examination on debugging
-use radio_sx127x::{
-    device::regs::Register,
-   // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,
-    
-};
+//use radio_sx127x::{
+//    device::regs::Register,
+//   // read_register, get_mode, get_signal_bandwidth, get_coding_rate_4, get_spreading_factor,   
+//};
 
 
 //   //////////////////////////////////////////////////////////////////////
@@ -89,8 +88,8 @@ use radio_sx127x::{
 use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::setup::{Peripherals, LED};
 
-use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
-//use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
+//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 
 //   //////////////////////////////////////////////////////////////////////
 

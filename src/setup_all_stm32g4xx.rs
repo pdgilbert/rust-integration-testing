@@ -25,7 +25,7 @@ pub use stm32g4xx_hal::{
     delay::DelayFromCountDownTimer,
     spi::{Mode, Phase, Polarity},
     serial::{FullConfig, NoDMA},
-    gpio::{Alternate, Input, 
+    gpio::{Alternate, Input, Pin,
            gpioa::{PA0, PA1, PA2, PA3, PA4, PA5, PA6, PA7, PA8, PA9, PA10},
            gpiob::{PB4, PB5, PB7, PB8, PB9},
            gpioc::{PC4, PC6 as LEDPIN}},  // weact-stm32g474CEU6 has onboard led on PC6
@@ -47,12 +47,14 @@ pub const MONOCLOCK: u32 = 16_000_000; //should be set for board not for HAL
 
 pub type OpenDrainType = PB7<Output<OpenDrain>>;
 
-pub type I2c1Type = I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>;
-pub type I2c2Type = I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>;
+//pub type I2c1Type = I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>;
+//pub type I2c2Type = I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>;
 // These need nightly and #![feature(type_alias_impl_trait)]
 // As of 1.89.0-nightly (circa May-June 2025) the change to  unstable TAITs (type alias impl trait) 
 //  requires [define_opaque(I2c1Type, I2c2Type)] attribute to defining function below.
 //   See link mentioned in https://github.com/stm32-rs/stm32g4xx-hal/issues/211
+pub type I2c1Type = I2c<I2C1, Pin<'B', 9, Alternate<4, OpenDrain>>, Pin<'B', 8, Alternate<4, OpenDrain>>>;
+pub type I2c2Type = I2c<I2C2, Pin<'A', 8, Alternate<4, OpenDrain>>, Pin<'C', 4, Alternate<4, OpenDrain>>>;
 //pub type I2c1Type = I2c<I2C1, PB9<I2C1>, PB8<I2C1>>;
 //pub type I2c2Type = I2c<I2C2, PA8<I2C2>, PC4<I2C2>>;
 //pub type I2c1Type = I2c<I2C1>;
@@ -111,7 +113,7 @@ impl ReadAdc for AdcSensor1Type {
 
 //   //////////////////////////////////////////////////////////////////////
 
-#[define_opaque(I2c1Type, I2c2Type)]
+//#[define_opaque(I2c1Type, I2c2Type)]
 pub fn all_from_dp(dp: Peripherals) -> 
           (OpenDrainType, 
            I2c1Type,  //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>, 

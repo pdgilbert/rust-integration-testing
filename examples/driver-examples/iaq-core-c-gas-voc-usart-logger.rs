@@ -22,7 +22,6 @@
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
-#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;

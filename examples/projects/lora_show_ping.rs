@@ -1,5 +1,5 @@
 //!  To Do:
-//!   - get working when dispaly is not present
+//!   - get working when display is not present
 //!   - delay between first 8 and second 8 display
 //!  
 
@@ -43,7 +43,6 @@
 
 #![no_std]
 #![no_main]
-#![feature(type_alias_impl_trait)]
 
 #[cfg(debug_assertions)]
 use panic_semihosting as _;
@@ -102,8 +101,8 @@ use radio_sx127x::{
 use rust_integration_testing_of_examples::setup;
 use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c2Type};
 
-use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
-//use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
+//use rust_integration_testing_of_examples::lora::{CONFIG_PA, CONFIG_RADIO, CONFIG_LORA, CONFIG_CH, FREQUENCY, MODE};
+use rust_integration_testing_of_examples::lora::{CONFIG_RADIO};
 //use rust_integration_testing_of_examples::setup::{Spi, SPI1,  Pin, Output, halDelay, TIM2, };
 use rust_integration_testing_of_examples::lora::{LoraType};
 
