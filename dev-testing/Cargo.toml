@@ -452,10 +452,6 @@ name = "veml6075-uv-display"
 path = "examples/driver-examples/veml6075-uv-display.rs"
 
 [[example]]
-name = "ccs811-gas-voc-usart-logger"
-path = "examples/driver-examples/ccs811-gas-voc-usart-logger.rs"
-
-[[example]]
 name = "iaq-core-c-gas-voc-usart-logger"
 path = "examples/driver-examples/iaq-core-c-gas-voc-usart-logger.rs"
 
@@ -562,81 +558,6 @@ path = "examples/misc/one_wire_bus_find_devices.rs"
 [[example]]
 name = "ds18b20"
 path = "examples/misc/ds18b20.rs"
-
-
-# examples/rtic
-
-[[example]]
-name = "blink_rtic"
-path = "examples/rtic/blink_rtic.rs"
-
-[[example]]
-name = "gps_rw_rtic"
-path = "examples/rtic/gps_rw_rtic.rs"
-
-[[example]]
-name = "schedule"
-path = "examples/rtic/schedule.rs"
-
-[[example]]
-name = "resource-user-struct"
-path = "examples/rtic/resource-user-struct.rs"
-
-[[example]]
-name = "dht_rtic"
-path = "examples/rtic/dht_rtic.rs"
-
-[[example]]
-name = "aht10_rtic"
-path = "examples/rtic/aht10_rtic.rs"
-
-[[example]]
-name = "htu2xd_rtic"
-path = "examples/rtic/htu2xd_rtic.rs"
-
-[[example]]
-name = "display_stuff_rtic0"
-path = "examples/rtic/display_stuff_rtic0.rs"
-
-[[example]]
-name = "display_stuff_rtic"
-path = "examples/rtic/display_stuff_rtic.rs"
-
-[[example]]
-name = "display_stuff_rtic_shared_bus"
-path = "examples/rtic/display_stuff_rtic_shared_bus.rs"
-
-[[example]]
-name = "ccs811-co2-voc"
-path = "examples/rtic/ccs811-co2-voc.rs"
-
-[[example]]
-name = "battery_monitor_ads1015_rtic"
-path = "examples/rtic/battery_monitor_ads1015_rtic.rs"
-
-[[example]]
-name = "battery_monitor_ads1015_rtic_dma"
-path = "examples/rtic/battery_monitor_ads1015_rtic_dma.rs"
-
-[[example]]
-name = "ads_ina_ssd_rtic"
-path = "examples/rtic/ads_ina_ssd_rtic.rs"
-
-[[example]]
-name = "ina219_rtic"
-path = "examples/rtic/ina219_rtic.rs"
-
-[[example]]
-name = "displayX2_rtic"
-path = "examples/rtic/displayX2_rtic.rs"
-
-[[example]]
-name = "serial-dma"
-path = "examples/rtic/serial-dma.rs"
-
-[[example]]
-name = "aht10-aht30_rtic"
-path = "examples/rtic/aht10-aht30_rtic.rs"
 
 
 # examples/misc-i2c-drivers

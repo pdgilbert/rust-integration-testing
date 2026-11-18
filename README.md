@@ -9,6 +9,8 @@ See the auto-generated menu in the github README display (above right).
 
 ## Summary
 
+(Most rtic examples have been moved to repository https://github.com/pdgilbert/stm32-rtic-testing.)
+
 The idea of this `Rust` crate-like repository is to have examples that run on different MCUs
 with the same application code. Setup functions do all board/MCU/hal initialization
 so the application part of each example is generic code that works with all MCUs. 
@@ -29,7 +31,6 @@ or I have the setup messed up.
 These are examples using crates from https://github.com/eldruin and 
 based on example from https://github.com/eldruin/driver-examples.
 - `ExI` are examples from the `examples/misc-i2c-drivers` directory of the repository. 
-- `ExR` are examples from the `examples/rtic` directory of the repository. 
 - `ExL` are examples from the `examples/radio-sx127x` directory of the repository which has LoRa examples. 
 - `ExP` are examples from the `examples/projects` directory of the repository. 
 These are a bit more ambitious projects.
