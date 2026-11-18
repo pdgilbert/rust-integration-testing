@@ -24,14 +24,6 @@ use cortex_m_semihosting::{hprintln};
 
 use cortex_m_rt::entry;
 
-//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Read;
-//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_Write;
-//use shared_bus::cortex_m::prelude::_embedded_hal_blocking_i2c_WriteRead;
-
-//use core::cell::RefCell;
-//use cortex_m::interrupt::Mutex;
-//use shared_bus::{I2cProxy};
-
 /////////////////////   ens
 use ens160::{Ens160, AirQualityIndex, ECo2};
 
@@ -131,9 +123,6 @@ fn main() -> ! {
     )
     .draw(&mut display)
     .unwrap();
-
-    //let manager = shared_bus::BusManagerSimple::new(i2c2);
-    //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
 
 
     /////////////////////   ens

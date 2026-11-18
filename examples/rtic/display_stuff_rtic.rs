@@ -1,3 +1,4 @@
+//!   Two I2c buses with one device each.  Trying RefCell::new(i2c1) but unneeded
 //! Display "stuff" on OLED with i2c.
 //! Compare 
 //!   display_stuff_rtic0 has only the display on the i2c bus and does not share the bus.
@@ -69,7 +70,6 @@ mod app {
 
     use core::cell::RefCell;
     //use embedded_hal_bus::i2c::RefCellDevice;
-    //use shared_bus::{I2cProxy};
     use cortex_m::interrupt::Mutex;
 
 

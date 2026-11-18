@@ -64,16 +64,6 @@ mod app {
     /////////////////////   hals
     use core::fmt::Write; 
 
-    //#[cfg(feature = "stm32h7xx")]
-    //use embedded_io::Write;
-
-    /////////////////////  bus sharing
-  
-    //use shared_bus::{I2cProxy};
-    //use core::cell::RefCell;
-    //use cortex_m::interrupt::Mutex;
-
-
     /////////////////////   setups
     use rust_integration_testing_of_examples::setup;
     use rust_integration_testing_of_examples::setup::{MONOCLOCK, LED, LedType, I2c1Type as I2cType, TxType};

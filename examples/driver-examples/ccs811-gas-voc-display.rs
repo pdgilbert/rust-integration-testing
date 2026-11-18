@@ -1,3 +1,6 @@
+//!   Two I2c buses with one device each
+//!   ssd1306 display on I2C1, ccs811 sensor on I2C2
+//!   
 //!   Hardware tested working with embedded-hal v1.0.0 on blackpill stm32f401, April 9, 2024.
 //!      - current https://github.com/eldruin/embedded-ccs811-rs uses embedded-hal v0.2.7
 //!        so this is using stm32f4xx_hal dual hal support.

@@ -1,3 +1,7 @@
+//!   Two I2c buses with one device each.  Trying RefCell::new(i2c1) but unneeded
+//!   ssd1306 display on I2C1, htu2xd sensor on I2C2
+
+//!  Nov 2026: Compiles with 
 //!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //! Continuously read temperature from htu21D sensor and display on SSD1306 OLED.
 //!

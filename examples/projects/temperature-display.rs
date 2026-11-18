@@ -3,7 +3,7 @@
 //!    temperature-display_4jst which does not need share but reads only 4 ADCs. And has more documentation.
 //!    battery_monitor_ads1015_rtic which is currently not sharing
 //!    therm10k_display
-//!    htu2xd_rtic which has sensor on shared bus and 'static,         let manager2: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap(); 
+//!    htu2xd_rtic which has sensor on shared bus and 'static,
 //!    ads1015-adc-display uses  RefCellDevice but is not rtic
 //!    ccs811-co2-voc  uses  RefCell  for sensor and rtic  AND SEE NOTES  Jan 2024
 //!    temp-humidity-display
@@ -236,9 +236,6 @@ mod app {
         // As of Feb 2024 I2CDisplayInterface::new is not working with shared bus.
         // (No luck Using embedded-bus instead.
         // Try ssd on i2c2 and shared-bus ads's on i2c1
-        //let manager: &'static _ = shared_bus::new_cortexm!(I2cType = i2c2).unwrap();
-        //let manager1: &'static _ = shared_bus::new_cortexm!(I2c1Type = i2c1).unwrap();
-
 
        //let i2c1_ref_cell = RefCell::new(i2c1);
        //let adc_a_rcd = RefCellDevice::new(&i2c1_ref_cell); 

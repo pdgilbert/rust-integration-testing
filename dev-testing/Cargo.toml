@@ -188,7 +188,9 @@ rtic-monotonics = { git = "https://github.com/rtic-rs/rtic", features = [ "corte
 portable-atomic = { version = "1", features = ["critical-section"], optional = true }
 
 #rtic-sync =  { version = "1.2.0", features = [ "unstable"], optional = true }
-rtic-sync = { git = "https://github.com/rtic-rs/rtic",  optional = true }
+#rtic-sync =  { version = "1.6.0", features = [ "unstable"], optional = true }
+rtic-sync =  { version = "1.6.1", optional = true }
+#rtic-sync = { git = "https://github.com/rtic-rs/rtic",  optional = true }
 
 #systick-monotonic = { git = "https://github.com/rtic-rs/systick-monotonic.git", optional = true }
 

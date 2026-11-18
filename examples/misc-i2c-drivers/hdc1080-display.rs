@@ -87,10 +87,8 @@ fn main() -> ! {
     let (i2c1, i2c2, mut delay, clocks) = setup::i2c1_i2c2_delay_clocks_from_dp(dp);
     let delay2 = cp.SYST.delay(&clocks); // this DelayMs works with non-eh-1 sensor crate
 
-    // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re manager)
+    // See more notes in example misc-i2c-drivers/htu2xd-display.rs re delay (and re shared bus)
 
-    //let manager = shared_bus::BusManagerSimple::new(i2c1); 
-    //let interface = I2CDisplayInterface::new(manager.acquire_i2c());
     let interface = I2CDisplayInterface::new(i2c2);
 
     //common display sizes are 128x64 and 128x32
@@ -107,7 +105,6 @@ fn main() -> ! {
     delay.delay_ms(2000_u32);
 
     // Start the sensor.
-    //let mut sensor = Hdc1080::new(manager.acquire_i2c(), delay2).unwrap();
     let mut sensor = Hdc1080::new(i2c1, delay2).unwrap();
 
     sensor.init().unwrap();
