@@ -481,14 +481,14 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32g4xx")]
 use stm32g4xx_hal::{
-    pac::{I2C1, I2C2},
+    //pac::{I2C1, I2C2},
     timer::Timer,
     time::{ExtU32, RateExtU32},
     delay::DelayFromCountDownTimer,
     gpio::{Input,
            gpiob::{PB10, PB11, PB6},        
     },
-    i2c::{I2c,  SDAPin, SCLPin,},
+    //i2c::{I2c,  SDAPin, SCLPin,},
     prelude::*,
 };
 

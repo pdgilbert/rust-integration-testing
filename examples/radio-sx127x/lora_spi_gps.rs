@@ -64,11 +64,13 @@ fn main() -> ! {
     hprintln!("entering transmit loop");
 
     loop {
-       let _len = rx_gps.read(&mut received);   //stm32f4xx_hal fails here with 
+       //let _len = rx_gps.read(&mut received);   //stm32f4xx_hal fails here with 
                                                 //method not found in `Rx<USART2>`
                                                 //see https://github.com/stm32-rs/stm32f4xx-hal/issues/721
 
-       //let byte = match block!(rx_gps.read()) {
+       let _len = embedded_io::Read::read(&mut rx_gps, &mut received);
+
+      //let byte = match block!(rx_gps.read()) {
        //     Ok(byt) => byt,
        //     Err(_error) => e,
        //};
