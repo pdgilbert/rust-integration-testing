@@ -70,22 +70,15 @@ use stm32f1xx_hal::{
 
 #[cfg(feature = "stm32f1xx")]
 fn setup() -> (Tx<USART1>, Rx<USART1>) {
-    //fn setup() -> (impl WriteRead<USART1>) {
-    //fn setup() -> (impl Write<USART1>, impl Read<USART1>) {
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
-    //let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    //let mut afio = p.AFIO.constrain();
     let mut gpioa = p.GPIOA.split(&mut rcc);
- //   let mut serial = p
- //       .USART3
- //       .serial((tx, rx), Config::default().baudrate(115200.bps()), &mut rcc);
     // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     Serial::new(
         p.USART1,
         (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
-         gpioa.pa10,
-        ), //rx pa10
+         gpioa.pa10, //rx pa10
+        ), 
         //&mut afio.mapr,
         Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1),
         &mut rcc,
@@ -145,8 +138,9 @@ fn setup() -> (Tx<USART1>, Rx<USART1>) {
     //let mut rcc = p.RCC.freeze(rcc::Config::hse(25.MHz()));
     let mut rcc = p.RCC.constrain();
     let gpioa = p.GPIOA.split(&mut rcc);
-type SerialType = Serial<USART1>;
-    let z: SerialType =  Serial::new(
+//type SerialType = Serial<USART1>;
+//    let z: SerialType =  Serial::new(
+    let z =  Serial::new(
         p.USART1,
         (gpioa.pa9.into_alternate(), gpioa.pa10.into_alternate()),
         Config::default().baudrate(9600.bps()),

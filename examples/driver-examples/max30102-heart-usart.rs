@@ -876,7 +876,7 @@ fn main() -> ! {
 //    for byte in b"\r\n" { block!(tx.write(*byte)).unwrap(); }
 
     let mut data = [0_u32; 16];
-    //let mut buf: [u8; 20];
+    let mut buf: [u8; 16] = [42; 16];
     //let mut buf: [heapless::String<32>; 1] = [
     //    heapless::String::new(),
     //];
@@ -893,15 +893,20 @@ fn main() -> ! {
         hprintln!("read {:?}", read);
         hprintln!("data {:?}", data);
 
-        for i in 0..read.into() {
-              hprintln!("data {}", data[i]);
-              //tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
-              embedded_io::Write::write(&mut tx, &[data[i] as u8]).unwrap();     // this may need fmt
-              //write!(buf, "data[i] {}\r", data[i]);  // but no luck let with this
-              //tx.write(&buf).unwrap();  
-              //writeln!(tx, "{}\r", data[i],).unwrap();  
-              //block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
-        }
+     //  Nov 19, 2026. This compiles on bluepill and blackpill, but not yet harware tested
+        for i in 0..buf.len() {buf[i] = data[i] as u8};  // need u8 in next. u32 to u8, may panic
+        embedded_io::Write::write(&mut tx, &buf).unwrap();  // this may need fmt
+
+     //  This also compiles on bluepill and blackpill, but not yet harware tested
+     //   for i in 0..read.into() {
+     //         hprintln!("data {}", data[i]);
+     //         //tx.write(&[data[i] as u8]).unwrap();     // this may need fmt
+     //         embedded_io::Write::write(&mut tx, &[data[i] as u8]).unwrap();     // this may need fmt
+     //         //write!(buf, "data[i] {}\r", data[i]);  // but no luck let with this
+     //         //tx.write(&buf).unwrap();  
+     //         //writeln!(tx, "{}\r", data[i],).unwrap();  
+     //         //block!(tx.write(data[i] as u8)).unwrap(); //u32 to u8, may panic
+     //   }
 
         //tx.write(b"\r\n").unwrap(); need to disambiguate
         embedded_io::Write::write(&mut tx, b"\r\n").unwrap(); 

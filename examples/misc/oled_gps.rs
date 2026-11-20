@@ -30,7 +30,7 @@ use panic_halt as _;
 
 use cortex_m_rt::entry;
 use embedded_hal::delay::DelayNs;
-use embedded_io::Read;
+//use embedded_io::Read;
 
 //use core::fmt::Write;  // for writeln
 use cortex_m_semihosting::hprintln;
@@ -91,7 +91,7 @@ fn setup() -> (
 #[cfg(feature = "stm32f1xx")] //  eg blue pill stm32f103
 use stm32f1xx_hal::{
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
-    timer::SysDelay as Delay,
+    // timer::SysDelay as Delay,
     i2c::{BlockingI2c, DutyCycle, Mode},
     rcc::Config as rccConfig,
     prelude::*,
@@ -108,7 +108,7 @@ fn setup() -> (
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain().freeze(rccConfig::hsi(), &mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain(&mut rcc);
+    //let mut afio = p.AFIO.constrain(&mut rcc);
 
     let mut gpioa = p.GPIOA.split(&mut rcc);
     let mut gpiob = p.GPIOB.split(&mut rcc);
@@ -201,6 +201,7 @@ fn setup() -> (
 use stm32f4xx_hal::{
     i2c::{I2c},
     pac::{CorePeripherals, Peripherals, I2C2, USART2},
+    rcc::{Config as rccConfig},
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx},
 };
@@ -209,8 +210,9 @@ use stm32f4xx_hal::{
 fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, impl DelayNs) {
     let cp = CorePeripherals::take().unwrap();
     let p = Peripherals::take().unwrap();
-    let clocks = p.RCC.constrain().cfgr.freeze();
-    let gpioa = p.GPIOA.split();
+    let mut rcc = p.RCC.constrain().freeze(rccConfig::hsi() );
+
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     let (tx2, rx2) = Serial::new(
         p.USART2,
@@ -218,13 +220,9 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, impl DelayNs) {
             gpioa.pa2.into_alternate(), //tx pa2  for GPS rx
             gpioa.pa3.into_alternate(),
         ), //rx pa3  for GPS tx
-        Config::default().baudrate(9600.bps()),
-        &clocks,
-    )
-    .unwrap()
-    .split();
+        Config::default().baudrate(9600.bps()), &mut rcc).unwrap().split();
 
-    let gpiob = p.GPIOB.split();
+    let gpiob = p.GPIOB.split(&mut rcc);
 
     // can have (scl, sda) using I2C1  on (PB8  _af4, PB9 _af4) or on  (PB6 _af4, PB7 _af4)
     //     or   (scl, sda) using I2C2  on (PB10 _af4, PB3 _af9)
@@ -233,11 +231,10 @@ fn setup() -> (Tx<USART2>, Rx<USART2>, I2c<I2C2>, impl DelayNs) {
     let scl = gpiob.pb10.into_alternate().set_open_drain(); // scl on PB10
     let sda = gpiob.pb3.into_alternate().set_open_drain(); // sda on PB3
 
-    (
-        tx2,
+    (   tx2,
         rx2,
-        I2c::new(p.I2C2, (scl, sda), 400.kHz(), &clocks), // i2c
-        cp.SYST.delay(&clocks),
+        I2c::new(p.I2C2, (scl, sda), 400.kHz(), &mut rcc), // i2c
+        cp.SYST.delay(&mut rcc.clocks),
     )
 }
 
@@ -676,7 +673,8 @@ fn main() -> ! {
 
     loop {
         // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
-        let _len = rx_gps.read(&mut buffer);
+        //let _len = rx_gps.read(&mut buffer);
+        let _len = embedded_io::Read::read(&mut rx_gps, &mut buffer);
         //hprintln!("{}", buffer);
         //tx_con.write(&buffer).unwrap();  // echo everything to console
 

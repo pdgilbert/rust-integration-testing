@@ -289,6 +289,7 @@ stm32f0xx = ["stm32f0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics", "por
 stm32f1xx = ["stm32f1xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics" ]
 stm32f3xx = ["stm32f3xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 #stm32f4xx = ["stm32f4xx-hal/rt","rtic/thumbv7-backend", "dwt-systick-monotonic"]
+#stm32f4xx = ["stm32f4xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics" ] 
 stm32f4xx = ["stm32f4xx-hal",    "rtic/thumbv7-backend", "rtic-monotonics", "rtic-sync" ] 
 stm32f7xx = ["stm32f7xx-hal/rt", "rtic/thumbv7-backend", "rtic-monotonics" ]
 stm32g0xx = ["stm32g0xx-hal/rt", "rtic/thumbv6-backend", "rtic-monotonics", "portable-atomic"]

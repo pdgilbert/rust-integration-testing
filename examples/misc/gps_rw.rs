@@ -38,7 +38,8 @@ use cortex_m_semihosting::hprintln;
 //use nb::block;
 
 // see  embedded-hal/embedded-io/src/lib.rs re Read, Write, BufRead
-use embedded_io::{Read, Write};
+//use embedded_io::{Read, Write};
+use embedded_io::{Write};
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
 
@@ -82,36 +83,32 @@ use stm32f1xx_hal::{
 #[cfg(feature = "stm32f1xx")]
 fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART3>, Rx<USART3>) {
     let p = Peripherals::take().unwrap();
-    let rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut dp.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain();
-    let mut gpioa = dp.GPIOA.split();
+    let mut rcc = dp.RCC.constrain();
+    // let mut rcc = dp.RCC.constrain().freeze(
+    //                        rccConfig::hse(8.MHz()) .sysclk(72.MHz()) .pclk1(36.MHz()),
+    //                        &mut dp.FLASH.constrain().acr );
+    let mut gpioa = dp.GPIOA.split(&mut rcc);
 
-    // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
     let (tx1, rx1) = Serial::new(
         dp.USART1,
-        (
-            gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9   for console
-            gpioa.pa10,
-        ), //rx pa10  for console
-        &mut afio.mapr,
+        (   gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9   for console
+            gpioa.pa10,                                         //rx pa10  for console
+        ), 
         Config::default()
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1), //.parity_odd()
-        &clocks,
+        &mut rcc,
     )
     .split();
 
-    let mut gpiob = p.GPIOB.split();
+    let mut gpiob = p.GPIOB.split(&mut rcc);
     let (tx3, rx3) = Serial::new(
         p.USART3,
-        (
-            gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //tx pb10  for GPS rx
-            gpiob.pb11,
-        ), //rx pb11  for GPS tx
-        &mut afio.mapr,
+        (   gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //tx pb10  for GPS rx
+            gpiob.pb11,                                          //rx pb11  for GPS tx
+        ),
         Config::default().baudrate(9_600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .split();
 
@@ -186,6 +183,9 @@ use stm32f4xx_hal::{
     prelude::*,
     serial::{config::Config, Rx, Serial, Tx, Error},
 };
+
+#[cfg(feature = "stm32f4xx")]
+use embedded_io::Read;
 
 #[cfg(feature = "stm32f4xx")]
 fn setup_from_dp(dp: Peripherals) -> (Tx<USART1>, Rx<USART1>, Tx<USART2>, Rx<USART2>) {

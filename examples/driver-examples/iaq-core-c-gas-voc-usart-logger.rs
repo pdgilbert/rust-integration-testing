@@ -54,14 +54,12 @@ mod app {
     use cortex_m_semihosting::{hprintln};
     //use rtt_target::{rprintln, rtt_init_print};
 
-    // use core::fmt::Write; 
     use nb::block;
+    use core::fmt::Write; 
+    //use embedded_io::Read;
 
     /////////////////////   iaq
     use iaq_core::{IaqCore, Measurement};
-
-    /////////////////////   hals
-    use core::fmt::Write; 
 
     /////////////////////   setups
     use rust_integration_testing_of_examples::setup;
