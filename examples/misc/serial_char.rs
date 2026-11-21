@@ -249,6 +249,9 @@ use stm32f4xx_hal::{
     serial::{config::Config, Rx, Serial, Tx},
 };
 
+//#[cfg(feature = "stm32f4xx")]
+//use embedded_io::{Read, Write};
+
 #[cfg(feature = "stm32f4xx")]
 fn setup() -> (
     Tx<USART1>,
@@ -259,10 +262,9 @@ fn setup() -> (
     Rx<USART6>,
 ) {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
+    let mut rcc = p.RCC.constrain();
 
-    let gpioa = p.GPIOA.split();
+    let gpioa = p.GPIOA.split(&mut rcc);
 
     // alternate function modes see https://www.st.com/resource/en/datasheet/stm32f411re.pdf  p47.
 
@@ -274,7 +276,7 @@ fn setup() -> (
             gpioa.pa10.into_alternate(),
         ), //rx pa10
         Config::default().baudrate(9600.bps()),
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();
@@ -287,7 +289,7 @@ fn setup() -> (
             gpioa.pa3.into_alternate(),
         ), //rx pa3
         Config::default().baudrate(115_200.bps()), //.parity_odd() .stopbits(StopBits::STOP1)
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();
@@ -301,7 +303,7 @@ fn setup() -> (
             gpioa.pa12.into_alternate(),
         ), //rx pa12
         Config::default().baudrate(115_200.bps()),
-        &clocks,
+        &mut rcc,
     )
     .unwrap()
     .split();

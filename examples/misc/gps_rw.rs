@@ -1,3 +1,4 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //!  Tested on weact-stm32g474 July 12, 2024.
 //!  Works, but looping is so fast that read buffer only ever has 0 or 1 length.
 //!  This does not give a very good test of buffered read and it is possible that chars are lost.
