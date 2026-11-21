@@ -239,7 +239,6 @@ radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", defau
 embedded-hal        = "1.0"
 embedded-hal-bus    = "0.3.0"
 embedded-hal-async  = "1.0.0"
-
 embedded-io-async   = "0.7.0" 
 embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
 # with rtic removed (so of 74)
@@ -252,6 +251,7 @@ embedded-io         = "0.7.1"  #"0.6.1" "0.7.1"
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io-async  = { git = "https://github.com/rust-embedded/embedded-hal/" }
 #embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 #embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }

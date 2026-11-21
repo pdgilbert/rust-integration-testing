@@ -1,3 +1,4 @@
+//!   NOT HARDWARE TESTED SINCE EMBEDDED-HAL V1.0.0 CHANGES
 //!  Tested on weact-stm32g474 July 13, 2024. Partially works. 
 //!     tx2 to rx3 is working but tx3 to rx2 gives rx2.read error Framing.
 
@@ -44,7 +45,7 @@ use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 //use nb::block;
 
-use embedded_io::{Read, Write};
+use embedded_io::{Write};
 
 
 // setup() does all  hal/MCU specific setup and returns generic hal device for use in main code.
@@ -117,53 +118,48 @@ fn setup() -> (
     Rx<USART3>,
 ) {
     let p = Peripherals::take().unwrap();
-    let rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain();
-    let mut gpioa = p.GPIOA.split();
-    // next consumes (moves) arguments other than clocks,  &mut rcc.apb2 and afio.
+    let mut rcc = p.RCC.constrain();
+    let mut gpioa = p.GPIOA.split(&mut rcc);
+
     let (tx1, rx1) = Serial::new(
         p.USART1,
-        (
-            gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
-            gpioa.pa10,
-        ), //rx pa10
-        &mut afio.mapr,
-        Config::default().baudrate(9600.bps()), //.stopbits(StopBits::STOP1
-        &clocks,
-    )
-    .split();
+          (gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9
+           gpioa.pa10,                                         //rx pa10
+          ),
+        //&mut afio.mapr,
+        Config::default() 
+            .baudrate(9600.bps()), 
+            //.stopbits(StopBits::STOP1
+        &mut rcc,
+    ).split();
+
     let (tx2, rx2) = Serial::new(
         p.USART2,
-        (
-            gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2
-            gpioa.pa3,
-        ), //rx pa3
-        &mut afio.mapr,
+          (gpioa.pa2.into_alternate_push_pull(&mut gpioa.crl), //tx pa2
+           gpioa.pa3,                                          //rx pa3
+          ),
+        //&mut afio.mapr,
         Config::default()
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        &clocks,
-    )
-    .split();
+        &mut rcc,
+    ).split();
 
-    let mut gpiob = p.GPIOB.split();
+    let mut gpiob = p.GPIOB.split(&mut rcc);
 
     let (tx3, rx3) = Serial::new(
         p.USART3,
-        (
-            gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //rx pb10
-            gpiob.pb11,
-        ), //tx pb11
-        &mut afio.mapr,
+          (gpiob.pb10.into_alternate_push_pull(&mut gpiob.crh), //rx pb10
+           gpiob.pb11,                                          //tx pb11
+          ),
+        //&mut afio.mapr,
         Config::default()
             .baudrate(9_600.bps())
             .parity_odd()
             .stopbits(StopBits::STOP1),
-        &clocks,
-    )
-    .split();
+        &mut rcc,
+    ).split();
 
     (tx1, rx1, tx2, rx2, tx3, rx3)
 }
@@ -805,7 +801,9 @@ fn main() -> ! {
 
     // Read the byte that was just send. Blocks until the read is complete
     // see https://docs.rs/embedded-io/latest/embedded_io/trait.Read.html
-    let len = rx3.read(&mut received).unwrap();
+    // See https://github.com/stm32-rs/stm32f4xx-hal/issues/721
+    let len = embedded_io::Read::read(&mut rx3, &mut received).unwrap();
+    //let len = rx3.read(&mut received).unwrap();
 
     hprintln!("   length received on rx3: {}", len);
     hprintln!("   checking tx2 to rx3 received = send,  {:?} = {:?} byte", received[0], send );
@@ -851,7 +849,8 @@ fn main() -> ! {
 
     // Read the byte that was just send. Blocks until the read is complete
 
-    let len = match rx2.read(&mut received2) {  
+    //let len = match rx2.read(&mut received2) {  
+    let len = match embedded_io::Read::read(&mut rx2, &mut received2) { 
         Ok(length)   =>  length,
         Err(e) =>  {hprintln!("   rx2.read error {:?}", e);    
                     //panic!("panic");
