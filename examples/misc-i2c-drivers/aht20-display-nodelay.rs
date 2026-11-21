@@ -38,11 +38,13 @@ use embedded_graphics::{
 /////////////////////   hals
 //use core::cell::RefCell;
 //use embedded_hal_bus::i2c::RefCellDevice;
-//use embedded_hal_aysnc;
-
-use embedded_hal::{
-   i2c::I2c as I2cTrait,
+use embedded_hal_async::{
+   i2c::I2c,
 };
+
+//use embedded_hal::{
+//   i2c::I2c,
+//};
 
 ///////////////////// setup
 

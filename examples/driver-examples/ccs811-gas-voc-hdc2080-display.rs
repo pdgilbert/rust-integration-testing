@@ -77,8 +77,12 @@ fn main() -> ! {
     // rtic needs task sharing not provided by BusManagerSimple: 
     // use rust_integration_testing_of_examples::i2c::{I2c2Type};
 
+    //NEEDS BUS SHARING HERE   
+    // Compare  eh1  displayX2_rtic4a1.rs  misc-i2c-drivers/hdc1080-display.rs
+    // Compare hdc2080-temp-humidity-display.rs  which does not need a shared bus.
     //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
-NEEDS BUS SHARING HERE   COMPARE displayX2_rtic4a1.rs  misc-i2c-drivers/hdc1080-display.rs
+    //hdc20xx still uses eh 0.2.7 so shared_bus might work, but is deprecated.
+    // BUT TRY eh1  APPROACH
 
     let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
     let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
