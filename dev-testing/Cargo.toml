@@ -240,11 +240,13 @@ embedded-hal        = "1.0"
 embedded-hal-bus    = "0.3.0"
 embedded-hal-async  = "1.0.0"
 
-embedded-io         = "0.7.1"  #"0.6.1" "0.7.1"
-#  f1x: 0.7.1 has 73 ok   0.6.1 has 74 ok
-#  f4x: 0.7.1 has 75 ok   0.6.1 has 74  ( diff is max30102-heart-usart )
-#  g4x: 0.7.1 has 73 ok   0.6.1 has 80 ok
-#  h7x: 0.7.1 has 50 ok   0.6.1 has 57 ok
+embedded-io-async   = "0.7.0" 
+embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
+# with rtic removed (so of 74)
+#  f1x: 0.7.1 has 69 ok   0.6.1 has 64 ok
+#  f4x: 0.7.1 has 67 ok   0.6.1 has 66  ( diff is max30102-heart-usart )
+#  g4x: 0.7.1 has 66 ok   0.6.1 has 72 ok 
+#  h7x: 0.7.1 has 43 ok   0.6.1 has 49 ok
 #  causes traits which provide `write` are implemented but not in scope
 #                                     breaking h7x  57 ok -> 50 
 #embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }

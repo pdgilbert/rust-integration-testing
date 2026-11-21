@@ -73,7 +73,7 @@ use si4703::{
 
 /////////////////////  setup
 
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, Delay, DelayNs}; 
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, I2c1Type, I2c2Type, DelayNs}; 
 
 //use rust_integration_testing_of_examples::i2c_led_delay_buttons_stcint::{
 //              setup_i2c_led_delay_buttons_stcint_using_dp, SEEK,};
@@ -202,7 +202,7 @@ use stm32f1xx_hal::{
     //timer::Delay,
     //timer::SysDelay as Delay,
     gpio::{
-        gpiob::{PB10, PB11, PB6, PB12, PB13},
+        gpiob::{PB6, PB12, PB13},
         Input,
     },
     i2c::{BlockingI2c, DutyCycle, Mode},
@@ -215,12 +215,11 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input<>>,
 ) {
 
-    let mut flash = dp.FLASH.constrain();
     let mut rcc = dp.RCC.constrain().freeze(Config::hsi(), &mut dp.FLASH.constrain().acr);
 
     let mut delay = dp.TIM2.delay_us(&mut rcc);
@@ -334,7 +333,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c1Type,
     I2c2Type,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input>,
 ) {
@@ -505,7 +504,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c2Type,
     //I2c<I2C2, impl SDAPin<I2C2>, impl SCLPin<I2C2>>,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input>,
 ) {
@@ -544,10 +543,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
+    pac::I2C1,
+    timer::Timer,
     gpio::{Input,
         gpiob::{PB10, PB11, PB6},
     },
     interrupt::TIM2,
+    i2c::{I2c,},
     prelude::*,
 };
 
@@ -555,8 +557,12 @@ use stm32h7xx_hal::{
 use stm32h7xx_hal::delay::DelayFromCountDownTimer;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> 
-  (I2c1Type, I2c2Type, impl LED, Delay, impl SEEK, PB6<Input>) {
+pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
+    I2c<I2C1>,
+    impl LED, 
+    impl DelayNs, 
+    impl SEEK, PB6<Input>,
+) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();

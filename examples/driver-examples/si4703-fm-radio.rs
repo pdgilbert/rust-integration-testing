@@ -37,7 +37,7 @@ use rtt_target::{rprintln, rtt_init_print};
 use si4703::{ChannelSpacing, DeEmphasis, SeekDirection, SeekMode, Si4703, Volume};
 
 
-use rust_integration_testing_of_examples::setup::{Peripherals, LED, Delay, DelayNs};
+use rust_integration_testing_of_examples::setup::{Peripherals, LED, DelayNs};
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -160,7 +160,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     //BlockingI2c<I2C1>,
     I2c<I2C1>,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input<>>,
 ) {
@@ -170,7 +170,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     let mut gpioc = dp.GPIOC.split(&mut rcc);
 
     //let mut delay = dp.TIM3.delay_us(&mut rcc);
-    let mut delay = dp.TIM3.delay(&mut rcc);
+    let mut delay = dp.TIM3.delay::<1000000_u32>(&mut rcc);
 
     let mut afio = dp.AFIO.constrain(&mut rcc);
 
@@ -273,7 +273,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     //I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
     I2c<I2C1>,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input>,
 ) {
@@ -429,7 +429,7 @@ use stm32g4xx_hal::{
 pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
     I2c<I2C1, impl SDAPin<I2C1>, impl SCLPin<I2C1>>,
     impl LED,
-    Delay,
+    impl DelayNs,
     impl SEEK,
     PB6<Input<>>,
 ) {
@@ -465,10 +465,13 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
 
 #[cfg(feature = "stm32h7xx")]
 use stm32h7xx_hal::{
+    pac::I2C1,
+    timer::Timer,
     gpio::{Input,
         gpiob::{PB10, PB11, PB6},
     },
     interrupt::TIM2,
+    i2c::{I2c,},
     prelude::*,
 };
 
@@ -476,7 +479,12 @@ use stm32h7xx_hal::{
 use stm32h7xx_hal::delay::DelayFromCountDownTimer;
 
 #[cfg(feature = "stm32h7xx")]
-pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType, impl LED, Delay, impl SEEK, PB6<Input>) {
+pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (
+    I2c<I2C1>,
+    impl LED, 
+    impl DelayNs, 
+    impl SEEK, PB6<Input>,
+) {
     let pwr = dp.PWR.constrain();
     let vos = pwr.freeze();
     let rcc = dp.RCC.constrain();
@@ -488,7 +496,7 @@ pub fn setup_i2c_led_delay_buttons_stcint_using_dp(dp: Peripherals) -> (I2cType,
     //let mut delay = DelayType::new(TIM2, 160.MHz());
     // CountDownTimer not supported by embedded-hal 1.0.0 ??
     let timer = dp.TIM5.timer(1.Hz(), ccdr.peripheral.TIM5, &clocks);
-    let delay = DelayFromCountDownTimer::new(timer);
+    let mut delay = DelayFromCountDownTimer::new(timer);
 
     let gpiob = dp.GPIOB.split(ccdr.peripheral.GPIOB);
     let gpioc = dp.GPIOC.split(ccdr.peripheral.GPIOC);
