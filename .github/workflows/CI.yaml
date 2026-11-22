@@ -235,8 +235,11 @@ jobs:
       - name: Example ccs811-gas-voc-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-display
 
-      - name: Example ccs811-gas-voc-hdc2080-display
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-hdc2080-display
+#      - name: Example ccs811-gas-voc-hdc2080-display
+#        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-hdc2080-display
+
+      - name: Example ccs811-gas-voc-aht20-display
+        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ccs811-gas-voc-aht20-display
 
       - name: Example ds1307-rtc
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example ds1307-rtc
@@ -416,8 +419,8 @@ jobs:
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht10_rtic
 
-      - name: Example aht20-display-nodelay
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
+  #    - name: Example aht20-display-nodelay
+  #      run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example aht20-display-nodelay
 
       - name: Example htu2xd_rtic
         #if: ${{ matrix.trg != 'thumbv6m-none-eabi'  }}
@@ -528,13 +531,13 @@ jobs:
     strategy:
       matrix:
 
-        eg:  [ccs811-gas-voc-display,  ccs811-gas-voc-hdc2080-display,   bmi160-imu-display, 
+        eg:  [ccs811-gas-voc-display,  ccs811-gas-voc-hdc2080-display,   ccs811-gas-voc-aht20-display, 
               ds1307-rtc,              hdc2080-temp-humidity-display,    iaq-core-c-gas-voc-display, 
               isl29125-color-display,  max17043-battery-monitor-display, max30102-heart-usart, 
               mcp7940n-rtc-display,    mlx90614-temperature-display,     mlx90615-temperature-display, 
               mma8452-accel-display,   opt3001-als-display,              pca9685-pwm-rgb-led-servos, 
               si4703-fm-radio-display, si4703-fm-radio,                  tcs34725-color-display,
-              tmp006-ir-temp-display,  tmp102-temp-display,              
+              tmp006-ir-temp-display,  tmp102-temp-display,              bmi160-imu-display,
               veml6030-als-display,    veml6070-uv-display,              veml6075-uv-display,     
               iaq-core-c-gas-voc-usart-logger, ccs811-co2-voc, 
              ]

@@ -132,9 +132,7 @@ fn setup() -> (
 
     let p = Peripherals::take().unwrap();
     let mut rcc = p.RCC.constrain();
-    let clocks = rcc.cfgr.freeze(&mut p.FLASH.constrain().acr);
-    let mut afio = p.AFIO.constrain();
-    let mut gpioa = p.GPIOA.split();
+    let mut gpioa = p.GPIOA.split(&mut rcc);
 
     let txrx1 = Serial::new(
         p.USART1,
@@ -142,11 +140,10 @@ fn setup() -> (
             gpioa.pa9.into_alternate_push_pull(&mut gpioa.crh), //tx pa9,
             gpioa.pa10,
         ), //rx pa10
-        &mut afio.mapr,
         Config::default()
             .baudrate(9600.bps())
             .stopbits(StopBits::STOP1),
-        &clocks,
+        &mut rcc,
     ); //.split();
 
     let (tx1, rx1) = txrx1.split();
@@ -295,9 +292,7 @@ fn setup() -> (
 
     let dp = Peripherals::take().unwrap();
     let mut rcc = dp.RCC.constrain();
-    let clocks = rcc.cfgr.freeze();
-    let gpioa = dp.GPIOA.split();
-    //dp.USART1.cr1.modify(|_,w| w.rxneie().set_bit());  //need RX interrupt?
+    let gpioa = dp.GPIOA.split(&mut rcc);
 
     let txrx1 = Serial::new(
         dp.USART1,
@@ -305,7 +300,7 @@ fn setup() -> (
         Config::default()
            .baudrate(9600.bps())
            .dma(serial::config::DmaConfig::Rx),
-        &clocks,
+        &&mut rcc,
     )
     .unwrap();
     let (mut tx1, mut rx1) = txrx1.split();

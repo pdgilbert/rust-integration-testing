@@ -5,6 +5,8 @@
 //! In order to compensate for the ambient temperature and humidity, an HDC2080
 //! sensor is used.
 //!
+//! Compare ccs811-gas-vocccs811-gas-vocaht20-display-display
+//!
 //!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
 //!  The specific function used will depend on the HAL setting (see README.md).
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
@@ -46,7 +48,10 @@ use embedded_graphics::{
 use ssd1306::{prelude::*, I2CDisplayInterface, Ssd1306};
 
 use rust_integration_testing_of_examples::setup;
-use rust_integration_testing_of_examples::setup::{Peripherals, LED};
+use rust_integration_testing_of_examples::setup::{I2c2Type, Peripherals, LED};
+
+use core::cell::RefCell;
+use embedded_hal_bus::i2c::RefCellDevice;
 
 
 #[entry]
@@ -73,22 +78,17 @@ fn main() -> ! {
         .text_color(BinaryColor::On)
         .build();
 
-    let manager = shared_bus::BusManagerSimple::new(i2c2);
-    // rtic needs task sharing not provided by BusManagerSimple: 
-    // use rust_integration_testing_of_examples::i2c::{I2c2Type};
 
-    //NEEDS BUS SHARING HERE   
-    // Compare  eh1  displayX2_rtic4a1.rs  misc-i2c-drivers/hdc1080-display.rs
-    // Compare hdc2080-temp-humidity-display.rs  which does not need a shared bus.
-    //let manager: &'static _ = shared_bus::new_cortexm!(I2c2Type = i2c2).unwrap();
-    //hdc20xx still uses eh 0.2.7 so shared_bus might work, but is deprecated.
-    // BUT TRY eh1  APPROACH
-
-    let mut hdc2080 = Hdc20xx::new(manager.acquire_i2c(), Hdc20xxSlaveAddr::default());
-    let mut ccs811 = Ccs811Awake::new(manager.acquire_i2c(), Ccs811SlaveAddr::default());
+    //NEEDS i2c2  BUS SHARING HERE. Trying RefCell but there are trait problems.  
+    // Compare   cs811-gas-voc-aht20-display which compiles.
+    // Note that both embedded_ccs811 and aht20_driver crates use embedded-hal 1 and Refcell sharing 
+    //  compiles. Crate hdc20xx still uses eh 0.2.7 so this might complicate the Refcell share.
+  
+    let i2c2rc = RefCell::new(i2c2);
+    let mut hdc2080 = Hdc20xx::new(RefCellDevice::new(&i2c2rc), Hdc20xxSlaveAddr::default());
+    let mut ccs811 = Ccs811Awake::new(RefCellDevice::new(&i2c2rc), Ccs811SlaveAddr::default());
     ccs811.software_reset().unwrap();
     delay.delay_ms(10);
-    let mut lines: [String<32>; 4] = [String::new(), String::new(), String::new(), String::new()];
 
     let mut ccs811 = ccs811.start_application().ok().unwrap();
     let mut env = block!(hdc2080.read()).unwrap();
@@ -104,6 +104,7 @@ fn main() -> ! {
         raw_voltage: 9999,
     };
 
+    let mut lines: [String<32>; 4] = [String::new(), String::new(), String::new(), String::new()];
     let mut counter = 0;
     loop {
         // Blink LED 0 to check that everything is actually running.

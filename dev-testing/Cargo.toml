@@ -111,6 +111,7 @@ ds1307          = { git = "https://github.com/eldruin/ds1307-rs" }
 eeprom24x       = { git = "https://github.com/eldruin/eeprom24x-rs" }
 embedded-ccs811 = { git = "https://github.com/eldruin/embedded-ccs811-rs" }
 hdc20xx         = { git = "https://github.com/eldruin/hdc20xx-rs" }
+#hdc20xx         = { git = "https://github.com/jboone/hdc20xx-rs", branch = "jboone_async" }
 iaq-core        = { git = "https://github.com/eldruin/iaq-core-rs" }
 isl29125        = { git = "https://github.com/eldruin/isl29125-rs" }
 max170xx        = { git = "https://github.com/eldruin/max170xx-rs" }
@@ -369,6 +370,10 @@ path = "examples/driver-examples/ccs811-gas-voc-display.rs"
 [[example]]
 name = "ccs811-gas-voc-hdc2080-display"
 path = "examples/driver-examples/ccs811-gas-voc-hdc2080-display.rs"
+
+[[example]]
+name = "ccs811-gas-voc-aht20-display"
+path = "examples/driver-examples/ccs811-gas-voc-aht20-display.rs"
 
 [[example]]
 name = "ds1307-rtc"

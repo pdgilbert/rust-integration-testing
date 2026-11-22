@@ -7,6 +7,8 @@
 //!  See the section of setup() corresponding to the HAL setting for details on pin connections.
 //!  (On "BluePill" (stm32f1xx_hal) scl is on PB8 and SDA is on PB9 using I2C1.  Using VCC  3.3v.)
 
+//  THIS PROBABLY NEEDS i2c2 FROM  embedded-hal-async RATHER THAN FROM embedded-hal.
+
 #![deny(unsafe_code)]
 #![no_std]
 #![no_main]
