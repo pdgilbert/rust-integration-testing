@@ -7,20 +7,7 @@
 //!
 //! Compare ccs811-gas-voc-hdc2080-display.
 //!
-//!  The setup() functions make the application code common. They are in src/i2c_led_delay.rs.
-//!  The specific function used will depend on the HAL setting (see README.md).
-//!  See the section of setup() corresponding to the HAL setting for details on pin connections.
-//!
-//!  On "BluePill" (stm32f1xx_hal) using I2C1.
-//! ```
-//! BP   <-> CCS811 <-> HDC2080 <-> Display
-//! GND  <-> GND    <-> GND     <-> GND
-//! 3.3V <-> VCC    <-> VCC     <-> VDD
-//! PB8  <-> SCL    <-> SCL     <-> SCL  PB8 with bluepill. Check src/i2c_led_delay.rs for other devices.
-//! PB9  <-> SDA    <-> SDA     <-> SDA  PB9 with bluepill. Check src/i2c_led_delay.rs for other devices.
-//! GND  <-> nWAKE
-//! 3.3V <-> RST
-//! ```
+//! See the section of setup() corresponding to the HAL setting for details on pin connections.
 
 #![deny(unsafe_code)]
 #![no_std]

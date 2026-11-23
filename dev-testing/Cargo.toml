@@ -45,8 +45,8 @@ stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = 
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 
-stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
-#stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true, branch = "hal-1" }
+#stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
+stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1" }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1-up" }
 #stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
@@ -682,14 +682,6 @@ path = "examples/misc-i2c-drivers/xca9548a_hdc2080.rs"
 
 
 # examples/projects
-
-[[example]]
-name = "temp-humidity-display"
-path = "examples/projects/temp-humidity-display.rs"
-
-[[example]]
-name = "temperature-display"
-path = "examples/projects/temperature-display.rs"
 
 [[example]]
 name = "temperature-display_no-rtic"

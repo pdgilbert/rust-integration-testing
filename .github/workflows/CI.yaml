@@ -259,9 +259,6 @@ jobs:
       - name: Example mcp7940n-rtc-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mcp7940n-rtc-display
 
-      - name: Example mlx90614-temperature-display
-        run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx90614-temperature-display
-
       - name: Example mlx90615-temperature-display
         run: cargo build  --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }} --example mlx90615-temperature-display
 
@@ -396,19 +393,6 @@ jobs:
 #################################################################################################
 #####  run examples here that are broken on some boards (last because job stops on failure) #####
 
-      - name: Example temp-humidity-display with sensor aht10
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},aht10 --example temp-humidity-display
-
-      - name: Example temp-humidity-display with sensor aht20
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},aht20 --example temp-humidity-display
-
-      - name: Example temp-humidity-display with sensor hdc1080
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},hdc1080 --example temp-humidity-display
-
-      - name: Example temp-humidity-display with sensor htu2xd
-        run: cargo  build --manifest-path  ${{ matrix.stg }}/Cargo.toml  --release --target ${{ matrix.trg }} --features ${{ matrix.hal }},${{ matrix.mcu }},htu2xd --example temp-humidity-display
-
-
 # these require solving eh-1 Read/Write issue on stm32f4xx
 
       - name: Example echo_by_char
@@ -448,8 +432,6 @@ jobs:
               one_wire_bus_find_devices,  temperature, text_i2c,   therm10k_display,
               battery_monitor_ads1015, ]
 
-             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
-             # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
         brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
@@ -667,8 +649,6 @@ jobs:
               xca9548a-aht20-bl, xca9548a-aht20-em, xca9548a-aht20-dr,  xca9548a_hdc2080,
              ]
              
-             # temp-humidity-display is tested in CI blocks for MCUs but not in this eg matrix 
-             # because the feature indicating the sensor needs to be set.
              #   mlx9064x,  aht20-display-nodelay,   #ad9833-midi-player,      
 
         brd: [bluepill, blackpill-stm32f401, weact-stm32g474, devEBox-stm32h750]  
