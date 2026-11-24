@@ -43,7 +43,6 @@ use panic_halt as _;
 //use rtt_target::{rprintln, rtt_init_print};
 use cortex_m_semihosting::hprintln;
 
-//use shared_bus::{I2cProxy};
 //use core::cell::RefCell;
 //use cortex_m::interrupt::Mutex;
 

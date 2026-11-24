@@ -62,7 +62,33 @@ stm32l1xx-hal = { git = "https://github.com/TheCallSign/stm32l1xx-hal", optional
 #stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
 stm32l4xx-hal = { git = "https://github.com/sousandrei/stm32l4xx-hal", optional = true, branch = "feat/migrate-to-ehal-1.0" }
 
-#  driver versions using git
+#  embedded-hal versions using release
+
+# NB. do not mix release and git versions.
+#     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
+#     Compiler gives error
+#        note: perhaps two different versions of crate `embedded_hal` are being used?
+embedded-hal        = "1.0"
+embedded-hal-bus    = "0.3.0"
+embedded-hal-async  = "1.0.0"
+embedded-io-async   = "0.7.0" 
+embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
+#using 0.7.1 and with rtic removed
+#  f1x: 73 ok of 73 that should be working   0 ok of 4 expected to fail
+#  f4x: 68 ok of 73 that should be working   0 ok of 4 expected to fail
+#  g4x: 67 ok of 73 that should be working   0 ok of 4 expected to fail
+#  h7x: 44 ok of 73 that should be working   0 ok of 4 expected to fail
+#  causes traits which provide `write` are implemented but not in scope
+#                                     breaking h7x  57 ok -> 50 
+#embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io-async  = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
+
+#embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
+
+#  driver crate versions using git
 
 dht-sensor      = { git = "https://github.com/michaelbeaumont/dht-sensor", branch = "main"}
 #dht-sensor      = { git = "https://github.com/MGlolenstine/dht-sensor", branch = "main"}  // NOT no-std ?
@@ -232,30 +258,6 @@ radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", defau
 #
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
-
-# NB. do not mix release and git versions.
-#     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
-#     Compiler gives error
-#        note: perhaps two different versions of crate `embedded_hal` are being used?
-embedded-hal        = "1.0"
-embedded-hal-bus    = "0.3.0"
-embedded-hal-async  = "1.0.0"
-embedded-io-async   = "0.7.0" 
-embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
-# with rtic removed (so of 74)
-#  f1x: 0.7.1 has 69 ok   0.6.1 has 64 ok
-#  f4x: 0.7.1 has 67 ok   0.6.1 has 66  ( diff is max30102-heart-usart )
-#  g4x: 0.7.1 has 66 ok   0.6.1 has 72 ok 
-#  h7x: 0.7.1 has 43 ok   0.6.1 has 49 ok
-#  causes traits which provide `write` are implemented but not in scope
-#                                     breaking h7x  57 ok -> 50 
-#embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-io-async  = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
-
-#embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-graphics = ">=0.7"
 
