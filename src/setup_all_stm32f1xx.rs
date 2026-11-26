@@ -1,7 +1,9 @@
-pub use nb::block;
+pub use nb::block;  //THIS IS NOT USED VERY MUCH. TEST AND CONSIDER JUST IMPORTING IN A FEW EXAMPLES
 
-pub use stm32f1xx_hal as hal;
-pub use hal::{
+pub use stm32f1xx_hal as mcu_hal;
+
+pub use mcu_hal::{
+      hal as eh,
       pac::CorePeripherals,   //hopefully temperary, used in some examples
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
       rcc::{RccExt},
@@ -15,7 +17,9 @@ pub use hal::{
       //block,
 };
 
-pub use stm32f1xx_hal::{
+// Above is the same for most hal crate, but below differs
+
+pub use mcu_hal::{
       pac::{TIM2, TIM3}, 
       rcc::Clocks,
       rcc::Config as rccConfig,
@@ -25,24 +29,18 @@ pub use stm32f1xx_hal::{
       spi::{Mode, Phase, Polarity},
       //spi::{Spi1NoRemap, Pins as SpiPins, Error as SpiError},
       serial::{Config},
-      gpio::{Alternate, Pin, Input, 
+      gpio::{Alternate, Pin, Input,
              gpioa::{PA0, PA1, PA8, PA11},
              gpiob::{PB0, PB1, PB6, PB7, PB8, PB9, PB10, PB11},
              gpioc::{PC13 as LEDPIN}},
 };
 
-//use embedded_hal::spi::{Mode, Phase, Polarity};
-//note: `Mode` and `Mode` have similar names, but...
-//use embedded_hal::i2c::ErrorType;
-
+//   //////////////////////////////////////////////////////////////////////
+pub use crate::setup::led::LED;
 
 //   //////////////////////////////////////////////////////////////////////
-pub use embedded_hal::delay::DelayNs;
 
-//pub use crate::alt_delay::{AltDelay as Delay1Type};
-//pub type Delay1Type = Delay;
-//pub use crate::alt_delay::{AltDelay as Delay2Type};
-//pub type Delay2Type = Delay;
+//use eh::spi::{Mode, Phase, Polarity};
 
 pub type Delay1Type = halDelay<TIM2, 1000000_u32>;
 pub type Delay2Type = halDelay<TIM3, 1000000_u32>;
@@ -61,7 +59,6 @@ pub type I2c1Type = BlockingI2c<I2C1>;
 pub type I2c2Type = BlockingI2c<I2C2>;
 pub type I2cType  = I2c1Type; 
 
-pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 

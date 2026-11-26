@@ -1,5 +1,7 @@
-pub use stm32h7xx_hal as hal;
-pub use hal::{
+pub use stm32h7xx_hal as mcu_hal;
+
+pub use mcu_hal::{
+      hal as eh,
       pac::CorePeripherals,   //hopefully temperary, used in some examples
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
       //timer::{Delay as halDelay},
@@ -15,7 +17,7 @@ pub use hal::{
 };
 
 
-pub use stm32h7xx_hal::{
+pub use mcu_hal::{
       rcc::CoreClocks as Clocks,
       pac::{TIM2, TIM5},
       timer::Timer,
@@ -33,10 +35,11 @@ pub use stm32h7xx_hal::{
 use embedded_hal::spi::{Mode, Phase, Polarity};
 
 //   //////////////////////////////////////////////////////////////////////
+pub use crate::setup::led::LED;
 
-pub use embedded_hal::delay::DelayNs;
+//   //////////////////////////////////////////////////////////////////////
 
-#[cfg(feature = "stm32h7xx")]
+// #[cfg(feature = "stm32h7xx")]
 pub type Delay1Type = DelayFromCountDownTimer<TIM2>;
 //pub type Delay1Type = DelayFromCountDownTimer<CountDown<TIM2>>;
 //pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
@@ -44,7 +47,7 @@ pub type Delay1Type = DelayFromCountDownTimer<TIM2>;
 //pub use crate::alt_delay::{AltDelay as Delay1Type};
 //pub type Delay1Type = Delay; //<TIM2, 1000000_u32>;
 
-#[cfg(feature = "stm32h7xx")]
+// #[cfg(feature = "stm32h7xx")]
 pub type Delay2Type = DelayFromCountDownTimer<Timer<TIM5>>;
 //pub type Delay2Type = DelayFromCountDownTimer<TIM5>;
 //pub type Delay2Type = DelayFromCountDownTimer<CountDown<TIM5>>;
@@ -70,7 +73,6 @@ pub type I2c1Type = I2c<I2C1>;
 pub type I2c2Type = I2c<I2C2>;
 pub type I2cType  = I2c1Type;
 
-pub use crate::led::LED;  // defines trait and default methods
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 

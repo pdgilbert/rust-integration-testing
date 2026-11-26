@@ -36,23 +36,22 @@ opt-level = "s"
                                           
 #in stm32f0xx-haljust making embedded-hal = 1.0, instead of embedded-hal-1 = 1.0 does not work.
 stm32f0xx-hal = { git = "https://github.com/stm32-rs/stm32f0xx-hal", optional = true }
-#stm32f1xx-hal = { version = "0.10.0", optional = true }
-stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true }
+#stm32f1xx-hal = { version = "0.10.0", optional = true }                               #does not export eh
+stm32f1xx-hal = { git = "https://github.com/stm32-rs/stm32f1xx-hal", optional = true } #exports eh
 stm32f3xx-hal = { git = "https://github.com/stm32-rs/stm32f3xx-hal", optional = true }
-#stm32f4xx-hal = { version = "0.22.1", optional = true } 
-stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true }
-#stm32f4xx-hal = {path = "/home/paul/githubClones/stm32f4xx-hal", optional = true }
+#stm32f4xx-hal = { version = "0.22.1", optional = true }                                # .split()
+stm32f4xx-hal = { git = "https://github.com/stm32-rs/stm32f4xx-hal", optional = true }  # .split(&mut rcc)
 stm32f7xx-hal = { git = "https://github.com/stm32-rs/stm32f7xx-hal", optional = true }
 stm32g0xx-hal = { git = "https://github.com/stm32-rs/stm32g0xx-hal", optional = true }
 
-#stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
-stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true }
+stm32g4xx-hal = { git = "https://github.com/stm32-rs/stm32g4xx-hal", optional = true }
+#stm32g4xx-hal = { git = "https://github.com/techmccat/stm32g4xx-hal", optional = true }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1" }
 #stm32g4xx-hal = {  git = "https://github.com/pdgilbert/stm32g4xx-hal",optional = true, branch = "hal-1-up" }
 #stm32g4xx-hal = {  git = "https://github.com/usbalbin/stm32g4xx-hal",optional = true, branch = "e-hal-1" }
 
-#stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
-stm32h7xx-hal = { git = "https://github.com/everdrone/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
+stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
+#stm32h7xx-hal = { git = "https://github.com/everdrone/stm32h7xx-hal", optional = true , branch = "eh-v1.0"}
 #stm32h7xx-hal = { git = "https://github.com/stm32-rs/stm32h7xx-hal", optional = true }
 #stm32l0xx-hal = { git = "https://github.com/stm32-rs/stm32l0xx-hal", optional = true }
 #stm32l0xx-hal = { git = "https://github.com/zheylmun/stm32l0xx-hal", optional = true, branch = "feature/embedded_hal_1_0" }
@@ -62,31 +61,6 @@ stm32l1xx-hal = { git = "https://github.com/TheCallSign/stm32l1xx-hal", optional
 #stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", optional = true }
 stm32l4xx-hal = { git = "https://github.com/sousandrei/stm32l4xx-hal", optional = true, branch = "feat/migrate-to-ehal-1.0" }
 
-#  embedded-hal versions using release
-
-# NB. do not mix release and git versions.
-#     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
-#     Compiler gives error
-#        note: perhaps two different versions of crate `embedded_hal` are being used?
-embedded-hal        = "1.0"
-embedded-hal-bus    = "0.3.0"
-embedded-hal-async  = "1.0.0"
-embedded-io-async   = "0.7.0" 
-embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
-#using 0.7.1 and with rtic removed
-#  f1x: 73 ok of 73 that should be working   0 ok of 4 expected to fail
-#  f4x: 68 ok of 73 that should be working   0 ok of 4 expected to fail
-#  g4x: 67 ok of 73 that should be working   0 ok of 4 expected to fail
-#  h7x: 44 ok of 73 that should be working   0 ok of 4 expected to fail
-#  causes traits which provide `write` are implemented but not in scope
-#                                     breaking h7x  57 ok -> 50 
-#embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-io-async  = { git = "https://github.com/rust-embedded/embedded-hal/" }
-#embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
-
-#embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 #  driver crate versions using git
 
@@ -258,6 +232,38 @@ radio-sx127x  = {  git = "https://github.com/pdgilbert/rust-radio-sx127x", defau
 #
 # updates to crates below are not actively tested by CI. Dependabot update are
 # incorporated when the update does not break things.
+
+# NB. do not mix release and git versions.
+#     embedded-hal-bus from git pulls in embedded-hal from git and traits get confused.
+#     Compiler gives error
+#        note: perhaps two different versions of crate `embedded_hal` are being used?
+#        and ^^^^ this is the expected trait  ...  this is the found trait
+#      
+#     For the same reason, embedded-hal is mostly not used directly.
+#     It is used through the stm23?xx_hal::hal which reexports it from src/lib.rs by
+#         pub use embedded_hal as hal;
+#     Since many examples use "stm23?xx_hal as hal" the examples mostly 
+#         use stm23?xx_hal as eh;
+#      
+embedded-hal        = "1.0"
+embedded-hal-bus    = "0.3.0"
+embedded-hal-async  = "1.0.0"
+#embedded-io-async   = "0.7.0" 
+embedded-io         = "0.7.1"  #"0.6.1" "0.7.1" 
+#using 0.7.1 and with rtic removed
+#  f1x: 73 ok of 73 that should be working   0 ok of 4 expected to fail
+#  f4x: 68 ok of 73 that should be working   0 ok of 4 expected to fail
+#  g4x: 67 ok of 73 that should be working   0 ok of 4 expected to fail
+#  h7x: 44 ok of 73 that should be working   0 ok of 4 expected to fail
+#  causes traits which provide `write` are implemented but not in scope
+#                                     breaking h7x  57 ok -> 50 
+#embedded-hal       = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-bus   = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-hal-async = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io-async  = { git = "https://github.com/rust-embedded/embedded-hal/" }
+#embedded-io        = { git = "https://github.com/rust-embedded/embedded-hal/" }
+
+#embedded-hal-nb    = { git = "https://github.com/rust-embedded/embedded-hal/" }
 
 embedded-graphics = ">=0.7"
 

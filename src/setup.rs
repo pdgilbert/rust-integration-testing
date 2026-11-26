@@ -13,7 +13,7 @@ use panic_halt as _;
 pub use  crate::setup_all_stm32f0xx::*;
 
 #[cfg(feature = "stm32f1xx")]
-pub use  crate::setup_all_stm32f1xx::*;
+pub use  crate::setup_all_stm32f1xx::*;  // setup_all_stm32f1xx exports  stm32f1xx_hal as mcu_hal  and   mcu_hal::hal as eh
 
 #[cfg(feature = "stm32f3xx")]
 pub use  crate::setup_all_stm32f3xx::*;
@@ -42,6 +42,11 @@ pub use  crate::setup_all_stm32l1xx::*;
 #[cfg(feature = "stm32l4xx")]
 pub use  crate::setup_all_stm32l4xx::*;
 
+
+//   //////////////////////////////////////////////////////////////////////
+pub use  eh::delay::DelayNs;
+pub use  eh::digital::OutputPin;
+pub mod led;   // has trait and default impl
 
 //   //////////////////////////////////////////////////////////////////////
 

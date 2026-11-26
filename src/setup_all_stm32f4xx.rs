@@ -1,5 +1,7 @@
-use stm32f4xx_hal as hal;
-pub use hal::{
+pub use stm32f4xx_hal as mcu_hal;
+
+pub use mcu_hal::{
+      hal as eh,
       pac::CorePeripherals,   //hopefully temperary, used in some examples
       pac::{Peripherals, I2C1, I2C2, USART1, USART2, SPI1, ADC1,},
       timer::{Delay as halDelay},
@@ -11,12 +13,12 @@ pub use hal::{
       adc::Adc,
       prelude::*,
       prelude,
-      block,
+      block, //block IS NOT USED VERY MUCH. TEST AND CONSIDER JUST IMPORTING IN A FEW EXAMPLES
 };
 
 // above are commom to all hals. Below are possibly different.
 
-pub use stm32f4xx_hal::{
+pub use mcu_hal::{
     pac::{TIM2, TIM5},
     rcc::{Clocks, Config as rccConfig},
     timer::{TimerExt},
@@ -28,11 +30,15 @@ pub use stm32f4xx_hal::{
     adc::{config::{AdcConfig, SampleTime}},
 };
 
-use embedded_hal::spi::{Mode, Phase, Polarity};
+//   //////////////////////////////////////////////////////////////////////
+pub use crate::setup::led::LED;
 
 //   //////////////////////////////////////////////////////////////////////
 
-pub use embedded_hal::delay::DelayNs;
+use eh::spi::{Mode, Phase, Polarity};
+
+//   //////////////////////////////////////////////////////////////////////
+
 
 pub type Delay1Type = halDelay<TIM2, 1000000_u32>;
 pub type Delay2Type = halDelay<TIM5, 1000000_u32>;
@@ -50,7 +56,7 @@ pub type I2cType  = I2c1Type;
 
 // impl LED would work in function signature but does not yet work in rtic share
 // or implimentation of methods,  so LedType is defined:
-pub use crate::led::LED;  // defines trait and default methods
+
 pub type LedType = LEDPIN<Output<PushPull>>;
 impl LED for LedType {}    
 

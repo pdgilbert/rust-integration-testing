@@ -13,7 +13,7 @@ use panic_halt as _;
 
 pub mod alt_delay;
 
-pub mod led;   // has trait and default impl
+//pub mod led;   // has trait and default impl
 pub mod lora;  // has structures and constants
 
 pub mod  setup;
@@ -22,7 +22,7 @@ pub mod  setup;
 //  attempted, and features gates are not set in the module, making a mess.
 
 //#[cfg(not(any(feature="stm32f0xx", feature="stm32f1xx", feature="stm32f3xx", feature="stm32f4xx", feature="stm32f7xx", feature="stm32g0xx", feature="stm32g4xx", feature="stm32h7xx",  feature="stm32l0xx",  feature="stm32l1xx", feature="stm32l4xx")))]
-// hal featuremust be set
+// hal feature must be set
 
 #[cfg(feature = "stm32f0xx")]
 pub mod  setup_all_stm32f0xx;
